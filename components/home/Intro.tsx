@@ -1,4 +1,13 @@
+"use client";
+
 import { site } from "@/lib/site";
+import { Magnetic } from "../motion/Magnetic";
+import { Parallax } from "../motion/Parallax";
+import { Reveal } from "../motion/Reveal";
+import { StaggerGroup } from "../motion/StaggerGroup";
+import { StaggerItem } from "../motion/StaggerItem";
+import { TextReveal } from "../motion/TextReveal";
+import { scaleIn } from "../motion/variants";
 import { Photo } from "../ui/Photo";
 import { TextLink } from "../ui/TextLink";
 
@@ -8,28 +17,38 @@ export function Intro() {
     <section aria-labelledby="intro-heading" className="section-y">
       <div className="container-page grid items-center gap-10 md:grid-cols-12 md:gap-12">
         <div className="md:col-span-7">
-          <h2
+          <TextReveal
+            as="h2"
             id="intro-heading"
+            text={heading}
             className="max-w-xl font-display text-h2 text-balance"
-          >
-            {heading}
-          </h2>
-          <div className="mt-6 max-w-xl space-y-4 text-body-lg leading-[1.7] text-ink/85">
+          />
+          <StaggerGroup className="mt-6 max-w-xl space-y-4 text-body-lg leading-[1.7] text-ink/85" staggerChildren={0.1}>
             {body.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
+              <StaggerItem as="p" key={paragraph}>
+                {paragraph}
+              </StaggerItem>
             ))}
-          </div>
-          <div className="mt-4">
-            <TextLink href={learnMoreHref}>Learn more about us</TextLink>
-          </div>
+          </StaggerGroup>
+          <Reveal delay={0.2}>
+            <div className="mt-4">
+              <Magnetic className="inline-block">
+                <TextLink href={learnMoreHref}>Learn more about us</TextLink>
+              </Magnetic>
+            </div>
+          </Reveal>
         </div>
         <div className="md:col-span-5">
-          <Photo
-            src={image.src}
-            alt={image.alt}
-            sizes="(min-width: 768px) 40vw, 100vw"
-            className="aspect-[4/5] w-full rounded-card md:max-w-md md:ml-auto"
-          />
+          <Parallax amount={8} className="md:max-w-md md:ml-auto">
+            <Reveal variants={scaleIn}>
+              <Photo
+                src={image.src}
+                alt={image.alt}
+                sizes="(min-width: 768px) 40vw, 100vw"
+                className="aspect-[4/5] w-full rounded-card"
+              />
+            </Reveal>
+          </Parallax>
         </div>
       </div>
     </section>

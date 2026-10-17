@@ -187,10 +187,10 @@ export function StaySelector({ query, problem, onChange, openSignal }: StaySelec
             ref={dialogRef}
             aria-labelledby={ids.title}
             onClose={() => setSheetOpen(false)}
-            className="m-0 h-dvh max-h-none w-screen max-w-none bg-paper p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col"
+            className="m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col"
           >
             {sheetOpen && (
-              <>
+              <div className="flex h-full w-full flex-col bg-paper animate-sheet-rise">
                 <div className="flex items-center justify-between border-b border-line px-5 py-2">
                   <h2 id={ids.title} className="font-display text-h3">Your stay</h2>
                   <button type="button" aria-label="Close" onClick={() => setSheetOpen(false)} className="grid size-11 place-items-center rounded-full hover:bg-ink/10">
@@ -211,7 +211,7 @@ export function StaySelector({ query, problem, onChange, openSignal }: StaySelec
                     <Button size="lg" className="flex-1" onClick={applySheet}>Apply</Button>
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </dialog>
         </div>

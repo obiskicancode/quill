@@ -1,14 +1,17 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Clock, MapPin, Navigation, Phone } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { HotelInfo } from '@/lib/booking/types'
+import { EASE_OUT } from '../motion/variants'
 import { ButtonLink } from '../ui/Button'
 
 /** The map loads only when it scrolls into view. Until then (or with no address) a static card and a plain address link show. */
 function LazyMap({ hotel }: { hotel: HotelInfo }) {
   const ref = useRef<HTMLDivElement>(null)
   const [near, setNear] = useState(false)
+  const reduced = useReducedMotion()
   useEffect(() => {
     const el = ref.current
     if (!el || !hotel.mapQuery) return
@@ -23,27 +26,32 @@ function LazyMap({ hotel }: { hotel: HotelInfo }) {
   }, [hotel.mapQuery])
 
   const query = hotel.mapQuery
+  const fade = reduced ? {} : { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: 0.3, ease: EASE_OUT } }
   return (
     <div ref={ref} className="relative aspect-[4/3] w-full overflow-hidden rounded-card bg-ink/10 md:aspect-[16/10]">
-      {near && query ? (
-        <iframe
-          title={`Map showing the location of ${hotel.name}`}
-          src={`https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          className="absolute inset-0 h-full w-full border-0"
-        />
-      ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center">
-          <MapPin className="size-10 text-ink/50" aria-hidden />
-          <p className="max-w-xs text-small text-muted">{query ? 'Loading the map as you scroll.' : 'The map appears here once the hotel address is added.'}</p>
-          {query && (
-            <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center font-semibold underline underline-offset-4">
-              Open the address in Maps<span className="sr-only"> (opens in a new tab)</span>
-            </a>
-          )}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {near && query ? (
+          <motion.div key="map" className="absolute inset-0" {...fade}>
+            <iframe
+              title={`Map showing the location of ${hotel.name}`}
+              src={`https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="h-full w-full border-0"
+            />
+          </motion.div>
+        ) : (
+          <motion.div key="placeholder" className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center" {...fade}>
+            <MapPin className="size-10 text-ink/50" aria-hidden />
+            <p className="max-w-xs text-small text-muted">{query ? 'Loading the map as you scroll.' : 'The map appears here once the hotel address is added.'}</p>
+            {query && (
+              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center font-semibold underline underline-offset-4">
+                Open the address in Maps<span className="sr-only"> (opens in a new tab)</span>
+              </a>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

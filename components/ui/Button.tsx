@@ -6,7 +6,7 @@ export type ButtonVariant = 'primary' | 'dark' | 'secondary' | 'secondaryOnDark'
 export type ButtonSize = 'sm' | 'md' | 'lg'
 
 const base =
-  'inline-flex select-none items-center justify-center gap-2 rounded-control font-semibold transition-colors duration-150 ' +
+  'inline-flex select-none items-center justify-center gap-2 rounded-control font-semibold transition-[color,background-color,border-color,transform] duration-150 motion-safe:active:scale-[0.98] ' +
   'disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50'
 
 const variants: Record<ButtonVariant, string> = {

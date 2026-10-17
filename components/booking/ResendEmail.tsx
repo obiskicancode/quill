@@ -1,10 +1,12 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Mail } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { bookingApi, BookingFailure } from '@/lib/booking/client'
 import { formatCountdown } from '@/lib/checkout/format'
 import { whatsappHref } from '@/lib/site'
+import { EASE_OUT } from '../motion/variants'
 import { Button } from '../ui/Button'
 
 type State = 'idle' | 'sending' | 'sent' | 'limited' | 'failed'
@@ -21,6 +23,7 @@ interface ResendEmailProps {
 export function ResendEmail({ reference, maskedEmail, lead, demo }: ResendEmailProps) {
   const [state, setState] = useState<State>('idle')
   const [cooldown, setCooldown] = useState(0)
+  const reduced = useReducedMotion()
 
   useEffect(() => {
     if (cooldown <= 0) return
@@ -66,7 +69,15 @@ export function ResendEmail({ reference, maskedEmail, lead, demo }: ResendEmailP
       >
         Wrong email? Contact us<span className="sr-only"> (opens in a new tab)</span>
       </a>
-      <p role="status" aria-live="polite" className={`basis-full text-small font-medium ${state === 'failed' || state === 'limited' ? 'text-danger' : ''}`}>{message}</p>
+      <p role="status" aria-live="polite" className={`basis-full text-small font-medium ${state === 'failed' || state === 'limited' ? 'text-danger' : ''}`}>
+        <AnimatePresence mode="wait" initial={false}>
+          {message && (
+            <motion.span key={state} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={reduced ? undefined : { opacity: 0 }} transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}>
+              {message}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </p>
     </div>
   )
 }

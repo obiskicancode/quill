@@ -2,6 +2,7 @@ import { unitLabels } from '@/lib/checkout/format'
 import type { GuestReservation } from '@/lib/booking/types'
 import { formatMinor } from '@/lib/stay-types'
 import { whatsappHref } from '@/lib/site'
+import { StaggerGroup, StaggerItem } from '../motion'
 import { ButtonLink } from '../ui/Button'
 
 /** Extras the guest can still add. Omitted entirely unless the hotel supports adding extras after booking. */
@@ -13,9 +14,9 @@ export function AddExtrasStrip({ v, mode = 'link' }: { v: GuestReservation; /** 
   return (
     <section id="add-extras" aria-labelledby="extras-title" className="print:hidden">
       <h2 id="extras-title" className="font-display text-h3">Add something to your stay</h2>
-      <ul className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+      <StaggerGroup as="ul" staggerChildren={0.06} className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
         {open.map((e) => (
-          <li key={e.id} className="flex h-full flex-col justify-between gap-4 rounded-card border border-line bg-surface p-5">
+          <StaggerItem key={e.id} as="li" scale className="flex h-full flex-col justify-between gap-4 rounded-card border border-line bg-surface p-5">
             <div>
               <p className="font-semibold">{e.name}</p>
               <p className="mt-1 text-small text-muted">{e.description}</p>
@@ -29,9 +30,9 @@ export function AddExtrasStrip({ v, mode = 'link' }: { v: GuestReservation; /** 
             >
               {mode === 'whatsapp' ? `Ask the hotel to add ${e.name.toLowerCase()}` : `Add ${e.name.toLowerCase()}`}
             </ButtonLink>
-          </li>
+          </StaggerItem>
         ))}
-      </ul>
+      </StaggerGroup>
     </section>
   )
 }

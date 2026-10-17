@@ -1,6 +1,8 @@
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { unitLabels } from '@/lib/checkout/format'
 import type { ExtraItem } from '@/lib/checkout/types'
 import { formatMinor } from '@/lib/stay-types'
+import { EASE_OUT } from '../motion/variants'
 import { GuestStepper } from '../GuestStepper'
 
 interface ExtrasStepProps {
@@ -17,6 +19,7 @@ interface ExtrasStepProps {
 
 /** Step 2. Shown only when the hotel has active extras, or the extra bed applies. Totals come from the server. */
 export function ExtrasStep({ catalog, quantities, onQuantity, lineTotals, extraBed, onExtraBed, guests, disabled }: ExtrasStepProps) {
+  const reduced = useReducedMotion()
   return (
     <section id="step-extras" aria-labelledby="extras-title" className="space-y-5">
       <h2 id="extras-title" className="font-display text-h3">Extras</h2>
@@ -56,9 +59,21 @@ export function ExtrasStep({ catalog, quantities, onQuantity, lineTotals, extraB
                 max={disabled ? qty : item.maxQuantity}
                 onChange={(n) => onQuantity(item.id, n)}
               />
-              {qty > 0 && lineTotals[item.id] !== undefined && (
-                <p className="-mt-2 pb-4 text-small font-semibold">Adds {formatMinor(lineTotals[item.id])} to your stay</p>
-              )}
+              <AnimatePresence initial={false}>
+                {qty > 0 && lineTotals[item.id] !== undefined && (
+                  <motion.p
+                    key="line-total"
+                    initial={reduced ? false : { opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={reduced ? undefined : { opacity: 0, height: 0 }}
+                    transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
+                    style={{ overflow: 'hidden' }}
+                    className="-mt-2 pb-4 text-small font-semibold"
+                  >
+                    Adds {formatMinor(lineTotals[item.id])} to your stay
+                  </motion.p>
+                )}
+              </AnimatePresence>
             </li>
           )
         })}

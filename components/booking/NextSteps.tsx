@@ -2,6 +2,7 @@ import { Check } from 'lucide-react'
 import type { GuestReservation, HeaderKind } from '@/lib/booking/types'
 import { formatMinor } from '@/lib/stay-types'
 import { whatsappHref } from '@/lib/site'
+import { StaggerGroup, StaggerItem } from '../motion'
 
 interface Step {
   title: string
@@ -38,9 +39,9 @@ export function NextSteps({ v, kind }: { v: GuestReservation; kind: HeaderKind }
   return (
     <section aria-labelledby="next-title" className="rounded-card border border-line bg-surface p-5 shadow-raised md:p-6">
       <h2 id="next-title" className="font-display text-h3">What happens next</h2>
-      <ol className="mt-5 space-y-4">
+      <StaggerGroup as="ol" staggerChildren={0.06} className="mt-5 space-y-4">
         {steps.map((s, i) => (
-          <li key={i} className="flex gap-4">
+          <StaggerItem key={i} as="li" className="flex gap-4">
             <span className={`grid size-8 shrink-0 place-items-center rounded-full text-small font-semibold ${s.state === 'done' ? 'bg-ink text-paper' : s.state === 'now' ? 'bg-accent text-ink' : 'border border-ink/50 text-muted'}`}>
               {s.state === 'done' ? <Check className="size-4" aria-hidden /> : i + 1}
             </span>
@@ -48,9 +49,9 @@ export function NextSteps({ v, kind }: { v: GuestReservation; kind: HeaderKind }
               {s.title}
               <span className="sr-only">{s.state === 'done' ? ' (done)' : s.state === 'now' ? ' (in progress)' : ''}</span>
             </p>
-          </li>
+          </StaggerItem>
         ))}
-      </ol>
+      </StaggerGroup>
       {kind !== 'ended' && (
         <div className="mt-6 space-y-2 border-t border-line pt-4 text-small">
           {v.policy.idRequired && <p><span className="font-semibold">ID at check-in: </span>{v.policy.idText}</p>}

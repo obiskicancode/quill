@@ -1,5 +1,6 @@
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { CtaBand } from "@/components/CtaBand";
+import { Reveal } from "@/components/motion/Reveal";
 import { AmenitiesSection } from "@/components/room-detail/AmenitiesSection";
 import { AskCard } from "@/components/room-detail/AskCard";
 import {
@@ -214,10 +215,12 @@ export default async function RoomPage({ params, searchParams }: PageProps) {
       <div className="container-page pt-8 lg:grid lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_26rem]">
         <div className="space-y-12">
           <section aria-labelledby="about-title">
-            <h2 id="about-title" className="mb-3 font-display text-h3">
-              About this room
-            </h2>
-            <ReadMore text={room.description} />
+            <Reveal>
+              <h2 id="about-title" className="mb-3 font-display text-h3">
+                About this room
+              </h2>
+              <ReadMore text={room.description} />
+            </Reveal>
           </section>
           <KeyFacts room={room} />
           <AmenitiesSection room={room} />

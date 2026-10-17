@@ -1,4 +1,5 @@
 import type { TimelineEntry } from '@/lib/manage/types'
+import { StaggerGroup, StaggerItem } from '../motion'
 
 const when = new Intl.DateTimeFormat('en-NG', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' })
 
@@ -10,16 +11,16 @@ export function ActivityTimeline({ entries }: { entries: TimelineEntry[] }) {
       {entries.length === 0 ? (
         <p className="mt-3 text-small text-muted">Nothing has happened on this booking yet.</p>
       ) : (
-        <ol className="mt-5 space-y-5 border-l-2 border-line pl-5">
+        <StaggerGroup as="ol" staggerChildren={0.06} className="mt-5 space-y-5 border-l-2 border-line pl-5">
           {entries.map((e) => (
-            <li key={e.id} className="relative">
+            <StaggerItem key={e.id} as="li" className="relative">
               <span aria-hidden className="absolute -left-[1.6rem] top-1.5 size-3 rounded-full border-2 border-ink bg-surface" />
               <p className="font-semibold">{e.label}</p>
               {e.detail && <p className="text-small text-ink/85">{e.detail}</p>}
               <p className="text-caption text-muted"><time dateTime={e.at}>{when.format(new Date(e.at))}</time></p>
-            </li>
+            </StaggerItem>
           ))}
-        </ol>
+        </StaggerGroup>
       )}
     </section>
   )

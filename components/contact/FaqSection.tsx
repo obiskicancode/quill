@@ -1,6 +1,7 @@
 import { getFaqs } from '@/lib/content/data'
 import { faqJsonLd } from '@/lib/content/jsonld'
 import type { PreviewFlags } from '@/lib/content/preview'
+import { Reveal, TextReveal } from '@/components/motion'
 import { JsonLd } from '../content/JsonLd'
 import { FaqAccordion } from './FaqAccordion'
 
@@ -13,8 +14,10 @@ export async function FaqSection({ flags }: { flags: PreviewFlags }) {
     <section aria-labelledby="faq-title" className="section-y">
       {ld && <JsonLd data={ld} />}
       <div className="container-page max-w-3xl">
-        <h2 id="faq-title" className="mb-8 font-display text-h2">Common questions</h2>
-        <FaqAccordion faqs={faqs} />
+        <TextReveal as="h2" id="faq-title" text="Common questions" className="mb-8 font-display text-h2" />
+        <Reveal delay={0.12}>
+          <FaqAccordion faqs={faqs} />
+        </Reveal>
       </div>
     </section>
   )

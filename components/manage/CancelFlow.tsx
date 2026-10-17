@@ -1,5 +1,6 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { newKey } from '@/lib/checkout/client'
@@ -7,6 +8,7 @@ import { manageApi, ManageFailure } from '@/lib/manage/client'
 import { CANCEL_REASONS, type CancellationPreview } from '@/lib/manage/types'
 import { formatMinor } from '@/lib/stay-types'
 import type { GuestReservation } from '@/lib/booking/types'
+import { EASE_OUT } from '../motion/variants'
 import { Banner } from '../checkout/CheckoutStates'
 import { VerifyForm } from '../booking/VerifyForm'
 import { Button, ButtonLink } from '../ui/Button'
@@ -71,6 +73,8 @@ export function CancelFlow({ open, onClose, v, csrf, demo, onUpdated, sessionExp
   const [result, setResult] = useState<GuestReservation | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const key = useRef(newKey())
+  const reduced = useReducedMotion()
+  const panelMotion = reduced ? {} : { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -6 }, transition: { duration: 0.2, ease: EASE_OUT } }
 
   async function loadPreview() {
     setLoadState('loading')
@@ -124,85 +128,90 @@ export function CancelFlow({ open, onClose, v, csrf, demo, onUpdated, sessionExp
   }
 
   const c = result?.cancellation
+  const panelKey = sessionExpired ? 'expired' : step === 'done' && result ? 'done' : loadState === 'loading' ? 'loading' : loadState === 'error' || !preview ? 'error' : step
   return (
     <FlowDialog open={open} onClose={onClose} title={step === 'done' ? 'Booking cancelled' : 'Cancel booking'} dismissible={!busy}>
-      {sessionExpired ? (
-        <VerifyForm embedded scope="manage" variant="verify" reference={v.reference} notice="Your session ended. Verify again to continue. Nothing you entered here is lost." onVerified={onReverified} />
-      ) : step === 'done' && result ? (
-        <div className="space-y-5">
-          <div role="status" className="flex items-start gap-4">
-            <CheckCircle2 className="size-8 shrink-0 text-accent-ink" aria-hidden />
-            <div>
-              <p className="font-display text-h3">Your booking is cancelled</p>
-              <p className="mt-2 text-ink/85">
-                {c?.refundStatus === 'initiated' && `We've started a refund of ${formatMinor(c.refundMinor)} to your original payment method. Expect it within ${c.timeline}.`}
-                {c?.refundStatus === 'pending_manual' && `The hotel will refund ${formatMinor(c.refundMinor)} to your bank by transfer. Expect it within ${c.timeline}. They may contact you for your account details.`}
-                {c?.refundStatus === 'none' && 'No refund is due under the cancellation policy.'}
-              </p>
-              <p className="mt-2 text-small text-muted">We emailed a confirmation to {result.guest.email}.</p>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div key={panelKey} {...panelMotion}>
+          {sessionExpired ? (
+            <VerifyForm embedded scope="manage" variant="verify" reference={v.reference} notice="Your session ended. Verify again to continue. Nothing you entered here is lost." onVerified={onReverified} />
+          ) : step === 'done' && result ? (
+            <div className="space-y-5">
+              <div role="status" className="flex items-start gap-4">
+                <CheckCircle2 className="size-8 shrink-0 text-accent-ink" aria-hidden />
+                <div>
+                  <p className="font-display text-h3">Your booking is cancelled</p>
+                  <p className="mt-2 text-ink/85">
+                    {c?.refundStatus === 'initiated' && `We've started a refund of ${formatMinor(c.refundMinor)} to your original payment method. Expect it within ${c.timeline}.`}
+                    {c?.refundStatus === 'pending_manual' && `The hotel will refund ${formatMinor(c.refundMinor)} to your bank by transfer. Expect it within ${c.timeline}. They may contact you for your account details.`}
+                    {c?.refundStatus === 'none' && 'No refund is due under the cancellation policy.'}
+                  </p>
+                  <p className="mt-2 text-small text-muted">We emailed a confirmation to {result.guest.email}.</p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <ButtonLink href={v.stay.checkIn && v.stay.checkOut ? `/checkout?${new URLSearchParams({ room: v.room.slug, checkIn: v.stay.checkIn, checkOut: v.stay.checkOut, adults: String(v.stay.adults), children: String(v.stay.children) }).toString()}` : `/rooms/${v.room.slug}`} size="lg">Book again</ButtonLink>
+                <Button variant="secondary" size="lg" onClick={onClose}>Done</Button>
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <ButtonLink href={v.stay.checkIn && v.stay.checkOut ? `/checkout?${new URLSearchParams({ room: v.room.slug, checkIn: v.stay.checkIn, checkOut: v.stay.checkOut, adults: String(v.stay.adults), children: String(v.stay.children) }).toString()}` : `/rooms/${v.room.slug}`} size="lg">Book again</ButtonLink>
-            <Button variant="secondary" size="lg" onClick={onClose}>Done</Button>
-          </div>
-        </div>
-      ) : loadState === 'loading' ? (
-        <div aria-busy="true" role="status" className="space-y-3">
-          <p className="sr-only">Working out your refund</p>
-          <div aria-hidden className="space-y-3">{[0, 1, 2, 3].map((i) => <div key={i} className="h-10 rounded bg-ink/10 motion-safe:animate-pulse" />)}</div>
-        </div>
-      ) : loadState === 'error' || !preview ? (
-        <Banner role="alert" tone="danger" title="We couldn't work out your refund" actions={<Button variant="secondary" size="sm" onClick={() => void loadPreview()}>Try again</Button>}>
-          <p>Nothing has been changed. Try again, or contact the hotel.</p>
-        </Banner>
-      ) : step === 'review' ? (
-        <div className="space-y-5">
-          {notice && <Banner role="alert" tone="warn" title="Please review the new amount"><p>{notice}</p></Banner>}
-          <p className="text-ink/85">Here is exactly what happens if you cancel. Nothing is changed until you confirm.</p>
-          <RefundSummary p={preview} />
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" variant="secondary" onClick={onClose}>Keep my booking</Button>
-            <Button size="lg" variant="dark" onClick={() => { setNotice(null); setStep('confirm') }}>Continue to cancel</Button>
-          </div>
-        </div>
-      ) : (
-        <form noValidate onSubmit={(e) => { e.preventDefault(); void submit() }} className="space-y-5">
-          <p className="rounded-control bg-paper p-4 text-small">
-            You will get back <span className="font-semibold">{formatMinor(preview.refundMinor)}</span>. The hotel keeps <span className="font-semibold">{formatMinor(preview.retainedMinor)}</span>.
-          </p>
-          <div>
-            <label htmlFor="cancel-reason" className="mb-1.5 block text-small font-semibold">Reason <span className="font-normal text-muted">(optional)</span></label>
-            <select id="cancel-reason" value={reason} onChange={(e) => setReason(e.target.value)} className="min-h-12 w-full rounded-control border border-ink/60 bg-surface px-4">
-              <option value="">Choose a reason</option>
-              {CANCEL_REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="cancel-note" className="mb-1.5 block text-small font-semibold">Anything you would like to add <span className="font-normal text-muted">(optional)</span></label>
-            <textarea id="cancel-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} rows={3} aria-describedby="cancel-note-count" className="w-full rounded-control border border-ink/60 bg-surface px-4 py-3" />
-            <p id="cancel-note-count" className="mt-1 text-caption text-muted">{note.length} / 300 characters</p>
-          </div>
-          <div>
-            <label className="flex cursor-pointer items-start gap-3 py-1">
-              <input id="cancel-ack" type="checkbox" checked={ack} onChange={(e) => { setAck(e.target.checked); if (e.target.checked) setAckError(false) }} aria-invalid={ackError || undefined} aria-describedby={ackError ? 'cancel-ack-error' : undefined} className="mt-0.5 size-6 shrink-0 accent-ink" />
-              <span className="text-small">I understand this cannot be undone.</span>
-            </label>
-            {ackError && <p id="cancel-ack-error" className="mt-1.5 text-small font-medium text-danger">Please confirm that you understand this cannot be undone.</p>}
-          </div>
-
-          {error && (
-            <Banner role="alert" tone="danger" title="The booking was not cancelled yet" actions={error.retryable ? <Button variant="secondary" size="sm" loading={busy} onClick={() => void submit()}>Try again</Button> : undefined}>
-              <p>{error.message}</p>
+          ) : loadState === 'loading' ? (
+            <div aria-busy="true" role="status" className="space-y-3">
+              <p className="sr-only">Working out your refund</p>
+              <div aria-hidden className="space-y-3">{[0, 1, 2, 3].map((i) => <div key={i} className="h-10 rounded bg-ink/10 motion-safe:animate-pulse" />)}</div>
+            </div>
+          ) : loadState === 'error' || !preview ? (
+            <Banner role="alert" tone="danger" title="We couldn't work out your refund" actions={<Button variant="secondary" size="sm" onClick={() => void loadPreview()}>Try again</Button>}>
+              <p>Nothing has been changed. Try again, or contact the hotel.</p>
             </Banner>
-          )}
+          ) : step === 'review' ? (
+            <div className="space-y-5">
+              {notice && <Banner role="alert" tone="warn" title="Please review the new amount"><p>{notice}</p></Banner>}
+              <p className="text-ink/85">Here is exactly what happens if you cancel. Nothing is changed until you confirm.</p>
+              <RefundSummary p={preview} />
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button size="lg" variant="secondary" onClick={onClose}>Keep my booking</Button>
+                <Button size="lg" variant="dark" onClick={() => { setNotice(null); setStep('confirm') }}>Continue to cancel</Button>
+              </div>
+            </div>
+          ) : (
+            <form noValidate onSubmit={(e) => { e.preventDefault(); void submit() }} className="space-y-5">
+              <p className="rounded-control bg-paper p-4 text-small">
+                You will get back <span className="font-semibold">{formatMinor(preview.refundMinor)}</span>. The hotel keeps <span className="font-semibold">{formatMinor(preview.retainedMinor)}</span>.
+              </p>
+              <div>
+                <label htmlFor="cancel-reason" className="mb-1.5 block text-small font-semibold">Reason <span className="font-normal text-muted">(optional)</span></label>
+                <select id="cancel-reason" value={reason} onChange={(e) => setReason(e.target.value)} className="min-h-12 w-full rounded-control border border-ink/60 bg-surface px-4">
+                  <option value="">Choose a reason</option>
+                  {CANCEL_REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="cancel-note" className="mb-1.5 block text-small font-semibold">Anything you would like to add <span className="font-normal text-muted">(optional)</span></label>
+                <textarea id="cancel-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} rows={3} aria-describedby="cancel-note-count" className="w-full rounded-control border border-ink/60 bg-surface px-4 py-3" />
+                <p id="cancel-note-count" className="mt-1 text-caption text-muted">{note.length} / 300 characters</p>
+              </div>
+              <div>
+                <label className="flex cursor-pointer items-start gap-3 py-1">
+                  <input id="cancel-ack" type="checkbox" checked={ack} onChange={(e) => { setAck(e.target.checked); if (e.target.checked) setAckError(false) }} aria-invalid={ackError || undefined} aria-describedby={ackError ? 'cancel-ack-error' : undefined} className="mt-0.5 size-6 shrink-0 accent-ink" />
+                  <span className="text-small">I understand this cannot be undone.</span>
+                </label>
+                {ackError && <p id="cancel-ack-error" className="mt-1.5 text-small font-medium text-danger">Please confirm that you understand this cannot be undone.</p>}
+              </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button variant="secondary" size="lg" disabled={busy} onClick={() => setStep('review')}>Back</Button>
-            <Button type="submit" variant="danger" size="lg" loading={busy} icon={busy ? <Loader2 className="hidden" aria-hidden /> : undefined}>Cancel booking</Button>
-          </div>
-        </form>
-      )}
+              {error && (
+                <Banner role="alert" tone="danger" title="The booking was not cancelled yet" actions={error.retryable ? <Button variant="secondary" size="sm" loading={busy} onClick={() => void submit()}>Try again</Button> : undefined}>
+                  <p>{error.message}</p>
+                </Banner>
+              )}
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button variant="secondary" size="lg" disabled={busy} onClick={() => setStep('review')}>Back</Button>
+                <Button type="submit" variant="danger" size="lg" loading={busy} icon={busy ? <Loader2 className="hidden" aria-hidden /> : undefined}>Cancel booking</Button>
+              </div>
+            </form>
+          )}
+        </motion.div>
+      </AnimatePresence>
     </FlowDialog>
   )
 }

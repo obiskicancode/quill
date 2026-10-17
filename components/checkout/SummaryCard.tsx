@@ -1,7 +1,9 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { BadgeCheck, ChevronDown, Clock, Lock, MessageCircle, ShieldCheck, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { EASE_OUT } from '../motion/variants'
 import { formatDeadline, formatCountdown } from '@/lib/checkout/format'
 import type { CheckoutQuoteResponse, ConfirmationMode } from '@/lib/checkout/types'
 import { formatRange } from '@/lib/room-query'
@@ -149,13 +151,23 @@ export function SummaryCard({ room, stay, quote, hotelTimes, hold, holdSeconds, 
 /** Mobile: a collapsed "₦X total, View details" row that opens the full summary in a bottom sheet. */
 export function MobileSummary(props: SummaryProps) {
   const [open, setOpen] = useState(false)
+  const [visible, setVisible] = useState(false)
   const ref = useRef<HTMLDialogElement>(null)
+  const reduced = useReducedMotion()
 
   useEffect(() => {
     const dialog = ref.current
     if (!dialog) return
-    if (open && !dialog.open) dialog.showModal()
-    if (!open && dialog.open) dialog.close()
+    if (open) {
+      if (!dialog.open) dialog.showModal()
+      setVisible(true)
+      return
+    }
+    setVisible(false)
+    if (reduced && dialog.open) dialog.close()
+  }, [open, reduced])
+
+  useEffect(() => {
     document.body.style.overflow = open ? 'hidden' : ''
     return () => {
       document.body.style.overflow = ''
@@ -189,19 +201,33 @@ export function MobileSummary(props: SummaryProps) {
         onClose={() => setOpen(false)}
         className="inset-x-0 bottom-0 top-auto m-0 max-h-[92dvh] w-full max-w-none rounded-t-card bg-paper p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col"
       >
-        {open && (
-          <>
-            <div className="flex items-center justify-between border-b border-line px-5 py-2">
-              <h2 id="mobile-summary-title" className="font-display text-h3">Your booking</h2>
-              <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="grid size-11 place-items-center rounded-full hover:bg-ink/10">
-                <X className="size-6" aria-hidden />
-              </button>
-            </div>
-            <div className="overflow-y-auto p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-              <SummaryCard {...props} />
-            </div>
-          </>
-        )}
+        <AnimatePresence
+          onExitComplete={() => {
+            const dialog = ref.current
+            if (dialog?.open) dialog.close()
+          }}
+        >
+          {visible && (
+            <motion.div
+              key="mobile-summary"
+              initial={reduced ? false : { opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={reduced ? undefined : { opacity: 0, y: 16 }}
+              transition={{ duration: reduced ? 0 : 0.26, ease: EASE_OUT }}
+              className="flex min-h-0 flex-1 flex-col"
+            >
+              <div className="flex items-center justify-between border-b border-line px-5 py-2">
+                <h2 id="mobile-summary-title" className="font-display text-h3">Your booking</h2>
+                <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="grid size-11 place-items-center rounded-full hover:bg-ink/10">
+                  <X className="size-6" aria-hidden />
+                </button>
+              </div>
+              <div className="overflow-y-auto p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+                <SummaryCard {...props} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </dialog>
     </div>
   )

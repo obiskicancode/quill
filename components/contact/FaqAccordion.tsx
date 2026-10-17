@@ -1,8 +1,10 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
 import type { Faq } from '@/lib/content/types'
+import { EASE_OUT } from '../motion/variants'
 
 /**
  * WAI-ARIA accordion: each question is a button in a heading with aria-expanded and aria-controls.
@@ -12,6 +14,7 @@ export function FaqAccordion({ faqs, mode = 'single' }: { faqs: Faq[]; mode?: 's
   const base = useId()
   const [open, setOpen] = useState<Set<string>>(new Set())
   const buttons = useRef<(HTMLButtonElement | null)[]>([])
+  const reduced = useReducedMotion()
 
   const toggle = (id: string) =>
     setOpen((cur) => {
@@ -50,9 +53,23 @@ export function FaqAccordion({ faqs, mode = 'single' }: { faqs: Faq[]; mode?: 's
                 <ChevronDown className={`size-5 shrink-0 transition-transform motion-reduce:transition-none ${expanded ? 'rotate-180' : ''}`} aria-hidden />
               </button>
             </h3>
-            <div id={`${base}-a-${f.id}`} role="region" aria-labelledby={`${base}-q-${f.id}`} hidden={!expanded}>
-              <p className="pb-5 pr-9 text-ink/85">{f.answer}</p>
-            </div>
+            <AnimatePresence initial={false}>
+              {expanded && (
+                <motion.div
+                  key="panel"
+                  id={`${base}-a-${f.id}`}
+                  role="region"
+                  aria-labelledby={`${base}-q-${f.id}`}
+                  initial={reduced ? false : { height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={reduced ? undefined : { height: 0, opacity: 0 }}
+                  transition={{ duration: reduced ? 0 : 0.3, ease: EASE_OUT }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <p className="pb-5 pr-9 text-ink/85">{f.answer}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )
       })}

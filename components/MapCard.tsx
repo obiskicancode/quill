@@ -3,6 +3,8 @@
 import { Clock, MapPin, Navigation, Phone } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { directionsHref, mapEmbedSrc, site, telHref } from '@/lib/site'
+import { Reveal } from './motion/Reveal'
+import { scaleIn } from './motion/variants'
 import { Button, ButtonLink } from './ui/Button'
 import { Photo } from './ui/Photo'
 
@@ -63,7 +65,7 @@ export function MapCard({ data, heading = 'Find us', loadOnView = false }: MapCa
   return (
     <section aria-labelledby="location-heading" className="section-y">
       <div className="container-page grid gap-8 lg:grid-cols-12 lg:gap-12">
-        <div className="lg:col-span-5">
+        <Reveal className="lg:col-span-5">
           <h2 id="location-heading" className="font-display text-h2">{heading}</h2>
           <address className="mt-6 flex gap-3 not-italic">
             <MapPin className="mt-1 size-5 shrink-0 text-accent-ink" aria-hidden />
@@ -94,9 +96,9 @@ export function MapCard({ data, heading = 'Find us', loadOnView = false }: MapCa
               {d.phoneDisplay ? `Call ${d.phoneDisplay}` : 'Call reception'}
             </ButtonLink>
           </div>
-        </div>
+        </Reveal>
 
-        <div className="lg:col-span-7">
+        <Reveal className="lg:col-span-7" variants={scaleIn} delay={0.12}>
           <div ref={frame} className="relative aspect-[4/3] w-full overflow-hidden rounded-card bg-ink/10 md:aspect-[16/10]">
             {loaded && d.embedSrc ? (
               <iframe
@@ -125,7 +127,7 @@ export function MapCard({ data, heading = 'Find us', loadOnView = false }: MapCa
               </>
             )}
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   )

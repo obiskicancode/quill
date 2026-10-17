@@ -1,6 +1,9 @@
 import { whatsappHref } from "@/lib/site";
 import type { Room } from "@/lib/types";
 import { RoomCard } from "../RoomCard";
+import { StaggerGroup } from "../motion/StaggerGroup";
+import { StaggerItem } from "../motion/StaggerItem";
+import { Tilt } from "../motion/Tilt";
 import { SectionHeading } from "../ui/SectionHeading";
 import { TextLink } from "../ui/TextLink";
 
@@ -19,13 +22,18 @@ export function FeaturedRooms({ rooms }: { rooms: Room[] }) {
           action={<TextLink href="/rooms">See all rooms</TextLink>}
         />
         {visible.length > 0 ? (
-          <div
+          <StaggerGroup
             className={`grid gap-6 md:grid-cols-2 lg:grid-cols-3 ${columns}`}
+            staggerChildren={0.1}
           >
             {visible.map((room) => (
-              <RoomCard key={room.id} room={room} />
+              <StaggerItem key={room.id} scale className="h-full">
+                <Tilt className="h-full">
+                  <RoomCard room={room} />
+                </Tilt>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
         ) : (
           <div className="rounded-card border border-dashed border-ink/30 p-10 text-center">
             <p className="font-display text-h3">Our rooms are being updated.</p>

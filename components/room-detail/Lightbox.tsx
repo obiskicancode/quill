@@ -77,7 +77,7 @@ export function Lightbox({ roomName, images, open, startIndex, onClose, returnFo
       className="on-dark m-0 h-dvh max-h-none w-screen max-w-none bg-ink p-0 text-white backdrop:bg-ink open:flex open:flex-col"
     >
       {open && (
-        <>
+        <div className="flex h-full flex-col animate-overlay-zoom">
           <div className="flex items-center justify-between px-4 py-2 md:px-6">
             <h2 id="lightbox-title" className="sr-only">{roomName} photos</h2>
             <p aria-live="polite" className="text-small tabular-nums">{counter === 'of' ? `${index + 1} of ${count}` : `${index + 1} / ${count}`}</p>
@@ -115,7 +115,7 @@ export function Lightbox({ roomName, images, open, startIndex, onClose, returnFo
               </>
             )}
           </div>
-        </>
+        </div>
       )}
     </dialog>
   )

@@ -1,9 +1,13 @@
 'use client'
 
+import { motion, useReducedMotion } from 'framer-motion'
 import { Images } from 'lucide-react'
 import { useRef, useState } from 'react'
 import type { GalleryImage } from '@/lib/room-detail'
 import { Carousel } from '../Carousel'
+import { HoverZoom } from '../motion/HoverZoom'
+import { Magnetic } from '../motion/Magnetic'
+import { EASE_OUT } from '../motion/variants'
 import { LazyPhoto } from '../rooms/LazyPhoto'
 import { Photo } from '../ui/Photo'
 import { Lightbox } from './Lightbox'
@@ -25,6 +29,7 @@ export function RoomGallery({ roomName, images }: { roomName: string; images: Ga
   const [open, setOpen] = useState(false)
   const [start, setStart] = useState(0)
   const trigger = useRef<HTMLElement | null>(null)
+  const reduced = useReducedMotion()
   const count = images.length
   if (count === 0) return null
 
@@ -52,19 +57,27 @@ export function RoomGallery({ roomName, images }: { roomName: string; images: Ga
       <div className="relative hidden md:block">
         <div className={`grid gap-2 overflow-hidden rounded-card ${layout.grid}`}>
           {tiles.map((img, i) => (
-            <div key={img.src} className={layout.spans[i]}>
+            <motion.div
+              key={img.src}
+              className={layout.spans[i]}
+              initial={reduced || i === 0 ? false : { opacity: 0, scale: 0.97 }}
+              animate={reduced ? undefined : { opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, ease: EASE_OUT, delay: i * 0.07 }}
+            >
               <button
                 type="button"
                 aria-label={`Open photo ${i + 1} of ${count}: ${img.caption}`}
                 onClick={(e) => openAt(i, e.currentTarget)}
-                className="block h-full w-full transition-[filter] hover:brightness-90"
+                className="group/media block h-full w-full"
               >
-                <Photo src={img.src} alt={img.alt} sizes={i === 0 ? HERO_SIZES : SMALL_SIZES} priority={i === 0} className="h-full w-full" />
+                <HoverZoom className="h-full w-full">
+                  <Photo src={img.src} alt={img.alt} sizes={i === 0 ? HERO_SIZES : SMALL_SIZES} priority={i === 0} className="h-full w-full" />
+                </HoverZoom>
               </button>
-            </div>
+            </motion.div>
           ))}
         </div>
-        {count > 1 && <div className="absolute bottom-4 right-4">{viewAll}</div>}
+        {count > 1 && <div className="absolute bottom-4 right-4"><Magnetic>{viewAll}</Magnetic></div>}
       </div>
 
       {/* Mobile: swipeable carousel */}

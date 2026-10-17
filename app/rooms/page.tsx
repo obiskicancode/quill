@@ -4,6 +4,8 @@ import { Breadcrumb } from '@/components/Breadcrumb'
 import { CtaBand } from '@/components/CtaBand'
 import { GroupEventStrip } from '@/components/GroupEventStrip'
 import { HelpBlock } from '@/components/HelpBlock'
+import { Reveal } from '@/components/motion/Reveal'
+import { TextReveal } from '@/components/motion/TextReveal'
 import { PolicyHighlights } from '@/components/PolicyHighlights'
 import { RoomsExplorer } from '@/components/rooms/RoomsExplorer'
 import { SkeletonCard } from '@/components/rooms/SkeletonCard'
@@ -30,22 +32,37 @@ export default function RoomsPage() {
   return (
     <>
       <section aria-labelledby="rooms-title" className="container-page pb-8 pt-4 md:pb-10 md:pt-6">
-        <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Rooms' }]} />
-        <h1 id="rooms-title" className="mt-3 font-display text-h2 md:text-display">
-          Rooms &amp; Accommodation
-        </h1>
-        <p className="mt-4 max-w-2xl text-body-lg text-ink/85">
-          Compare our rooms and apartments side by side. Add your dates to see the total for your stay, with taxes and fees shown up front.
-        </p>
+        <Reveal>
+          <Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Rooms' }]} />
+        </Reveal>
+        <TextReveal
+          id="rooms-title"
+          as="h1"
+          text="Rooms & Accommodation"
+          onScroll={false}
+          staggerChildren={0.05}
+          className="mt-3 font-display text-h2 md:text-display"
+        />
+        <Reveal delay={0.15}>
+          <p className="mt-4 max-w-2xl text-body-lg text-ink/85">
+            Compare our rooms and apartments side by side. Add your dates to see the total for your stay, with taxes and fees shown up front.
+          </p>
+        </Reveal>
       </section>
 
       <Suspense fallback={<ExplorerFallback />}>
         <RoomsExplorer rooms={roomTypes} />
       </Suspense>
 
-      <HelpBlock />
-      <GroupEventStrip />
-      <PolicyHighlights />
+      <Reveal>
+        <HelpBlock />
+      </Reveal>
+      <Reveal>
+        <GroupEventStrip />
+      </Reveal>
+      <Reveal>
+        <PolicyHighlights />
+      </Reveal>
       <CtaBand />
     </>
   )

@@ -3,8 +3,10 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Menu, MessageCircle, Phone, X } from 'lucide-react'
 import { site, telHref, whatsappHref } from '@/lib/site'
+import { EASE_OUT } from './motion/variants'
 import { Logo } from './Logo'
 import { ButtonLink } from './ui/Button'
 
@@ -14,6 +16,7 @@ export function Header() {
   const overHero = pathname === '/'
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
+  const reduced = useReducedMotion()
   const toggleRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -92,31 +95,40 @@ export function Header() {
           </div>
         </div>
 
-        {open && (
-          <div id="mobile-nav" className="border-t border-line bg-paper text-ink lg:hidden">
-            <nav aria-label="Mobile" className="container-page py-2">
-              <ul>
-                {site.nav.map((item) => (
-                  <li key={item.href} className="border-b border-line last:border-0">
-                    <Link
-                      href={item.href}
-                      aria-current={pathname === item.href ? 'page' : undefined}
-                      onClick={() => setOpen(false)}
-                      className="flex min-h-12 items-center text-body-lg font-medium aria-[current=page]:text-accent-ink"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-            <div className="container-page pb-5">
-              <ButtonLink href={whatsappHref()} external variant="secondary" icon={<MessageCircle className="size-5" aria-hidden />} className="w-full">
-                Chat on WhatsApp
-              </ButtonLink>
-            </div>
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div
+              id="mobile-nav"
+              initial={reduced ? false : { opacity: 0, height: 0 }}
+              animate={reduced ? undefined : { opacity: 1, height: 'auto' }}
+              exit={reduced ? undefined : { opacity: 0, height: 0 }}
+              transition={{ duration: reduced ? 0 : 0.28, ease: EASE_OUT }}
+              className="overflow-hidden border-t border-line bg-paper text-ink lg:hidden"
+            >
+              <nav aria-label="Mobile" className="container-page py-2">
+                <ul>
+                  {site.nav.map((item) => (
+                    <li key={item.href} className="border-b border-line last:border-0">
+                      <Link
+                        href={item.href}
+                        aria-current={pathname === item.href ? 'page' : undefined}
+                        onClick={() => setOpen(false)}
+                        className="flex min-h-12 items-center text-body-lg font-medium aria-[current=page]:text-accent-ink"
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+              <div className="container-page pb-5">
+                <ButtonLink href={whatsappHref()} external variant="secondary" icon={<MessageCircle className="size-5" aria-hidden />} className="w-full">
+                  Chat on WhatsApp
+                </ButtonLink>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
     </>
   )

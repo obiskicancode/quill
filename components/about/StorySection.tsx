@@ -1,6 +1,7 @@
 import { getAboutPage } from '@/lib/content/data'
 import type { PreviewFlags } from '@/lib/content/preview'
 import type { RichBlock } from '@/lib/content/types'
+import { HoverZoom, Reveal } from '@/components/motion'
 import { Photo } from '../ui/Photo'
 import { RichText } from '../content/RichText'
 
@@ -24,12 +25,14 @@ export async function StorySection({ flags }: { flags: PreviewFlags }) {
         {chunks.map((chunk, i) => {
           const image = images[i]
           return (
-            <div key={i} className={`grid items-center gap-8 md:gap-12 ${image ? 'md:grid-cols-2' : 'max-w-3xl'}`}>
+            <Reveal key={i} delay={i * 0.08} className={`group/media grid items-center gap-8 md:gap-12 ${image ? 'md:grid-cols-2' : 'max-w-3xl'}`}>
               <div className={i % 2 === 1 ? 'md:order-2' : ''}><RichText blocks={chunk} /></div>
               {image && (
-                <Photo src={image.src} alt={image.alt} sizes="(min-width: 768px) 45vw, 100vw" className={`aspect-[4/3] w-full rounded-card ${i % 2 === 1 ? 'md:order-1' : ''}`} />
+                <HoverZoom className={`aspect-[4/3] w-full rounded-card ${i % 2 === 1 ? 'md:order-1' : ''}`}>
+                  <Photo src={image.src} alt={image.alt} sizes="(min-width: 768px) 45vw, 100vw" className="h-full w-full" />
+                </HoverZoom>
               )}
-            </div>
+            </Reveal>
           )
         })}
       </div>

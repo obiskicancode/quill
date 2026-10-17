@@ -2,17 +2,18 @@ import { Clock, Mail, MessageCircle, Phone } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { getContactInfo } from '@/lib/content/data'
 import type { PreviewFlags } from '@/lib/content/preview'
+import { StaggerGroup, StaggerItem } from '@/components/motion'
 import { CopyButton } from '../checkout/PaymentStep'
 
 function Card({ icon, title, children, copy }: { icon: ReactNode; title: string; children: ReactNode; copy?: { value: string; label: string } }) {
   return (
-    <li className="flex flex-col justify-between gap-4 rounded-card border border-line bg-surface p-5 shadow-raised">
+    <StaggerItem as="li" scale className="flex flex-col justify-between gap-4 rounded-card border border-line bg-surface p-5 shadow-raised">
       <div>
         <p className="flex items-center gap-2 text-small font-semibold text-muted"><span className="text-accent-ink">{icon}</span>{title}</p>
         <div className="mt-2 break-words font-semibold">{children}</div>
       </div>
       {copy && <div><CopyButton value={copy.value} label={copy.label} /></div>}
-    </li>
+    </StaggerItem>
   )
 }
 
@@ -59,7 +60,7 @@ export async function ContactCards({ flags }: { flags: PreviewFlags }) {
     <section aria-labelledby="cards-title" className="section-y pb-0">
       <div className="container-page">
         <h2 id="cards-title" className="sr-only">Ways to reach us</h2>
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{cards}</ul>
+        <StaggerGroup as="ul" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{cards}</StaggerGroup>
       </div>
     </section>
   )

@@ -1,9 +1,12 @@
 'use client'
 
+import { motion, useReducedMotion } from 'framer-motion'
 import { CalendarClock, Gift, PencilLine, XCircle } from 'lucide-react'
 import type { GuestReservation } from '@/lib/booking/types'
 import { whatsappHref, telHref } from '@/lib/site'
 import { formatRange } from '@/lib/room-query'
+import { AnimatedList } from '../motion'
+import { EASE_OUT } from '../motion/variants'
 import { Button, ButtonLink } from '../ui/Button'
 
 interface ActionsPanelProps {
@@ -19,6 +22,8 @@ interface ActionsPanelProps {
  */
 export function ActionsPanel({ v, onCancel, onChangeDates, onEdit }: ActionsPanelProps) {
   const m = v.manage
+  const reduced = useReducedMotion()
+  const li = reduced ? {} : { layout: true, initial: { opacity: 0, scale: 0.96 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 0.96 }, transition: { duration: 0.2, ease: EASE_OUT } }
   if (!m) return null
   const { canCancel, canChangeDates, canEditDetails, canAddExtras } = m.allowed
   const finished = !canCancel.allowed && !canChangeDates.allowed && !canEditDetails.allowed
@@ -36,20 +41,20 @@ export function ActionsPanel({ v, onCancel, onChangeDates, onEdit }: ActionsPane
     <section aria-labelledby="actions-title" className="rounded-card border border-line bg-surface p-5 shadow-raised md:p-6 print:hidden">
       <h2 id="actions-title" className="font-display text-h3">{finished ? 'About this booking' : 'What would you like to do?'}</h2>
 
-      <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+      <AnimatedList className="mt-5 grid gap-3 sm:grid-cols-2">
         {canChangeDates.allowed && (
-          <li><Button variant="secondary" className="w-full" icon={<CalendarClock className="size-5" aria-hidden />} onClick={(e) => onChangeDates(e.currentTarget)}>Change dates</Button></li>
+          <motion.li key="dates" {...li}><Button variant="secondary" className="w-full" icon={<CalendarClock className="size-5" aria-hidden />} onClick={(e) => onChangeDates(e.currentTarget)}>Change dates</Button></motion.li>
         )}
         {canEditDetails.allowed && (
-          <li><Button variant="secondary" className="w-full" icon={<PencilLine className="size-5" aria-hidden />} onClick={(e) => onEdit(e.currentTarget)}>Edit details</Button></li>
+          <motion.li key="edit" {...li}><Button variant="secondary" className="w-full" icon={<PencilLine className="size-5" aria-hidden />} onClick={(e) => onEdit(e.currentTarget)}>Edit details</Button></motion.li>
         )}
         {canAddExtras.allowed && (
-          <li><ButtonLink href="#add-extras" variant="secondary" className="w-full" icon={<Gift className="size-5" aria-hidden />}>Add extras</ButtonLink></li>
+          <motion.li key="extras" {...li}><ButtonLink href="#add-extras" variant="secondary" className="w-full" icon={<Gift className="size-5" aria-hidden />}>Add extras</ButtonLink></motion.li>
         )}
         {canCancel.allowed && (
-          <li><Button variant="secondary" className="w-full" icon={<XCircle className="size-5" aria-hidden />} onClick={(e) => onCancel(e.currentTarget)}>Cancel booking</Button></li>
+          <motion.li key="cancel" {...li}><Button variant="secondary" className="w-full" icon={<XCircle className="size-5" aria-hidden />} onClick={(e) => onCancel(e.currentTarget)}>Cancel booking</Button></motion.li>
         )}
-      </ul>
+      </AnimatedList>
 
       {!canChangeDates.allowed && !finished && (
         <div className="mt-5 rounded-control bg-paper p-4 text-small">

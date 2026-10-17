@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { Component, useState, type ReactNode } from 'react'
+import { Reveal } from '../motion'
 import { Banner } from '../checkout/CheckoutStates'
 import { Button } from '../ui/Button'
 
@@ -20,9 +21,11 @@ class Boundary extends Component<BoundaryProps, { failed: boolean }> {
     if (!this.state.failed) return this.props.children
     return (
       <section className="container-page py-8">
-        <Banner role="alert" tone="danger" title={`We couldn't load ${this.props.label}`} actions={<Button variant="secondary" size="sm" onClick={this.props.onRetry}>Try again</Button>}>
-          <p>The rest of the page still works. Trying again only reloads this part.</p>
-        </Banner>
+        <Reveal>
+          <Banner role="alert" tone="danger" title={`We couldn't load ${this.props.label}`} actions={<Button variant="secondary" size="sm" onClick={this.props.onRetry}>Try again</Button>}>
+            <p>The rest of the page still works. Trying again only reloads this part.</p>
+          </Banner>
+        </Reveal>
       </section>
     )
   }

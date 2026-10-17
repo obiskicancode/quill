@@ -1,5 +1,6 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { CreditCard, Landmark, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { newKey } from '@/lib/checkout/client'
@@ -10,6 +11,7 @@ import type { PendingChangeView } from '@/lib/manage/types'
 import { formatRange } from '@/lib/room-query'
 import { formatMinor } from '@/lib/stay-types'
 import type { PaymentMethod } from '@/lib/checkout/types'
+import { EASE_OUT } from '../motion/variants'
 import { Banner } from '../checkout/CheckoutStates'
 import { Field } from '../checkout/Field'
 import { CopyButton } from '../checkout/PaymentStep'
@@ -38,6 +40,8 @@ export function ChangePayment({ reference, change, csrf, demo, onRefresh, onSess
   const [fileError, setFileError] = useState<string | null>(null)
   const key = useRef(newKey())
   const hold = useHoldCountdown(Date.parse(change.holdExpiresAt), 0)
+  const reduced = useReducedMotion()
+  const panelMotion = reduced ? {} : { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -6 }, transition: { duration: 0.2, ease: EASE_OUT } }
 
   function fail(e: unknown) {
     const f = e instanceof ManageFailure ? e : null
@@ -88,6 +92,7 @@ export function ChangePayment({ reference, change, csrf, demo, onRefresh, onSess
   const holdLine = hold.expired
     ? 'The hold on your new dates has ended. Your current dates are unchanged.'
     : `We're holding your new dates (${formatRange(change.checkIn, change.checkOut)}): ${formatCountdown(hold.remainingMs ?? 0)}. Your current dates stay valid until the payment is complete.`
+  const statusKey = change.status === 'awaiting_verification' ? 'verification' : change.status === 'awaiting_payment' && !choosing ? 'confirming' : change.status === 'awaiting_transfer' && change.bank ? 'transfer' : 'choose'
 
   return (
     <section aria-labelledby="change-pay-title" className="space-y-4">
@@ -97,6 +102,8 @@ export function ChangePayment({ reference, change, csrf, demo, onRefresh, onSess
       {change.status === 'payment_failed' && <Banner role="alert" tone="danger" title="The payment didn't go through"><p>Your current dates are unchanged. You can try again while the hold lasts.</p></Banner>}
       {error && <Banner role="alert" tone="danger" title="That did not go through"><p>{error}</p></Banner>}
 
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div key={statusKey} {...panelMotion}>
       {change.status === 'awaiting_verification' ? (
         <Banner tone="info" title="Awaiting verification"><p>We have your receipt. The hotel verifies it, then your new dates take effect. Your current dates stay valid until then.</p></Banner>
       ) : change.status === 'awaiting_payment' && !choosing ? (
@@ -137,6 +144,8 @@ export function ChangePayment({ reference, change, csrf, demo, onRefresh, onSess
           </Button>
         </div>
       )}
+        </motion.div>
+      </AnimatePresence>
     </section>
   )
 }

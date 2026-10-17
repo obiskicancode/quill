@@ -1,5 +1,6 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { AlertTriangle, CheckCircle2, Clock, Loader2, RefreshCw, WifiOff } from 'lucide-react'
 import { forwardRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
@@ -7,6 +8,7 @@ import { whatsappHref, telHref, site } from '@/lib/site'
 import { formatMinor } from '@/lib/stay-types'
 import { formatRange } from '@/lib/room-query'
 import { DatePicker, type DateRange } from '../DatePicker'
+import { EASE_OUT } from '../motion/variants'
 import { Button, ButtonLink } from '../ui/Button'
 
 type Tone = 'info' | 'warn' | 'danger'
@@ -28,9 +30,19 @@ export function Banner({ tone, title, children, actions, role = 'status' }: { to
 
 /** Top-of-form summary. Focus moves here after a failed submit; each item jumps to its field. */
 export const ErrorSummary = forwardRef<HTMLDivElement, { errors: { id: string; message: string }[] }>(function ErrorSummary({ errors }, ref) {
+  const reduced = useReducedMotion()
   if (errors.length === 0) return null
   return (
-    <div ref={ref} tabIndex={-1} role="alert" aria-labelledby="error-summary-title" className="rounded-card border-2 border-danger bg-danger/5 p-5">
+    <motion.div
+      ref={ref}
+      tabIndex={-1}
+      role="alert"
+      aria-labelledby="error-summary-title"
+      className="rounded-card border-2 border-danger bg-danger/5 p-5"
+      initial={reduced ? false : { opacity: 0, y: -8, scale: 0.99 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: reduced ? 0 : 0.25, ease: EASE_OUT }}
+    >
       <p id="error-summary-title" className="flex items-center gap-2 font-semibold text-danger">
         <AlertTriangle className="size-5" aria-hidden />
         {errors.length === 1 ? 'There is 1 thing to fix' : `There are ${errors.length} things to fix`}
@@ -51,7 +63,7 @@ export const ErrorSummary = forwardRef<HTMLDivElement, { errors: { id: string; m
           </li>
         ))}
       </ul>
-    </div>
+    </motion.div>
   )
 })
 
@@ -116,6 +128,7 @@ interface UnavailableProps {
 /** Full-width state when the room is gone. One-tap nearby dates, a date picker, and similar rooms. */
 export function UnavailableState({ room, stay, suggestions, hrefFor, similarHref }: UnavailableProps) {
   const router = useRouter()
+  const reduced = useReducedMotion()
   const [range, setRange] = useState<DateRange>({ checkIn: stay.checkIn, checkOut: stay.checkOut })
   const [picking, setPicking] = useState(false)
   return (
@@ -144,18 +157,28 @@ export function UnavailableState({ room, stay, suggestions, hrefFor, similarHref
       )}
       <div>
         <Button variant="secondary" aria-expanded={picking} onClick={() => setPicking((p) => !p)}>Pick different dates</Button>
-        {picking && (
-          <div className="mt-4 max-w-sm rounded-card border border-line bg-surface p-4">
-            <DatePicker
-              value={range}
-              onChange={(next) => {
-                setRange(next)
-                if (next.checkIn && next.checkOut) router.push(hrefFor({ checkIn: next.checkIn, checkOut: next.checkOut }))
-              }}
-              monthsShown={1}
-            />
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {picking && (
+            <motion.div
+              key="picker"
+              initial={reduced ? false : { opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={reduced ? undefined : { opacity: 0, height: 0 }}
+              transition={{ duration: reduced ? 0 : 0.3, ease: EASE_OUT }}
+              style={{ overflow: 'hidden' }}
+              className="mt-4 max-w-sm rounded-card border border-line bg-surface p-4"
+            >
+              <DatePicker
+                value={range}
+                onChange={(next) => {
+                  setRange(next)
+                  if (next.checkIn && next.checkOut) router.push(hrefFor({ checkIn: next.checkIn, checkOut: next.checkOut }))
+                }}
+                monthsShown={1}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
       <p><ButtonLink href={similarHref} variant="secondary">See similar rooms</ButtonLink></p>
     </section>
@@ -163,26 +186,29 @@ export function UnavailableState({ room, stay, suggestions, hrefFor, similarHref
 }
 
 export function ConfirmingScreen({ timedOut, onCheckAgain, checking }: { timedOut: boolean; onCheckAgain: () => void; checking: boolean }) {
+  const reduced = useReducedMotion()
   return (
-    <section aria-labelledby="confirming-title" className="space-y-5 rounded-card border border-line bg-surface p-8 text-center shadow-raised">
-      {!timedOut ? (
-        <>
-          <Loader2 className="mx-auto size-10 animate-spin text-accent-ink motion-reduce:animate-none" aria-hidden />
-          <h1 id="confirming-title" className="font-display text-h2">Confirming your payment</h1>
-          <p role="status" className="mx-auto max-w-md text-ink/85">Please keep this page open. We are waiting for your payment provider to confirm. This usually takes a few seconds.</p>
-        </>
-      ) : (
-        <>
-          <Clock className="mx-auto size-10 text-accent-ink" aria-hidden />
-          <h1 id="confirming-title" className="font-display text-h2">We are still waiting for confirmation</h1>
-          <p role="status" className="mx-auto max-w-md text-ink/85">
-            Your payment may still be going through. You do not need to pay again. We will email you as soon as it is confirmed. If you do not hear from us soon, contact the hotel on{' '}
-            <a href={telHref()} className="font-semibold underline underline-offset-4">{site.contact.phoneDisplay}</a> or{' '}
-            <a href={whatsappHref('Hello, I paid for a booking and have not received a confirmation.')} target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-4">WhatsApp<span className="sr-only"> (opens in a new tab)</span></a>.
-          </p>
-          <Button variant="secondary" loading={checking} onClick={onCheckAgain}>Check again</Button>
-        </>
-      )}
+    <section aria-labelledby="confirming-title" className="rounded-card border border-line bg-surface p-8 text-center shadow-raised">
+      <AnimatePresence mode="wait" initial={false}>
+        {!timedOut ? (
+          <motion.div key="waiting" className="space-y-5" initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={reduced ? undefined : { opacity: 0 }} transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}>
+            <Loader2 className="mx-auto size-10 animate-spin text-accent-ink motion-reduce:animate-none" aria-hidden />
+            <h1 id="confirming-title" className="font-display text-h2">Confirming your payment</h1>
+            <p role="status" className="mx-auto max-w-md text-ink/85">Please keep this page open. We are waiting for your payment provider to confirm. This usually takes a few seconds.</p>
+          </motion.div>
+        ) : (
+          <motion.div key="timed-out" className="space-y-5" initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={reduced ? undefined : { opacity: 0 }} transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}>
+            <Clock className="mx-auto size-10 text-accent-ink" aria-hidden />
+            <h1 id="confirming-title" className="font-display text-h2">We are still waiting for confirmation</h1>
+            <p role="status" className="mx-auto max-w-md text-ink/85">
+              Your payment may still be going through. You do not need to pay again. We will email you as soon as it is confirmed. If you do not hear from us soon, contact the hotel on{' '}
+              <a href={telHref()} className="font-semibold underline underline-offset-4">{site.contact.phoneDisplay}</a> or{' '}
+              <a href={whatsappHref('Hello, I paid for a booking and have not received a confirmation.')} target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-4">WhatsApp<span className="sr-only"> (opens in a new tab)</span></a>.
+            </p>
+            <Button variant="secondary" loading={checking} onClick={onCheckAgain}>Check again</Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   )
 }

@@ -1,11 +1,14 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { CheckCircle2, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { newKey } from '@/lib/checkout/client'
 import { enquiryFormSchema, MAX_MESSAGE, normalizeTopic, STAY_TOPICS, topicLabels, type EnquiryError, type EnquiryResponse } from '@/lib/content/schemas'
 import { ENQUIRY_TOPICS } from '@/lib/content/types'
+import { Reveal } from '../motion'
+import { EASE_OUT } from '../motion/variants'
 import { Banner, ErrorSummary } from '../checkout/CheckoutStates'
 import { Field, inputClass } from '../checkout/Field'
 import { Button, ButtonLink } from '../ui/Button'
@@ -50,6 +53,7 @@ export function ContactForm({ initialTopic, initialRoom, initialRef, rooms, resp
   const summaryRef = useRef<HTMLDivElement>(null)
   const [focusTick, setFocusTick] = useState(0)
   const submitting = useRef(false)
+  const reduced = useReducedMotion()
 
   useEffect(() => setToday(new Date().toISOString().slice(0, 10)), [])
   useEffect(() => {
@@ -127,28 +131,31 @@ export function ContactForm({ initialTopic, initialRoom, initialRef, rooms, resp
 
   const summary = ORDER.filter((f) => errors[f]).map((f) => ({ id: `contact-${f}`, message: `${labels[f]}: ${errors[f]}` }))
 
-  if (status === 'success') {
-    return (
-      <section id="enquiry" aria-labelledby="form-title" className="section-y">
-        <div className="container-page max-w-3xl">
-          <div role="status" className="space-y-5 rounded-card border border-line bg-surface p-8 shadow-raised">
-            <CheckCircle2 className="size-10 text-accent-ink" aria-hidden />
-            <h2 id="form-title" className="font-display text-h2">Thanks, we&rsquo;ll reply within {responseHours} {responseHours === 1 ? 'hour' : 'hours'}</h2>
-            <p className="text-ink/85">Your message reference is <span className="font-semibold">{reference}</span>. We have emailed you a copy.</p>
-            <p className="text-small text-ink/85">Need an answer sooner? Message us on WhatsApp.</p>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href={whatsappHref} external variant="whatsapp" icon={<MessageCircle className="size-5" aria-hidden />}>Chat on WhatsApp<span className="sr-only"> (opens in a new tab)</span></ButtonLink>
-              <Button variant="secondary" onClick={reset}>Send another message</Button>
-            </div>
-          </div>
-        </div>
-      </section>
-    )
-  }
+  const panelMotion = reduced ? {} : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -12 } }
+
+  const successPanel = (
+    <div role="status" className="space-y-5 rounded-card border border-line bg-surface p-8 shadow-raised">
+      <CheckCircle2 className="size-10 text-accent-ink" aria-hidden />
+      <h2 id="form-title" className="font-display text-h2">Thanks, we&rsquo;ll reply within {responseHours} {responseHours === 1 ? 'hour' : 'hours'}</h2>
+      <p className="text-ink/85">Your message reference is <span className="font-semibold">{reference}</span>. We have emailed you a copy.</p>
+      <p className="text-small text-ink/85">Need an answer sooner? Message us on WhatsApp.</p>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <ButtonLink href={whatsappHref} external variant="whatsapp" icon={<MessageCircle className="size-5" aria-hidden />}>Chat on WhatsApp<span className="sr-only"> (opens in a new tab)</span></ButtonLink>
+        <Button variant="secondary" onClick={reset}>Send another message</Button>
+      </div>
+    </div>
+  )
 
   return (
     <section id="enquiry" aria-labelledby="form-title" className="section-y">
       <div className="container-page max-w-3xl">
+        <AnimatePresence mode="wait" initial={false}>
+          {status === 'success' ? (
+            <motion.div key="success" {...panelMotion} transition={{ duration: 0.35, ease: EASE_OUT }}>
+              {successPanel}
+            </motion.div>
+          ) : (
+            <motion.div key="form" {...panelMotion} transition={{ duration: 0.35, ease: EASE_OUT }}>
         <h2 id="form-title" className="font-display text-h2">Send us a message</h2>
         <p className="mt-3 text-body-lg text-ink/85">We reply within {responseHours} {responseHours === 1 ? 'hour' : 'hours'}.</p>
 
@@ -163,15 +170,15 @@ export function ContactForm({ initialTopic, initialRoom, initialRef, rooms, resp
         </div>
 
         <form noValidate onSubmit={(e) => { e.preventDefault(); void submit() }} className="mt-8 space-y-5">
-          <div className="grid gap-5 md:grid-cols-2">
+          <Reveal className="grid gap-5 md:grid-cols-2">
             <Field id="contact-name" label="Name" error={errors.name}>
               {(a) => <input {...a} {...bind('name')} type="text" autoComplete="name" className={inputClass(errors.name)} />}
             </Field>
             <Field id="contact-email" label="Email" error={errors.email}>
               {(a) => <input {...a} {...bind('email')} type="email" inputMode="email" autoComplete="email" autoCapitalize="none" spellCheck={false} className={inputClass(errors.email)} />}
             </Field>
-          </div>
-          <div className="grid gap-5 md:grid-cols-2">
+          </Reveal>
+          <Reveal delay={0.05} className="grid gap-5 md:grid-cols-2">
             <Field id="contact-phone" label="Phone" optional error={errors.phone} hint="Add the country code if it is not a Nigerian number.">
               {(a) => <input {...a} {...bind('phone')} type="tel" inputMode="tel" autoComplete="tel" className={inputClass(errors.phone)} />}
             </Field>
@@ -182,7 +189,7 @@ export function ContactForm({ initialTopic, initialRoom, initialRef, rooms, resp
                 </select>
               )}
             </Field>
-          </div>
+          </Reveal>
           <Field id="contact-subject" label="Subject" optional error={errors.subject}>
             {(a) => <input {...a} {...bind('subject')} type="text" autoComplete="off" className={inputClass(errors.subject)} />}
           </Field>
@@ -190,7 +197,7 @@ export function ContactForm({ initialTopic, initialRoom, initialRef, rooms, resp
           {showStay && (
             <fieldset className="space-y-5 rounded-card border border-line bg-surface p-5">
               <legend className="px-2 font-semibold">Your stay (optional)</legend>
-              <div className="grid gap-5 md:grid-cols-2">
+              <Reveal delay={0.1} className="grid gap-5 md:grid-cols-2">
                 <Field id="contact-checkIn" label="Check-in" optional error={errors.checkIn}>
                   {(a) => <input {...a} {...bind('checkIn')} type="date" min={today || undefined} className={inputClass(errors.checkIn)} />}
                 </Field>
@@ -208,7 +215,7 @@ export function ContactForm({ initialTopic, initialRoom, initialRef, rooms, resp
                     </select>
                   )}
                 </Field>
-              </div>
+              </Reveal>
             </fieldset>
           )}
 
@@ -246,6 +253,9 @@ export function ContactForm({ initialTopic, initialRoom, initialRef, rooms, resp
             {status === 'submitting' ? 'Sending' : 'Send message'}
           </Button>
         </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </section>
   )

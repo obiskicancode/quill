@@ -10,6 +10,7 @@ import { site, whatsappHref } from '@/lib/site'
 import { bookingHref, formatMinor, stayParams, type QuoteDemo, type StayInput, type StayPatch } from '@/lib/stay-types'
 import { DatePicker } from '../DatePicker'
 import { GuestStepper } from '../GuestStepper'
+import { Reveal } from '../motion/Reveal'
 import { AvailabilityBadge } from '../rooms/AvailabilityBadge'
 import { PriceBlock } from '../rooms/PriceBlock'
 import { Button, ButtonLink } from '../ui/Button'
@@ -328,7 +329,7 @@ export function BookingCard({ room, initial, demo, bestPriceDirect }: BookingCar
     <>
       {/* Desktop */}
       <div className="hidden rounded-card border border-line bg-surface p-6 shadow-float lg:sticky lg:top-24 lg:block lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto">
-        {panel}
+        <Reveal>{panel}</Reveal>
       </div>
 
       {/* Mobile and tablet bar. It carries the id the global Book Now bar watches, so the two never stack. */}
@@ -348,10 +349,10 @@ export function BookingCard({ room, initial, demo, bestPriceDirect }: BookingCar
         ref={dialogRef}
         aria-labelledby="booking-sheet-title"
         onClose={() => setSheetOpen(false)}
-        className="inset-x-0 bottom-0 top-auto m-0 max-h-[92dvh] w-full max-w-none rounded-t-card bg-paper p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col lg:hidden"
+        className="inset-x-0 bottom-0 top-auto m-0 max-h-[92dvh] w-full max-w-none bg-transparent p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col lg:hidden"
       >
         {sheetOpen && (
-          <>
+          <div className="flex max-h-[92dvh] min-h-0 w-full flex-col overflow-hidden rounded-t-card bg-paper animate-sheet-rise">
             <div className="flex items-center justify-between border-b border-line px-5 py-2">
               <h2 id="booking-sheet-title" className="font-display text-h3">Your stay</h2>
               <button type="button" aria-label="Close" onClick={() => setSheetOpen(false)} className="grid size-11 place-items-center rounded-full hover:bg-ink/10">
@@ -359,7 +360,7 @@ export function BookingCard({ room, initial, demo, bestPriceDirect }: BookingCar
               </button>
             </div>
             <div className="overflow-y-auto px-5 py-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">{panel}</div>
-          </>
+          </div>
         )}
       </dialog>
     </>

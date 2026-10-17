@@ -1,5 +1,6 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -9,6 +10,7 @@ import {
 } from '@/lib/checkout/schemas'
 import type { BankDetails, CheckoutQuoteResponse, PaymentMethod } from '@/lib/checkout/types'
 import { formatMinor } from '@/lib/stay-types'
+import { EASE_OUT } from '../motion/variants'
 import { Button } from '../ui/Button'
 import { DetailsStep, type GuestField } from './DetailsStep'
 import { ExtrasStep } from './ExtrasStep'
@@ -55,6 +57,9 @@ interface CheckoutFlowProps {
 
 export function CheckoutFlow({ room, stay, initialQuote, demo, seenTotalMinor, resumeReference, hotelTimes }: CheckoutFlowProps) {
   const router = useRouter()
+  const reduced = useReducedMotion()
+  const bannerMotion = reduced ? {} : { initial: { opacity: 0, y: -8 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -8 } }
+  const bannerTransition = { duration: reduced ? 0 : 0.2, ease: EASE_OUT }
 
   // --- quote (always from the server) ---
   const [quote, setQuote] = useState<CheckoutQuoteResponse>(initialQuote)
@@ -433,17 +438,23 @@ export function CheckoutFlow({ room, stay, initialQuote, demo, seenTotalMinor, r
   } else {
     main = (
       <div className="space-y-8">
-        {expired && <ExpiredPanel onRestart={restart} busy={busy} />}
-        {!expired && hold.expiring && holdActive && <ExpiringBanner />}
-        {phase.name === 'failed' && !expired && (
-          <FailedPanel reason={phase.reason} holdActive={holdActive} onRetry={retryPayment} onSwitch={switchMethod} busy={busy} />
-        )}
-        {netError && <NetworkErrorBanner message={netError} onRetry={() => void submit()} busy={busy} />}
-        {quoteFailed && (
-          <Banner role="alert" tone="danger" title="We couldn't update your price" actions={<Button variant="secondary" size="sm" onClick={() => setQuoteFailed(false)}>Dismiss</Button>}>
-            <p>Your last change may not be included in the total. Change it again to retry.</p>
-          </Banner>
-        )}
+        <AnimatePresence initial={false}>
+          {expired && <motion.div key="expired" {...bannerMotion} transition={bannerTransition}><ExpiredPanel onRestart={restart} busy={busy} /></motion.div>}
+          {!expired && hold.expiring && holdActive && <motion.div key="expiring" {...bannerMotion} transition={bannerTransition}><ExpiringBanner /></motion.div>}
+          {phase.name === 'failed' && !expired && (
+            <motion.div key="failed" {...bannerMotion} transition={bannerTransition}>
+              <FailedPanel reason={phase.reason} holdActive={holdActive} onRetry={retryPayment} onSwitch={switchMethod} busy={busy} />
+            </motion.div>
+          )}
+          {netError && <motion.div key="net" {...bannerMotion} transition={bannerTransition}><NetworkErrorBanner message={netError} onRetry={() => void submit()} busy={busy} /></motion.div>}
+          {quoteFailed && (
+            <motion.div key="quotefailed" {...bannerMotion} transition={bannerTransition}>
+              <Banner role="alert" tone="danger" title="We couldn't update your price" actions={<Button variant="secondary" size="sm" onClick={() => setQuoteFailed(false)}>Dismiss</Button>}>
+                <p>Your last change may not be included in the total. Change it again to retry.</p>
+              </Banner>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <ErrorSummary ref={summaryRef} errors={summaryItems} />
 
         <form id="checkout-form" noValidate onSubmit={(e) => { e.preventDefault(); void submit() }} className="space-y-10">
@@ -484,6 +495,10 @@ export function CheckoutFlow({ room, stay, initialQuote, demo, seenTotalMinor, r
 
   const showBar = inForm && !priceChange && !expired
 
+  const mainKey = priceChange ? 'price-change' : phase.name
+  const panelMotion = reduced ? {} : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -8 } }
+  const panelTransition = { duration: reduced ? 0 : 0.25, ease: EASE_OUT }
+
   return (
     <div className="container-page py-8 md:py-12">
       <p aria-live="polite" className="sr-only">{hold.announcement}</p>
@@ -495,7 +510,13 @@ export function CheckoutFlow({ room, stay, initialQuote, demo, seenTotalMinor, r
       )}
       <div className="mb-6"><MobileSummary {...summaryProps} /></div>
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_26rem] lg:items-start lg:gap-12">
-        <div>{main}</div>
+        <div>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={mainKey} {...panelMotion} transition={panelTransition}>
+              {main}
+            </motion.div>
+          </AnimatePresence>
+        </div>
         <aside aria-label="Booking summary" className="hidden lg:sticky lg:top-6 lg:block">
           <SummaryCard {...summaryProps} />
         </aside>

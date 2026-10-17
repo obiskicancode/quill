@@ -1,11 +1,13 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useRef, useState } from 'react'
 import { newKey } from '@/lib/checkout/client'
 import { detailsPatchSchema, type GuestInput } from '@/lib/checkout/schemas'
 import { manageApi, ManageFailure } from '@/lib/manage/client'
 import { whatsappHref } from '@/lib/site'
 import type { GuestReservation } from '@/lib/booking/types'
+import { EASE_OUT } from '../motion/variants'
 import { VerifyForm } from '../booking/VerifyForm'
 import { Banner } from '../checkout/CheckoutStates'
 import { DetailsStep, type GuestField } from '../checkout/DetailsStep'
@@ -35,6 +37,8 @@ export function EditDetailsPanel({ v, csrf, demo, onSaved, onClose, sessionExpir
   const [error, setError] = useState<{ message: string; retryable: boolean } | null>(null)
   const [justSaved, setJustSaved] = useState(false)
   const key = useRef(newKey())
+  const reduced = useReducedMotion()
+  const panelMotion = reduced ? {} : { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -6 }, transition: { duration: 0.2, ease: EASE_OUT } }
 
   const dirty = EDITABLE.some((f) => (values[f] ?? '') !== (saved[f] ?? ''))
   const issues = (val: GuestInput) => {
@@ -105,12 +109,20 @@ export function EditDetailsPanel({ v, csrf, demo, onSaved, onClose, sessionExpir
         />
 
         {Object.values(errors).some(Boolean) && <p role="alert" className="text-small font-medium text-danger">Please fix the highlighted fields.</p>}
-        {error && (
-          <Banner role="alert" tone="danger" title="Your changes were not saved" actions={error.retryable ? <Button variant="secondary" size="sm" loading={busy} onClick={() => void save()}>Try again</Button> : undefined}>
-            <p>{error.message}</p>
-          </Banner>
-        )}
-        <p role="status" aria-live="polite" className={justSaved ? 'rounded-control bg-paper p-3 text-small font-semibold' : 'sr-only'}>{justSaved ? 'Details saved. We emailed you a summary.' : ''}</p>
+        <AnimatePresence initial={false}>
+          {error && (
+            <motion.div {...panelMotion}>
+              <Banner role="alert" tone="danger" title="Your changes were not saved" actions={error.retryable ? <Button variant="secondary" size="sm" loading={busy} onClick={() => void save()}>Try again</Button> : undefined}>
+                <p>{error.message}</p>
+              </Banner>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <p role="status" aria-live="polite" className={justSaved ? 'rounded-control bg-paper p-3 text-small font-semibold' : 'sr-only'}>
+          <AnimatePresence initial={false}>
+            {justSaved && <motion.span key="saved" {...panelMotion}>Details saved. We emailed you a summary.</motion.span>}
+          </AnimatePresence>
+        </p>
 
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" size="lg" loading={busy} disabled={!dirty}>Save changes</Button>

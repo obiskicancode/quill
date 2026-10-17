@@ -1,5 +1,6 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { CheckCircle2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { newKey } from '@/lib/checkout/client'
@@ -10,6 +11,7 @@ import { formatRange } from '@/lib/room-query'
 import { whatsappHref } from '@/lib/site'
 import { formatMinor } from '@/lib/stay-types'
 import type { GuestReservation } from '@/lib/booking/types'
+import { EASE_OUT } from '../motion/variants'
 import { VerifyForm } from '../booking/VerifyForm'
 import { Banner } from '../checkout/CheckoutStates'
 import { DatePicker, type DateRange } from '../DatePicker'
@@ -59,6 +61,8 @@ export function ChangeDatesFlow({ open, onClose, v, csrf, demo, onUpdated, onRef
   const [confirmed, setConfirmed] = useState<ChangeQuoteResponse | null>(null)
   const key = useRef(newKey())
   const pending = v.manage?.pendingChange ?? null
+  const reduced = useReducedMotion()
+  const panelMotion = reduced ? {} : { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -6 }, transition: { duration: 0.2, ease: EASE_OUT } }
 
   useEffect(() => {
     if (!open) return
@@ -121,6 +125,7 @@ export function ChangeDatesFlow({ open, onClose, v, csrf, demo, onUpdated, onRef
   const askHotel = (extra: string) =>
     whatsappHref(`Hello, I'd like to change booking ${v.reference}${range.checkIn && range.checkOut ? ` to ${formatRange(range.checkIn, range.checkOut)}` : ''}. ${extra}`)
   const currentLabel = current.checkIn && current.checkOut ? formatRange(current.checkIn, current.checkOut) : ''
+  const quoteKey = quoting ? 'quoting' : quoteFailed ? 'failed' : quote?.status ?? 'idle'
 
   let body: React.ReactNode
   if (sessionExpired) {
@@ -155,6 +160,8 @@ export function ChangeDatesFlow({ open, onClose, v, csrf, demo, onUpdated, onRef
 
         <div aria-live="polite" className="space-y-4">
           {notice && <Banner tone="warn" title="Please review"><p>{notice}</p></Banner>}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={quoteKey} {...panelMotion} className="space-y-4">
           {quoting && (
             <div aria-busy="true" role="status"><p className="sr-only">Checking your new dates</p><div aria-hidden className="space-y-3">{[0, 1, 2].map((i) => <div key={i} className="h-8 rounded bg-ink/10 motion-safe:animate-pulse" />)}</div></div>
           )}
@@ -223,6 +230,8 @@ export function ChangeDatesFlow({ open, onClose, v, csrf, demo, onUpdated, onRef
               <p>{quote.reason}</p>
             </Banner>
           )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     )
@@ -230,7 +239,11 @@ export function ChangeDatesFlow({ open, onClose, v, csrf, demo, onUpdated, onRef
 
   return (
     <FlowDialog open={open} onClose={onClose} title={step === 'done' ? 'Dates changed' : 'Change dates'} dismissible={!busy}>
-      {body}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div key={sessionExpired ? 'expired' : step} {...panelMotion}>
+          {body}
+        </motion.div>
+      </AnimatePresence>
     </FlowDialog>
   )
 }

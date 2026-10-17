@@ -1,11 +1,13 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Check, Copy, CreditCard, Landmark, Upload } from 'lucide-react'
 import Link from 'next/link'
 import { useState, type ReactNode } from 'react'
 import { MAX_PROOF_BYTES } from '@/lib/checkout/schemas'
 import type { BankDetails, ConfirmationMode, PaymentMethod, PaymentPlan, PaymentProvider } from '@/lib/checkout/types'
 import { formatMinor } from '@/lib/stay-types'
+import { EASE_OUT } from '../motion/variants'
 import { Field } from './Field'
 
 const providerNames: Record<PaymentProvider, string> = { paystack: 'Paystack', flutterwave: 'Flutterwave', stripe: 'Stripe' }
@@ -51,6 +53,9 @@ interface PaymentStepProps {
 
 /** Step 3. Never collects card data: "Card or USSD" opens the provider's own checkout. */
 export function PaymentStep({ payment, method, onMethod, confirmationMode, terms, onTerms, termsError, bank, proof, disabled, action }: PaymentStepProps) {
+  const reduced = useReducedMotion()
+  const bankMotion = reduced ? {} : { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -6 } }
+  const bankTransition = { duration: reduced ? 0 : 0.25, ease: EASE_OUT }
   const atHotel = payment.mode === 'pay_at_hotel'
   const single = payment.acceptedMethods.length === 1
   const option = (value: PaymentMethod, icon: ReactNode, title: string, text: string) => (
@@ -99,8 +104,9 @@ export function PaymentStep({ payment, method, onMethod, confirmationMode, terms
       )}
 
       {!atHotel && method === 'bank_transfer' && (
-        bank ? (
-          <div className="space-y-4 rounded-card border border-ink/40 bg-paper p-5">
+        <AnimatePresence mode="wait" initial={false}>
+        {bank ? (
+          <motion.div key="bank" className="space-y-4 rounded-card border border-ink/40 bg-paper p-5" {...bankMotion} transition={bankTransition}>
             <h3 className="font-semibold">Transfer to this account</h3>
             <dl className="space-y-3 text-small">
               {[
@@ -138,12 +144,13 @@ export function PaymentStep({ payment, method, onMethod, confirmationMode, terms
                 ? 'Your reservation is confirmed after the hotel verifies your transfer. Until then your room stays held.'
                 : 'The hotel will verify your transfer and approve your reservation. Until then your room stays held.'}
             </p>
-          </div>
+          </motion.div>
         ) : (
-          <p className="rounded-card border border-line p-4 text-small text-ink/85">
+          <motion.p key="note" className="rounded-card border border-line p-4 text-small text-ink/85" {...bankMotion} transition={bankTransition}>
             Continue to see the hotel&rsquo;s bank details, your exact amount and your booking reference. We hold your room while you transfer.
-          </p>
-        )
+          </motion.p>
+        )}
+        </AnimatePresence>
       )}
 
       <div>

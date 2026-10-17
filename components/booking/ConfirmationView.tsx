@@ -1,5 +1,6 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Settings2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { bookingApi } from '@/lib/booking/client'
@@ -7,6 +8,8 @@ import { trackBookingConfirmedOnce } from '@/lib/booking/analytics'
 import { headerKind, type GuestReservation } from '@/lib/booking/types'
 import { Banner } from '../checkout/CheckoutStates'
 import { HelpBlock } from '../HelpBlock'
+import { Reveal } from '../motion'
+import { EASE_OUT } from '../motion/variants'
 import { Button, ButtonLink } from '../ui/Button'
 import { ActionRow } from './ActionRow'
 import { AddExtrasStrip } from './AddExtrasStrip'
@@ -45,6 +48,9 @@ export function ConfirmationView({ initial, demo }: { initial: GuestReservation;
   const [refreshing, setRefreshing] = useState(false)
   const [refreshError, setRefreshError] = useState(false)
   const kind = headerKind(v)
+  const reduced = useReducedMotion()
+  const presence = reduced ? {} : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -8 } }
+  const presenceTransition = { duration: reduced ? 0 : 0.22, ease: EASE_OUT }
 
   /** A read-only reload. Retrying it can never change the reservation. */
   const refresh = useCallback(async () => {
@@ -108,25 +114,43 @@ export function ConfirmationView({ initial, demo }: { initial: GuestReservation;
           )}
         </StatusHeader>
 
-        {refreshError && (
-          <Banner role="alert" tone="danger" title="We couldn't refresh your booking" actions={<Button variant="secondary" size="sm" loading={refreshing} onClick={() => void refresh()}>Try again</Button>}>
-            <p>Your booking is safe. This only reloads what you see, so trying again changes nothing.</p>
-          </Banner>
-        )}
+        <AnimatePresence initial={false}>
+          {refreshError && (
+            <motion.div key="refresh-error" {...presence} transition={presenceTransition}>
+              <Banner role="alert" tone="danger" title="We couldn't refresh your booking" actions={<Button variant="secondary" size="sm" loading={refreshing} onClick={() => void refresh()}>Try again</Button>}>
+                <p>Your booking is safe. This only reloads what you see, so trying again changes nothing.</p>
+              </Banner>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {active && <ResendEmail reference={v.reference} maskedEmail={v.guest.email} lead={emailLead[kind]} demo={demo} />}
+        <AnimatePresence initial={false}>
+          {active && (
+            <motion.div key="resend-email" {...presence} transition={presenceTransition}>
+              <ResendEmail reference={v.reference} maskedEmail={v.guest.email} lead={emailLead[kind]} demo={demo} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <ActionRow v={v} demo={demo} />
+        <Reveal delay={0.05}><ActionRow v={v} demo={demo} /></Reveal>
 
-        <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-          <StayDetailsCard v={v} />
-          <PaymentSummary v={v} />
-        </div>
+        <Reveal delay={0.1}>
+          <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+            <StayDetailsCard v={v} />
+            <PaymentSummary v={v} />
+          </div>
+        </Reveal>
 
-        <NextSteps v={v} kind={kind} />
-        {active && <GettingHere hotel={v.hotel} />}
-        <PolicySection v={v} />
-        <AddExtrasStrip v={v} />
+        <Reveal delay={0.15}><NextSteps v={v} kind={kind} /></Reveal>
+        <AnimatePresence initial={false}>
+          {active && (
+            <motion.div key="getting-here" {...presence} transition={presenceTransition}>
+              <GettingHere hotel={v.hotel} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <Reveal delay={0.2}><PolicySection v={v} /></Reveal>
+        <Reveal delay={0.24}><AddExtrasStrip v={v} /></Reveal>
       </div>
 
       <div className="print:hidden">

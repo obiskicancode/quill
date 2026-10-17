@@ -1,10 +1,12 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { MessageSquare } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { headerKind, type GuestReservation } from '@/lib/booking/types'
 import { manageApi, ManageFailure } from '@/lib/manage/client'
 import { formatCountdown } from '@/lib/checkout/format'
+import { EASE_OUT } from '../motion/variants'
 import { ActionRow } from '../booking/ActionRow'
 import { AddExtrasStrip } from '../booking/AddExtrasStrip'
 import { PaymentSummary } from '../booking/PaymentSummary'
@@ -61,6 +63,8 @@ export function ManageView({ initial, demo, onSignedOut, onExpired }: ManageView
   const [changeOpen, setChangeOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const trigger = useRef<HTMLElement | null>(null)
+  const reduced = useReducedMotion()
+  const presence = reduced ? {} : { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -6 }, transition: { duration: 0.2, ease: EASE_OUT } }
 
   const m = v.manage
   const csrf = m?.csrfToken ?? ''
@@ -170,29 +174,39 @@ export function ManageView({ initial, demo, onSignedOut, onExpired }: ManageView
           )}
         </StatusHeader>
 
-        {refreshError && (
-          <Banner role="alert" tone="danger" title="We couldn't refresh your booking" actions={<Button variant="secondary" size="sm" loading={refreshing} onClick={() => void refresh()}>Try again</Button>}>
-            <p>Your booking is safe. This only reloads what you see, so trying again changes nothing.</p>
-          </Banner>
-        )}
+        <AnimatePresence initial={false}>
+          {refreshError && (
+            <motion.div {...presence}>
+              <Banner role="alert" tone="danger" title="We couldn't refresh your booking" actions={<Button variant="secondary" size="sm" loading={refreshing} onClick={() => void refresh()}>Try again</Button>}>
+                <p>Your booking is safe. This only reloads what you see, so trying again changes nothing.</p>
+              </Banner>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {pending && !changeOpen && (
-          <section aria-labelledby="pending-title" className="space-y-3 rounded-card border-2 border-ink bg-surface p-5 md:p-6">
-            <h2 id="pending-title" className="font-display text-h3">A date change is waiting for payment</h2>
-            <ChangePayment reference={v.reference} change={pending} csrf={csrf} demo={demo} onRefresh={refresh} onSessionExpired={() => setExpired(true)} />
-          </section>
-        )}
+        <AnimatePresence initial={false}>
+          {pending && !changeOpen && (
+            <motion.section {...presence} aria-labelledby="pending-title" className="space-y-3 rounded-card border-2 border-ink bg-surface p-5 md:p-6">
+              <h2 id="pending-title" className="font-display text-h3">A date change is waiting for payment</h2>
+              <ChangePayment reference={v.reference} change={pending} csrf={csrf} demo={demo} onRefresh={refresh} onSessionExpired={() => setExpired(true)} />
+            </motion.section>
+          )}
+        </AnimatePresence>
 
         <ActionsPanel v={v} onCancel={open(setCancelOpen)} onChangeDates={open(setChangeOpen)} onEdit={open(setEditOpen)} />
 
-        {editOpen && (
-          <EditDetailsPanel
-            v={v} csrf={csrf} demo={demo} sessionExpired={expired} onSessionExpired={() => setExpired(true)}
-            onReverified={() => { setExpired(false); void refresh() }}
-            onSaved={(next) => applyView(next, 'Your details have been saved.')}
-            onClose={() => { setEditOpen(false); trigger.current?.focus() }}
-          />
-        )}
+        <AnimatePresence initial={false}>
+          {editOpen && (
+            <motion.div {...presence}>
+              <EditDetailsPanel
+                v={v} csrf={csrf} demo={demo} sessionExpired={expired} onSessionExpired={() => setExpired(true)}
+                onReverified={() => { setExpired(false); void refresh() }}
+                onSaved={(next) => applyView(next, 'Your details have been saved.')}
+                onClose={() => { setEditOpen(false); trigger.current?.focus() }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <ActionRow v={v} demo={demo} hideManage />
         {kind !== 'ended' && <ResendEmail reference={v.reference} maskedEmail={v.guest.email} lead={emailLead[kind]} demo={demo} />}

@@ -1,4 +1,8 @@
+"use client";
+
+import { motion } from "framer-motion";
 import type { RoomAmenityKey } from "@/lib/rooms";
+import { fadeUp } from "./motion/variants";
 import { RoomAmenityIcon } from "./rooms/RoomAmenityIcon";
 
 interface AmenityItemProps {
@@ -7,9 +11,10 @@ interface AmenityItemProps {
   tone?: "dark" | "light";
 }
 
+/** A single amenity row. Inherits its entrance from a parent <StaggerGroup> when present; otherwise renders static. */
 export function AmenityItem({ amenity, tone = "dark" }: AmenityItemProps) {
   return (
-    <li className="flex items-center gap-4">
+    <motion.li className="flex items-center gap-4" variants={fadeUp}>
       <span className="grid size-12 shrink-0 place-items-center rounded-full bg-accent text-ink">
         <RoomAmenityIcon name={amenity.key} className="size-6" />
       </span>
@@ -23,6 +28,6 @@ export function AmenityItem({ amenity, tone = "dark" }: AmenityItemProps) {
           </p>
         )}
       </div>
-    </li>
+    </motion.li>
   );
 }

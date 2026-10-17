@@ -1,7 +1,9 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { formatNaira } from '@/lib/format'
+import { spring } from '../motion/variants'
 import {
   bedTypeLabels, filterAmenityOptions, type FilterAmenity, type RoomFilters,
 } from '@/lib/rooms'
@@ -38,22 +40,32 @@ function buildChips(f: RoomFilters): Chip[] {
 
 export function FilterChips({ filters, onChange, onClearAll }: { filters: RoomFilters; onChange: (next: RoomFilters) => void; onClearAll: () => void }) {
   const chips = buildChips(filters)
+  const reduced = useReducedMotion()
   if (chips.length === 0) return null
   return (
     <ul aria-label="Active filters" className="flex flex-wrap items-center gap-2">
-      {chips.map((chip) => (
-        <li key={chip.id}>
-          <button
-            type="button"
-            onClick={() => onChange(chip.remove(filters))}
-            aria-label={`Remove filter: ${chip.label}`}
-            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink/60 bg-surface pl-4 pr-3 text-small font-medium transition-colors hover:bg-ink hover:text-paper"
+      <AnimatePresence initial={false}>
+        {chips.map((chip) => (
+          <motion.li
+            key={chip.id}
+            layout={!reduced}
+            initial={reduced ? false : { opacity: 0, scale: 0.85 }}
+            animate={reduced ? undefined : { opacity: 1, scale: 1 }}
+            exit={reduced ? undefined : { opacity: 0, scale: 0.85 }}
+            transition={spring}
           >
-            {chip.label}
-            <X className="size-4" aria-hidden />
-          </button>
-        </li>
-      ))}
+            <button
+              type="button"
+              onClick={() => onChange(chip.remove(filters))}
+              aria-label={`Remove filter: ${chip.label}`}
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink/60 bg-surface pl-4 pr-3 text-small font-medium transition-colors hover:bg-ink hover:text-paper"
+            >
+              {chip.label}
+              <X className="size-4" aria-hidden />
+            </button>
+          </motion.li>
+        ))}
+      </AnimatePresence>
       <li>
         <button type="button" onClick={onClearAll} className="inline-flex min-h-11 items-center px-3 text-small font-semibold underline decoration-accent decoration-2 underline-offset-4">
           Clear all

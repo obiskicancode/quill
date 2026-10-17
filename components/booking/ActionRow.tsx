@@ -1,16 +1,21 @@
 'use client'
 
+import { motion, useReducedMotion } from 'framer-motion'
 import { CalendarPlus, MessageCircle, Printer, Settings2 } from 'lucide-react'
 import { calendarUrl } from '@/lib/booking/client'
 import { googleCalendarUrl, whatsappShareUrl, type CalendarEvent } from '@/lib/booking/ics'
 import type { GuestReservation } from '@/lib/booking/types'
 import { formatRange } from '@/lib/room-query'
+import { AnimatedList } from '../motion'
+import { EASE_OUT } from '../motion/variants'
 import { Button, ButtonLink } from '../ui/Button'
 
 /** Calendar (.ics and Google), print or save as PDF, WhatsApp share, and Manage booking. */
 export function ActionRow({ v, demo, hideManage = false }: { v: GuestReservation; demo: string | null; /** Hide "Manage booking" when already on the manage page. */ hideManage?: boolean }) {
   const { checkIn, checkOut } = v.stay
   const ready = Boolean(checkIn && checkOut)
+  const reduced = useReducedMotion()
+  const li = reduced ? {} : { layout: true, initial: { opacity: 0, scale: 0.96 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 0.96 }, transition: { duration: 0.2, ease: EASE_OUT } }
   const event: CalendarEvent | null =
     checkIn && checkOut
       ? {
@@ -23,35 +28,35 @@ export function ActionRow({ v, demo, hideManage = false }: { v: GuestReservation
 
   return (
     <section aria-label="Actions" className="print:hidden">
-      <ul className="flex flex-wrap gap-3">
+      <AnimatedList className="flex flex-wrap gap-3">
         {active && (
-          <>
-            <li>
-              {ready && event ? (
-                <ButtonLink href={calendarUrl(v.reference, demo)} variant="secondary" download icon={<CalendarPlus className="size-5" aria-hidden />}>
-                  Add to calendar (.ics)
-                </ButtonLink>
-              ) : (
-                <Button variant="secondary" disabled icon={<CalendarPlus className="size-5" aria-hidden />}>Add to calendar (.ics)</Button>
-              )}
-            </li>
-            <li>
-              {ready && event ? (
-                <ButtonLink href={googleCalendarUrl(event)} external variant="secondary">
-                  Google Calendar<span className="sr-only"> (opens in a new tab)</span>
-                </ButtonLink>
-              ) : (
-                <Button variant="secondary" disabled>Google Calendar</Button>
-              )}
-            </li>
-          </>
+          <motion.li key="ics" {...li}>
+            {ready && event ? (
+              <ButtonLink href={calendarUrl(v.reference, demo)} variant="secondary" download icon={<CalendarPlus className="size-5" aria-hidden />}>
+                Add to calendar (.ics)
+              </ButtonLink>
+            ) : (
+              <Button variant="secondary" disabled icon={<CalendarPlus className="size-5" aria-hidden />}>Add to calendar (.ics)</Button>
+            )}
+          </motion.li>
         )}
-        <li>
+        {active && (
+          <motion.li key="google" {...li}>
+            {ready && event ? (
+              <ButtonLink href={googleCalendarUrl(event)} external variant="secondary">
+                Google Calendar<span className="sr-only"> (opens in a new tab)</span>
+              </ButtonLink>
+            ) : (
+              <Button variant="secondary" disabled>Google Calendar</Button>
+            )}
+          </motion.li>
+        )}
+        <motion.li key="print" {...li}>
           <Button variant="secondary" disabled={!ready} icon={<Printer className="size-5" aria-hidden />} onClick={() => window.print()}>
             Print or save as PDF
           </Button>
-        </li>
-        <li>
+        </motion.li>
+        <motion.li key="share" {...li}>
           <ButtonLink
             href={whatsappShareUrl({ reference: v.reference, hotelName: v.hotel.name, address: v.hotel.addressLines.join(', '), checkIn: checkIn ?? '', checkOut: checkOut ?? '', datesLabel })}
             external
@@ -60,15 +65,15 @@ export function ActionRow({ v, demo, hideManage = false }: { v: GuestReservation
           >
             Share by WhatsApp<span className="sr-only"> (opens in a new tab)</span>
           </ButtonLink>
-        </li>
+        </motion.li>
         {active && !hideManage && (
-          <li>
+          <motion.li key="manage" {...li}>
             <ButtonLink href={`/booking/manage?ref=${encodeURIComponent(v.reference)}`} variant="secondary" icon={<Settings2 className="size-5" aria-hidden />}>
               Manage booking
             </ButtonLink>
-          </li>
+          </motion.li>
         )}
-      </ul>
+      </AnimatedList>
       {!ready && <p className="mt-3 text-small text-muted">Calendar and print are unavailable until your check-in date is confirmed.</p>}
     </section>
   )

@@ -1,5 +1,6 @@
 import type { Amenity } from '@/lib/types'
 import { AmenityItem } from './AmenityItem'
+import { StaggerGroup } from './motion/StaggerGroup'
 import { SectionHeading } from './ui/SectionHeading'
 import { TextLink } from './ui/TextLink'
 
@@ -15,11 +16,15 @@ export function Amenities({ amenities }: { amenities: Amenity[] }) {
           intro="The practical things, done properly."
           action={<TextLink href="/amenities">See all amenities</TextLink>}
         />
-        <ul className="grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+        <StaggerGroup
+          as="ul"
+          className="grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4"
+          staggerChildren={0.07}
+        >
           {items.map((amenity) => (
             <AmenityItem key={amenity.key} amenity={amenity} />
           ))}
-        </ul>
+        </StaggerGroup>
       </div>
     </section>
   )

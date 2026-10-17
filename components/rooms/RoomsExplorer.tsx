@@ -19,10 +19,14 @@ import {
   sortRooms,
   type RoomType,
 } from "@/lib/rooms";
+import { motion, useReducedMotion } from "framer-motion";
 import { SlidersHorizontal } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState, useTransition } from "react";
 import { HelpBlock } from "../HelpBlock";
+import { AnimatedList } from "../motion/AnimatedList";
+import { Reveal } from "../motion/Reveal";
+import { EASE_OUT, springGentle } from "../motion/variants";
 import { RoomCard } from "../RoomCard";
 import { Button } from "../ui/Button";
 import { EmptyState } from "./EmptyState";
@@ -42,6 +46,7 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
   const [, startTransition] = useTransition();
   const [openSignal, setOpenSignal] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const reduced = useReducedMotion();
 
   const query = useMemo(() => parseRoomQuery(searchParams), [searchParams]);
   const notice =
@@ -149,32 +154,34 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
           </aside>
 
           <div>
-            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-              <p className="font-semibold">
-                {visible.length} {visible.length === 1 ? "room" : "rooms"}
-                {stay && (
-                  <span className="font-normal text-muted">
-                    {" "}
-                    for {formatRange(stay.checkIn, stay.checkOut)}
-                  </span>
-                )}
-              </p>
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="lg:hidden"
-                  icon={<SlidersHorizontal className="size-4" aria-hidden />}
-                  onClick={() => setFiltersOpen(true)}
-                >
-                  Filters{activeFilters > 0 ? ` (${activeFilters})` : ""}
-                </Button>
-                <SortMenu
-                  value={query.sort}
-                  onChange={(sort) => update({ sort })}
-                />
+            <Reveal>
+              <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                <p className="font-semibold">
+                  {visible.length} {visible.length === 1 ? "room" : "rooms"}
+                  {stay && (
+                    <span className="font-normal text-muted">
+                      {" "}
+                      for {formatRange(stay.checkIn, stay.checkOut)}
+                    </span>
+                  )}
+                </p>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="lg:hidden"
+                    icon={<SlidersHorizontal className="size-4" aria-hidden />}
+                    onClick={() => setFiltersOpen(true)}
+                  >
+                    Filters{activeFilters > 0 ? ` (${activeFilters})` : ""}
+                  </Button>
+                  <SortMenu
+                    value={query.sort}
+                    onChange={(sort) => update({ sort })}
+                  />
+                </div>
               </div>
-            </div>
+            </Reveal>
             <p role="status" aria-live="polite" className="sr-only">
               {announcement}
             </p>
@@ -208,21 +215,33 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
 
             <div className="mt-6" aria-busy={loading}>
               {base.length === 0 ? (
-                <EmptyState
-                  title="Our rooms are being updated"
-                  text="Message us on WhatsApp and we will tell you what is available for your dates."
-                  action={<HelpBlock variant="compact" />}
-                />
+                <Reveal>
+                  <EmptyState
+                    title="Our rooms are being updated"
+                    text="Message us on WhatsApp and we will tell you what is available for your dates."
+                    action={<HelpBlock variant="compact" />}
+                  />
+                </Reveal>
               ) : visible.length === 0 ? (
-                <EmptyState
-                  title="No rooms match these filters"
-                  text="Try a wider price range or remove a filter to see more rooms."
-                  action={<Button onClick={clearFilters}>Clear filters</Button>}
-                />
+                <Reveal>
+                  <EmptyState
+                    title="No rooms match these filters"
+                    text="Try a wider price range or remove a filter to see more rooms."
+                    action={<Button onClick={clearFilters}>Clear filters</Button>}
+                  />
+                </Reveal>
               ) : (
-                <ul className="grid gap-6 lg:grid-cols-2">
+                <AnimatedList className="grid gap-6 lg:grid-cols-2">
                   {visible.map((room, index) => (
-                    <li key={room.id}>
+                    <motion.li
+                      key={room.id}
+                      layout={reduced ? false : "position"}
+                      initial={reduced ? false : { opacity: 0, scale: 0.98 }}
+                      animate={reduced ? undefined : { opacity: 1, scale: 1 }}
+                      exit={reduced ? undefined : { opacity: 0, scale: 0.98 }}
+                      transition={{ duration: 0.35, ease: EASE_OUT, layout: springGentle }}
+                      className="h-full"
+                    >
                       {loading ? (
                         <SkeletonCard />
                       ) : (
@@ -245,14 +264,18 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
                           onPickDates={(range) => update(range)}
                         />
                       )}
-                    </li>
+                    </motion.li>
                   ))}
                   {!loading && visible.length % 2 === 1 && (
-                    <li className="hidden lg:block">
+                    <motion.li
+                      key="help"
+                      layout={reduced ? false : "position"}
+                      className="hidden h-full lg:block"
+                    >
                       <HelpBlock variant="compact" />
-                    </li>
+                    </motion.li>
                   )}
-                </ul>
+                </AnimatedList>
               )}
             </div>
           </div>

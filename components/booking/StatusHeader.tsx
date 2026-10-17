@@ -1,7 +1,9 @@
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { AlertTriangle, CheckCircle2, Clock, Hourglass, Landmark, MapPin, ShieldQuestion } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { formatMinor } from '@/lib/stay-types'
 import type { GuestReservation, HeaderKind } from '@/lib/booking/types'
+import { EASE_OUT } from '../motion/variants'
 import { ButtonLink } from '../ui/Button'
 import { ReferenceBlock } from './ReferenceBlock'
 
@@ -60,6 +62,7 @@ function copyFor(kind: HeaderKind, v: GuestReservation, timedOut: boolean): Copy
 /** The top block. Only a confirmed booking gets the dark, success treatment. Every other state is plain. */
 export function StatusHeader({ v, kind, timedOut, children }: { v: GuestReservation; kind: HeaderKind; timedOut: boolean; children?: ReactNode }) {
   const { title, text, icon } = copyFor(kind, v, timedOut)
+  const reduced = useReducedMotion()
   const success = kind === 'confirmed' || kind === 'confirmed-deposit'
   const bookAgain = v.stay.checkIn && v.stay.checkOut
     ? `/checkout?${new URLSearchParams({ room: v.room.slug, checkIn: v.stay.checkIn, checkOut: v.stay.checkOut, adults: String(v.stay.adults), children: String(v.stay.children) }).toString()}`
@@ -70,13 +73,22 @@ export function StatusHeader({ v, kind, timedOut, children }: { v: GuestReservat
       aria-labelledby="status-title"
       className={`rounded-card p-6 md:p-8 ${success ? 'on-dark bg-ink text-paper' : 'border border-line bg-surface text-ink shadow-raised'}`}
     >
-      <div className="flex items-start gap-4">
-        <span className={`grid size-14 shrink-0 place-items-center rounded-full ${success ? 'bg-accent text-ink' : 'bg-ink/10 text-ink'}`}>{icon}</span>
-        <div className="min-w-0">
-          <h1 id="status-title" className="font-display text-h2 text-balance">{title}</h1>
-          <p className={`mt-2 max-w-2xl text-body-lg ${success ? 'text-paper/90' : 'text-ink/85'}`}>{text}</p>
-        </div>
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={title}
+          className="flex items-start gap-4"
+          initial={reduced ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduced ? undefined : { opacity: 0, y: -8 }}
+          transition={{ duration: reduced ? 0 : 0.25, ease: EASE_OUT }}
+        >
+          <span className={`grid size-14 shrink-0 place-items-center rounded-full ${success ? 'bg-accent text-ink' : 'bg-ink/10 text-ink'}`}>{icon}</span>
+          <div className="min-w-0">
+            <h1 id="status-title" className="font-display text-h2 text-balance">{title}</h1>
+            <p className={`mt-2 max-w-2xl text-body-lg ${success ? 'text-paper/90' : 'text-ink/85'}`}>{text}</p>
+          </div>
+        </motion.div>
+      </AnimatePresence>
       <div className="mt-6">
         <ReferenceBlock reference={v.reference} large={success} />
       </div>

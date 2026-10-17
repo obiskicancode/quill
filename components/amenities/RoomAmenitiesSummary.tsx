@@ -1,5 +1,6 @@
 import { getRoomAmenities } from '@/lib/content/data'
 import type { PreviewFlags } from '@/lib/content/preview'
+import { StaggerGroup, TextReveal } from '@/components/motion'
 import { AmenityItem } from '../AmenityItem'
 import { TextLink } from '../ui/TextLink'
 
@@ -12,14 +13,14 @@ export async function RoomAmenitiesSummary({ flags }: { flags: PreviewFlags }) {
       <div className="container-page">
         <div className="mb-10 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
           <div className="max-w-2xl">
-            <h2 id="room-amenities-title" className="font-display text-h2">In every room</h2>
+            <TextReveal as="h2" id="room-amenities-title" text="In every room" className="font-display text-h2" />
             <p className="mt-3 text-body-lg text-ink/85">What most of our rooms and apartments include.</p>
           </div>
           <TextLink href="/rooms">See all rooms</TextLink>
         </div>
-        <ul className="grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+        <StaggerGroup as="ul" staggerChildren={0.05} className="grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
           {items.map((a) => <AmenityItem key={a.key} amenity={a} tone="light" />)}
-        </ul>
+        </StaggerGroup>
       </div>
     </section>
   )

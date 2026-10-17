@@ -1,5 +1,7 @@
 import { BedDouble, MapPin, Ruler, Users } from 'lucide-react'
 import type { RoomDetail } from '@/lib/room-detail'
+import { StaggerGroup } from '../motion/StaggerGroup'
+import { StaggerItem } from '../motion/StaggerItem'
 
 export function KeyFacts({ room }: { room: RoomDetail }) {
   const facts = [
@@ -9,16 +11,16 @@ export function KeyFacts({ room }: { room: RoomDetail }) {
     { icon: MapPin, label: 'View and floor', value: room.viewNotes },
   ]
   return (
-    <dl className="grid grid-cols-2 gap-x-6 gap-y-5 rounded-card border border-line bg-surface p-5 md:grid-cols-4">
+    <StaggerGroup as="dl" className="grid grid-cols-2 gap-x-6 gap-y-5 rounded-card border border-line bg-surface p-5 md:grid-cols-4" staggerChildren={0.08}>
       {facts.map(({ icon: Icon, label, value }) => (
-        <div key={label}>
+        <StaggerItem as="div" key={label}>
           <dt className="flex items-center gap-2 text-caption font-semibold text-muted">
             <Icon className="size-4 text-accent-ink" aria-hidden />
             {label}
           </dt>
           <dd className="mt-1 font-semibold">{value}</dd>
-        </div>
+        </StaggerItem>
       ))}
-    </dl>
+    </StaggerGroup>
   )
 }

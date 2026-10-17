@@ -1,5 +1,6 @@
 'use client'
 
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Upload } from 'lucide-react'
 import { useState } from 'react'
 import { api, ApiFailure } from '@/lib/checkout/client'
@@ -8,6 +9,7 @@ import { formatMinor } from '@/lib/stay-types'
 import type { GuestReservation } from '@/lib/booking/types'
 import { Field } from '../checkout/Field'
 import { CopyButton } from '../checkout/PaymentStep'
+import { EASE_OUT } from '../motion/variants'
 import { Button } from '../ui/Button'
 
 /** Bank details, exact amount and reference, plus the receipt upload when no proof has been sent yet. */
@@ -15,6 +17,7 @@ export function TransferPanel({ v, onUploaded }: { v: GuestReservation; onUpload
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const reduced = useReducedMotion()
   if (!v.bank) return null
 
   const rows: [string, string, string | null][] = [
@@ -57,27 +60,31 @@ export function TransferPanel({ v, onUploaded }: { v: GuestReservation; onUpload
           </div>
         ))}
       </dl>
-      {v.proofUploaded ? (
-        <p className="text-small font-medium">We have your receipt. The hotel will verify it and email you.</p>
-      ) : (
-        <>
-          <Field id="field-proof" label="Upload your receipt" error={error ?? undefined} hint={`JPG, PNG, WebP or PDF, up to ${MAX_PROOF_BYTES / 1024 / 1024} MB.`}>
-            {(a) => (
-              <input
-                {...a}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,application/pdf"
-                onChange={(e) => {
-                  setFile(e.target.files?.[0] ?? null)
-                  setError(null)
-                }}
-                className="block min-h-12 w-full cursor-pointer rounded-control border border-ink/60 bg-surface text-small file:mr-4 file:min-h-12 file:cursor-pointer file:border-0 file:bg-ink file:px-4 file:font-semibold file:text-paper"
-              />
-            )}
-          </Field>
-          <Button loading={busy} icon={<Upload className="size-4" aria-hidden />} onClick={submit}>Submit transfer details</Button>
-        </>
-      )}
+      <AnimatePresence mode="wait" initial={false}>
+        {v.proofUploaded ? (
+          <motion.div key="uploaded" initial={reduced ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={reduced ? undefined : { opacity: 0, y: -6 }} transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}>
+            <p className="text-small font-medium">We have your receipt. The hotel will verify it and email you.</p>
+          </motion.div>
+        ) : (
+          <motion.div key="upload" className="space-y-4" initial={reduced ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={reduced ? undefined : { opacity: 0, y: -6 }} transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}>
+            <Field id="field-proof" label="Upload your receipt" error={error ?? undefined} hint={`JPG, PNG, WebP or PDF, up to ${MAX_PROOF_BYTES / 1024 / 1024} MB.`}>
+              {(a) => (
+                <input
+                  {...a}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  onChange={(e) => {
+                    setFile(e.target.files?.[0] ?? null)
+                    setError(null)
+                  }}
+                  className="block min-h-12 w-full cursor-pointer rounded-control border border-ink/60 bg-surface text-small file:mr-4 file:min-h-12 file:cursor-pointer file:border-0 file:bg-ink file:px-4 file:font-semibold file:text-paper"
+                />
+              )}
+            </Field>
+            <Button loading={busy} icon={<Upload className="size-4" aria-hidden />} onClick={submit}>Submit transfer details</Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

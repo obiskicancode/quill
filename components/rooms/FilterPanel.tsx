@@ -3,6 +3,8 @@
 import { X } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { formatNaira } from '@/lib/format'
+import { StaggerGroup } from '../motion/StaggerGroup'
+import { StaggerItem } from '../motion/StaggerItem'
 import {
   bedTypeLabels, countActiveFilters, emptyFilters, filterAmenityOptions,
   type BedType, type FilterAmenity, type RoomFilters,
@@ -72,35 +74,43 @@ export function FilterPanel({ value, onChange, priceBounds, maxGuestsAvailable }
   const bedOptions = (Object.keys(bedTypeLabels) as BedType[]).map((key) => ({ key, label: bedTypeLabels[key] }))
 
   return (
-    <div className="space-y-6">
-      <fieldset>
-        <legend className="font-semibold">Price per night</legend>
-        <div className="mt-2 flex gap-3">
-          <PriceField key={`min-${value.minPrice}`} label="From" value={value.minPrice} placeholder={priceBounds ? priceBounds.min.toLocaleString('en-NG') : '0'} onCommit={(n) => setPrice(n, value.maxPrice)} />
-          <PriceField key={`max-${value.maxPrice}`} label="To" value={value.maxPrice} placeholder={priceBounds ? priceBounds.max.toLocaleString('en-NG') : 'Any'} onCommit={(n) => setPrice(value.minPrice, n)} />
+    <StaggerGroup className="space-y-6" staggerChildren={0.06}>
+      <StaggerItem>
+        <fieldset>
+          <legend className="font-semibold">Price per night</legend>
+          <div className="mt-2 flex gap-3">
+            <PriceField key={`min-${value.minPrice}`} label="From" value={value.minPrice} placeholder={priceBounds ? priceBounds.min.toLocaleString('en-NG') : '0'} onCommit={(n) => setPrice(n, value.maxPrice)} />
+            <PriceField key={`max-${value.maxPrice}`} label="To" value={value.maxPrice} placeholder={priceBounds ? priceBounds.max.toLocaleString('en-NG') : 'Any'} onCommit={(n) => setPrice(value.minPrice, n)} />
+          </div>
+          {priceBounds && <p className="mt-2 text-caption text-muted">Rooms run from {formatNaira(priceBounds.min)} to {formatNaira(priceBounds.max)}. Rooms with no published price always show.</p>}
+        </fieldset>
+      </StaggerItem>
+
+      <StaggerItem>
+        <div className="border-t border-line">
+          <GuestStepper
+            label="Minimum guests"
+            hint="Rooms that sleep at least this many"
+            value={value.minGuests ?? 1}
+            min={1}
+            max={maxGuestsAvailable}
+            onChange={(n) => onChange({ ...value, minGuests: n <= 1 ? null : n })}
+          />
         </div>
-        {priceBounds && <p className="mt-2 text-caption text-muted">Rooms run from {formatNaira(priceBounds.min)} to {formatNaira(priceBounds.max)}. Rooms with no published price always show.</p>}
-      </fieldset>
+      </StaggerItem>
 
-      <div className="border-t border-line">
-        <GuestStepper
-          label="Minimum guests"
-          hint="Rooms that sleep at least this many"
-          value={value.minGuests ?? 1}
-          min={1}
-          max={maxGuestsAvailable}
-          onChange={(n) => onChange({ ...value, minGuests: n <= 1 ? null : n })}
-        />
-      </div>
+      <StaggerItem>
+        <div className="border-t border-line pt-4">
+          <CheckGroup legend="Bed type" options={bedOptions} selected={value.beds} onToggle={(k) => onChange({ ...value, beds: toggle(value.beds, k) })} />
+        </div>
+      </StaggerItem>
 
-      <div className="border-t border-line pt-4">
-        <CheckGroup legend="Bed type" options={bedOptions} selected={value.beds} onToggle={(k) => onChange({ ...value, beds: toggle(value.beds, k) })} />
-      </div>
-
-      <div className="border-t border-line pt-4">
-        <CheckGroup<FilterAmenity> legend="Amenities" options={filterAmenityOptions} selected={value.amenities} onToggle={(k) => onChange({ ...value, amenities: toggle(value.amenities, k) })} />
-      </div>
-    </div>
+      <StaggerItem>
+        <div className="border-t border-line pt-4">
+          <CheckGroup<FilterAmenity> legend="Amenities" options={filterAmenityOptions} selected={value.amenities} onToggle={(k) => onChange({ ...value, amenities: toggle(value.amenities, k) })} />
+        </div>
+      </StaggerItem>
+    </StaggerGroup>
   )
 }
 
@@ -140,10 +150,10 @@ export function FilterSheet({ open, onClose, value, onApply, countFor, priceBoun
       ref={ref}
       aria-labelledby={titleId}
       onClose={onClose}
-      className="inset-x-0 bottom-0 top-auto m-0 max-h-[90dvh] w-full max-w-none rounded-t-card bg-paper p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col"
+      className="inset-x-0 bottom-0 top-auto m-0 max-h-[90dvh] w-full max-w-none bg-transparent p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col"
     >
       {open && (
-        <>
+        <div className="flex max-h-[90dvh] min-h-0 w-full flex-col overflow-hidden rounded-t-card bg-paper animate-sheet-rise">
           <div className="flex items-center justify-between border-b border-line px-5 py-2">
             <h2 id={titleId} className="font-display text-h3">Filters</h2>
             <button type="button" aria-label="Close filters" onClick={onClose} className="grid size-11 place-items-center rounded-full hover:bg-ink/10">
@@ -161,7 +171,7 @@ export function FilterSheet({ open, onClose, value, onApply, countFor, priceBoun
               {count === 0 ? 'No rooms match' : `Show ${count} ${count === 1 ? 'room' : 'rooms'}`}
             </Button>
           </div>
-        </>
+        </div>
       )}
     </dialog>
   )
