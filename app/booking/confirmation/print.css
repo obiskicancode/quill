@@ -1,0 +1,47 @@
+/* Print stylesheet for the confirmation page and the receipt: a clean one-page voucher. */
+@page {
+  size: A4;
+  margin: 14mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* No navigation, buttons or the floating WhatsApp button. */
+  .checkout-chrome,
+  a[href="#main"],
+  a[aria-label^="Chat with us on WhatsApp"],
+  button,
+  dialog {
+    display: none !important;
+  }
+
+  /* Keep the voucher and the receipt on one page, in plain black on white. */
+  .print-voucher,
+  .receipt-doc {
+    font-size: 11pt;
+    line-height: 1.4;
+    color: #000;
+  }
+  .print-voucher *,
+  .receipt-doc * {
+    color: #000 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+  .print-voucher section,
+  .print-voucher dl > div,
+  .receipt-doc section,
+  .receipt-doc dl > div {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .print-voucher a,
+  .receipt-doc a {
+    text-decoration: none;
+  }
+}

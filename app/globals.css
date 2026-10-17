@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------
+   DESIGN TOKENS. Swap these to rebrand. Colours are "R G B" triplets.
+   --------------------------------------------------------------- */
+:root {
+  --color-ink: 28 33 38; /* #1C2126 deep neutral base */
+  --color-ink-soft: 45 53 60; /* #2D353C */
+  --color-muted: 87 95 103; /* #575F67 secondary text */
+  --color-paper: 247 246 243; /* #F7F6F3 soft off-white page */
+  --color-surface: 255 255 255; /* cards, inputs */
+  --color-line: 221 218 211; /* #DDDAD3 hairlines */
+  --color-accent: 232 163 23; /* #E8A317 the one accent */
+  --color-accent-hover: 219 154 18; /* #DB9A12 */
+  --color-accent-pressed: 196 131 16; /* #C48310 */
+  --color-accent-ink: 122 77 0; /* #7A4D00 accent as text on light */
+  --color-whatsapp: 15 122 62; /* #0F7A3E */
+  --color-whatsapp-hover: 12 100 51;
+  --color-danger: 179 38 30; /* #B3261E */
+  --color-success: 27 122 70; /* #1B7A46 */
+
+  --focus: 28 33 38; /* focus ring colour on light surfaces */
+
+  --radius-control: 0.75rem; /* buttons, fields */
+  --radius-card: 1.25rem; /* cards, panels */
+
+  --shadow-raised: 0 1px 2px rgb(28 33 38 / 0.06), 0 8px 24px -12px rgb(28 33 38 / 0.2);
+  --shadow-float: 0 2px 4px rgb(28 33 38 / 0.08), 0 20px 48px -16px rgb(28 33 38 / 0.35);
+
+  --section-y: 4rem;
+}
+
+@media (min-width: 768px) {
+  :root { --section-y: 6rem; }
+}
+@media (min-width: 1440px) {
+  :root { --section-y: 7rem; }
+}
+
+/* Dark sections switch the focus ring to the accent (7.5:1 on ink). */
+.on-dark { --focus: 232 163 23; }
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background-color: rgb(var(--color-paper));
+    color: rgb(var(--color-ink));
+    text-rendering: optimizeLegibility;
+  }
+  :focus-visible {
+    outline: 3px solid rgb(var(--focus));
+    outline-offset: 3px;
+  }
+  [id] { scroll-margin-top: 5.5rem; }
+}
+
+@layer components {
+  .container-page { @apply mx-auto w-full max-w-page px-5 md:px-8 xl:px-10; }
+  .section-y { padding-block: var(--section-y); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
