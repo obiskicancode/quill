@@ -3,11 +3,12 @@
 import { addDays, todayISO } from '@/lib/dates'
 import type { DemoMode } from '@/lib/availability'
 import type { RoomQuery } from '@/lib/room-query'
+import { config } from '@/config'
 import { Button } from '../ui/Button'
 
 /** Development-only controls for previewing every card state. Not rendered in production builds. */
 export function PreviewBar({ query, onChange }: { query: RoomQuery; onChange: (patch: Partial<RoomQuery>) => void }) {
-  if (process.env.NODE_ENV === 'production') return null
+  if (config.isProd) return null
 
   const start = addDays(todayISO(), 14)
   const demos: { label: string; value: DemoMode | null }[] = [

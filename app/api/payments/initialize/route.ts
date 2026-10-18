@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server'
 import { loadReservation } from '@/lib/booking/view'
 import { requireManage } from '@/lib/manage/auth'
 import { refresh, store, type StoredReservation } from '@/lib/checkout/mock-db'
+import { apiFail, apiOk } from '@/app/api/envelope'
 import { fieldErrorsFrom, paymentInitSchema } from '@/schemas/checkout.schema'
 import { getCheckoutSettings, parseDemos } from '@/lib/checkout/settings'
 import type { ApiError, PaymentInitResponse } from '@/types/checkout.types'
 
-const fail = (status: number, error: ApiError) => NextResponse.json(error, { status })
+const fail = (status: number, error: ApiError) => apiFail(status, error.message, error)
 
 function returnUrl(r: StoredReservation, demo: string | null): string {
   const p = new URLSearchParams({
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   const { reference, method, idempotencyKey, demo, purpose, changeId } = parsed.data
 
   const replay = store.paymentResponses.get(idempotencyKey)
-  if (replay) return NextResponse.json(replay)
+  if (replay) return apiOk(replay)
 
   // Paying the difference for a date change reuses this endpoint. The old dates stay valid until the payment lands.
   if (purpose === 'change') {
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       changeResponse = { kind: 'redirect', url: `/booking/manage?${p.toString()}` }
     }
     store.paymentResponses.set(idempotencyKey, changeResponse)
-    return NextResponse.json(changeResponse)
+    return apiOk(changeResponse)
   }
 
   const reservation = store.reservations.get(reference)
@@ -82,5 +82,5 @@ export async function POST(req: Request) {
     response = { kind: 'redirect', url: returnUrl(reservation, demo ?? reservation.demo) }
   }
   store.paymentResponses.set(idempotencyKey, response)
-  return NextResponse.json(response)
+  return apiOk(response)
 }

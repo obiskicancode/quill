@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view'
 import { store } from '@/lib/checkout/mock-db'
 import { fieldErrorsFrom } from '@/schemas/checkout.schema'
 import { commitChange } from '@/lib/manage/actions'
 import { manageError, manageOpts, replayKey, requireManage } from '@/lib/manage/auth'
+import { apiFail, apiOk } from '@/app/api/envelope'
 import { changeDatesRequestSchema } from '@/schemas/manage.schema'
 import { hotelClock } from '@/lib/stay-quote'
 
@@ -26,7 +26,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ reference: str
   if (!r) return manageError(404, { code: 'not_found', message: 'Booking not found.' })
   const opts = await manageOpts(reference)
   const respond = (status: 'completed' | 'payment_required') =>
-    NextResponse.json({ status, view: buildGuestReservation(r, 'verified', { manage: opts }) }, { headers: { 'Cache-Control': 'no-store' } })
+    apiOk({ status, view: buildGuestReservation(r, 'verified', { manage: opts }) }, { headers: { 'Cache-Control': 'no-store' } })
 
   const key = replayKey('chg', idempotencyKey)
   const earlier = store.results.get(key) as 'completed' | 'payment_required' | undefined
@@ -35,7 +35,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ reference: str
   const demos = new Set((demo ?? '').split(',').map((t) => t.trim()))
   const outcome = await commitChange(r, quoteId, hotelClock(), demos)
   if (outcome.status === 'not_allowed') return manageError(409, { code: 'not_allowed', message: outcome.reason })
-  if (outcome.status === 'stale') return NextResponse.json({ code: 'quote_stale', message: 'The price or availability changed. Please review the new details.', quote: outcome.quote }, { status: 409, headers: { 'Cache-Control': 'no-store' } })
+  if (outcome.status === 'stale') return apiFail(409, 'The price or availability changed. Please review the new details.', { code: 'quote_stale', quote: outcome.quote }, { headers: { 'Cache-Control': 'no-store' } })
 
   store.results.set(key, outcome.status)
   if (demos.has('changeerror') && !store.failedOnce.has(key)) {

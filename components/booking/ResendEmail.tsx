@@ -3,7 +3,8 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Mail } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { bookingApi, BookingFailure } from '@/lib/booking/client'
+import { bookingService } from '@/app/api/services/booking.service'
+import { ServiceError } from '@/app/api/services/base.service'
 import { formatCountdown } from '@/lib/checkout/format'
 import { whatsappHref } from '@/lib/site'
 import { EASE_OUT } from '../motion/variants'
@@ -35,11 +36,11 @@ export function ResendEmail({ reference, maskedEmail, lead, demo }: ResendEmailP
     if (state === 'sending' || cooldown > 0) return
     setState('sending')
     try {
-      const r = await bookingApi.resend(reference, demo)
+      const r = (await bookingService.resend(reference, demo)).data
       setCooldown(r.cooldownSeconds)
       setState('sent')
     } catch (e) {
-      if (e instanceof BookingFailure && e.status === 429) {
+      if (e instanceof ServiceError && e.status === 429) {
         setCooldown(e.body?.retryAfterSeconds ?? 60)
         setState('limited')
       } else setState('failed')

@@ -14,3 +14,6 @@ export interface ApiResponse<T> {
   meta?: Record<string, unknown>;
   data?: T;
 }
+
+/** A returned response is always 2xx — non-2xx throws ServiceError, so data is always present. */
+export type ApiResult<T> = ApiResponse<T> & { data: T };

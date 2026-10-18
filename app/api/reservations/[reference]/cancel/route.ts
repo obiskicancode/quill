@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view'
 import { store } from '@/lib/checkout/mock-db'
+import { apiOk } from '@/app/api/envelope'
 import { fieldErrorsFrom } from '@/schemas/checkout.schema'
 import { cancelBooking } from '@/lib/manage/actions'
 import { manageError, manageOpts, replayKey, requireManage } from '@/lib/manage/auth'
@@ -24,7 +24,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ reference: str
   const r = await loadReservation(reference, demo)
   if (!r) return manageError(404, { code: 'not_found', message: 'Booking not found.' })
   const opts = await manageOpts(reference)
-  const done = () => NextResponse.json(buildGuestReservation(r, 'verified', { manage: opts }), { headers: { 'Cache-Control': 'no-store' } })
+  const done = () => apiOk(buildGuestReservation(r, 'verified', { manage: opts }), { headers: { 'Cache-Control': 'no-store' } })
 
   const key = replayKey('cancel', body.idempotencyKey)
   if (store.idempotency.get(key) === reference) return done() // replay: nothing is repeated

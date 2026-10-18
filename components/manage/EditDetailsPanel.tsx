@@ -2,9 +2,10 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useRef, useState } from 'react'
-import { newKey } from '@/lib/checkout/client'
+import { newKey } from '@/app/api/services/checkout.service'
 import { detailsPatchSchema, type GuestInput } from '@/schemas/checkout.schema'
-import { manageApi, ManageFailure } from '@/lib/manage/client'
+import { manageService } from '@/app/api/services/manage.service'
+import { ServiceError } from '@/app/api/services/base.service'
 import { whatsappHref } from '@/lib/site'
 import type { GuestReservation } from '@/types/booking.types'
 import { EASE_OUT } from '../motion/variants'
@@ -58,17 +59,17 @@ export function EditDetailsPanel({ v, csrf, demo, onSaved, onClose, sessionExpir
     setError(null)
     setJustSaved(false)
     try {
-      const next = await manageApi.saveDetails(v.reference, {
+      const next = (await manageService.saveDetails(v.reference, {
         idempotencyKey: key.current,
         details: { fullName: values.fullName, country: values.country, phone: values.phone, arrivalTime: values.arrivalTime, specialRequests: values.specialRequests },
-      }, csrf, demo)
+      }, csrf, demo)).data
       setSaved(values)
       key.current = newKey()
       setJustSaved(true)
       onSaved(next)
     } catch (e) {
-      const f = e instanceof ManageFailure ? e : null
-      if (f?.sessionExpired) onSessionExpired()
+      const f = e instanceof ServiceError ? e : null
+      if (f?.body?.code === 'session_expired') onSessionExpired()
       else if (f?.body?.code === 'validation' && f.body.fieldErrors) {
         setErrors(f.body.fieldErrors as Partial<Record<GuestField, string>>)
         key.current = newKey()

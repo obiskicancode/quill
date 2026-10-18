@@ -1,6 +1,6 @@
 "use client";
 
-import { useConsent } from "@/lib/consent";
+import { useConsent } from "@/providers/consent.provider";
 
 /** A small button to reopen cookie settings and change your choice. Reusable on light and dark backgrounds. */
 export function CookieSettingsButton({ className }: { className?: string }) {

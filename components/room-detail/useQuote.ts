@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { stayService } from '@/app/api/services/stay.service'
 import type { QuoteDemo, QuoteResponse, StayInput } from '@/types/stay.types'
 
 export type QuoteState =
@@ -20,26 +21,26 @@ export function useQuote(slug: string, stay: StayInput | null, demo: QuoteDemo |
       setState({ status: 'idle' })
       return
     }
-    const controller = new AbortController()
+    let cancelled = false
     setState({ status: 'checking' })
-    const p = new URLSearchParams({
-      checkIn: stay.checkIn,
-      checkOut: stay.checkOut,
-      adults: String(stay.adults),
-      children: String(stay.children),
-      extraBed: stay.extraBed ? '1' : '0',
-    })
-    if (demo) p.set('demo', demo)
-    fetch(`/api/rooms/${encodeURIComponent(slug)}/quote?${p.toString()}`, { signal: controller.signal, cache: 'no-store' })
+    stayService
+      .quote(slug, {
+        checkIn: stay.checkIn,
+        checkOut: stay.checkOut,
+        adults: stay.adults,
+        children: stay.children,
+        extraBed: stay.extraBed,
+        demo,
+      })
       .then((res) => {
-        if (!res.ok) throw new Error(String(res.status))
-        return res.json() as Promise<QuoteResponse>
+        if (!cancelled) setState({ status: 'ready', data: res.data })
       })
-      .then((data) => setState({ status: 'ready', data }))
-      .catch((err: unknown) => {
-        if (!(err instanceof DOMException && err.name === 'AbortError')) setState({ status: 'error' })
+      .catch(() => {
+        if (!cancelled) setState({ status: 'error' })
       })
-    return () => controller.abort()
+    return () => {
+      cancelled = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, slug])
 

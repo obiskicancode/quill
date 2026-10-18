@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view'
 import { store } from '@/lib/checkout/mock-db'
 import { fieldErrorsFrom } from '@/schemas/checkout.schema'
 import { saveDetails } from '@/lib/manage/actions'
 import { manageError, manageOpts, replayKey, requireManage } from '@/lib/manage/auth'
+import { apiOk } from '@/app/api/envelope'
 import { detailsRequestSchema } from '@/schemas/manage.schema'
 import { hotelClock } from '@/lib/stay-quote'
 
@@ -20,7 +20,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ reference: st
   const r = await loadReservation(reference, demo)
   if (!r) return manageError(404, { code: 'not_found', message: 'Booking not found.' })
   const opts = await manageOpts(reference)
-  const done = () => NextResponse.json(buildGuestReservation(r, 'verified', { manage: opts }), { headers: { 'Cache-Control': 'no-store' } })
+  const done = () => apiOk(buildGuestReservation(r, 'verified', { manage: opts }), { headers: { 'Cache-Control': 'no-store' } })
 
   const key = replayKey('det', parsed.data.idempotencyKey)
   if (store.idempotency.get(key) === reference) return done()

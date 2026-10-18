@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { addDays } from '@/lib/dates'
+import { config } from '@/config'
 import { hotelClock } from '@/lib/stay-quote'
 
 /** Development-only shortcuts to every booking-card state. Not rendered in production builds. */
 export function PreviewLinks({ slug }: { slug: string }) {
-  if (process.env.NODE_ENV === 'production') return null
+  if (config.isProd) return null
   const today = hotelClock().today
   const start = addDays(today, 14)
   const base = (extra: Record<string, string>, room = slug) => {

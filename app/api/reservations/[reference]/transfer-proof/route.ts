@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server'
 import { requireManage } from '@/lib/manage/auth'
 import { loadReservation } from '@/lib/booking/view'
 import { logEvent, refresh, store, toStatus } from '@/lib/checkout/mock-db'
+import { apiFail, apiOk } from '@/app/api/envelope'
 import { checkProofFile } from '@/schemas/checkout.schema'
 import type { ApiError } from '@/types/checkout.types'
 
-const fail = (status: number, error: ApiError) => NextResponse.json(error, { status })
+const fail = (status: number, error: ApiError) => apiFail(status, error.message, error)
 
 /** Receives the bank-transfer receipt (JPG, PNG, WebP or PDF, up to 5 MB). MOCK: stores only the file's type and size. */
 export async function POST(req: Request, ctx: { params: Promise<{ reference: string }> }) {
@@ -27,7 +27,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ reference: str
     if (problem) return fail(422, { code: 'bad_file', message: problem })
     pc.status = 'awaiting_verification'
     logEvent(r, 'transfer_proof_received', 'For your new dates', 'guest')
-    return NextResponse.json({ ok: true })
+    return apiOk({ ok: true })
   }
 
   const reservation = store.reservations.get(reference)
@@ -45,5 +45,5 @@ export async function POST(req: Request, ctx: { params: Promise<{ reference: str
   reservation.proof = { type: file.type, size: file.size }
   reservation.status = 'awaiting_verification'
   logEvent(reservation, 'transfer_proof_received', undefined, 'guest')
-  return NextResponse.json(toStatus(reservation))
+  return apiOk(toStatus(reservation))
 }

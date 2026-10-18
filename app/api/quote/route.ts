@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
 import { buildCheckoutQuote } from '@/lib/checkout/quote'
+import { apiFail, apiOk } from '@/app/api/envelope'
 import { fieldErrorsFrom, quoteRequestSchema } from '@/schemas/checkout.schema'
 import type { ApiError } from '@/types/checkout.types'
 
@@ -9,13 +9,13 @@ export async function POST(req: Request) {
   const parsed = quoteRequestSchema.safeParse(body)
   if (!parsed.success) {
     const error: ApiError = { code: 'validation', message: 'Check the stay details and try again.', fieldErrors: fieldErrorsFrom(parsed.error) }
-    return NextResponse.json(error, { status: 422 })
+    return apiFail(422, error.message, error)
   }
   try {
     const quote = await buildCheckoutQuote({ ...parsed.data, extras: parsed.data.extras })
-    return NextResponse.json(quote, { headers: { 'Cache-Control': 'no-store' } })
+    return apiOk(quote, { headers: { 'Cache-Control': 'no-store' } })
   } catch {
     const error: ApiError = { code: 'server', message: "We couldn't calculate your price." }
-    return NextResponse.json(error, { status: 503 })
+    return apiFail(503, error.message, error)
   }
 }

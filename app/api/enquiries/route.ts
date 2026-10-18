@@ -1,12 +1,13 @@
-import { NextResponse } from 'next/server'
 import { rateLimited } from '@/lib/checkout/mock-db'
+import { apiFail, apiOk } from '@/app/api/envelope'
+import { config } from '@/config'
 import { fieldErrorsFrom } from '@/schemas/checkout.schema'
 import { getHotelSettings } from '@/lib/content/data'
 import { enquiryStore, saveEnquiry } from '@/lib/content/enquiries'
 import { enquirySchema, type EnquiryError, type EnquiryResponse } from '@/schemas/content.schema'
 
 const noStore = { 'Cache-Control': 'no-store' }
-const fail = (status: number, error: EnquiryError, headers: Record<string, string> = {}) => NextResponse.json(error, { status, headers: { ...noStore, ...headers } })
+const fail = (status: number, error: EnquiryError, headers: Record<string, string> = {}) => apiFail(status, error.message, error, { headers: { ...noStore, ...headers } })
 
 const tooMany = () => fail(429, { code: 'rate_limited', message: 'You have sent a few messages already. Please wait a few minutes, or message us on WhatsApp.', retryAfterSeconds: 600 }, { 'Retry-After': '600' })
 
@@ -27,14 +28,14 @@ export async function POST(req: Request) {
   const responseHours = getHotelSettings().enquiryResponseHours
 
   // Honeypot: bots fill the hidden field. Reply as if it worked, store nothing.
-  if (data.website) return NextResponse.json<EnquiryResponse>({ reference: 'ENQ-000000', responseHours }, { headers: noStore })
+  if (data.website) return apiOk<EnquiryResponse>({ reference: 'ENQ-000000', responseHours }, { headers: noStore })
 
   // Replay of the same key returns the same enquiry and does not count against the limit.
   const earlier = enquiryStore.keys.get(data.idempotencyKey)
-  if (earlier) return NextResponse.json<EnquiryResponse>({ reference: earlier, responseHours }, { headers: noStore })
+  if (earlier) return apiOk<EnquiryResponse>({ reference: earlier, responseHours }, { headers: noStore })
 
   // Preview switches (development only).
-  if (process.env.NODE_ENV !== 'production') {
+  if (config.isDev) {
     if (data.demo === 'ratelimit') return tooMany()
     if (data.demo === 'error' && !enquiryStore.failedOnce.has(data.idempotencyKey)) {
       enquiryStore.failedOnce.add(data.idempotencyKey)
@@ -46,5 +47,5 @@ export async function POST(req: Request) {
   if (rateLimited(`enquiry:${client}`, 3, 10 * 60_000)) return tooMany()
 
   const row = saveEnquiry(data)
-  return NextResponse.json<EnquiryResponse>({ reference: row.reference, responseHours }, { status: 201, headers: noStore })
+  return apiOk<EnquiryResponse>({ reference: row.reference, responseHours }, { status: 201, headers: noStore })
 }

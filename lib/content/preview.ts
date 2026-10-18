@@ -1,3 +1,5 @@
+import { config } from '@/config'
+
 /**
  * Development-only preview switches, read from ?preview= on each content page.
  *   preview=empty            every optional section has no data (so it is omitted)
@@ -14,7 +16,7 @@ export interface PreviewFlags {
 const none: PreviewFlags = { has: () => false }
 
 export function parsePreview(raw: string | string[] | undefined | null): PreviewFlags {
-  if (process.env.NODE_ENV === 'production' || !raw) return none
+  if (config.isProd || !raw) return none
   const tokens = new Set((Array.isArray(raw) ? raw[0] : raw).split(',').map((t) => t.trim()).filter(Boolean))
   return { has: (kind, key) => tokens.has(kind) || tokens.has(`${kind}:${key}`) }
 }
@@ -30,7 +32,7 @@ export async function gate<T>(flags: PreviewFlags, key: string, data: T, empty: 
 
 /** Reads a value switch such as ?preview=form:error (development only). */
 export function previewValue(raw: string | string[] | undefined | null, key: string): string | null {
-  if (process.env.NODE_ENV === 'production' || !raw) return null
+  if (config.isProd || !raw) return null
   const hit = (Array.isArray(raw) ? raw[0] : raw).split(',').map((t) => t.trim()).find((t) => t.startsWith(`${key}:`))
   return hit ? hit.slice(key.length + 1) : null
 }

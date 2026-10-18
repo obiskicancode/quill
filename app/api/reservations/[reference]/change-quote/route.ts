@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server'
 import { loadReservation } from '@/lib/booking/view'
 import { fieldErrorsFrom } from '@/schemas/checkout.schema'
 import { quoteChange } from '@/lib/manage/actions'
 import { manageError, requireManage } from '@/lib/manage/auth'
+import { apiOk } from '@/app/api/envelope'
 import { changeQuoteRequestSchema } from '@/schemas/manage.schema'
 import { hotelClock } from '@/lib/stay-quote'
 
@@ -21,5 +21,5 @@ export async function POST(req: Request, ctx: { params: Promise<{ reference: str
   if (demos.has('quoteerror')) return manageError(503, { code: 'server', message: "We couldn't check those dates." })
 
   const quote = await quoteChange(r, parsed.data, hotelClock(), demos)
-  return NextResponse.json(quote, { headers: { 'Cache-Control': 'no-store' } })
+  return apiOk(quote, { headers: { 'Cache-Control': 'no-store' } })
 }

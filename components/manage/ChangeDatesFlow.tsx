@@ -3,9 +3,10 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { CheckCircle2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { newKey } from '@/lib/checkout/client'
+import { newKey } from '@/app/api/services/checkout.service'
 import { formatDeadline } from '@/lib/checkout/format'
-import { manageApi, ManageFailure } from '@/lib/manage/client'
+import { manageService } from '@/app/api/services/manage.service'
+import { ServiceError } from '@/app/api/services/base.service'
 import type { ChangeQuoteResponse, PriceDifference } from '@/types/manage.types'
 import { formatRange } from '@/lib/room-query'
 import { whatsappHref } from '@/lib/site'
@@ -78,9 +79,9 @@ export function ChangeDatesFlow({ open, onClose, v, csrf, demo, onUpdated, onRef
     setQuoteFailed(false)
     setError(null)
     try {
-      setQuote(await manageApi.changeQuote(v.reference, { checkIn: r.checkIn, checkOut: r.checkOut }, csrf, demo))
+      setQuote((await manageService.changeQuote(v.reference, { checkIn: r.checkIn, checkOut: r.checkOut }, csrf, demo)).data)
     } catch (e) {
-      if (e instanceof ManageFailure && e.sessionExpired) onSessionExpired()
+      if (e instanceof ServiceError && e.body?.code === 'session_expired') onSessionExpired()
       else setQuoteFailed(true)
     } finally {
       setQuoting(false)
@@ -99,14 +100,14 @@ export function ChangeDatesFlow({ open, onClose, v, csrf, demo, onUpdated, onRef
     setBusy(true)
     setError(null)
     try {
-      const res = await manageApi.changeDates(v.reference, { idempotencyKey: key.current, quoteId: quote.quoteId }, csrf, demo)
+      const res = (await manageService.changeDates(v.reference, { idempotencyKey: key.current, quoteId: quote.quoteId }, csrf, demo)).data
       setConfirmed(quote)
       onUpdated(res.view, res.status === 'completed' ? 'Your dates have been changed.' : 'Your new dates are held while you pay.')
       setStep(res.status === 'completed' ? 'done' : 'payment')
     } catch (e) {
-      const f = e instanceof ManageFailure ? e : null
+      const f = e instanceof ServiceError ? e : null
       const stale = (f?.body as unknown as { quote?: ChangeQuoteResponse } | null)?.quote
-      if (f?.sessionExpired) onSessionExpired()
+      if (f?.body?.code === 'session_expired') onSessionExpired()
       else if (f?.body?.code === 'quote_stale' && stale) {
         key.current = newKey()
         setQuote(stale)

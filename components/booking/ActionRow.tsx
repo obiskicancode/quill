@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from 'framer-motion'
 import { CalendarPlus, MessageCircle, Printer, Settings2 } from 'lucide-react'
-import { calendarUrl } from '@/lib/booking/client'
+import { bookingService } from '@/app/api/services/booking.service'
 import { googleCalendarUrl, whatsappShareUrl, type CalendarEvent } from '@/lib/booking/ics'
 import type { GuestReservation } from '@/types/booking.types'
 import { formatRange } from '@/lib/room-query'
@@ -32,7 +32,7 @@ export function ActionRow({ v, demo, hideManage = false }: { v: GuestReservation
         {active && (
           <motion.li key="ics" {...li}>
             {ready && event ? (
-              <ButtonLink href={calendarUrl(v.reference, demo)} variant="secondary" download icon={<CalendarPlus className="size-5" aria-hidden />}>
+              <ButtonLink href={bookingService.calendarUrl(v.reference, demo)} variant="secondary" download icon={<CalendarPlus className="size-5" aria-hidden />}>
                 Add to calendar (.ics)
               </ButtonLink>
             ) : (

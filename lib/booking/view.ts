@@ -7,6 +7,7 @@ import type { ReservationStatus, StatusResponse } from '@/types/checkout.types'
 import { buildManageData } from '../manage/data'
 import { previewCancellation } from '../manage/rules'
 import { getManageSettings } from '../manage/settings'
+import { config } from '@/config'
 import { getRoomDetail } from '../room-detail'
 import { hotelClock } from '../stay-quote'
 import { maskEmail, maskPhone } from './mask'
@@ -113,7 +114,7 @@ export function buildGuestReservation(r: StoredReservation, level: AccessLevel, 
 // and cancellations made on it persist until the server restarts (add `reset` to rebuild it).
 // ---------------------------------------------------------------------------------------------
 
-export const isDemoRef = (reference: string) => process.env.NODE_ENV !== 'production' && reference === 'DEMO-01'
+export const isDemoRef = (reference: string) => config.isDev && reference === 'DEMO-01'
 
 const pollStart: { at: number } = ((globalThis as unknown as { __deaPollDemo?: { at: number } }).__deaPollDemo ??= { at: 0 })
 

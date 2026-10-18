@@ -1,18 +1,18 @@
-import { NextResponse } from 'next/server'
 import { getManageSession } from '../booking/session'
 import { isDemoRef } from '../booking/view'
 import { rateLimited, store } from '../checkout/mock-db'
+import { apiFail } from '@/app/api/envelope'
 import type { ManageApiError } from '@/types/manage.types'
 
 const noStore = { 'Cache-Control': 'no-store' }
 
-export const manageError = (status: number, error: ManageApiError) => NextResponse.json(error, { status, headers: noStore })
+export const manageError = (status: number, error: ManageApiError) => apiFail(status, error.message, error, { headers: noStore })
 
 /**
  * Every change needs: a live manage session cookie, a matching CSRF token and a rate-limit pass.
  * (In development the DEMO-01 reference skips the cookie and CSRF so every state can be previewed.)
  */
-export async function requireManage(req: Request, reference: string, demo: string | null): Promise<{ ok: true } | { ok: false; res: NextResponse }> {
+export async function requireManage(req: Request, reference: string, demo: string | null): Promise<{ ok: true } | { ok: false; res: Response }> {
   const client = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local'
   if (rateLimited(`manage:${client}`, 40, 60_000)) {
     return { ok: false, res: manageError(429, { code: 'rate_limited', message: 'Too many requests. Please wait a moment.', retryAfterSeconds: 60 }) }

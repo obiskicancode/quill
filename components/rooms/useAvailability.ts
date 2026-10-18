@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { fetchAvailability, type AvailabilityMap, type DemoMode, type StayParams } from '@/lib/availability'
+import { stayService } from '@/app/api/services/stay.service'
+import type { AvailabilityMap, DemoMode, StayParams } from '@/lib/availability'
 import type { RoomType } from '@/lib/rooms'
 
 type State = { status: 'idle' | 'loading' | 'ready' | 'error'; data: AvailabilityMap | null }
@@ -19,8 +20,9 @@ export function useAvailability(rooms: RoomType[], stay: StayParams | null, demo
     }
     let cancelled = false
     setState({ status: 'loading', data: null })
-    fetchAvailability(stay, rooms, demo)
-      .then((data) => !cancelled && setState({ status: 'ready', data }))
+    stayService
+      .availability({ ...stay, rooms: rooms.map((r) => r.id), demo })
+      .then((res) => !cancelled && setState({ status: 'ready', data: res.data }))
       .catch(() => !cancelled && setState({ status: 'error', data: null }))
     return () => {
       cancelled = true

@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
+import { config } from '@/config'
 import { cookies } from 'next/headers'
 import type { NextResponse } from 'next/server'
 
@@ -13,9 +14,9 @@ export const ACCESS_TTL_SECONDS = 2 * 60 * 60
 export const cookieName = (reference: string) => `dea_bk_${reference}`
 
 function secret(): string {
-  const s = process.env.BOOKING_COOKIE_SECRET
+  const s = config.BOOKING.COOKIE_SECRET
   if (s) return s
-  if (process.env.NODE_ENV === 'production') throw new Error('BOOKING_COOKIE_SECRET must be set in production')
+  if (config.isProd) throw new Error('BOOKING_COOKIE_SECRET must be set in production')
   return 'dev-only-secret-change-me'
 }
 
@@ -81,7 +82,7 @@ export function setManageCookie(res: NextResponse, reference: string, value: str
     // Lax, not Strict: the guest returns from the payment provider by a cross-site redirect and must still be signed in.
     // Changes are protected by the CSRF token instead.
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: config.isProd,
     path: '/',
     maxAge: MANAGE_TTL_SECONDS,
   })
@@ -89,14 +90,14 @@ export function setManageCookie(res: NextResponse, reference: string, value: str
 }
 
 export function clearManageCookie(res: NextResponse, reference: string): void {
-  res.cookies.set(manageCookieName(reference), '', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 0 })
+  res.cookies.set(manageCookieName(reference), '', { httpOnly: true, sameSite: 'lax', secure: config.isProd, path: '/', maxAge: 0 })
 }
 
 export function setAccessCookie(res: NextResponse, reference: string, level: AccessLevel): void {
   res.cookies.set(cookieName(reference), createAccessValue(reference, level), {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: config.isProd,
     path: '/',
     maxAge: ACCESS_TTL_SECONDS,
   })

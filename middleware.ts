@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { config as appConfig } from '@/config'
 
-const MAINTENANCE = process.env.MAINTENANCE_MODE === 'true'
+const MAINTENANCE = appConfig.MAINTENANCE_MODE
 
 /**
  * Returns 503 and serves /maintenance for all requests except:

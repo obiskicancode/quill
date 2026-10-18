@@ -2,7 +2,8 @@
 
 import { MessageCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { bookingApi, BookingFailure } from '@/lib/booking/client'
+import { bookingService } from '@/app/api/services/booking.service'
+import { ServiceError } from '@/app/api/services/base.service'
 import { verifyRequestSchema } from '@/schemas/booking.schema'
 import type { GuestReservation } from '@/types/booking.types'
 import { formatCountdown } from '@/lib/checkout/format'
@@ -61,12 +62,12 @@ export function VerifyForm({ reference, variant, onVerified, scope = 'view', not
     setServerError(null)
     setBusy(true)
     try {
-      onVerified(await bookingApi.verify(parsed.data))
+      onVerified((await bookingService.verify(parsed.data)).data)
     } catch (err) {
-      if (err instanceof BookingFailure && err.status === 429) {
+      if (err instanceof ServiceError && err.status === 429) {
         setLockedFor(err.body?.retryAfterSeconds ?? 600)
         setServerError('Too many attempts. Please wait before trying again.')
-      } else if (err instanceof BookingFailure && err.network) {
+      } else if (err instanceof ServiceError && err.network) {
         setServerError("We couldn't reach the server. Check your connection and try again.")
       } else {
         // One generic message for every other failure.

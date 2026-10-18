@@ -7,6 +7,7 @@ import { SectionSkeleton } from '@/components/content/Skeletons'
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm'
 import { EnquirySection } from '@/components/enquiry/EnquirySection'
 import { getFormSettings, getHotelSettings } from '@/lib/content/data'
+import { config } from '@/config'
 import { parsePreview } from '@/lib/content/preview'
 import { roomTypes } from '@/lib/rooms'
 
@@ -32,7 +33,7 @@ export default async function EnquiryPage({
     const v = sp[name]
     return Array.isArray(v) ? (v[0] ?? null) : (v ?? null)
   }
-  const flags = process.env.NODE_ENV === 'production' ? parsePreview(undefined) : parsePreview(sp.preview)
+  const flags = config.isProd ? parsePreview(undefined) : parsePreview(sp.preview)
   const settings = await getFormSettings(flags)
   if (!settings) notFound()
   const hotel = getHotelSettings()

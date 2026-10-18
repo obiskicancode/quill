@@ -1,3 +1,4 @@
+import { config } from "@/config";
 import type { SiteConfig } from "@/types/site.types";
 
 /**
@@ -12,7 +13,7 @@ export const site: SiteConfig = {
   shortName: "Divine Ex.",
   description:
     "Comfortable rooms and serviced apartments in Nigeria. Check availability, book direct and pay securely online.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  url: config.SITE.URL,
   logo: null, // e.g. { src: '/images/logo.svg', alt: 'Divine Excellent Apartments', width: 160, height: 48 }
   bookingHref: "/checkout",
   nav: [

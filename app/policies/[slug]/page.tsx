@@ -7,6 +7,7 @@ import { PolicyToc } from '@/components/policies/PolicyToc'
 import { PrintButton } from '@/components/policies/PrintButton'
 import { CancellationSummary, HouseRulesList } from '@/components/policies/PolicySummary'
 import { getPolicyPage, getPolicySettings } from '@/lib/content/data'
+import { config } from '@/config'
 import { parsePreview } from '@/lib/content/preview'
 import { policyHeadings } from '@/lib/content/rich'
 import { POLICY_SLUGS, type PolicySlug } from '@/types/content.types'
@@ -42,7 +43,7 @@ export default async function PolicyPage({
   const { slug } = await params
   if (!isPolicySlug(slug)) notFound()
   // Preview switches exist only in development.
-  const flags = process.env.NODE_ENV === 'production' ? parsePreview(undefined) : parsePreview((await searchParams).preview)
+  const flags = config.isProd ? parsePreview(undefined) : parsePreview((await searchParams).preview)
   const page = await getPolicyPage(slug, flags)
   if (!page) notFound()
 

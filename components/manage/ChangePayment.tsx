@@ -3,10 +3,11 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { CreditCard, Landmark, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { newKey } from '@/lib/checkout/client'
+import { newKey } from '@/app/api/services/checkout.service'
 import { checkProofFile, MAX_PROOF_BYTES } from '@/schemas/checkout.schema'
 import { formatCountdown } from '@/lib/checkout/format'
-import { manageApi, ManageFailure } from '@/lib/manage/client'
+import { manageService } from '@/app/api/services/manage.service'
+import { ServiceError } from '@/app/api/services/base.service'
 import type { PendingChangeView } from '@/types/manage.types'
 import { formatRange } from '@/lib/room-query'
 import { formatMinor } from '@/types/stay.types'
@@ -44,8 +45,8 @@ export function ChangePayment({ reference, change, csrf, demo, onRefresh, onSess
   const panelMotion = reduced ? {} : { initial: { opacity: 0, y: 6 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -6 }, transition: { duration: 0.2, ease: EASE_OUT } }
 
   function fail(e: unknown) {
-    const f = e instanceof ManageFailure ? e : null
-    if (f?.sessionExpired) return onSessionExpired()
+    const f = e instanceof ServiceError ? e : null
+    if (f?.body?.code === 'session_expired') return onSessionExpired()
     if (!f || f.network || f.status >= 500) setError("We couldn't reach the server. Trying again is safe: it will not take the payment twice.")
     else {
       key.current = newKey()
@@ -58,7 +59,7 @@ export function ChangePayment({ reference, change, csrf, demo, onRefresh, onSess
     setBusy(true)
     setError(null)
     try {
-      const init = await manageApi.initChangePayment(reference, { changeId: change.changeId, method, idempotencyKey: key.current }, csrf, demo)
+      const init = (await manageService.initChangePayment(reference, { changeId: change.changeId, method, idempotencyKey: key.current }, csrf, demo)).data
       if (init.kind === 'redirect') {
         window.location.assign(init.url) // the provider's hosted checkout. Only its verified webhook confirms the payment.
         return
@@ -79,7 +80,7 @@ export function ChangePayment({ reference, change, csrf, demo, onRefresh, onSess
     setFileError(null)
     setBusy(true)
     try {
-      await manageApi.uploadChangeProof(reference, change.changeId, file, csrf, demo)
+      await manageService.uploadChangeProof(reference, change.changeId, file, csrf, demo)
       await onRefresh()
     } catch (e) {
       fail(e)

@@ -1,14 +1,14 @@
-import { NextResponse } from 'next/server'
 import { buildSnapshot } from '@/lib/booking/snapshot'
 import { setAccessCookie } from '@/lib/booking/session'
 import { getRoomDetail } from '@/lib/room-detail'
 import { buildCheckoutQuote } from '@/lib/checkout/quote'
 import { createReference, logEvent, notify, rateLimited, refresh, store, toReservationResponse, type StoredReservation } from '@/lib/checkout/mock-db'
+import { apiFail, apiOk } from '@/app/api/envelope'
 import { fieldErrorsFrom, reservationRequestSchema } from '@/schemas/checkout.schema'
 import { getCheckoutSettings, parseDemos } from '@/lib/checkout/settings'
 import type { ApiError } from '@/types/checkout.types'
 
-const fail = (status: number, error: ApiError, headers?: Record<string, string>) => NextResponse.json(error, { status, headers })
+const fail = (status: number, error: ApiError, headers?: Record<string, string>) => apiFail(status, error.message, error, headers ? { headers } : undefined)
 
 /**
  * Creates the pending reservation and starts the hold. Safe to retry: the same idempotency key always returns
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   const existingRef = store.idempotency.get(`res:${data.idempotencyKey}`)
   const existing = existingRef ? store.reservations.get(existingRef) : undefined
   if (existing) {
-    const replay = NextResponse.json(toReservationResponse(refresh(existing)))
+    const replay = apiOk(toReservationResponse(refresh(existing)))
     setAccessCookie(replay, existing.reference, 'checkout')
     return replay
   }
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
     return fail(503, { code: 'server', message: 'The connection dropped.' })
   }
   // The guest's browser gets a short-lived signed cookie bound to this reference, so the confirmation page can load without exposing details by reference alone.
-  const created = NextResponse.json(toReservationResponse(reservation), { status: 201 })
+  const created = apiOk(toReservationResponse(reservation), { status: 201 })
   setAccessCookie(created, reservation.reference, 'checkout')
   return created
 }

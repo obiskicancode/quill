@@ -3,7 +3,9 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Upload } from 'lucide-react'
 import { useState } from 'react'
-import { api, ApiFailure } from '@/lib/checkout/client'
+import { config } from '@/config'
+import { checkoutService } from '@/app/api/services/checkout.service'
+import { ServiceError } from '@/app/api/services/base.service'
 import { checkProofFile, MAX_PROOF_BYTES } from '@/schemas/checkout.schema'
 import { formatMinor } from '@/types/stay.types'
 import type { GuestReservation } from '@/types/booking.types'
@@ -36,11 +38,11 @@ export function TransferPanel({ v, onUploaded }: { v: GuestReservation; onUpload
     setBusy(true)
     try {
       // Dev preview reference has no stored reservation, so the upload is simulated.
-      if (process.env.NODE_ENV !== 'production' && v.reference === 'DEMO-01') await new Promise((r) => setTimeout(r, 600))
-      else await api.uploadProof(v.reference, file)
+      if (config.isDev && v.reference === 'DEMO-01') await new Promise((r) => setTimeout(r, 600))
+      else await checkoutService.uploadProof(v.reference, file)
       onUploaded()
     } catch (e) {
-      setError(e instanceof ApiFailure && e.body?.message ? e.body.message : "We couldn't upload the receipt. Please try again.")
+      setError(e instanceof ServiceError && e.body?.message ? e.body.message : "We couldn't upload the receipt. Please try again.")
     } finally {
       setBusy(false)
     }

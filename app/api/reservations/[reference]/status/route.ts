@@ -1,6 +1,8 @@
-import { NextResponse } from 'next/server'
 import { getAccess } from '@/lib/booking/session'
 import { isDemoRef, loadReservation, statusOf } from '@/lib/booking/view'
+import { apiFail, apiOk } from '@/app/api/envelope'
+
+const noStore = { 'Cache-Control': 'no-store' }
 
 /**
  * Polled by checkout and by the confirmation page. Needs the signed booking cookie (or the dev demo reference),
@@ -11,6 +13,6 @@ export async function GET(req: Request, ctx: { params: Promise<{ reference: stri
   const demo = new URL(req.url).searchParams.get('demo')
   const allowed = isDemoRef(reference) || (await getAccess(reference)) !== null
   const reservation = allowed ? await loadReservation(reference, demo) : null
-  if (!reservation) return NextResponse.json({ code: 'not_found', message: 'Reservation not found.' }, { status: 404, headers: { 'Cache-Control': 'no-store' } })
-  return NextResponse.json(statusOf(reservation), { headers: { 'Cache-Control': 'no-store' } })
+  if (!reservation) return apiFail(404, 'Reservation not found.', { code: 'not_found' }, { headers: noStore })
+  return apiOk(statusOf(reservation), { headers: noStore })
 }

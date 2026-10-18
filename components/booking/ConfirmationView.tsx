@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Settings2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { bookingApi } from '@/lib/booking/client'
+import { bookingService } from '@/app/api/services/booking.service'
 import { trackBookingConfirmedOnce } from '@/lib/booking/analytics'
 import { headerKind, type GuestReservation } from '@/types/booking.types'
 import { Banner } from '../checkout/CheckoutStates'
@@ -57,7 +57,7 @@ export function ConfirmationView({ initial, demo }: { initial: GuestReservation;
     setRefreshing(true)
     setRefreshError(false)
     try {
-      const next = await bookingApi.get(v.reference, demo)
+      const next = (await bookingService.get(v.reference, demo)).data
       setV((prev) => {
         if (prev.status !== next.status) setAnnouncement('Your booking status has changed. The page has been updated.')
         return next
@@ -77,7 +77,7 @@ export function ConfirmationView({ initial, demo }: { initial: GuestReservation;
     const started = Date.now()
     const tick = async () => {
       try {
-        const s = await bookingApi.status(v.reference, demo)
+        const s = (await bookingService.status(v.reference, demo)).data
         if (stopped) return
         if (s.status !== v.status || s.paymentStatus !== v.paymentStatus) return void (await refresh())
       } catch {

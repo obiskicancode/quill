@@ -3,9 +3,11 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { CheckCircle2, Loader2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { newKey } from '@/lib/checkout/client'
-import { manageApi, ManageFailure } from '@/lib/manage/client'
+import { newKey } from '@/app/api/services/checkout.service'
+import { manageService } from '@/app/api/services/manage.service'
+import { ServiceError } from '@/app/api/services/base.service'
 import { CANCEL_REASONS, type CancellationPreview } from '@/types/manage.types'
+import type { CancelRequest } from '@/schemas/manage.schema'
 import { formatMinor } from '@/types/stay.types'
 import type { GuestReservation } from '@/types/booking.types'
 import { EASE_OUT } from '../motion/variants'
@@ -79,10 +81,10 @@ export function CancelFlow({ open, onClose, v, csrf, demo, onUpdated, sessionExp
   async function loadPreview() {
     setLoadState('loading')
     try {
-      setPreview(await manageApi.cancellationPreview(v.reference, demo))
+      setPreview((await manageService.cancellationPreview(v.reference, demo)).data)
       setLoadState('ready')
     } catch (e) {
-      if (e instanceof ManageFailure && e.sessionExpired) onSessionExpired()
+      if (e instanceof ServiceError && e.body?.code === 'session_expired') onSessionExpired()
       setLoadState('error')
     }
   }
@@ -102,18 +104,18 @@ export function CancelFlow({ open, onClose, v, csrf, demo, onUpdated, sessionExp
     setError(null)
     setBusy(true)
     try {
-      const next = await manageApi.cancel(v.reference, {
-        idempotencyKey: key.current, reason: reason || null, note: note.trim() || null, acknowledged: true, expectedRefundMinor: preview.refundMinor,
-      }, csrf, demo)
+      const next = (await manageService.cancel(v.reference, {
+        idempotencyKey: key.current, reason: (reason || null) as CancelRequest['reason'], note: note.trim() || null, acknowledged: true, expectedRefundMinor: preview.refundMinor,
+      }, csrf, demo)).data
       setResult(next)
       setStep('done')
       onUpdated(next, 'Your booking has been cancelled.')
     } catch (e) {
-      const f = e instanceof ManageFailure ? e : null
-      if (f?.sessionExpired) onSessionExpired()
+      const f = e instanceof ServiceError ? e : null
+      if (f?.body?.code === 'session_expired') onSessionExpired()
       else if (f?.body?.code === 'preview_changed' && f.body.preview) {
         key.current = newKey()
-        setPreview(f.body.preview)
+        setPreview(f.body.preview as CancellationPreview)
         setStep('review')
         setNotice('The refund amount has changed since you opened this. Please review it before you continue.')
       } else if (!f || f.network || f.status >= 500) {

@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
 import { manageError, manageOpts } from '@/lib/manage/auth'
 import { allowedActions, previewCancellation } from '@/lib/manage/rules'
 import { getManageSettings } from '@/lib/manage/settings'
 import { parseDemos } from '@/lib/checkout/settings'
 import { isDemoRef, loadReservation } from '@/lib/booking/view'
+import { apiOk } from '@/app/api/envelope'
 import { hotelClock } from '@/lib/stay-quote'
 
 /** What cancelling right now would do: refund, amount kept, the policy rule applied, the method and the expected wait. */
@@ -19,5 +19,5 @@ export async function GET(req: Request, ctx: { params: Promise<{ reference: stri
   const clock = hotelClock()
   const allowed = allowedActions(r, clock, settings).canCancel
   if (!allowed.allowed) return manageError(409, { code: 'not_allowed', message: allowed.reason ?? 'This booking cannot be cancelled online.' })
-  return NextResponse.json(previewCancellation(r, clock, settings), { headers: { 'Cache-Control': 'no-store' } })
+  return apiOk(previewCancellation(r, clock, settings), { headers: { 'Cache-Control': 'no-store' } })
 }

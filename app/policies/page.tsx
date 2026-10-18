@@ -4,6 +4,7 @@ import { PageHero } from '@/components/content/PageHero'
 import { Section } from '@/components/content/Section'
 import { SectionSkeleton } from '@/components/content/Skeletons'
 import { PolicyList } from '@/components/policies/PolicyList'
+import { config } from '@/config'
 import { parsePreview } from '@/lib/content/preview'
 
 export const metadata: Metadata = {
@@ -20,7 +21,7 @@ export default async function PoliciesPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   // Preview switches exist only in development.
-  const flags = process.env.NODE_ENV === 'production' ? parsePreview(undefined) : parsePreview((await searchParams).preview)
+  const flags = config.isProd ? parsePreview(undefined) : parsePreview((await searchParams).preview)
 
   return (
     <>

@@ -4,7 +4,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { MessageSquare } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { headerKind, type GuestReservation } from '@/types/booking.types'
-import { manageApi, ManageFailure } from '@/lib/manage/client'
+import { manageService } from '@/app/api/services/manage.service'
+import { ServiceError } from '@/app/api/services/base.service'
 import { formatCountdown } from '@/lib/checkout/format'
 import { EASE_OUT } from '../motion/variants'
 import { ActionRow } from '../booking/ActionRow'
@@ -83,9 +84,9 @@ export function ManageView({ initial, demo, onSignedOut, onExpired }: ManageView
     setRefreshing(true)
     setRefreshError(false)
     try {
-      applyView(await manageApi.get(v.reference, demo))
+      applyView((await manageService.get(v.reference, demo)).data)
     } catch (e) {
-      if (e instanceof ManageFailure && e.sessionExpired) setExpired(true)
+      if (e instanceof ServiceError && e.body?.code === 'session_expired') setExpired(true)
       else setRefreshError(true)
     } finally {
       setRefreshing(false)
@@ -115,7 +116,7 @@ export function ManageView({ initial, demo, onSignedOut, onExpired }: ManageView
     const started = Date.now()
     const tick = async () => {
       try {
-        const next = await manageApi.get(v.reference, demo)
+        const next = (await manageService.get(v.reference, demo)).data
         if (stopped) return
         if (!next.manage) return setExpired(true)
         const changed = next.status !== v.status || next.manage.pendingChange?.status !== pending?.status || Boolean(next.manage.pendingChange) !== Boolean(pending)
@@ -137,7 +138,7 @@ export function ManageView({ initial, demo, onSignedOut, onExpired }: ManageView
   async function signOut() {
     setSigningOut(true)
     try {
-      await manageApi.signOut(v.reference, csrf, demo)
+      await manageService.signOut(v.reference, csrf, demo)
     } catch {
       /* the session ends on the server either way */
     }

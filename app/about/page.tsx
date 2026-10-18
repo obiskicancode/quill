@@ -12,6 +12,7 @@ import { Section } from '@/components/content/Section'
 import { SectionSkeleton } from '@/components/content/Skeletons'
 import { getHotelSettings, getSitePage } from '@/lib/content/data'
 import { hotelJsonLd } from '@/lib/content/jsonld'
+import { config } from '@/config'
 import { parsePreview } from '@/lib/content/preview'
 
 export function generateMetadata(): Metadata {
@@ -24,7 +25,7 @@ export function generateMetadata(): Metadata {
 
 export default async function AboutPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   // Preview switches exist only in development. Not reading searchParams in production keeps this page static.
-  const flags = process.env.NODE_ENV === 'production' ? parsePreview(undefined) : parsePreview((await searchParams).preview)
+  const flags = config.isProd ? parsePreview(undefined) : parsePreview((await searchParams).preview)
   const page = getSitePage('about')
 
   return (
