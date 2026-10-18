@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Menu, MessageCircle, Phone, X } from 'lucide-react'
@@ -40,6 +40,15 @@ export function Header() {
     return () => document.removeEventListener('keydown', onKey)
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [open])
+
   const solid = scrolled || open || !overHero
   const iconButton = 'grid size-11 place-items-center rounded-full transition-colors hover:bg-current/10'
 
@@ -47,7 +56,9 @@ export function Header() {
     <>
       {!overHero && <div aria-hidden className="h-16 lg:h-20" />}
       <header
-        className={`fixed inset-x-0 top-0 z-40 transition-[background-color,box-shadow] duration-200 ${
+        className={`fixed inset-x-0 top-0 transition-[background-color,box-shadow,z-index] duration-200 ${
+          open ? 'z-[80]' : 'z-40'
+        } ${
           solid ? 'bg-paper/95 text-ink shadow-raised backdrop-blur' : 'on-dark bg-gradient-to-b from-ink/70 to-transparent text-white'
         }`}
       >
@@ -94,42 +105,63 @@ export function Header() {
             </button>
           </div>
         </div>
+      </header>
 
-        <AnimatePresence initial={false}>
-          {open && (
-            <motion.div
-              id="mobile-nav"
-              initial={reduced ? false : { opacity: 0, height: 0 }}
-              animate={reduced ? undefined : { opacity: 1, height: 'auto' }}
-              exit={reduced ? undefined : { opacity: 0, height: 0 }}
-              transition={{ duration: reduced ? 0 : 0.28, ease: EASE_OUT }}
-              className="overflow-hidden border-t border-line bg-paper text-ink lg:hidden"
-            >
-              <nav aria-label="Mobile" className="container-page py-2">
-                <ul>
-                  {site.nav.map((item) => (
-                    <li key={item.href} className="border-b border-line last:border-0">
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            id="mobile-nav"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setOpen(false)
+            }}
+            initial={reduced ? false : { opacity: 0, scale: 0.98, y: 10 }}
+            animate={reduced ? undefined : { opacity: 1, scale: 1, y: 0 }}
+            exit={reduced ? undefined : { opacity: 0, scale: 0.985, y: 6 }}
+            transition={{ duration: reduced ? 0 : 0.32, ease: EASE_OUT }}
+            className="fixed inset-0 z-[70] bg-paper/95 text-ink backdrop-blur supports-[backdrop-filter]:bg-paper/90 lg:hidden"
+          >
+            <div className="flex h-full flex-col items-center justify-center px-6">
+              <nav aria-label="Mobile" className="w-full">
+                <ul className="flex flex-col items-center">
+                  {site.nav.map((item, i) => (
+                    <motion.li
+                      key={item.href}
+                      initial={reduced ? false : { opacity: 0, y: 12 }}
+                      animate={reduced ? undefined : { opacity: 1, y: 0 }}
+                      transition={{ duration: reduced ? 0 : 0.3, ease: EASE_OUT, delay: reduced ? 0 : 0.06 + i * 0.05 }}
+                    >
                       <Link
                         href={item.href}
                         aria-current={pathname === item.href ? 'page' : undefined}
                         onClick={() => setOpen(false)}
-                        className="flex min-h-12 items-center text-body-lg font-medium aria-[current=page]:text-accent-ink"
+                        className="block py-4 text-center text-xl font-medium tracking-tight decoration-accent decoration-2 underline-offset-[10px] transition-colors hover:opacity-80 aria-[current=page]:underline aria-[current=page]:text-accent-ink sm:text-2xl"
                       >
                         {item.label}
                       </Link>
-                    </li>
+                    </motion.li>
                   ))}
                 </ul>
               </nav>
-              <div className="container-page pb-5">
-                <ButtonLink href={whatsappHref()} external variant="secondary" icon={<MessageCircle className="size-5" aria-hidden />} className="w-full">
+              <motion.div
+                initial={reduced ? false : { opacity: 0, y: 12 }}
+                animate={reduced ? undefined : { opacity: 1, y: 0 }}
+                transition={{ duration: reduced ? 0 : 0.3, ease: EASE_OUT, delay: reduced ? 0 : 0.06 + site.nav.length * 0.05 }}
+                className="mt-12 w-full max-w-sm"
+              >
+                <ButtonLink
+                  href={whatsappHref()}
+                  external
+                  variant="secondary"
+                  icon={<MessageCircle className="size-5" aria-hidden />}
+                  className="w-full"
+                >
                   Chat on WhatsApp
                 </ButtonLink>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </header>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }

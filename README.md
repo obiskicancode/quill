@@ -19,4 +19,4 @@ npm run build
 Drop files in `public/images/` (see the image list in DESIGN-SPEC.md). Missing files show a "Photo coming soon" placeholder, so the page never breaks.
 
 ## Routes this page links to
-`/book` (receives `checkIn`, `checkOut`, `adults`, `children`, and `room` from a room card), `/rooms`, `/rooms/[slug]`, `/about`, `/amenities`, `/gallery`, `/contact`, `/terms`, `/privacy`, `/cancellation`.
+`/book` (receives `checkIn`, `checkOut`, `adults`, `children`, and `room` from a room card), `/rooms`, `/rooms/[slug]`, `/about`, `/amenities`, `/gallery`, `/contact`, `/enquiry`, `/policies`, `/policies/[slug]` (terms, privacy, cancellation-policy, house-rules).

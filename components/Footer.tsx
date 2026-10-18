@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Facebook, Instagram, Mail, MapPin, MessageCircle, Phone } from 'lucide-react'
 import { site, telHref, whatsappHref } from '@/lib/site'
+import { CookieSettingsButton } from './CookieSettingsButton'
 import { Logo } from './Logo'
 
 const link = 'inline-flex min-h-11 items-center underline-offset-4 hover:text-white hover:underline'
@@ -51,6 +52,7 @@ export function Footer() {
             {site.policies.map((p) => (
               <li key={p.href}><Link href={p.href} className={link}>{p.label}</Link></li>
             ))}
+            <li><CookieSettingsButton className={`${link} gap-2`} /></li>
           </ul>
         </nav>
       </div>

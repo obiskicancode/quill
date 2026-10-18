@@ -10,7 +10,7 @@ export const cancelRequestSchema = z.object({
   reason: z.enum(CANCEL_REASONS).nullish(),
   note: z.string().trim().max(300, 'Keep your note under 300 characters.').nullish(),
   /** The guest ticked "I understand this cannot be undone". */
-  acknowledged: z.literal(true, { errorMap: () => ({ message: 'Please confirm that you understand this cannot be undone.' }) }),
+  acknowledged: z.literal(true, { message: 'Please confirm that you understand this cannot be undone.' }),
   /** The refund the guest was shown. If the server now calculates something else, the cancel is refused and the guest sees the new amount. */
   expectedRefundMinor: z.number().int().nonnegative(),
 })

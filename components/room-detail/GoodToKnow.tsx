@@ -41,7 +41,7 @@ export function GoodToKnow({ room, hotel }: { room: RoomDetail; hotel: HotelSett
           <h2 id="cancel-title" className="font-display text-h3">Cancellation</h2>
           <p className="mt-3 max-w-prose text-ink/85">{hotel.cancellationSummary}</p>
           <div className="mt-1">
-            <TextLink href="/cancellation">Read the full cancellation policy</TextLink>
+            <TextLink href="/policies/cancellation-policy">Read the full cancellation policy</TextLink>
           </div>
         </section>
       </Reveal>

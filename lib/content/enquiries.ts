@@ -10,7 +10,9 @@ export interface StoredEnquiry {
   type: EnquiryRequest['topic']
   status: 'new'
   createdAt: number
-  fields: Omit<EnquiryRequest, 'idempotencyKey' | 'website' | 'demo' | 'consent'>
+  /** The page the guest sent this from, so the hotel can spot a broken link. */
+  sourcePage: string
+  fields: Omit<EnquiryRequest, 'idempotencyKey' | 'website' | 'demo' | 'consent' | 'source_page'>
 }
 
 export interface EnquiryEmail {
@@ -37,8 +39,8 @@ export function enquiryReference(): string {
 }
 
 export function saveEnquiry(req: EnquiryRequest): StoredEnquiry {
-  const { idempotencyKey, website: _w, demo: _d, consent: _c, ...fields } = req
-  const row: StoredEnquiry = { reference: enquiryReference(), type: req.topic, status: 'new', createdAt: Date.now(), fields }
+  const { idempotencyKey, website: _w, demo: _d, consent: _c, source_page, ...fields } = req
+  const row: StoredEnquiry = { reference: enquiryReference(), type: req.topic, status: 'new', createdAt: Date.now(), sourcePage: source_page, fields }
   enquiryStore.rows.set(row.reference, row)
   enquiryStore.keys.set(idempotencyKey, row.reference)
   const at = Date.now()

@@ -2,20 +2,27 @@ import { cache } from "react";
 import { getCheckoutSettings } from "../checkout/settings";
 import type { ExtraItem } from "../checkout/types";
 import { testimonials as sampleTestimonials } from "../data";
+import { hotelSettings as roomHotelSettings } from "../room-detail";
 import { roomAmenityLabels, roomTypes, type RoomAmenityKey } from "../rooms";
 import { site } from "../site";
 import type { Testimonial } from "../types";
 import { gate, type PreviewFlags } from "./preview";
 import type {
+  AnalyticsSettings,
+  ConsentSettings,
   Facility,
   Faq,
   GalleryImageRecord,
   HotelSettings,
   NearbyAttraction,
+  PolicyPage,
+  PolicySettings,
+  PolicySlug,
   SitePage,
   SocialLink,
   TeamMember,
 } from "./types";
+import { POLICY_SLUGS } from "./types";
 
 /*
  * TYPED PLACEHOLDER DATA. In production these come from the admin database (site_pages, team_members,
@@ -71,6 +78,25 @@ export const getHotelSettings = cache(
         url: "https://facebook.com/",
       },
     ] satisfies SocialLink[],
+    analytics: analyticsSettings,
+  }),
+);
+
+/** Analytics stays off until the hotel configures a provider, so no tag ever loads by default. */
+const analyticsSettings: AnalyticsSettings = {
+  provider: "meta_pixel", // [placeholder] set to 'ga4', 'plausible' or 'meta_pixel' once a real ID exists
+  measurementId: "null", // [placeholder] e.g. 'G-XXXXXXX' for GA4
+  marketingEnabled: false,
+};
+
+/** Read by the cookie banner. It only appears when something optional is actually configured. */
+export const getConsentSettings = cache(
+  (): ConsentSettings => ({
+    enabled:
+      analyticsSettings.provider !== "none" &&
+      Boolean(analyticsSettings.measurementId),
+    privacyPolicyHref: "/policies/privacy",
+    retentionDays: 180,
   }),
 );
 
@@ -552,3 +578,252 @@ export const getFormSettings = (f: PreviewFlags) =>
     { responseHours: getHotelSettings().enquiryResponseHours },
     null,
   );
+
+// ------------------------------------------------------------------ policies
+/*
+ * POLICY PAGES. In production these are site_pages rows with a policy type.
+ * Every piece of legal text below is a [placeholder] the hotel must review and replace
+ * with its own wording (and, for the privacy policy, against the Nigeria Data Protection
+ * Act) before launch. Nothing here is legal advice.
+ */
+const policyPages: Record<PolicySlug, PolicyPage> = {
+  terms: {
+    slug: "terms",
+    title: "Terms of booking",
+    summary:
+      "How a booking is made, paid for and changed when you book with us directly.",
+    body: [
+      {
+        type: "p",
+        text: "[Placeholder] These terms apply to every booking made through this website. They sit alongside our cancellation policy and privacy policy, which are linked below.",
+      },
+      { type: "h2", text: "Making a booking" },
+      {
+        type: "p",
+        text: "[Placeholder] When you submit a booking we hold your chosen room for a short time while you pay. A booking is only confirmed once you receive a confirmation email from us.",
+      },
+      {
+        type: "ul",
+        items: [
+          "[Placeholder] You must give accurate guest details, including a name that matches a valid photo ID.",
+          "[Placeholder] The lead guest must be at least 18 years old.",
+          "[Placeholder] Prices are shown before any payment and the server total is the amount you pay.",
+        ],
+      },
+      { type: "h2", text: "Payment" },
+      {
+        type: "p",
+        text: "[Placeholder] You can pay online, by bank transfer, or at the hotel depending on the rate you choose. Card payments are handled by our payment provider; we never store your card number.",
+      },
+      { type: "h2", text: "Changes and cancellations" },
+      {
+        type: "p",
+        text: "[Placeholder] You can change or cancel a booking through the manage booking page or by contacting us. What you owe or get back depends on the cancellation policy shown on your booking.",
+        links: [
+          {
+            label: "Read the cancellation policy",
+            href: "/policies/cancellation-policy",
+          },
+        ],
+      },
+      { type: "h2", text: "Questions" },
+      {
+        type: "p",
+        text: "[Placeholder] If anything here is unclear, contact us before you book and we will explain it.",
+        links: [{ label: "Contact us", href: "/contact" }],
+      },
+    ],
+    updatedAt: "2026-01-01",
+    isPublished: true,
+    metaTitle: "Terms of booking",
+    metaDescription:
+      "[Placeholder] The terms that apply when you book a room or apartment with us directly, including payment and changes.",
+  },
+  privacy: {
+    slug: "privacy",
+    title: "Privacy policy",
+    summary:
+      "What we do with your personal details, who we share them with, and the choices you have.",
+    body: [
+      {
+        type: "p",
+        text: "[Placeholder] This policy explains how we collect and use your personal data when you contact us or book a stay. It must be reviewed against the Nigeria Data Protection Act (NDPA) before launch and kept up to date.",
+      },
+      { type: "h2", text: "What we collect" },
+      {
+        type: "ul",
+        items: [
+          "[Placeholder] Your name, email address and phone number.",
+          "[Placeholder] Your stay details: dates, number of guests and room type.",
+          "[Placeholder] Payment information is handled by our payment provider and is not stored by us.",
+        ],
+      },
+      { type: "h2", text: "Why we use it" },
+      {
+        type: "p",
+        text: "[Placeholder] We use your details to manage your booking, contact you about your stay, reply to your enquiries and meet legal obligations. We do not sell your data.",
+      },
+      { type: "h2", text: "Who we share it with" },
+      {
+        type: "p",
+        text: "[Placeholder] We share what is necessary with our payment provider and email provider to complete your booking and send confirmations. We never share more than is needed.",
+      },
+      { type: "h2", text: "How long we keep it" },
+      {
+        type: "p",
+        text: "[Placeholder] We keep booking records for as long as needed for accounting and legal purposes, then delete or anonymise them.",
+      },
+      { type: "h2", text: "Your rights" },
+      {
+        type: "p",
+        text: "[Placeholder] You can ask us to access, correct or delete your personal data, and you can object to how we use it. Contact us to make a request.",
+        links: [{ label: "Contact us", href: "/contact" }],
+      },
+    ],
+    updatedAt: "2026-01-01",
+    isPublished: true,
+    metaTitle: "Privacy policy",
+    metaDescription:
+      "[Placeholder] How we collect, use and protect your personal data when you book or contact us, and the rights you have.",
+  },
+  "cancellation-policy": {
+    slug: "cancellation-policy",
+    title: "Cancellation policy",
+    summary:
+      "When a cancellation is free, what you get back, and what happens if you do not arrive.",
+    body: [
+      {
+        type: "p",
+        text: "[Placeholder] The cancellation terms shown on your booking at the time you booked always apply to that booking. The summary below explains how our usual policy works.",
+      },
+      { type: "h2", text: "Free cancellation" },
+      {
+        type: "p",
+        text: "[Placeholder] You can cancel free of charge up to the free-cancellation window before your arrival date. The exact deadline is shown on your booking confirmation.",
+      },
+      { type: "h2", text: "After the free window" },
+      {
+        type: "p",
+        text: "[Placeholder] Once the free window has passed, a percentage of the stay is charged. The percentage and how a refund is worked out are shown on your booking when you manage it.",
+      },
+      { type: "h2", text: "Refunds" },
+      {
+        type: "p",
+        text: "[Placeholder] Approved refunds are returned to the original payment method. How long it takes depends on your bank or card provider.",
+      },
+      { type: "h2", text: "If you do not arrive" },
+      {
+        type: "p",
+        text: "[Placeholder] If you do not check in and have not cancelled, the booking is treated as a no-show and may be charged in full.",
+      },
+      { type: "h2", text: "How to cancel" },
+      {
+        type: "p",
+        text: "[Placeholder] You can cancel through the manage booking page or by contacting us with your booking reference.",
+        links: [
+          { label: "Manage your booking", href: "/booking/manage" },
+          { label: "Contact us", href: "/contact" },
+        ],
+      },
+    ],
+    updatedAt: "2026-01-01",
+    isPublished: true,
+    metaTitle: "Cancellation policy",
+    metaDescription:
+      "[Placeholder] When cancellation is free, what a refund covers, and what to do if your plans change.",
+  },
+  "house-rules": {
+    slug: "house-rules",
+    title: "House rules",
+    summary:
+      "Check-in and check-out times, and what we ask of you during your stay.",
+    body: [
+      {
+        type: "p",
+        text: "[Placeholder] These simple rules keep the building calm and safe for everyone. They are part of your booking.",
+      },
+      { type: "h2", text: "Arrival and departure" },
+      {
+        type: "p",
+        text: "[Placeholder] Check-in is from the time shown below. Tell us your arrival time so we can expect you. Check-out is by the time shown below so we can prepare the room.",
+      },
+      { type: "h2", text: "During your stay" },
+      {
+        type: "ul",
+        items: [
+          "[Placeholder] Quiet hours are observed at night; please keep noise down.",
+          "[Placeholder] Visitors may be asked to sign in at reception.",
+          "[Placeholder] You are responsible for any damage to the room during your stay.",
+        ],
+      },
+      { type: "h2", text: "Who can stay" },
+      {
+        type: "p",
+        text: "[Placeholder] Only the guests named on the booking may stay overnight. Children and pets are welcome under the policies below.",
+      },
+    ],
+    updatedAt: "2026-01-01",
+    isPublished: true,
+    metaTitle: "House rules",
+    metaDescription:
+      "[Placeholder] Check-in and check-out times and the simple house rules that apply during your stay.",
+  },
+};
+
+/** All policies, in hub order. Only published rows are returned. */
+export const getPolicyPages = async (f: PreviewFlags): Promise<PolicyPage[]> =>
+  (
+    await gate(
+      f,
+      "policies",
+      POLICY_SLUGS.map((s) => policyPages[s]),
+      [],
+    )
+  )
+    .filter((p) => p.isPublished)
+    .sort(
+      (a, b) => POLICY_SLUGS.indexOf(a.slug) - POLICY_SLUGS.indexOf(b.slug),
+    );
+
+/** One policy, or null when the slug is unknown or the page is unpublished. */
+export const getPolicyPage = async (
+  slug: PolicySlug,
+  f: PreviewFlags,
+): Promise<PolicyPage | null> => {
+  const page = policyPages[slug];
+  if (!page) return null;
+  const all = await getPolicyPages(f);
+  return all.find((p) => p.slug === slug) ?? null;
+};
+
+/**
+ * Structured policy facts for the cancellation and house-rules pages. Seeded from the
+ * same values checkout uses so the two can never disagree.
+ */
+export const getPolicySettings = cache(
+  (): PolicySettings => ({
+    cancellation: {
+      policyType: "flexible", // [placeholder] confirm with the hotel
+      freeCancellationHours: roomHotelSettings.freeCancellationHours,
+      refundPercentAfterWindow: 50, // [placeholder]
+      noShowPolicy:
+        "[Placeholder] If you do not arrive and have not cancelled, the booking may be charged in full.",
+      refundTimelineDays: 7, // [placeholder] working days
+    },
+    houseRules: {
+      checkInTime: roomHotelSettings.checkInTime,
+      checkOutTime: roomHotelSettings.checkOutTime,
+      petsAllowed: false, // [placeholder] set true if pets are welcome
+      petsNote: roomHotelSettings.petsPolicy,
+      smokingPolicy: "not_allowed", // [placeholder]
+      smokingNote: roomHotelSettings.smokingPolicy,
+      idRequiredAtCheckin: true, // [placeholder]
+      childrenPolicy: roomHotelSettings.childrenPolicy,
+      quietHours: "[Placeholder, e.g. 10:00 pm to 7:00 am]",
+      visitorsNote:
+        "[Placeholder] Visitors may be asked to sign in at reception.",
+      damagesNote:
+        "[Placeholder] Guests are responsible for any damage to the room during their stay.",
+    },
+  }),
+);

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { newKey } from '@/lib/checkout/client'
 import { enquiryFormSchema, MAX_MESSAGE, normalizeTopic, STAY_TOPICS, topicLabels, type EnquiryError, type EnquiryResponse } from '@/lib/content/schemas'
-import { ENQUIRY_TOPICS } from '@/lib/content/types'
+import { CONTACT_TOPICS } from '@/lib/content/types'
 import { Reveal } from '../motion'
 import { EASE_OUT } from '../motion/variants'
 import { Banner, ErrorSummary } from '../checkout/CheckoutStates'
@@ -35,11 +35,17 @@ const labels: Record<FieldName, string> = {
 }
 const ORDER: FieldName[] = ['name', 'email', 'phone', 'topic', 'subject', 'checkIn', 'checkOut', 'guests', 'roomType', 'message', 'consent']
 
+/** A topic the contact form can actually show (the booking enquiry has its own page). */
+function contactTopic(raw: string | null): string {
+  const t = normalizeTopic(raw)
+  return (CONTACT_TOPICS as string[]).includes(t) ? t : 'general'
+}
+
 /** Contact form. Same Zod schema as the server. Input is never lost: errors, rate limits and server failures all keep it. */
 export function ContactForm({ initialTopic, initialRoom, initialRef, rooms, responseHours, whatsappHref, demo }: ContactFormProps) {
   const safeRef = initialRef && /^[A-Za-z0-9-]{4,30}$/.test(initialRef) ? initialRef : null
   const [values, setValues] = useState({
-    name: '', email: '', phone: '', topic: normalizeTopic(initialTopic) as string, subject: '',
+    name: '', email: '', phone: '', topic: contactTopic(initialTopic), subject: '',
     message: safeRef ? `Booking reference: ${safeRef}\n\n` : '', checkIn: '', checkOut: '', guests: '',
     roomType: rooms.some((r) => r.slug === initialRoom) ? (initialRoom as string) : '', consent: false,
   })
@@ -185,7 +191,7 @@ export function ContactForm({ initialTopic, initialRoom, initialRef, rooms, resp
             <Field id="contact-topic" label="What is this about?" error={errors.topic}>
               {(a) => (
                 <select {...a} {...bind('topic')} className={inputClass(errors.topic)}>
-                  {ENQUIRY_TOPICS.map((t) => <option key={t} value={t}>{topicLabels[t]}</option>)}
+                  {CONTACT_TOPICS.map((t) => <option key={t} value={t}>{topicLabels[t]}</option>)}
                 </select>
               )}
             </Field>
@@ -242,7 +248,7 @@ export function ContactForm({ initialTopic, initialRoom, initialRef, rooms, resp
               />
               <span className="text-small">
                 I agree to the{' '}
-                <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold underline decoration-accent decoration-2 underline-offset-4">Privacy Policy<span className="sr-only"> (opens in a new tab)</span></Link>{' '}
+                <Link href="/policies/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold underline decoration-accent decoration-2 underline-offset-4">Privacy Policy<span className="sr-only"> (opens in a new tab)</span></Link>{' '}
                 so the hotel can reply to me.
               </span>
             </label>

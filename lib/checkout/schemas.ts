@@ -49,9 +49,9 @@ export const guestFields = z.object({
     .max(100, 'Keep your name under 100 characters.')
     .refine((v) => v.includes(' '), 'Enter your first and last name.'),
   email: z.string().trim().toLowerCase().min(1, 'Enter your email address.').email('Enter a valid email address, like name@example.com.'),
-  country: z.enum(countryCodes, { errorMap: () => ({ message: 'Choose your country.' }) }),
+  country: z.enum(countryCodes, { message: 'Choose your country.' }),
   phone: z.string().trim().min(1, 'Enter a phone number we can reach on WhatsApp.'),
-  arrivalTime: z.enum(arrivalValues, { errorMap: () => ({ message: 'Choose roughly when you will arrive.' }) }),
+  arrivalTime: z.enum(arrivalValues, { message: 'Choose roughly when you will arrive.' }),
   specialRequests: z.string().max(MAX_REQUEST_LENGTH, `Keep requests under ${MAX_REQUEST_LENGTH} characters.`).default(''),
 })
 
@@ -88,7 +88,7 @@ export const reservationRequestSchema = quoteRequestSchema.extend({
   guest: guestSchema,
   /** The total the guest agreed to. If the server's total differs, the reservation is refused with price_changed. */
   expectedTotalMinor: z.number().int().positive(),
-  termsAccepted: z.literal(true, { errorMap: () => ({ message: 'Please accept the Terms, Privacy Policy and Cancellation Policy to continue.' }) }),
+  termsAccepted: z.literal(true, { message: 'Please accept the Terms, Privacy Policy and Cancellation Policy to continue.' }),
   /** Honeypot: real guests never see or fill this. */
   website: z.string().max(200).optional(),
 })

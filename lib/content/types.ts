@@ -2,10 +2,27 @@ import type { ImageAsset } from '../types'
 
 /** Typed shapes for the content pages. They mirror the admin's data fields. Money is integer kobo. */
 
-export type RichBlock = { type: 'p'; text: string } | { type: 'h3'; text: string } | { type: 'ul'; items: string[] }
+/** An inline link the renderer is allowed to render (see lib/content/rich.ts for the href allow-list). */
+export interface RichLink {
+  label: string
+  href: string
+}
 
-export const ENQUIRY_TOPICS = ['general', 'group_booking', 'event_conference', 'corporate_account', 'complaint_feedback'] as const
+/**
+ * Admin rich text. The original p/h3/ul shapes are unchanged, so existing pages keep working;
+ * policy pages add h2, ol and tables, plus optional inline links on a paragraph.
+ */
+export type RichBlock =
+  | { type: 'p'; text: string; links?: RichLink[] }
+  | { type: 'h2' | 'h3'; text: string }
+  | { type: 'ul' | 'ol'; items: string[] }
+  | { type: 'table'; caption?: string; head: string[]; rows: string[][] }
+
+export const ENQUIRY_TOPICS = ['general', 'group_booking', 'event_conference', 'corporate_account', 'complaint_feedback', 'booking_enquiry'] as const
 export type EnquiryTopic = (typeof ENQUIRY_TOPICS)[number]
+
+/** The topics shown in the contact form's dropdown. The booking enquiry form uses its own topic. */
+export const CONTACT_TOPICS = ENQUIRY_TOPICS.filter((t): t is Exclude<EnquiryTopic, 'booking_enquiry'> => t !== 'booking_enquiry')
 
 export interface PublicPhone {
   label: string
@@ -41,6 +58,25 @@ export interface HotelSettings {
   googleReviewsUrl: string | null
   enquiryResponseHours: number
   socialLinks: SocialLink[]
+  analytics: AnalyticsSettings
+}
+
+/** Analytics and marketing tags. Nothing loads until a guest consents and an ID is configured. */
+export interface AnalyticsSettings {
+  provider: 'none' | 'ga4' | 'plausible' | 'meta_pixel'
+  /** Google measurement ID, Plausible domain or Meta pixel ID. Ignored while provider is "none". */
+  measurementId: string | null
+  /** Set true only when the hotel also runs marketing tags, so the consent banner can offer it. */
+  marketingEnabled: boolean
+}
+
+/** Consent storage settings, read by the cookie banner. */
+export interface ConsentSettings {
+  /** The banner only appears when something optional is actually configured. */
+  enabled: boolean
+  privacyPolicyHref: string
+  /** Days the guest's choice is remembered before they are asked again. */
+  retentionDays: number
 }
 
 export type ValueIcon = 'bed' | 'shield' | 'power' | 'heart' | 'clock' | 'map' | 'users' | 'sparkles'
@@ -62,6 +98,52 @@ export interface SitePage {
   metaTitle: string | null
   metaDescription: string | null
   ogImage: ImageAsset | null
+}
+
+export const POLICY_SLUGS = ['terms', 'privacy', 'cancellation-policy', 'house-rules'] as const
+export type PolicySlug = (typeof POLICY_SLUGS)[number]
+
+/** site_pages rows that are policies. Carries a summary card and an updated_at date. */
+export interface PolicyPage {
+  slug: PolicySlug
+  title: string
+  summary: string
+  body: RichBlock[]
+  /** ISO date string (YYYY-MM-DD). Shown as "Last updated". */
+  updatedAt: string
+  isPublished: boolean
+  metaTitle: string | null
+  metaDescription: string | null
+}
+
+export type CancellationPolicyType = 'flexible' | 'moderate' | 'non_refundable' | 'custom'
+export type SmokingPolicy = 'not_allowed' | 'outside_only' | 'allowed'
+
+/** Structured policy facts, merged into the cancellation and house-rules pages. */
+export interface PolicySettings {
+  cancellation: {
+    policyType: CancellationPolicyType
+    /** null when there is no free cancellation. */
+    freeCancellationHours: number | null
+    /** Percentage refunded once the free window has passed. */
+    refundPercentAfterWindow: number
+    noShowPolicy: string
+    /** Working days to the refund landing on the guest's card. null hides the row. */
+    refundTimelineDays: number | null
+  }
+  houseRules: {
+    checkInTime: string
+    checkOutTime: string
+    petsAllowed: boolean
+    petsNote: string
+    smokingPolicy: SmokingPolicy
+    smokingNote: string
+    idRequiredAtCheckin: boolean
+    childrenPolicy: string
+    quietHours: string | null
+    visitorsNote: string | null
+    damagesNote: string | null
+  }
 }
 
 export interface TeamMember {

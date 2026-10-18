@@ -5,11 +5,11 @@ import type { SiteConfig } from "./types";
  * Anything in [square brackets] is a placeholder the client must supply.
  * No component hard-codes the hotel name.
  */
-const name = "Divine Excellent Apartments";
+const name = "Divine Excellent Luxury Apartments";
 
 export const site: SiteConfig = {
   name,
-  shortName: "Divine Excellent",
+  shortName: "Divine Ex.",
   description:
     "Comfortable rooms and serviced apartments in Nigeria. Check availability, book direct and pay securely online.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
@@ -46,9 +46,10 @@ export const site: SiteConfig = {
   googleReviewsUrl: null, // paste the Google reviews link; the rating shows once rating and count are set
   reviews: { rating: null, count: null },
   policies: [
-    { label: "Terms", href: "/terms" },
-    { label: "Privacy", href: "/privacy" },
-    { label: "Cancellation policy", href: "/cancellation" },
+    { label: "Terms", href: "/policies/terms" },
+    { label: "Privacy", href: "/policies/privacy" },
+    { label: "Cancellation", href: "/policies/cancellation-policy" },
+    { label: "House rules", href: "/policies/house-rules" },
   ],
   trust: [
     { id: "reviews", label: "Guest reviews on Google", enabled: true },

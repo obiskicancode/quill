@@ -167,9 +167,9 @@ export function PaymentStep({ payment, method, onMethod, confirmationMode, terms
           />
           <span className="text-small">
             I agree to the{' '}
-            <Link href="/terms" target="_blank" rel="noopener noreferrer" className="font-semibold underline decoration-accent decoration-2 underline-offset-4">Terms<span className="sr-only"> (opens in a new tab)</span></Link>,{' '}
-            <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold underline decoration-accent decoration-2 underline-offset-4">Privacy Policy<span className="sr-only"> (opens in a new tab)</span></Link> and{' '}
-            <Link href="/cancellation" target="_blank" rel="noopener noreferrer" className="font-semibold underline decoration-accent decoration-2 underline-offset-4">Cancellation Policy<span className="sr-only"> (opens in a new tab)</span></Link>.
+            <Link href="/policies/terms" target="_blank" rel="noopener noreferrer" className="font-semibold underline decoration-accent decoration-2 underline-offset-4">Terms<span className="sr-only"> (opens in a new tab)</span></Link>,{' '}
+            <Link href="/policies/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold underline decoration-accent decoration-2 underline-offset-4">Privacy Policy<span className="sr-only"> (opens in a new tab)</span></Link> and{' '}
+            <Link href="/policies/cancellation-policy" target="_blank" rel="noopener noreferrer" className="font-semibold underline decoration-accent decoration-2 underline-offset-4">Cancellation Policy<span className="sr-only"> (opens in a new tab)</span></Link>.
           </span>
         </label>
         {termsError && <p id="field-terms-error" className="mt-1.5 text-small font-medium text-danger">{termsError}</p>}

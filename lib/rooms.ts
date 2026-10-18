@@ -214,5 +214,5 @@ export const policyHighlights = {
   checkIn: '[2:00 pm]',
   checkOut: '[12:00 noon]',
   cancellation: '[Add a one-line cancellation summary, for example free cancellation until 48 hours before arrival.]',
-  fullPoliciesHref: '/cancellation',
+  fullPoliciesHref: '/policies/cancellation-policy',
 }

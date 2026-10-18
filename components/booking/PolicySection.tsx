@@ -32,9 +32,9 @@ export function PolicySection({ v, refundNow }: { v: GuestReservation; /** Manag
         </div>
       </dl>
       <ul className="mt-4 flex flex-wrap gap-x-6 print:hidden">
-        <li><TextLink href="/cancellation" external>Cancellation Policy<span className="sr-only"> (opens in a new tab)</span></TextLink></li>
-        <li><TextLink href="/terms" external>Terms<span className="sr-only"> (opens in a new tab)</span></TextLink></li>
-        <li><TextLink href="/privacy" external>Privacy Policy<span className="sr-only"> (opens in a new tab)</span></TextLink></li>
+        <li><TextLink href="/policies/cancellation-policy" external>Cancellation Policy<span className="sr-only"> (opens in a new tab)</span></TextLink></li>
+        <li><TextLink href="/policies/terms" external>Terms<span className="sr-only"> (opens in a new tab)</span></TextLink></li>
+        <li><TextLink href="/policies/privacy" external>Privacy Policy<span className="sr-only"> (opens in a new tab)</span></TextLink></li>
       </ul>
     </section>
   )
