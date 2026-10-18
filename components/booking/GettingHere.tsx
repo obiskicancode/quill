@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Clock, MapPin, Navigation, Phone } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import type { HotelInfo } from '@/lib/booking/types'
+import type { HotelInfo } from '@/types/booking.types'
 import { EASE_OUT } from '../motion/variants'
 import { ButtonLink } from '../ui/Button'
 

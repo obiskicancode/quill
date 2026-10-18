@@ -1,11 +1,11 @@
 import { fromISO, nightsBetween, toISO, type ISODate } from '../dates'
 import type { Clock } from '../stay-quote'
 import type { StoredReservation } from '../checkout/mock-db'
-import type { PolicySummary } from '../checkout/types'
-import type { PolicySnapshot } from '../booking/types'
+import type { PolicySummary } from '@/types/checkout.types'
+import type { PolicySnapshot } from '@/types/booking.types'
 import { calculateRefund } from './refund'
 import type { ManageSettings } from './settings'
-import type { ActionAllowance, AllowedActions, CancellationPreview } from './types'
+import type { ActionAllowance, AllowedActions, CancellationPreview } from '@/types/manage.types'
 
 /** Server-side rules for what a guest may do to a booking. Every mutation re-checks these. */
 

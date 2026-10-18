@@ -1,5 +1,5 @@
 import { formatShort } from '@/lib/dates'
-import { formatMinor, type StayQuote } from '@/lib/stay-types'
+import { formatMinor, type StayQuote } from '@/types/stay.types'
 
 /** The room page passes a plain StayQuote. Checkout adds extras, a discount and another levy. */
 export type PriceBreakdownQuote = Omit<StayQuote, 'freeCancellationUntil'> & {

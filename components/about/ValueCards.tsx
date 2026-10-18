@@ -1,7 +1,7 @@
 import { Bed, Clock, Heart, MapPin, ShieldCheck, Sparkles, Users, Zap, type LucideIcon } from 'lucide-react'
 import { getValueCards } from '@/lib/content/data'
 import type { PreviewFlags } from '@/lib/content/preview'
-import type { ValueIcon } from '@/lib/content/types'
+import type { ValueIcon } from '@/types/content.types'
 import { StaggerGroup, StaggerItem } from '@/components/motion'
 
 const icons: Record<ValueIcon, LucideIcon> = { bed: Bed, shield: ShieldCheck, power: Zap, heart: Heart, clock: Clock, map: MapPin, users: Users, sparkles: Sparkles }

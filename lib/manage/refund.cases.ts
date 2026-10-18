@@ -1,5 +1,5 @@
 import { calculateRefund, type RefundInput } from './refund'
-import type { RefundKind } from './types'
+import type { RefundKind } from '@/types/manage.types'
 
 /**
  * Test cases for calculateRefund: every policy type and payment mode.

@@ -1,4 +1,4 @@
-import type { HistoryEntry, HistoryType, TimelineEntry } from './types'
+import type { HistoryEntry, HistoryType, TimelineEntry } from '@/types/manage.types'
 
 /** Plain-language labels for the activity timeline. Newest first. */
 const labels: Record<HistoryType, string> = {

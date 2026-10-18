@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAccess } from '@/lib/booking/session'
 import { manageOpts } from '@/lib/manage/auth'
 import { buildGuestReservation, isDemoRef, loadReservation } from '@/lib/booking/view'
-import type { BookingApiError } from '@/lib/booking/types'
+import type { BookingApiError } from '@/types/booking.types'
 
 const deny = () =>
   NextResponse.json<BookingApiError>({ code: 'unauthorised', message: 'Verify your booking to see it.' }, { status: 401, headers: { 'Cache-Control': 'no-store' } })

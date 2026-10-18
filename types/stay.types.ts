@@ -1,5 +1,5 @@
-import type { ISODate } from './dates'
-import { formatNaira } from './format'
+import type { ISODate } from '@/lib/dates'
+import { formatNaira } from '@/lib/format'
 
 /** Shared by the server (pricing, API route) and the booking card. Money is integer minor units (kobo). */
 

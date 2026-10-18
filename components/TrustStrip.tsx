@@ -2,7 +2,7 @@
 
 import { BadgeCheck, Lock, ShieldCheck, Star, type LucideIcon } from 'lucide-react'
 import { site } from '@/lib/site'
-import type { TrustItem } from '@/lib/types'
+import type { TrustItem } from '@/types/site.types'
 import { StaggerGroup } from './motion/StaggerGroup'
 import { StaggerItem } from './motion/StaggerItem'
 

@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useState } from 'react'
-import type { GuestReservation } from '@/lib/booking/types'
+import type { GuestReservation } from '@/types/booking.types'
 import { EASE_OUT } from '../motion/variants'
 import { VerifyForm } from '../booking/VerifyForm'
 import { ManageView } from './ManageView'

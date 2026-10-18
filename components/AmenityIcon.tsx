@@ -2,7 +2,7 @@ import {
   Briefcase, CarFront, Coffee, Laptop, PlaneLanding, Presentation, Shirt, ShieldCheck, Snowflake,
   Tv, Utensils, UtensilsCrossed, Waves, Wifi, Zap, type LucideIcon,
 } from 'lucide-react'
-import type { AmenityKey } from '@/lib/types'
+import type { AmenityKey } from '@/types/site.types'
 
 const icons: Record<AmenityKey, LucideIcon> = {
   wifi: Wifi,

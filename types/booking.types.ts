@@ -1,8 +1,8 @@
-import type { ISODate } from '../dates'
-import type { ManageData, RefundStatus, RefundMethod } from '../manage/types'
+import type { ISODate } from '@/lib/dates'
+import type { ManageData, RefundStatus, RefundMethod } from '@/types/manage.types'
 import type {
   BankDetails, CheckoutBreakdown, ConfirmationMode, ExtraItem, PaymentMethod, PaymentMode, PaymentStatus, PolicySummary, ReservationStatus,
-} from '../checkout/types'
+} from '@/types/checkout.types'
 
 /** Confirmation-page contract. Money is integer minor units (kobo); the UI divides by 100. */
 

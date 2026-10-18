@@ -1,4 +1,4 @@
-import { formatMinor } from '@/lib/stay-types'
+import { formatMinor } from '@/types/stay.types'
 import type { HotelSettings, RoomDetail } from '@/lib/room-detail'
 import { Reveal } from '../motion/Reveal'
 import { StaggerGroup } from '../motion/StaggerGroup'

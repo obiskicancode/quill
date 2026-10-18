@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { buildCheckoutQuote } from '@/lib/checkout/quote'
-import { fieldErrorsFrom, quoteRequestSchema } from '@/lib/checkout/schemas'
-import type { ApiError } from '@/lib/checkout/types'
+import { fieldErrorsFrom, quoteRequestSchema } from '@/schemas/checkout.schema'
+import type { ApiError } from '@/types/checkout.types'
 
 /** Server-calculated breakdown, availability, hold requirements and policy summary. */
 export async function POST(req: Request) {

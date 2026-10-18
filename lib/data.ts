@@ -4,7 +4,7 @@ import type {
   ImageAsset,
   Room,
   Testimonial,
-} from "./types";
+} from "@/types/site.types";
 
 /*
  * PLACEHOLDER CONTENT. In production these arrays come from the database.

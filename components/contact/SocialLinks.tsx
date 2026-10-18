@@ -1,7 +1,7 @@
 import { Facebook, Globe, Instagram, Linkedin, Twitter, Youtube, type LucideIcon } from 'lucide-react'
 import { getSocialLinks } from '@/lib/content/data'
 import type { PreviewFlags } from '@/lib/content/preview'
-import type { SocialLink } from '@/lib/content/types'
+import type { SocialLink } from '@/types/content.types'
 import { StaggerGroup, StaggerItem, TextReveal } from '@/components/motion'
 
 const icons: Record<SocialLink['platform'], LucideIcon> = { instagram: Instagram, facebook: Facebook, x: Twitter, youtube: Youtube, linkedin: Linkedin, tiktok: Globe, other: Globe }

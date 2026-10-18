@@ -1,9 +1,9 @@
 import { addDays, nightsBetween, todayISO } from '../dates'
 import { logEvent, refresh, store, toStatus, type StoredReservation } from '../checkout/mock-db'
 import { buildCheckoutQuote } from '../checkout/quote'
-import { arrivalOptions } from '../checkout/schemas'
+import { arrivalOptions } from '@/schemas/checkout.schema'
 import { getCheckoutSettings, parseDemos } from '../checkout/settings'
-import type { ReservationStatus, StatusResponse } from '../checkout/types'
+import type { ReservationStatus, StatusResponse } from '@/types/checkout.types'
 import { buildManageData } from '../manage/data'
 import { previewCancellation } from '../manage/rules'
 import { getManageSettings } from '../manage/settings'
@@ -12,7 +12,7 @@ import { hotelClock } from '../stay-quote'
 import { maskEmail, maskPhone } from './mask'
 import { buildSnapshot } from './snapshot'
 import type { AccessLevel } from './session'
-import type { GuestCancellation, GuestReservation, PaymentLabel } from './types'
+import type { GuestCancellation, GuestReservation, PaymentLabel } from '@/types/booking.types'
 
 /** Turns a stored reservation into what the guest may see. Email and phone are masked until verification. */
 

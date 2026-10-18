@@ -1,12 +1,12 @@
-import type { GuestInfo, ReservationSnapshot } from '../booking/types'
+import type { GuestInfo, ReservationSnapshot } from '@/types/booking.types'
 import { formatRange } from '../room-query'
-import type { CheckoutBreakdown, PolicySummary } from './types'
+import type { CheckoutBreakdown, PolicySummary } from '@/types/checkout.types'
 import type {
   HistoryEntry, HistoryType, PendingChange, RefundRecord, StoredCancellation,
-} from '../manage/types'
+} from '@/types/manage.types'
 import type {
   ConfirmationMode, ExtraSelection, PaymentInitResponse, PaymentStatus, PaymentMethod, ReservationResponse, ReservationStatus, StatusResponse,
-} from './types'
+} from '@/types/checkout.types'
 
 /**
  * MOCK PERSISTENCE (in memory, survives hot reloads via globalThis). Replace with your database.

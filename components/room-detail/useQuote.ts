@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { QuoteDemo, QuoteResponse, StayInput } from '@/lib/stay-types'
+import type { QuoteDemo, QuoteResponse, StayInput } from '@/types/stay.types'
 
 export type QuoteState =
   | { status: 'idle' }

@@ -1,8 +1,8 @@
-import type { CheckoutSettings } from '../checkout/types'
-import type { CheckoutQuoteResponse } from '../checkout/types'
+import type { CheckoutSettings } from '@/types/checkout.types'
+import type { CheckoutQuoteResponse } from '@/types/checkout.types'
 import { hotelSettings, type RoomDetail } from '../room-detail'
 import { site } from '../site'
-import type { ReservationSnapshot } from './types'
+import type { ReservationSnapshot } from '@/types/booking.types'
 
 const providerNames = { paystack: 'Paystack', flutterwave: 'Flutterwave', stripe: 'Stripe' } as const
 

@@ -1,5 +1,5 @@
 import type { ISODate } from './dates'
-import type { SearchState } from './types'
+import type { SearchState } from '@/types/site.types'
 
 export const MAX_ADULTS = 10
 export const MAX_CHILDREN = 6

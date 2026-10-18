@@ -1,6 +1,6 @@
-import type { ISODate } from '../dates'
-import type { BankDetails, CheckoutBreakdown, PaymentMethod, PolicySummary } from '../checkout/types'
-import type { Violation } from '../stay-types'
+import type { ISODate } from '@/lib/dates'
+import type { BankDetails, CheckoutBreakdown, PaymentMethod, PolicySummary } from '@/types/checkout.types'
+import type { Violation } from '@/types/stay.types'
 
 /** Manage-booking contract. Money is integer minor units (kobo). The server decides every policy, refund, price and availability. */
 

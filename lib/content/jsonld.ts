@@ -1,5 +1,5 @@
 import { site } from '../site'
-import type { Facility, Faq, GalleryImageRecord, HotelSettings } from './types'
+import type { Facility, Faq, GalleryImageRecord, HotelSettings } from '@/types/content.types'
 
 /** JSON-LD builders. Placeholder values (anything in [brackets]) and empty fields are left out, so no fake data reaches search engines. */
 

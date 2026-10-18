@@ -5,7 +5,7 @@ import { getCheckoutSettings, parseDemos } from './settings'
 import { unitLabels } from './format'
 import type {
   BreakdownExtraLine, CheckoutQuoteResponse, CheckoutSettings, ExtraItem, PaymentPlan, PolicySummary, QuoteRequest,
-} from './types'
+} from '@/types/checkout.types'
 
 /**
  * MOCK SERVER QUOTE. The only place prices, discount, levy, tax, deposit and availability are decided.

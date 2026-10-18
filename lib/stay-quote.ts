@@ -2,7 +2,7 @@ import { addDays, formatShort, nightsBetween, type ISODate } from './dates'
 import { fetchAvailability } from './availability'
 import { baseGuests, hotelSettings, rateRules, type HotelSettings, type RoomDetail } from './room-detail'
 import { isWeekendNight } from './rooms'
-import { formatMinor, type QuoteDemo, type QuoteLine, type QuoteResponse, type StayInput, type StayQuote, type Violation } from './stay-types'
+import { formatMinor, type QuoteDemo, type QuoteLine, type QuoteResponse, type StayInput, type StayQuote, type Violation } from '@/types/stay.types'
 
 /**
  * MOCK SERVER PRICING. All money maths happens here (server only); the client just displays the result.

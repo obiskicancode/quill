@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
-import { verifyRequestSchema } from '@/lib/booking/schemas'
+import { verifyRequestSchema } from '@/schemas/booking.schema'
 import { createManageValue, readManageValue, setAccessCookie, setManageCookie } from '@/lib/booking/session'
 import { buildGuestReservation, demoStored, isDemoRef } from '@/lib/booking/view'
-import type { BookingApiError } from '@/lib/booking/types'
+import type { BookingApiError } from '@/types/booking.types'
 import { rateLimited, refresh, store } from '@/lib/checkout/mock-db'
 
 const noStore = { 'Cache-Control': 'no-store' }

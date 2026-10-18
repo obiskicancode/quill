@@ -1,10 +1,10 @@
-import type { GuestReservation } from '../booking/types'
+import type { GuestReservation } from '@/types/booking.types'
 import { calendarUrl } from '../booking/client'
-import type { PaymentInitResponse } from '../checkout/types'
-import type { DetailsRequest } from './schemas'
+import type { PaymentInitResponse } from '@/types/checkout.types'
+import type { DetailsRequest } from '@/schemas/manage.schema'
 import type {
   CancellationPreview, ChangeQuoteRequest, ChangeQuoteResponse, ManageApiError,
-} from './types'
+} from '@/types/manage.types'
 
 /** Typed fetch helpers for the manage page. Every change sends the CSRF token and an idempotency key, so retries are safe. */
 export class ManageFailure extends Error {

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { parseRoomQuery } from '@/lib/room-query'
 import { getRoomDetail } from '@/lib/room-detail'
 import { getQuoteResponse, hotelClock } from '@/lib/stay-quote'
-import { QUOTE_DEMOS, type QuoteDemo } from '@/lib/stay-types'
+import { QUOTE_DEMOS, type QuoteDemo } from '@/types/stay.types'
 
 /** Server-side price breakdown for the chosen dates. The booking card only displays what this returns. */
 export async function GET(req: NextRequest, ctx: { params: Promise<{ slug: string }> }) {

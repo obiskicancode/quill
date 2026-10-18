@@ -7,9 +7,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, ApiFailure, loadProviderScript, newKey } from '@/lib/checkout/client'
 import {
   checkProofFile, guestSchema, type GuestInput, type ReservationRequestInput,
-} from '@/lib/checkout/schemas'
-import type { BankDetails, CheckoutQuoteResponse, PaymentMethod } from '@/lib/checkout/types'
-import { formatMinor } from '@/lib/stay-types'
+} from '@/schemas/checkout.schema'
+import type { BankDetails, CheckoutQuoteResponse, PaymentMethod } from '@/types/checkout.types'
+import { formatMinor } from '@/types/stay.types'
 import { EASE_OUT } from '../motion/variants'
 import { Button } from '../ui/Button'
 import { DetailsStep, type GuestField } from './DetailsStep'

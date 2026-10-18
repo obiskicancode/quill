@@ -1,7 +1,7 @@
 import { unitLabels } from '@/lib/checkout/format'
 import { getExtras } from '@/lib/content/data'
 import type { PreviewFlags } from '@/lib/content/preview'
-import { formatMinor } from '@/lib/stay-types'
+import { formatMinor } from '@/types/stay.types'
 import { StaggerGroup, StaggerItem, TextReveal } from '@/components/motion'
 
 /** The hotel's active paid extras. Prices come as kobo and are shown in naira. */

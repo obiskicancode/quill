@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { loadReservation } from '@/lib/booking/view'
-import { fieldErrorsFrom } from '@/lib/checkout/schemas'
+import { fieldErrorsFrom } from '@/schemas/checkout.schema'
 import { quoteChange } from '@/lib/manage/actions'
 import { manageError, requireManage } from '@/lib/manage/auth'
-import { changeQuoteRequestSchema } from '@/lib/manage/schemas'
+import { changeQuoteRequestSchema } from '@/schemas/manage.schema'
 import { hotelClock } from '@/lib/stay-quote'
 
 /** Re-quotes the SAME room type for new dates: availability, the new breakdown, the difference and the new deadline. */

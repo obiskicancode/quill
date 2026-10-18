@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { detailsPatchSchema } from '../checkout/schemas'
-import { CANCEL_REASONS } from './types'
+import { detailsPatchSchema } from '@/schemas/checkout.schema'
+import { CANCEL_REASONS } from '@/types/manage.types'
 
 const key = z.string().min(16).max(64)
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date.')

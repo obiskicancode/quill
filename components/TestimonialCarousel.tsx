@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Star } from "lucide-react";
 import { site } from "@/lib/site";
-import type { Testimonial } from "@/lib/types";
+import type { Testimonial } from "@/types/site.types";
 import { Carousel } from "./Carousel";
 import { Reveal } from "./motion/Reveal";
 import { TextReveal } from "./motion/TextReveal";

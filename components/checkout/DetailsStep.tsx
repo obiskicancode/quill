@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { whatsappHref } from '@/lib/site'
 import { Field, inputClass } from './Field'
 import { countries } from '@/lib/checkout/countries'
-import { arrivalOptions, MAX_REQUEST_LENGTH, type GuestInput } from '@/lib/checkout/schemas'
+import { arrivalOptions, MAX_REQUEST_LENGTH, type GuestInput } from '@/schemas/checkout.schema'
 
 export type GuestField = keyof GuestInput
 

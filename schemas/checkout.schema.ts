@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { dialFor, countries } from './countries'
+import { dialFor, countries } from '@/lib/checkout/countries'
 
 /** Shared by the browser (inline validation) and the server (the real check). */
 

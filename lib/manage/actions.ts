@@ -1,17 +1,17 @@
 import { nightsBetween, type ISODate } from '../dates'
 import { applyStayChange, logEvent, newId, notify, store, type StoredQuote, type StoredReservation } from '../checkout/mock-db'
 import { buildCheckoutQuote } from '../checkout/quote'
-import type { DetailsRequest } from './schemas'
-import { detailsPatchSchema } from '../checkout/schemas'
+import type { DetailsRequest } from '@/schemas/manage.schema'
+import { detailsPatchSchema } from '@/schemas/checkout.schema'
 import { parseDemos } from '../checkout/settings'
 import { formatRange } from '../room-query'
 import { getRoomDetail, hotelSettings } from '../room-detail'
 import { validateStay, type Clock } from '../stay-quote'
-import type { StayInput, Violation } from '../stay-types'
+import type { StayInput, Violation } from '@/types/stay.types'
 import { allowedActions, freeDeadline, previewCancellation } from './rules'
 import { getManageSettings, type ManageSettings } from './settings'
-import type { CancelRequest } from './schemas'
-import type { CancellationPreview, ChangeQuoteResponse, PendingChange, PriceDifference, RefundRecord, RefundStatus } from './types'
+import type { CancelRequest } from '@/schemas/manage.schema'
+import type { CancellationPreview, ChangeQuoteResponse, PendingChange, PriceDifference, RefundRecord, RefundStatus } from '@/types/manage.types'
 
 /**
  * MOCK server actions for managing a booking. Every one re-checks the rules, writes the status history and audit log,

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getManageSession } from '../booking/session'
 import { isDemoRef } from '../booking/view'
 import { rateLimited, store } from '../checkout/mock-db'
-import type { ManageApiError } from './types'
+import type { ManageApiError } from '@/types/manage.types'
 
 const noStore = { 'Cache-Control': 'no-store' }
 

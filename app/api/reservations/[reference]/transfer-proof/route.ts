@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { requireManage } from '@/lib/manage/auth'
 import { loadReservation } from '@/lib/booking/view'
 import { logEvent, refresh, store, toStatus } from '@/lib/checkout/mock-db'
-import { checkProofFile } from '@/lib/checkout/schemas'
-import type { ApiError } from '@/lib/checkout/types'
+import { checkProofFile } from '@/schemas/checkout.schema'
+import type { ApiError } from '@/types/checkout.types'
 
 const fail = (status: number, error: ApiError) => NextResponse.json(error, { status })
 

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view'
 import { store } from '@/lib/checkout/mock-db'
-import { fieldErrorsFrom } from '@/lib/checkout/schemas'
+import { fieldErrorsFrom } from '@/schemas/checkout.schema'
 import { commitChange } from '@/lib/manage/actions'
 import { manageError, manageOpts, replayKey, requireManage } from '@/lib/manage/auth'
-import { changeDatesRequestSchema } from '@/lib/manage/schemas'
+import { changeDatesRequestSchema } from '@/schemas/manage.schema'
 import { hotelClock } from '@/lib/stay-quote'
 
 /**

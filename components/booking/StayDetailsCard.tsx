@@ -2,8 +2,8 @@
 
 import { Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
-import type { GuestReservation } from '@/lib/booking/types'
-import { formatMinor } from '@/lib/stay-types'
+import type { GuestReservation } from '@/types/booking.types'
+import { formatMinor } from '@/types/stay.types'
 import { StayFacts } from '../checkout/SummaryCard'
 
 /** The stay as booked: room, dates and times, guests, extras, requests and the guest's contact details (masked until verified). */

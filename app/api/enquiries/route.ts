@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import { rateLimited } from '@/lib/checkout/mock-db'
-import { fieldErrorsFrom } from '@/lib/checkout/schemas'
+import { fieldErrorsFrom } from '@/schemas/checkout.schema'
 import { getHotelSettings } from '@/lib/content/data'
 import { enquiryStore, saveEnquiry } from '@/lib/content/enquiries'
-import { enquirySchema, type EnquiryError, type EnquiryResponse } from '@/lib/content/schemas'
+import { enquirySchema, type EnquiryError, type EnquiryResponse } from '@/schemas/content.schema'
 
 const noStore = { 'Cache-Control': 'no-store' }
 const fail = (status: number, error: EnquiryError, headers: Record<string, string> = {}) => NextResponse.json(error, { status, headers: { ...noStore, ...headers } })

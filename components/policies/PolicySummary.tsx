@@ -1,5 +1,5 @@
 import { hotelSettings } from '@/lib/room-detail'
-import type { PolicySettings } from '@/lib/content/types'
+import type { PolicySettings } from '@/types/content.types'
 
 const policyTypeLabels: Record<PolicySettings['cancellation']['policyType'], string> = {
   flexible: 'Free cancellation within the window',

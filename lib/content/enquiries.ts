@@ -1,4 +1,4 @@
-import type { EnquiryRequest } from './schemas'
+import type { EnquiryRequest } from '@/schemas/content.schema'
 
 /**
  * MOCK enquiry storage and notifications (in memory). Replace with your database and mailer.

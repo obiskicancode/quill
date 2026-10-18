@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { normalizePhone } from '../checkout/schemas'
-import { ENQUIRY_TOPICS, type EnquiryTopic } from './types'
+import { normalizePhone } from '@/schemas/checkout.schema'
+import { ENQUIRY_TOPICS, type EnquiryTopic } from '@/types/content.types'
 
 /** Shared by the contact form (inline validation) and POST /api/enquiries (the real check). */
 

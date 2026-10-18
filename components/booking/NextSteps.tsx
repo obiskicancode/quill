@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react'
-import type { GuestReservation, HeaderKind } from '@/lib/booking/types'
-import { formatMinor } from '@/lib/stay-types'
+import type { GuestReservation, HeaderKind } from '@/types/booking.types'
+import { formatMinor } from '@/types/stay.types'
 import { whatsappHref } from '@/lib/site'
 import { StaggerGroup, StaggerItem } from '../motion'
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import type { ImageAsset } from "@/lib/types";
+import type { ImageAsset } from "@/types/site.types";
 import { EASE_OUT, viewportOnce } from "./motion/variants";
 import { Photo } from "./ui/Photo";
 import { SectionHeading } from "./ui/SectionHeading";

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAccess } from '@/lib/booking/session'
 import { isDemoRef, loadReservation } from '@/lib/booking/view'
-import type { BookingApiError, ResendResponse } from '@/lib/booking/types'
+import type { BookingApiError, ResendResponse } from '@/types/booking.types'
 import { logEvent, rateLimited } from '@/lib/checkout/mock-db'
 
 const COOLDOWN_SECONDS = 60

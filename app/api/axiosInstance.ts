@@ -1,0 +1,127 @@
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+
+import { config } from "@/config";
+import { AuthTokens } from "@/types/auth.types";
+
+import { TokenService } from "./services/token.service";
+
+interface CustomConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
+const isServer = typeof window === "undefined";
+const BASE_PATH = "/api";
+
+const apiClient = axios.create({
+  baseURL: isServer ? config.API.BASE_URL + `${BASE_PATH}` : `${BASE_PATH}`,
+  timeout: 30000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+  withCredentials: true,
+});
+
+const refreshClient = axios.create({
+  baseURL: isServer ? config.API.BASE_URL + BASE_PATH : BASE_PATH,
+  withCredentials: true,
+});
+
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (err: Error) => void;
+}> = [];
+
+const processQueue = (error: Error | null, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token!);
+    }
+  });
+  failedQueue = [];
+};
+
+apiClient.interceptors.request.use(
+  (config) => {
+    const accessToken = TokenService.getAccessToken();
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+  },
+  (error) => {
+    if (error instanceof Error) {
+      return Promise.reject(error);
+    }
+  },
+);
+
+apiClient.interceptors.response.use(
+  (response) => response,
+
+  async (e) => {
+    const err = e as AxiosError;
+    const originalRequest = err.config as CustomConfig;
+
+    if (
+      !(err instanceof AxiosError) ||
+      err.response?.status !== 401 ||
+      originalRequest._retry ||
+      originalRequest.url?.includes("/auth/refresh")
+    ) {
+      return Promise.reject(err);
+    }
+
+    if (isRefreshing) {
+      return new Promise<string>((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      })
+        .then((token) => {
+          originalRequest.headers = originalRequest.headers || {};
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return apiClient(originalRequest);
+        })
+        .catch((error) => {
+          if (error instanceof Error) {
+            return Promise.reject(error);
+          }
+        });
+    }
+
+    originalRequest._retry = true;
+    isRefreshing = true;
+
+    try {
+      const response = await refreshClient.post<{ tokens: AuthTokens }>(
+        "/auth/refresh",
+        {},
+        { withCredentials: true },
+      );
+
+      const { access_token } = response.data.tokens;
+
+      TokenService.setAccessToken(access_token);
+      processQueue(null, access_token);
+
+      originalRequest.headers.Authorization = `Bearer ${access_token}`;
+      return apiClient(originalRequest);
+    } catch (refreshError) {
+      processQueue(refreshError as Error);
+      TokenService.clearAccessToken();
+
+      if (!isServer) {
+        window.dispatchEvent(new Event("auth:logout"));
+      }
+
+      if (refreshError instanceof Error) {
+        return Promise.reject(err);
+      }
+    } finally {
+      isRefreshing = false;
+    }
+  },
+);
+
+export { apiClient };

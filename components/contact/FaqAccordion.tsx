@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { useId, useRef, useState, type KeyboardEvent } from 'react'
-import type { Faq } from '@/lib/content/types'
+import type { Faq } from '@/types/content.types'
 import { EASE_OUT } from '../motion/variants'
 
 /**

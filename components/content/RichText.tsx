@@ -1,4 +1,4 @@
-import type { RichBlock, RichLink } from '@/lib/content/types'
+import type { RichBlock, RichLink } from '@/types/content.types'
 import { headingIdMap, safeHref } from '@/lib/content/rich'
 
 function InlineLink({ link }: { link: RichLink }) {

@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from 'framer-motion'
 import { CalendarClock, Gift, PencilLine, XCircle } from 'lucide-react'
-import type { GuestReservation } from '@/lib/booking/types'
+import type { GuestReservation } from '@/types/booking.types'
 import { whatsappHref, telHref } from '@/lib/site'
 import { formatRange } from '@/lib/room-query'
 import { AnimatedList } from '../motion'

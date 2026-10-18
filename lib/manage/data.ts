@@ -4,7 +4,7 @@ import type { Clock } from '../stay-quote'
 import { timelineFrom } from './labels'
 import { allowedActions, previewCancellation } from './rules'
 import { getManageSettings } from './settings'
-import type { ManageData, PendingChangeView } from './types'
+import type { ManageData, PendingChangeView } from '@/types/manage.types'
 
 /** Everything the manage page needs beyond the confirmation view. The server decides every action and every amount. */
 export function buildManageData(r: StoredReservation, session: { csrf: string; expiresAt: number }, clock: Clock): ManageData {

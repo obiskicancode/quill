@@ -1,6 +1,6 @@
 'use client'
 
-import type { AnalyticsSettings } from '@/lib/content/types'
+import type { AnalyticsSettings } from '@/types/content.types'
 import { hasConsent, useConsent } from '@/lib/consent'
 
 /**

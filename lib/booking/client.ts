@@ -1,6 +1,6 @@
-import type { BookingApiError, GuestReservation, ResendResponse } from './types'
-import type { StatusResponse } from '../checkout/types'
-import type { VerifyRequest } from './schemas'
+import type { BookingApiError, GuestReservation, ResendResponse } from '@/types/booking.types'
+import type { StatusResponse } from '@/types/checkout.types'
+import type { VerifyRequest } from '@/schemas/booking.schema'
 
 /** Typed fetch helpers for the confirmation page. Every call here is a read or a rate-limited, repeat-safe action. */
 export class BookingFailure extends Error {

@@ -1,11 +1,11 @@
 import { cache } from "react";
 import { getCheckoutSettings } from "../checkout/settings";
-import type { ExtraItem } from "../checkout/types";
+import type { ExtraItem } from '@/types/checkout.types';
 import { testimonials as sampleTestimonials } from "../data";
 import { hotelSettings as roomHotelSettings } from "../room-detail";
 import { roomAmenityLabels, roomTypes, type RoomAmenityKey } from "../rooms";
 import { site } from "../site";
-import type { Testimonial } from "../types";
+import type { Testimonial } from "@/types/site.types";
 import { gate, type PreviewFlags } from "./preview";
 import type {
   AnalyticsSettings,
@@ -21,8 +21,8 @@ import type {
   SitePage,
   SocialLink,
   TeamMember,
-} from "./types";
-import { POLICY_SLUGS } from "./types";
+} from "@/types/content.types";
+import { POLICY_SLUGS } from "@/types/content.types";
 
 /*
  * TYPED PLACEHOLDER DATA. In production these come from the admin database (site_pages, team_members,

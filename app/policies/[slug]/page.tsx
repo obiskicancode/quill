@@ -9,7 +9,7 @@ import { CancellationSummary, HouseRulesList } from '@/components/policies/Polic
 import { getPolicyPage, getPolicySettings } from '@/lib/content/data'
 import { parsePreview } from '@/lib/content/preview'
 import { policyHeadings } from '@/lib/content/rich'
-import { POLICY_SLUGS, type PolicySlug } from '@/lib/content/types'
+import { POLICY_SLUGS, type PolicySlug } from '@/types/content.types'
 
 const isPolicySlug = (s: string): s is PolicySlug => (POLICY_SLUGS as readonly string[]).includes(s)
 

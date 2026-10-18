@@ -1,4 +1,4 @@
-import type { Amenity } from '@/lib/types'
+import type { Amenity } from '@/types/site.types'
 import { AmenityItem } from './AmenityItem'
 import { StaggerGroup } from './motion/StaggerGroup'
 import { SectionHeading } from './ui/SectionHeading'

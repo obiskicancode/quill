@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view'
 import { store } from '@/lib/checkout/mock-db'
-import { fieldErrorsFrom } from '@/lib/checkout/schemas'
+import { fieldErrorsFrom } from '@/schemas/checkout.schema'
 import { saveDetails } from '@/lib/manage/actions'
 import { manageError, manageOpts, replayKey, requireManage } from '@/lib/manage/auth'
-import { detailsRequestSchema } from '@/lib/manage/schemas'
+import { detailsRequestSchema } from '@/schemas/manage.schema'
 import { hotelClock } from '@/lib/stay-quote'
 
 /** Updates name, phone, country, arrival time and special requests. The email cannot be changed here. */

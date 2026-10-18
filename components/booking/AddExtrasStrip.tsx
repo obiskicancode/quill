@@ -1,6 +1,6 @@
 import { unitLabels } from '@/lib/checkout/format'
-import type { GuestReservation } from '@/lib/booking/types'
-import { formatMinor } from '@/lib/stay-types'
+import type { GuestReservation } from '@/types/booking.types'
+import { formatMinor } from '@/types/stay.types'
 import { whatsappHref } from '@/lib/site'
 import { StaggerGroup, StaggerItem } from '../motion'
 import { ButtonLink } from '../ui/Button'

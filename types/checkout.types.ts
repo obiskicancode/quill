@@ -1,5 +1,5 @@
-import type { ISODate } from '../dates'
-import type { StayQuote } from '../stay-types'
+import type { ISODate } from '@/lib/dates'
+import type { StayQuote } from '@/types/stay.types'
 
 /**
  * API contract for checkout. Money is always integer minor units (kobo); the UI divides by 100.

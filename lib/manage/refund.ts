@@ -1,8 +1,8 @@
 import type { ISODate } from '../dates'
-import type { PaymentMethod, PaymentMode } from '../checkout/types'
+import type { PaymentMethod, PaymentMode } from '@/types/checkout.types'
 import { formatDeadline } from '../checkout/format'
-import type { PolicySnapshot } from '../booking/types'
-import type { RefundResult } from './types'
+import type { PolicySnapshot } from '@/types/booking.types'
+import type { RefundResult } from '@/types/manage.types'
 
 /**
  * The one refund calculation. It runs only on the server, from the policy snapshot saved on the reservation

@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { Expand } from 'lucide-react'
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
-import { GALLERY_CATEGORIES, type GalleryCategory, type GalleryImageRecord } from '@/lib/content/types'
+import { GALLERY_CATEGORIES, type GalleryCategory, type GalleryImageRecord } from '@/types/content.types'
 import { EASE_OUT, spring } from '../motion/variants'
 import { HoverZoom } from '../motion/HoverZoom'
 import { Lightbox } from '../room-detail/Lightbox'

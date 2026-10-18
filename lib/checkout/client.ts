@@ -1,7 +1,7 @@
 import type {
   ApiError, CheckoutQuoteResponse, PaymentInitRequest, PaymentInitResponse, QuoteRequest, ReservationResponse, StatusResponse,
-} from './types'
-import type { ReservationRequestInput } from './schemas'
+} from '@/types/checkout.types'
+import type { ReservationRequestInput } from '@/schemas/checkout.schema'
 
 /** Typed fetch helpers. A network failure is reported as `network: true` so the UI can offer a safe retry. */
 export class ApiFailure extends Error {

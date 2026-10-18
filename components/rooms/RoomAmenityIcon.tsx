@@ -1,6 +1,6 @@
 import { DoorOpen, Utensils } from 'lucide-react'
 import { AmenityIcon } from '../AmenityIcon'
-import type { AmenityKey } from '@/lib/types'
+import type { AmenityKey } from '@/types/site.types'
 import type { RoomAmenityKey } from '@/lib/rooms'
 
 /** Wraps the existing AmenityIcon and adds the two listing-only amenities. */

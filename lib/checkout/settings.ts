@@ -1,5 +1,5 @@
 import { hotelSettings } from "../room-detail";
-import type { CheckoutSettings, ExtraItem, PaymentProvider } from "./types";
+import type { CheckoutSettings, ExtraItem, PaymentProvider } from "@/types/checkout.types";
 
 /**
  * MOCK hotel checkout settings. In production these come from the database.

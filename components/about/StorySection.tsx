@@ -1,6 +1,6 @@
 import { getAboutPage } from '@/lib/content/data'
 import type { PreviewFlags } from '@/lib/content/preview'
-import type { RichBlock } from '@/lib/content/types'
+import type { RichBlock } from '@/types/content.types'
 import { HoverZoom, Reveal } from '@/components/motion'
 import { Photo } from '../ui/Photo'
 import { RichText } from '../content/RichText'

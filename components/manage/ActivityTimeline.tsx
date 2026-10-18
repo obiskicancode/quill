@@ -1,4 +1,4 @@
-import type { TimelineEntry } from '@/lib/manage/types'
+import type { TimelineEntry } from '@/types/manage.types'
 import { StaggerGroup, StaggerItem } from '../motion'
 
 const when = new Intl.DateTimeFormat('en-NG', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Lagos' })

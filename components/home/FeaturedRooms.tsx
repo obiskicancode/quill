@@ -1,5 +1,5 @@
 import { whatsappHref } from "@/lib/site";
-import type { Room } from "@/lib/types";
+import type { Room } from "@/types/site.types";
 import { RoomCard } from "../RoomCard";
 import { StaggerGroup } from "../motion/StaggerGroup";
 import { StaggerItem } from "../motion/StaggerItem";

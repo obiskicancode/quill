@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server'
 import { loadReservation } from '@/lib/booking/view'
 import { requireManage } from '@/lib/manage/auth'
 import { refresh, store, type StoredReservation } from '@/lib/checkout/mock-db'
-import { fieldErrorsFrom, paymentInitSchema } from '@/lib/checkout/schemas'
+import { fieldErrorsFrom, paymentInitSchema } from '@/schemas/checkout.schema'
 import { getCheckoutSettings, parseDemos } from '@/lib/checkout/settings'
-import type { ApiError, PaymentInitResponse } from '@/lib/checkout/types'
+import type { ApiError, PaymentInitResponse } from '@/types/checkout.types'
 
 const fail = (status: number, error: ApiError) => NextResponse.json(error, { status })
 

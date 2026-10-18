@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { MessageSquare } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { headerKind, type GuestReservation } from '@/lib/booking/types'
+import { headerKind, type GuestReservation } from '@/types/booking.types'
 import { manageApi, ManageFailure } from '@/lib/manage/client'
 import { formatCountdown } from '@/lib/checkout/format'
 import { EASE_OUT } from '../motion/variants'

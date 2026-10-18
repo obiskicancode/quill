@@ -5,7 +5,7 @@ import { AlertTriangle, CheckCircle2, Clock, Loader2, RefreshCw, WifiOff } from 
 import { forwardRef, useState, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { whatsappHref, telHref, site } from '@/lib/site'
-import { formatMinor } from '@/lib/stay-types'
+import { formatMinor } from '@/types/stay.types'
 import { formatRange } from '@/lib/room-query'
 import { DatePicker, type DateRange } from '../DatePicker'
 import { EASE_OUT } from '../motion/variants'

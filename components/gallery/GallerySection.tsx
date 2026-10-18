@@ -1,6 +1,6 @@
 import { getGalleryImages, getRoomTypeOptions } from '@/lib/content/data'
 import type { PreviewFlags } from '@/lib/content/preview'
-import { GALLERY_CATEGORIES, type GalleryCategory } from '@/lib/content/types'
+import { GALLERY_CATEGORIES, type GalleryCategory } from '@/types/content.types'
 import { Reveal } from '../motion/Reveal'
 import { EmptyState } from '../rooms/EmptyState'
 import { ButtonLink } from '../ui/Button'

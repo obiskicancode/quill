@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import { CheckoutShell } from '@/components/checkout/CheckoutShell'
 import { ManageGate } from '@/components/manage/ManageGate'
-import { referenceSchema } from '@/lib/booking/schemas'
+import { referenceSchema } from '@/schemas/booking.schema'
 import { getManageSession } from '@/lib/booking/session'
 import { buildGuestReservation, isDemoRef, loadReservation } from '@/lib/booking/view'
 import { manageOpts } from '@/lib/manage/auth'
-import type { GuestReservation } from '@/lib/booking/types'
+import type { GuestReservation } from '@/types/booking.types'
 import '../confirmation/print.css'
 
 // No personal data may be cached or indexed.

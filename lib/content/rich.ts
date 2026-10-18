@@ -1,4 +1,4 @@
-import type { RichBlock } from './types'
+import type { RichBlock } from '@/types/content.types'
 
 /** A stable id for a heading, so table-of-contents anchors link to it. */
 export function headingId(text: string): string {

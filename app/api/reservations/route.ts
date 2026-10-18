@@ -4,9 +4,9 @@ import { setAccessCookie } from '@/lib/booking/session'
 import { getRoomDetail } from '@/lib/room-detail'
 import { buildCheckoutQuote } from '@/lib/checkout/quote'
 import { createReference, logEvent, notify, rateLimited, refresh, store, toReservationResponse, type StoredReservation } from '@/lib/checkout/mock-db'
-import { fieldErrorsFrom, reservationRequestSchema } from '@/lib/checkout/schemas'
+import { fieldErrorsFrom, reservationRequestSchema } from '@/schemas/checkout.schema'
 import { getCheckoutSettings, parseDemos } from '@/lib/checkout/settings'
-import type { ApiError } from '@/lib/checkout/types'
+import type { ApiError } from '@/types/checkout.types'
 
 const fail = (status: number, error: ApiError, headers?: Record<string, string>) => NextResponse.json(error, { status, headers })
 

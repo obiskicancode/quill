@@ -5,10 +5,10 @@ import { BadgeCheck, ChevronDown, Clock, Lock, MessageCircle, ShieldCheck, X } f
 import { useEffect, useRef, useState } from 'react'
 import { EASE_OUT } from '../motion/variants'
 import { formatDeadline, formatCountdown } from '@/lib/checkout/format'
-import type { CheckoutQuoteResponse, ConfirmationMode } from '@/lib/checkout/types'
+import type { CheckoutQuoteResponse, ConfirmationMode } from '@/types/checkout.types'
 import { formatRange } from '@/lib/room-query'
 import { whatsappHref } from '@/lib/site'
-import { formatMinor } from '@/lib/stay-types'
+import { formatMinor } from '@/types/stay.types'
 import { BreakdownSkeleton, PriceBreakdown } from '../room-detail/PriceBreakdown'
 import { Photo } from '../ui/Photo'
 

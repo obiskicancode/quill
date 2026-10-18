@@ -1,7 +1,7 @@
 import { formatDeadline } from '@/lib/checkout/format'
-import type { GuestReservation } from '@/lib/booking/types'
-import { formatMinor } from '@/lib/stay-types'
-import type { CancellationPreview } from '@/lib/manage/types'
+import type { GuestReservation } from '@/types/booking.types'
+import { formatMinor } from '@/types/stay.types'
+import type { CancellationPreview } from '@/types/manage.types'
 import { TextLink } from '../ui/TextLink'
 
 /** Shows the policy snapshot saved on the reservation, never the hotel's current settings. */

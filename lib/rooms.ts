@@ -1,5 +1,5 @@
 import { amenityLabels } from './data'
-import type { AmenityKey, ImageAsset } from './types'
+import type { AmenityKey, ImageAsset } from '@/types/site.types'
 
 /*
  * PLACEHOLDER CONTENT. In production these come from the database.

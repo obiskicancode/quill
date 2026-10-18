@@ -1,5 +1,5 @@
 import { maxGuests, roomTypes, type RoomAmenityKey, type RoomType } from './rooms'
-import type { AmenityKey, Room } from './types'
+import type { AmenityKey, Room } from '@/types/site.types'
 
 /*
  * MOCK DATABASE LAYER. Replace getRoomDetail / getSimilarRooms with real queries.

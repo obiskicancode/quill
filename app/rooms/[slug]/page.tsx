@@ -37,7 +37,7 @@ import {
   stayParams,
   type QuoteDemo,
   type StayInput,
-} from "@/lib/stay-types";
+} from "@/types/stay.types";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 

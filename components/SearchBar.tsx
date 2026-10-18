@@ -9,7 +9,7 @@ import {
   MAX_CHILDREN,
   validateSearch,
 } from "@/lib/search";
-import type { SearchState } from "@/lib/types";
+import type { SearchState } from "@/types/site.types";
 import { CalendarDays, Search, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {

@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import type { GuestReservation } from '@/lib/booking/types'
-import { formatMinor } from '@/lib/stay-types'
+import type { GuestReservation } from '@/types/booking.types'
+import { formatMinor } from '@/types/stay.types'
 import { PriceBreakdown } from '../room-detail/PriceBreakdown'
 import { Badge } from '../rooms/AvailabilityBadge'
 

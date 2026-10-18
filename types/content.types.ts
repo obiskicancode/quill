@@ -1,4 +1,4 @@
-import type { ImageAsset } from '../types'
+import type { ImageAsset } from '@/types/site.types'
 
 /** Typed shapes for the content pages. They mirror the admin's data fields. Money is integer kobo. */
 
