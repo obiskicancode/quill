@@ -1,45 +1,46 @@
-import { Breadcrumb } from "@/components/Breadcrumb";
-import { CtaBand } from "@/components/CtaBand";
-import { Reveal } from "@/components/motion/Reveal";
-import { AmenitiesSection } from "@/components/room-detail/AmenitiesSection";
-import { AskCard } from "@/components/room-detail/AskCard";
+import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+
+import { Breadcrumb } from '@/components/Breadcrumb';
+import { CtaBand } from '@/components/CtaBand';
+import { Reveal } from '@/components/motion/Reveal';
+import { AmenitiesSection } from '@/components/room-detail/AmenitiesSection';
+import { AskCard } from '@/components/room-detail/AskCard';
 import {
   BookingCard,
   type BookingRoom,
-} from "@/components/room-detail/BookingCard";
-import { GoodToKnow } from "@/components/room-detail/GoodToKnow";
-import { KeyFacts } from "@/components/room-detail/KeyFacts";
-import { PreviewLinks } from "@/components/room-detail/PreviewLinks";
-import { ReadMore } from "@/components/room-detail/ReadMore";
-import { RoomGallery } from "@/components/room-detail/RoomGallery";
-import { RoomReviews } from "@/components/room-detail/RoomReviews";
-import { SimilarRooms } from "@/components/room-detail/SimilarRooms";
-import { TitleBlock } from "@/components/room-detail/TitleBlock";
+} from '@/components/room-detail/BookingCard';
+import { GoodToKnow } from '@/components/room-detail/GoodToKnow';
+import { KeyFacts } from '@/components/room-detail/KeyFacts';
+import { PreviewLinks } from '@/components/room-detail/PreviewLinks';
+import { ReadMore } from '@/components/room-detail/ReadMore';
+import { RoomGallery } from '@/components/room-detail/RoomGallery';
+import { RoomReviews } from '@/components/room-detail/RoomReviews';
+import { SimilarRooms } from '@/components/room-detail/SimilarRooms';
+import { TitleBlock } from '@/components/room-detail/TitleBlock';
 import {
   baseGuests,
   getRoomDetail,
   getSimilarRooms,
   hotelSettings,
   type RoomDetail,
-} from "@/lib/room-detail";
-import { parseRoomQuery, stayHref } from "@/lib/room-query";
-import { bedTypeLabels, maxGuests, roomAmenityLabels } from "@/lib/rooms";
-import { site } from "@/lib/site";
+} from '@/lib/room-detail';
+import { parseRoomQuery, stayHref } from '@/lib/room-query';
+import { bedTypeLabels, maxGuests, roomAmenityLabels } from '@/lib/rooms';
+import { site } from '@/lib/site';
 import {
   hotelClock,
   needsExtraBed,
   priceStay,
   validateStay,
-} from "@/lib/stay-quote";
+} from '@/lib/stay-quote';
 import {
   bookingHref,
   QUOTE_DEMOS,
   stayParams,
   type QuoteDemo,
   type StayInput,
-} from "@/types/stay.types";
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+} from '@/types/stay.types';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 interface PageProps {
@@ -56,10 +57,10 @@ const paramsLike = (sp: SearchParams) => ({
 
 export async function generateMetadata({
   params,
-}: Pick<PageProps, "params">): Promise<Metadata> {
+}: Pick<PageProps, 'params'>): Promise<Metadata> {
   const { slug } = await params;
   const room = getRoomDetail(slug);
-  if (!room) return { title: "Room not found" };
+  if (!room) return { title: 'Room not found' };
   const description =
     room.metaDescription ??
     (room.description.length > 155
@@ -72,7 +73,7 @@ export async function generateMetadata({
     openGraph: {
       title: room.metaTitle ?? `${room.name} | ${site.name}`,
       description,
-      type: "website",
+      type: 'website',
       ...(cover ? { images: [{ url: cover.src, alt: cover.alt }] } : {}),
     },
   };
@@ -85,20 +86,20 @@ function buildJsonLd(
 ) {
   const absolute = (src: string) => new URL(src, site.url).toString();
   const hotelRoom: Record<string, unknown> = {
-    "@type": "HotelRoom",
+    '@type': 'HotelRoom',
     name: room.name,
     description: room.description,
     url: absolute(`/rooms/${room.slug}`),
-    bed: { "@type": "BedDetails", typeOfBed: bedTypeLabels[room.bedType] },
-    occupancy: { "@type": "QuantitativeValue", maxValue: maxGuests(room) },
+    bed: { '@type': 'BedDetails', typeOfBed: bedTypeLabels[room.bedType] },
+    occupancy: { '@type': 'QuantitativeValue', maxValue: maxGuests(room) },
     floorSize: {
-      "@type": "QuantitativeValue",
+      '@type': 'QuantitativeValue',
       value: room.sizeSqm,
-      unitCode: "MTK",
+      unitCode: 'MTK',
     },
     image: room.gallery.map((g) => absolute(g.src)),
     amenityFeature: room.amenities.map((k) => ({
-      "@type": "LocationFeatureSpecification",
+      '@type': 'LocationFeatureSpecification',
       name: roomAmenityLabels[k],
       value: true,
     })),
@@ -106,15 +107,15 @@ function buildJsonLd(
   // Offers only when the price is public and the dates are known and valid.
   if (offerHref && totalMinor !== null) {
     hotelRoom.offers = {
-      "@type": "Offer",
+      '@type': 'Offer',
       price: (totalMinor / 100).toFixed(2),
-      priceCurrency: "NGN",
+      priceCurrency: 'NGN',
       url: absolute(offerHref),
     };
   }
   return {
-    "@context": "https://schema.org",
-    "@type": "Hotel",
+    '@context': 'https://schema.org',
+    '@type': 'Hotel',
     name: site.name,
     url: site.url,
     description: site.description,
@@ -129,7 +130,7 @@ export default async function RoomPage({ params, searchParams }: PageProps) {
 
   const sp = await searchParams;
   const q = parseRoomQuery(paramsLike(sp));
-  const rawDemo = paramsLike(sp).get("demo");
+  const rawDemo = paramsLike(sp).get('demo');
   const demo = QUOTE_DEMOS.includes(rawDemo as QuoteDemo)
     ? (rawDemo as QuoteDemo)
     : null;
@@ -140,7 +141,7 @@ export default async function RoomPage({ params, searchParams }: PageProps) {
     checkOut: q.checkOut,
     adults: q.adults,
     children: q.children,
-    extraBed: paramsLike(sp).get("extraBed") === "0" ? false : needs,
+    extraBed: paramsLike(sp).get('extraBed') === '0' ? false : needs,
   };
 
   const bookingRoom: BookingRoom = {
@@ -184,7 +185,7 @@ export default async function RoomPage({ params, searchParams }: PageProps) {
   }
   const jsonLd = JSON.stringify(
     buildJsonLd(room, offerHref, totalMinor),
-  ).replace(/</g, "\\u003c");
+  ).replace(/</g, '\\u003c');
   const stayQuery = stayParams(initial).toString();
 
   return (
@@ -198,8 +199,8 @@ export default async function RoomPage({ params, searchParams }: PageProps) {
       <div className="container-page pb-6 pt-4 md:pt-6">
         <Breadcrumb
           items={[
-            { label: "Home", href: "/" },
-            { label: "Rooms", href: stayHref("/rooms", q) },
+            { label: 'Home', href: '/' },
+            { label: 'Rooms', href: stayHref('/rooms', q) },
             { label: room.name },
           ]}
         />

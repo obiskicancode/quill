@@ -1,10 +1,14 @@
-import type { Config } from 'tailwindcss'
+import type { Config } from 'tailwindcss';
 
 /** Every colour is a CSS variable (see app/globals.css) so the brand can be swapped in one place. */
-const token = (name: string) => `rgb(var(--color-${name}) / <alpha-value>)`
+const token = (name: string) => `rgb(var(--color-${name}) / <alpha-value>)`;
 
 const config: Config = {
-  content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', './lib/**/*.{ts,tsx}'],
+  content: [
+    './app/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './lib/**/*.{ts,tsx}',
+  ],
   theme: {
     screens: { sm: '390px', md: '768px', lg: '1024px', xl: '1440px' },
     extend: {
@@ -29,8 +33,14 @@ const config: Config = {
         sans: ['var(--font-body)', 'system-ui', 'sans-serif'],
       },
       fontSize: {
-        display: ['clamp(2.5rem, 1.7rem + 3.6vw, 4.5rem)', { lineHeight: '1.04', letterSpacing: '-0.015em' }],
-        h2: ['clamp(1.875rem, 1.45rem + 1.8vw, 2.75rem)', { lineHeight: '1.12', letterSpacing: '-0.01em' }],
+        display: [
+          'clamp(2.5rem, 1.7rem + 3.6vw, 4.5rem)',
+          { lineHeight: '1.04', letterSpacing: '-0.015em' },
+        ],
+        h2: [
+          'clamp(1.875rem, 1.45rem + 1.8vw, 2.75rem)',
+          { lineHeight: '1.12', letterSpacing: '-0.01em' },
+        ],
         h3: ['1.375rem', { lineHeight: '1.3' }],
         'body-lg': ['1.125rem', { lineHeight: '1.65' }],
         body: ['1rem', { lineHeight: '1.6' }],
@@ -49,6 +59,6 @@ const config: Config = {
     },
   },
   plugins: [],
-}
+};
 
-export default config
+export default config;

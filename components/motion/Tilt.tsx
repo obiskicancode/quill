@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   motion,
@@ -6,8 +6,8 @@ import {
   useReducedMotion,
   useSpring,
   useTransform,
-} from "framer-motion";
-import { useRef, type ReactNode } from "react";
+} from 'framer-motion';
+import { useRef, type ReactNode } from 'react';
 
 interface TiltProps {
   children: ReactNode;
@@ -62,7 +62,7 @@ export function Tilt({ children, className, max = 6 }: TiltProps) {
   return (
     <div ref={ref} className={className} style={{ perspective: 900 }}>
       <motion.div
-        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+        style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
         onMouseMove={onMouseMove}
         onMouseLeave={onMouseLeave}
         className="h-full"

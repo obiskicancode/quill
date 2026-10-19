@@ -1,24 +1,32 @@
-import Link from 'next/link'
-import { ArrowRight, FileText } from 'lucide-react'
-import { getPolicyPages } from '@/lib/content/data'
-import type { PreviewFlags } from '@/lib/content/preview'
+import Link from 'next/link';
+import { ArrowRight, FileText } from 'lucide-react';
+
+import { getPolicyPages } from '@/lib/content/data';
+import type { PreviewFlags } from '@/lib/content/preview';
 
 const formatDate = (iso: string) =>
-  new Date(iso + 'T00:00:00').toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })
+  new Date(iso + 'T00:00:00').toLocaleDateString('en-NG', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
 /** Cards for every published policy. Omitted entirely when there are none. */
 export async function PolicyList({ flags }: { flags: PreviewFlags }) {
-  const pages = await getPolicyPages(flags)
+  const pages = await getPolicyPages(flags);
   if (pages.length === 0) {
     return (
       <p className="max-w-prose text-ink/85">
         Our policies are being updated. Please{' '}
-        <Link href="/contact" className="font-semibold underline decoration-accent decoration-2 underline-offset-4">
+        <Link
+          href="/contact"
+          className="font-semibold underline decoration-accent decoration-2 underline-offset-4"
+        >
           contact us
         </Link>{' '}
         if you have a question.
       </p>
-    )
+    );
   }
 
   return (
@@ -31,7 +39,9 @@ export async function PolicyList({ flags }: { flags: PreviewFlags }) {
           >
             <span className="inline-flex items-center gap-2 text-accent-ink">
               <FileText className="size-5" aria-hidden />
-              <span className="text-small font-semibold uppercase tracking-wide">Policy</span>
+              <span className="text-small font-semibold uppercase tracking-wide">
+                Policy
+              </span>
             </span>
             <h2 className="mt-3 font-display text-h3 text-ink">{p.title}</h2>
             <p className="mt-2 flex-1 text-ink/85">{p.summary}</p>
@@ -46,5 +56,5 @@ export async function PolicyList({ flags }: { flags: PreviewFlags }) {
         </li>
       ))}
     </ul>
-  )
+  );
 }

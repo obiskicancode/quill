@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { motion, useReducedMotion } from "framer-motion";
-import type { ReactNode } from "react";
-import { stagger, viewportOnce } from "./variants";
+import { motion, useReducedMotion } from 'framer-motion';
+import type { ReactNode } from 'react';
+
+import { stagger, viewportOnce } from './variants';
 
 interface StaggerGroupProps {
   children: ReactNode;
@@ -11,7 +12,7 @@ interface StaggerGroupProps {
   staggerChildren?: number;
   /** Delay before the first child starts, in seconds. */
   delayChildren?: number;
-  as?: "div" | "ul" | "section" | "dl" | "ol";
+  as?: 'div' | 'ul' | 'section' | 'dl' | 'ol';
 }
 
 /**
@@ -23,7 +24,7 @@ export function StaggerGroup({
   className,
   staggerChildren = 0.08,
   delayChildren = 0,
-  as = "div",
+  as = 'div',
 }: StaggerGroupProps) {
   const reduced = useReducedMotion();
   const Comp = motion[as];

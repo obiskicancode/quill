@@ -1,7 +1,11 @@
-import { Wrench } from 'lucide-react'
-import { ButtonLink } from '@/components/ui/Button'
+import { Wrench } from 'lucide-react';
 
-export const metadata = { title: 'Maintenance', robots: { index: false, follow: false } }
+import { ButtonLink } from '@/components/ui/Button';
+
+export const metadata = {
+  title: 'Maintenance',
+  robots: { index: false, follow: false },
+};
 
 /** Returns HTTP 503 when served through middleware. */
 export default function MaintenancePage() {
@@ -13,10 +17,12 @@ export default function MaintenancePage() {
           We are making a few updates
         </h1>
         <p className="text-body-lg text-ink/85">
-          Our website is down for scheduled maintenance. We will be back online soon. Thanks for your patience.
+          Our website is down for scheduled maintenance. We will be back online
+          soon. Thanks for your patience.
         </p>
         <p className="text-small text-muted">
-          Want to make a booking now? Message us on WhatsApp and we can help you straight away.
+          Want to make a booking now? Message us on WhatsApp and we can help you
+          straight away.
         </p>
         <div>
           <ButtonLink href="https://wa.me/" variant="whatsapp" external>
@@ -26,5 +32,5 @@ export default function MaintenancePage() {
         </div>
       </div>
     </section>
-  )
+  );
 }

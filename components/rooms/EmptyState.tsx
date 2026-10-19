@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react'
+import type { ReactNode } from 'react';
 
 interface EmptyStateProps {
-  title: string
-  text: string
-  action?: ReactNode
+  title: string;
+  text: string;
+  action?: ReactNode;
 }
 
 export function EmptyState({ title, text, action }: EmptyStateProps) {
@@ -13,5 +13,5 @@ export function EmptyState({ title, text, action }: EmptyStateProps) {
       <p className="mx-auto mt-2 max-w-md text-muted">{text}</p>
       {action && <div className="mt-6 flex justify-center">{action}</div>}
     </div>
-  )
+  );
 }

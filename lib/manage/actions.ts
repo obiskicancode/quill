@@ -1,5 +1,5 @@
-import { detailsPatchSchema } from "@/schemas/checkout.schema";
-import type { CancelRequest, DetailsRequest } from "@/schemas/manage.schema";
+import { detailsPatchSchema } from '@/schemas/checkout.schema';
+import type { CancelRequest, DetailsRequest } from '@/schemas/manage.schema';
 import type {
   CancellationPreview,
   ChangeQuoteResponse,
@@ -7,8 +7,9 @@ import type {
   PriceDifference,
   RefundRecord,
   RefundStatus,
-} from "@/types/manage.types";
-import type { StayInput, Violation } from "@/types/stay.types";
+} from '@/types/manage.types';
+import type { StayInput, Violation } from '@/types/stay.types';
+
 import {
   applyStayChange,
   logEvent,
@@ -17,15 +18,15 @@ import {
   store,
   type StoredQuote,
   type StoredReservation,
-} from "../checkout/mock-db";
-import { buildCheckoutQuote } from "../checkout/quote";
-import { parseDemos } from "../checkout/settings";
-import { nightsBetween, type ISODate } from "../dates";
-import { getRoomDetail, hotelSettings } from "../room-detail";
-import { formatRange } from "../room-query";
-import { validateStay, type Clock } from "../stay-quote";
-import { allowedActions, freeDeadline, previewCancellation } from "./rules";
-import { getManageSettings } from "./settings";
+} from '../checkout/mock-db';
+import { buildCheckoutQuote } from '../checkout/quote';
+import { parseDemos } from '../checkout/settings';
+import { nightsBetween, type ISODate } from '../dates';
+import { getRoomDetail, hotelSettings } from '../room-detail';
+import { formatRange } from '../room-query';
+import { validateStay, type Clock } from '../stay-quote';
+import { allowedActions, freeDeadline, previewCancellation } from './rules';
+import { getManageSettings } from './settings';
 
 /**
  * MOCK server actions for managing a booking. Every one re-checks the rules, writes the status history and audit log,
@@ -37,9 +38,9 @@ const demosOf = (r: StoredReservation, extra: Set<string>) =>
 
 // ---------------------------------------------------------------- cancel
 export type CancelOutcome =
-  | { status: "cancelled" }
-  | { status: "not_allowed"; reason: string }
-  | { status: "preview_changed"; preview: CancellationPreview };
+  | { status: 'cancelled' }
+  | { status: 'not_allowed'; reason: string }
+  | { status: 'preview_changed'; preview: CancellationPreview };
 
 export function cancelBooking(
   r: StoredReservation,
@@ -51,21 +52,21 @@ export function cancelBooking(
   const allowed = allowedActions(r, clock, settings).canCancel;
   if (!allowed.allowed)
     return {
-      status: "not_allowed",
-      reason: allowed.reason ?? "This booking cannot be cancelled online.",
+      status: 'not_allowed',
+      reason: allowed.reason ?? 'This booking cannot be cancelled online.',
     };
 
   const preview = previewCancellation(r, clock, settings);
   if (preview.refundMinor !== req.expectedRefundMinor)
-    return { status: "preview_changed", preview };
+    return { status: 'preview_changed', preview };
 
   const refundStatus: RefundStatus =
     preview.refundMinor > 0
-      ? preview.refundMethod === "manual_bank"
-        ? "pending_manual"
-        : "initiated"
-      : "none";
-  r.status = "cancelled";
+      ? preview.refundMethod === 'manual_bank'
+        ? 'pending_manual'
+        : 'initiated'
+      : 'none';
+  r.status = 'cancelled';
   r.pendingChange = null;
   r.cancellation = {
     at: Date.now(),
@@ -74,11 +75,11 @@ export function cancelBooking(
     refund: preview,
     refundStatus,
   };
-  logEvent(r, "cancelled", undefined, "guest");
+  logEvent(r, 'cancelled', undefined, 'guest');
 
   if (preview.refundMinor > 0) {
     const record: RefundRecord = {
-      id: newId("rf"),
+      id: newId('rf'),
       at: Date.now(),
       amountMinor: preview.refundMinor,
       method: preview.refundMethod,
@@ -88,25 +89,24 @@ export function cancelBooking(
     // Online refunds go to the payment provider's refund API (mock). Bank transfers become a manual task for staff.
     logEvent(
       r,
-      refundStatus === "pending_manual"
-        ? "refund_pending_manual"
-        : "refund_initiated",
+      refundStatus === 'pending_manual'
+        ? 'refund_pending_manual'
+        : 'refund_initiated',
       undefined,
-      "system",
+      'system',
     );
   }
-  notify(r, "booking_cancelled", "Your cancellation was confirmed by email.");
-  return { status: "cancelled" };
+  notify(r, 'booking_cancelled', 'Your cancellation was confirmed by email.');
+  return { status: 'cancelled' };
 }
 
 // ---------------------------------------------------------------- edit details
 export type DetailsOutcome =
-  | { status: "saved" }
-  | { status: "not_allowed"; reason: string };
+  { status: 'saved' } | { status: 'not_allowed'; reason: string };
 
 export function saveDetails(
   r: StoredReservation,
-  patch: DetailsRequest["details"],
+  patch: DetailsRequest['details'],
   clock: Clock,
   extraDemos: Set<string>,
 ): DetailsOutcome {
@@ -117,19 +117,19 @@ export function saveDetails(
   ).canEditDetails;
   if (!allowed.allowed)
     return {
-      status: "not_allowed",
-      reason: allowed.reason ?? "Details cannot be edited.",
+      status: 'not_allowed',
+      reason: allowed.reason ?? 'Details cannot be edited.',
     };
   const parsed = detailsPatchSchema.parse(patch);
   r.guest = { ...r.guest, ...parsed };
   logEvent(
     r,
-    "details_changed",
-    "Name, phone, country, arrival time or requests",
-    "guest",
+    'details_changed',
+    'Name, phone, country, arrival time or requests',
+    'guest',
   );
-  notify(r, "details_changed", "A summary of your changes was emailed to you.");
-  return { status: "saved" };
+  notify(r, 'details_changed', 'A summary of your changes was emailed to you.');
+  return { status: 'saved' };
 }
 
 // ---------------------------------------------------------------- change dates
@@ -147,22 +147,22 @@ export async function quoteChange(
   const allowed = allowedActions(r, clock, settings).canChangeDates;
   if (!allowed.allowed)
     return {
-      status: "not_allowed",
+      status: 'not_allowed',
       reason: allowed.reason ?? "Dates can't be changed online.",
     };
 
   const room = getRoomDetail(r.roomSlug);
   if (!room)
     return {
-      status: "not_allowed",
+      status: 'not_allowed',
       reason: "This room can't be changed online.",
     };
 
   const violations: Violation[] = [];
   if (sameDates(r, req.checkIn, req.checkOut))
     violations.push({
-      code: "min-nights",
-      message: "Those are your current dates. Choose different dates.",
+      code: 'min-nights',
+      message: 'Those are your current dates. Choose different dates.',
     });
   else {
     const stay: StayInput & { checkIn: ISODate; checkOut: ISODate } = {
@@ -173,7 +173,7 @@ export async function quoteChange(
     };
     violations.push(...validateStay(room, hotelSettings, stay, clock));
   }
-  if (violations.length > 0) return { status: "rule", violations };
+  if (violations.length > 0) return { status: 'rule', violations };
 
   const run = (demo: string) =>
     buildCheckoutQuote({
@@ -186,50 +186,50 @@ export async function quoteChange(
       demo,
     });
   const base = [...demos]
-    .filter((d) => d !== "unavailable" && d !== "changed")
-    .join(",");
-  let q = await run(`${base},${demos.has("unavailable") ? "unavailable" : ""}`);
+    .filter((d) => d !== 'unavailable' && d !== 'changed')
+    .join(',');
+  let q = await run(`${base},${demos.has('unavailable') ? 'unavailable' : ''}`);
   let roomReassigned = false;
-  if (q.status === "unavailable" && demos.has("reassign")) {
+  if (q.status === 'unavailable' && demos.has('reassign')) {
     // The same room is taken but another room of the same type is free: assign it silently and tell the guest.
     q = await run(`${base},avail`);
     roomReassigned = true;
   }
-  if (q.status === "unavailable")
-    return { status: "unavailable", suggestions: q.suggestions };
-  if (q.status === "invalid")
+  if (q.status === 'unavailable')
+    return { status: 'unavailable', suggestions: q.suggestions };
+  if (q.status === 'invalid')
     return {
-      status: "rule",
-      violations: [{ code: "min-nights", message: q.message }],
+      status: 'rule',
+      violations: [{ code: 'min-nights', message: q.message }],
     };
 
   const oldTotal = r.totals.totalMinor;
   const newTotal = q.breakdown.totalMinor;
   const diff = newTotal - oldTotal;
-  const settle = r.mode === "full" && r.paidMinor > 0 ? "now" : "at_hotel";
-  const manual = r.method === "bank_transfer";
+  const settle = r.mode === 'full' && r.paidMinor > 0 ? 'now' : 'at_hotel';
+  const manual = r.method === 'bank_transfer';
   const difference: PriceDifference =
     diff > 0
-      ? { kind: "pay", amountMinor: diff, settle }
+      ? { kind: 'pay', amountMinor: diff, settle }
       : diff < 0
         ? {
-            kind: "refund",
+            kind: 'refund',
             amountMinor: -diff,
             settle,
             refundMethod:
-              settle === "now"
+              settle === 'now'
                 ? manual
-                  ? "manual_bank"
-                  : "original_payment"
-                : "none",
+                  ? 'manual_bank'
+                  : 'original_payment'
+                : 'none',
             timeline:
-              settle === "now"
+              settle === 'now'
                 ? manual
                   ? settings.manualRefundTimeline
                   : settings.refundTimeline
                 : null,
           }
-        : { kind: "none", amountMinor: 0, settle };
+        : { kind: 'none', amountMinor: 0, settle };
 
   const policy = freeDeadline(
     r.snapshot.policy,
@@ -238,7 +238,7 @@ export async function quoteChange(
     clock,
   );
   const stored: StoredQuote = {
-    id: newId("q"),
+    id: newId('q'),
     reference: r.reference,
     ...req,
     breakdown: q.breakdown,
@@ -252,7 +252,7 @@ export async function quoteChange(
   store.quotes.set(stored.id, stored);
 
   return {
-    status: "ok",
+    status: 'ok',
     quoteId: stored.id,
     expiresAt: new Date(stored.expiresAt).toISOString(),
     ...req,
@@ -271,10 +271,10 @@ export async function quoteChange(
 }
 
 export type CommitOutcome =
-  | { status: "completed" }
-  | { status: "payment_required" }
-  | { status: "stale"; quote: ChangeQuoteResponse }
-  | { status: "not_allowed"; reason: string };
+  | { status: 'completed' }
+  | { status: 'payment_required' }
+  | { status: 'stale'; quote: ChangeQuoteResponse }
+  | { status: 'not_allowed'; reason: string };
 
 export async function commitChange(
   r: StoredReservation,
@@ -290,10 +290,10 @@ export async function commitChange(
     stored.expiresAt < Date.now()
   ) {
     return {
-      status: "stale",
+      status: 'stale',
       quote: {
-        status: "not_allowed",
-        reason: "That quote has expired. Choose your dates again.",
+        status: 'not_allowed',
+        reason: 'That quote has expired. Choose your dates again.',
       },
     };
   }
@@ -304,15 +304,15 @@ export async function commitChange(
     clock,
     extraDemos,
   );
-  if (fresh.status === "not_allowed")
-    return { status: "not_allowed", reason: fresh.reason };
-  if (fresh.status !== "ok" || fresh.newTotalMinor !== stored.newTotalMinor)
-    return { status: "stale", quote: fresh };
+  if (fresh.status === 'not_allowed')
+    return { status: 'not_allowed', reason: fresh.reason };
+  if (fresh.status !== 'ok' || fresh.newTotalMinor !== stored.newTotalMinor)
+    return { status: 'stale', quote: fresh };
 
   const diff = stored.newTotalMinor - stored.oldTotalMinor;
-  if (diff > 0 && stored.settle === "now") {
+  if (diff > 0 && stored.settle === 'now') {
     const pending: PendingChange = {
-      changeId: newId("chg"),
+      changeId: newId('chg'),
       checkIn: stored.checkIn,
       checkOut: stored.checkOut,
       breakdown: stored.breakdown,
@@ -320,7 +320,7 @@ export async function commitChange(
       amountDueMinor: diff,
       holdExpiresAt: Date.now() + settings.holdSeconds * 1000,
       method: null,
-      status: "awaiting_payment",
+      status: 'awaiting_payment',
       payment: null,
       roomReassigned: stored.roomReassigned,
       policy: stored.policy,
@@ -328,14 +328,14 @@ export async function commitChange(
     r.pendingChange = pending;
     logEvent(
       r,
-      "change_requested",
+      'change_requested',
       `New dates ${formatRange(stored.checkIn, stored.checkOut)} are held while you pay.`,
-      "guest",
+      'guest',
     );
-    return { status: "payment_required" };
+    return { status: 'payment_required' };
   }
 
-  const refund = diff < 0 && stored.settle === "now" ? -diff : 0;
+  const refund = diff < 0 && stored.settle === 'now' ? -diff : 0;
   applyStayChange(r, {
     checkIn: stored.checkIn,
     checkOut: stored.checkOut,
@@ -345,20 +345,20 @@ export async function commitChange(
     policy: stored.policy,
   });
   if (refund > 0) {
-    const manual = r.method === "bank_transfer";
+    const manual = r.method === 'bank_transfer';
     r.refunds.push({
-      id: newId("rf"),
+      id: newId('rf'),
       at: Date.now(),
       amountMinor: refund,
-      method: manual ? "manual_bank" : "original_payment",
-      status: manual ? "pending_manual" : "initiated",
+      method: manual ? 'manual_bank' : 'original_payment',
+      status: manual ? 'pending_manual' : 'initiated',
     });
     logEvent(
       r,
-      manual ? "refund_pending_manual" : "refund_initiated",
-      "Difference for your new dates",
+      manual ? 'refund_pending_manual' : 'refund_initiated',
+      'Difference for your new dates',
     );
   }
-  notify(r, "dates_changed", "Your updated booking was emailed to you.");
-  return { status: "completed" };
+  notify(r, 'dates_changed', 'Your updated booking was emailed to you.');
+  return { status: 'completed' };
 }

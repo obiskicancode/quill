@@ -1,7 +1,12 @@
-"use client";
+'use client';
 
-import type { StayParams } from "@/lib/availability";
-import { todayISO } from "@/lib/dates";
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { motion, useReducedMotion } from 'framer-motion';
+import { SlidersHorizontal } from 'lucide-react';
+import { useCallback, useMemo, useState, useTransition } from 'react';
+
+import type { StayParams } from '@/lib/availability';
+import { todayISO } from '@/lib/dates';
 import {
   formatRange,
   hasFilters,
@@ -9,7 +14,7 @@ import {
   serializeRoomQuery,
   stayProblem,
   type RoomQuery,
-} from "@/lib/room-query";
+} from '@/lib/room-query';
 import {
   countActiveFilters,
   emptyFilters,
@@ -18,25 +23,22 @@ import {
   sortOptions,
   sortRooms,
   type RoomType,
-} from "@/lib/rooms";
-import { motion, useReducedMotion } from "framer-motion";
-import { SlidersHorizontal } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState, useTransition } from "react";
-import { HelpBlock } from "../HelpBlock";
-import { AnimatedList } from "../motion/AnimatedList";
-import { Reveal } from "../motion/Reveal";
-import { EASE_OUT, springGentle } from "../motion/variants";
-import { RoomCard } from "../RoomCard";
-import { Button } from "../ui/Button";
-import { EmptyState } from "./EmptyState";
-import { FilterChips } from "./FilterChips";
-import { FilterPanel, FilterSheet } from "./FilterPanel";
-import { PreviewBar } from "./PreviewBar";
-import { SkeletonCard } from "./SkeletonCard";
-import { SortMenu } from "./SortMenu";
-import { StaySelector } from "./StaySelector";
-import { useAvailability } from "./useAvailability";
+} from '@/lib/rooms';
+
+import { HelpBlock } from '../HelpBlock';
+import { AnimatedList } from '../motion/AnimatedList';
+import { Reveal } from '../motion/Reveal';
+import { EASE_OUT, springGentle } from '../motion/variants';
+import { RoomCard } from '../RoomCard';
+import { Button } from '../ui/Button';
+import { EmptyState } from './EmptyState';
+import { FilterChips } from './FilterChips';
+import { FilterPanel, FilterSheet } from './FilterPanel';
+import { PreviewBar } from './PreviewBar';
+import { SkeletonCard } from './SkeletonCard';
+import { SortMenu } from './SortMenu';
+import { StaySelector } from './StaySelector';
+import { useAvailability } from './useAvailability';
 
 /** Owns the URL state (dates, guests, sort, filters) and renders the selector, toolbar, filters and room list. */
 export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
@@ -50,8 +52,8 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
 
   const query = useMemo(() => parseRoomQuery(searchParams), [searchParams]);
   const notice =
-    searchParams.get("notice") === "checkout"
-      ? "Choose a room and your dates to start your booking."
+    searchParams.get('notice') === 'checkout'
+      ? 'Choose a room and your dates to start your booking.'
       : null;
 
   const update = useCallback(
@@ -99,12 +101,12 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
   const maxGuestsAvailable = Math.max(2, ...base.map(maxGuests));
   const activeFilters = countActiveFilters(query.filters);
   const sortLabel =
-    sortOptions.find((o) => o.key === query.sort)?.label ?? "Recommended";
-  const loading = status === "loading";
+    sortOptions.find((o) => o.key === query.sort)?.label ?? 'Recommended';
+  const loading = status === 'loading';
 
   const announcement = loading
-    ? "Checking availability for your dates."
-    : `${visible.length} ${visible.length === 1 ? "room" : "rooms"} shown. Sorted by ${sortLabel.toLowerCase()}.${status === "error" ? " Live availability could not be loaded." : ""}`;
+    ? 'Checking availability for your dates.'
+    : `${visible.length} ${visible.length === 1 ? 'room' : 'rooms'} shown. Sorted by ${sortLabel.toLowerCase()}.${status === 'error' ? ' Live availability could not be loaded.' : ''}`;
 
   const clearFilters = () => update({ filters: emptyFilters });
 
@@ -157,10 +159,10 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
             <Reveal>
               <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
                 <p className="font-semibold">
-                  {visible.length} {visible.length === 1 ? "room" : "rooms"}
+                  {visible.length} {visible.length === 1 ? 'room' : 'rooms'}
                   {stay && (
                     <span className="font-normal text-muted">
-                      {" "}
+                      {' '}
                       for {formatRange(stay.checkIn, stay.checkOut)}
                     </span>
                   )}
@@ -173,7 +175,7 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
                     icon={<SlidersHorizontal className="size-4" aria-hidden />}
                     onClick={() => setFiltersOpen(true)}
                   >
-                    Filters{activeFilters > 0 ? ` (${activeFilters})` : ""}
+                    Filters{activeFilters > 0 ? ` (${activeFilters})` : ''}
                   </Button>
                   <SortMenu
                     value={query.sort}
@@ -196,7 +198,7 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
               </div>
             )}
 
-            {status === "error" && (
+            {status === 'error' && (
               <div
                 role="alert"
                 className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-card border border-danger/40 bg-surface p-4"
@@ -204,7 +206,7 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
                 <p className="text-small">
                   <span className="font-semibold">
                     We couldn&rsquo;t load availability.
-                  </span>{" "}
+                  </span>{' '}
                   Rooms are shown with starting rates only.
                 </p>
                 <Button variant="secondary" size="sm" onClick={retry}>
@@ -227,7 +229,9 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
                   <EmptyState
                     title="No rooms match these filters"
                     text="Try a wider price range or remove a filter to see more rooms."
-                    action={<Button onClick={clearFilters}>Clear filters</Button>}
+                    action={
+                      <Button onClick={clearFilters}>Clear filters</Button>
+                    }
                   />
                 </Reveal>
               ) : (
@@ -235,11 +239,15 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
                   {visible.map((room, index) => (
                     <motion.li
                       key={room.id}
-                      layout={reduced ? false : "position"}
+                      layout={reduced ? false : 'position'}
                       initial={reduced ? false : { opacity: 0, scale: 0.98 }}
                       animate={reduced ? undefined : { opacity: 1, scale: 1 }}
                       exit={reduced ? undefined : { opacity: 0, scale: 0.98 }}
-                      transition={{ duration: 0.35, ease: EASE_OUT, layout: springGentle }}
+                      transition={{
+                        duration: 0.35,
+                        ease: EASE_OUT,
+                        layout: springGentle,
+                      }}
                       className="h-full"
                     >
                       {loading ? (
@@ -251,11 +259,11 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
                           index={index}
                           query={query}
                           liveState={
-                            status === "ready"
-                              ? "ready"
-                              : status === "error"
-                                ? "error"
-                                : "idle"
+                            status === 'ready'
+                              ? 'ready'
+                              : status === 'error'
+                                ? 'error'
+                                : 'idle'
                           }
                           availability={data?.[room.id] ?? null}
                           onCheckAvailability={() =>
@@ -269,7 +277,7 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
                   {!loading && visible.length % 2 === 1 && (
                     <motion.li
                       key="help"
-                      layout={reduced ? false : "position"}
+                      layout={reduced ? false : 'position'}
                       className="hidden h-full lg:block"
                     >
                       <HelpBlock variant="compact" />

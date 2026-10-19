@@ -26,21 +26,29 @@
   --radius-control: 0.75rem; /* buttons, fields */
   --radius-card: 1.25rem; /* cards, panels */
 
-  --shadow-raised: 0 1px 2px rgb(28 33 38 / 0.06), 0 8px 24px -12px rgb(28 33 38 / 0.2);
-  --shadow-float: 0 2px 4px rgb(28 33 38 / 0.08), 0 20px 48px -16px rgb(28 33 38 / 0.35);
+  --shadow-raised:
+    0 1px 2px rgb(28 33 38 / 0.06), 0 8px 24px -12px rgb(28 33 38 / 0.2);
+  --shadow-float:
+    0 2px 4px rgb(28 33 38 / 0.08), 0 20px 48px -16px rgb(28 33 38 / 0.35);
 
   --section-y: 4rem;
 }
 
 @media (min-width: 768px) {
-  :root { --section-y: 6rem; }
+  :root {
+    --section-y: 6rem;
+  }
 }
 @media (min-width: 1440px) {
-  :root { --section-y: 7rem; }
+  :root {
+    --section-y: 7rem;
+  }
 }
 
 /* Dark sections switch the focus ring to the accent (7.5:1 on ink). */
-.on-dark { --focus: 232 163 23; }
+.on-dark {
+  --focus: 232 163 23;
+}
 
 @layer base {
   html {
@@ -56,29 +64,53 @@
     outline: 3px solid rgb(var(--focus));
     outline-offset: 3px;
   }
-  [id] { scroll-margin-top: 5.5rem; }
+  [id] {
+    scroll-margin-top: 5.5rem;
+  }
 }
 
 @layer components {
-  .container-page { @apply mx-auto w-full max-w-page px-5 md:px-8 xl:px-10; }
-  .section-y { padding-block: var(--section-y); }
+  .container-page {
+    @apply mx-auto w-full max-w-page px-5 md:px-8 xl:px-10;
+  }
+  .section-y {
+    padding-block: var(--section-y);
+  }
 }
 
 /* Entrance for native <dialog> sheets and the photo viewer. */
 @keyframes sheet-rise {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 @keyframes overlay-zoom {
-  from { opacity: 0; transform: scale(1.02); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
-.animate-sheet-rise { animation: sheet-rise 0.34s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.animate-overlay-zoom { animation: overlay-zoom 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-sheet-rise {
+  animation: sheet-rise 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-overlay-zoom {
+  animation: overlay-zoom 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

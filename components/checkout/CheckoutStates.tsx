@@ -1,21 +1,23 @@
-"use client";
+'use client';
 
-import { formatRange } from "@/lib/room-query";
-import { site, telHref, whatsappHref } from "@/lib/site";
-import { formatMinor } from "@/types/stay.types";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CheckCircle2, Clock, Loader2, RefreshCw, WifiOff } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
-import { DatePicker, type DateRange } from "../DatePicker";
-import { EASE_OUT } from "../motion/variants";
-import { Button, ButtonLink } from "../ui/Button";
+import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { CheckCircle2, Clock, Loader2, RefreshCw, WifiOff } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 
-type Tone = "info" | "warn" | "danger";
+import { formatRange } from '@/lib/room-query';
+import { site, telHref, whatsappHref } from '@/lib/site';
+import { formatMinor } from '@/types/stay.types';
+
+import { DatePicker, type DateRange } from '../DatePicker';
+import { EASE_OUT } from '../motion/variants';
+import { Button, ButtonLink } from '../ui/Button';
+
+type Tone = 'info' | 'warn' | 'danger';
 const tones: Record<Tone, string> = {
-  info: "border-ink/40 bg-surface",
-  warn: "border-accent bg-accent/15",
-  danger: "border-danger bg-danger/5",
+  info: 'border-ink/40 bg-surface',
+  warn: 'border-accent bg-accent/15',
+  danger: 'border-danger bg-danger/5',
 };
 
 export function Banner({
@@ -23,13 +25,13 @@ export function Banner({
   title,
   children,
   actions,
-  role = "status",
+  role = 'status',
 }: {
   tone: Tone;
   title: string;
   children?: ReactNode;
   actions?: ReactNode;
-  role?: "status" | "alert";
+  role?: 'status' | 'alert';
 }) {
   return (
     <div role={role} className={`rounded-card border-2 p-5 ${tones[tone]}`}>
@@ -68,12 +70,12 @@ export function PriceUpdatedPanel({
       }
     >
       <p>
-        The total for your stay has {up ? "gone up" : "come down"} since you
-        last looked: it was{" "}
+        The total for your stay has {up ? 'gone up' : 'come down'} since you
+        last looked: it was{' '}
         <span className="font-semibold line-through">
           {formatMinor(previousMinor)}
-        </span>{" "}
-        and is now{" "}
+        </span>{' '}
+        and is now{' '}
         <span className="font-semibold">{formatMinor(currentMinor)}</span>.
       </p>
     </Banner>
@@ -186,7 +188,7 @@ export function UnavailableState({
         title="This room is no longer available for your dates"
       >
         <p>
-          The {room.name} has been booked for{" "}
+          The {room.name} has been booked for{' '}
           {formatRange(stay.checkIn, stay.checkOut)}. Nothing has been charged.
         </p>
       </Banner>
@@ -228,10 +230,10 @@ export function UnavailableState({
             <motion.div
               key="picker"
               initial={reduced ? false : { opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
+              animate={{ opacity: 1, height: 'auto' }}
               exit={reduced ? undefined : { opacity: 0, height: 0 }}
               transition={{ duration: reduced ? 0 : 0.3, ease: EASE_OUT }}
-              style={{ overflow: "hidden" }}
+              style={{ overflow: 'hidden' }}
               className="mt-4 max-w-sm rounded-card border border-line bg-surface p-4"
             >
               <DatePicker
@@ -314,17 +316,17 @@ export function ConfirmingScreen({
             <p role="status" className="mx-auto max-w-md text-ink/85">
               Your payment may still be going through. You do not need to pay
               again. We will email you as soon as it is confirmed. If you do not
-              hear from us soon, contact the hotel on{" "}
+              hear from us soon, contact the hotel on{' '}
               <a
                 href={telHref()}
                 className="font-semibold underline underline-offset-4"
               >
                 {site.contact.phoneDisplay}
-              </a>{" "}
-              or{" "}
+              </a>{' '}
+              or{' '}
               <a
                 href={whatsappHref(
-                  "Hello, I paid for a booking and have not received a confirmation.",
+                  'Hello, I paid for a booking and have not received a confirmation.',
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -355,7 +357,7 @@ export function FailedPanel({
   onSwitch,
   busy,
 }: {
-  reason: "failed" | "cancelled";
+  reason: 'failed' | 'cancelled';
   holdActive: boolean;
   onRetry: () => void;
   onSwitch: () => void;
@@ -366,8 +368,8 @@ export function FailedPanel({
       role="alert"
       tone="danger"
       title={
-        reason === "cancelled"
-          ? "You cancelled the payment"
+        reason === 'cancelled'
+          ? 'You cancelled the payment'
           : "The payment didn't go through"
       }
       actions={
@@ -382,12 +384,12 @@ export function FailedPanel({
       }
     >
       <p>
-        {reason === "cancelled"
-          ? "The payment was stopped before it finished."
-          : "The payment was not completed."}{" "}
+        {reason === 'cancelled'
+          ? 'The payment was stopped before it finished.'
+          : 'The payment was not completed.'}{' '}
         {holdActive
-          ? "Your room is still held for you while the timer runs."
-          : ""}
+          ? 'Your room is still held for you while the timer runs.'
+          : ''}
       </p>
     </Banner>
   );
@@ -427,7 +429,7 @@ export function RequestReceivedScreen({
   reference,
   confirmationHref,
   reason,
-}: DoneProps & { reason: "pay_at_hotel" | "manual" }) {
+}: DoneProps & { reason: 'pay_at_hotel' | 'manual' }) {
   return (
     <section
       aria-labelledby="request-title"
@@ -438,10 +440,10 @@ export function RequestReceivedScreen({
         Request received
       </h1>
       <p className="max-w-xl text-ink/85">
-        {reason === "pay_at_hotel"
-          ? "We have reserved your room. You pay at the hotel when you arrive. The hotel will email you to confirm."
-          : "The hotel reviews every booking and will email you once it is approved."}{" "}
-        Your booking reference is{" "}
+        {reason === 'pay_at_hotel'
+          ? 'We have reserved your room. You pay at the hotel when you arrive. The hotel will email you to confirm.'
+          : 'The hotel reviews every booking and will email you once it is approved.'}{' '}
+        Your booking reference is{' '}
         <span className="font-semibold">{reference}</span>.
       </p>
       <ButtonLink href={confirmationHref} size="lg">

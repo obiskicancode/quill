@@ -1,4 +1,8 @@
-import type { HistoryEntry, HistoryType, TimelineEntry } from '@/types/manage.types'
+import type {
+  HistoryEntry,
+  HistoryType,
+  TimelineEntry,
+} from '@/types/manage.types';
 
 /** Plain-language labels for the activity timeline. Newest first. */
 const labels: Record<HistoryType, string> = {
@@ -19,10 +23,15 @@ const labels: Record<HistoryType, string> = {
   checked_in: 'Checked in',
   checked_out: 'Checked out',
   no_show: 'Marked as a no-show',
-}
+};
 
 export function timelineFrom(history: HistoryEntry[]): TimelineEntry[] {
   return [...history]
     .sort((a, b) => b.at - a.at)
-    .map((h) => ({ id: h.id, at: new Date(h.at).toISOString(), label: labels[h.type], detail: h.detail }))
+    .map((h) => ({
+      id: h.id,
+      at: new Date(h.at).toISOString(),
+      label: labels[h.type],
+      detail: h.detail,
+    }));
 }

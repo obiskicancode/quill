@@ -1,30 +1,42 @@
-'use client'
+'use client';
 
-import { X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { roomAmenityLabels, type RoomAmenityKey } from '@/lib/rooms'
-import { RoomAmenityIcon } from '../rooms/RoomAmenityIcon'
-import { Button } from '../ui/Button'
+import { X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+
+import { roomAmenityLabels, type RoomAmenityKey } from '@/lib/rooms';
+
+import { RoomAmenityIcon } from '../rooms/RoomAmenityIcon';
+import { Button } from '../ui/Button';
 
 /** "Show all N amenities" opens a grouped list in a native modal dialog (focus trapped, Esc closes). */
-export function AmenitiesModal({ total, groups }: { total: number; groups: { title: string; keys: RoomAmenityKey[] }[] }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDialogElement>(null)
+export function AmenitiesModal({
+  total,
+  groups,
+}: {
+  total: number;
+  groups: { title: string; keys: RoomAmenityKey[] }[];
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    const dialog = ref.current
-    if (!dialog) return
-    if (open && !dialog.open) dialog.showModal()
-    if (!open && dialog.open) dialog.close()
-    document.body.style.overflow = open ? 'hidden' : ''
+    const dialog = ref.current;
+    if (!dialog) return;
+    if (open && !dialog.open) dialog.showModal();
+    if (!open && dialog.open) dialog.close();
+    document.body.style.overflow = open ? 'hidden' : '';
     return () => {
-      document.body.style.overflow = ''
-    }
-  }, [open])
+      document.body.style.overflow = '';
+    };
+  }, [open]);
 
   return (
     <>
-      <Button variant="secondary" aria-haspopup="dialog" onClick={() => setOpen(true)}>
+      <Button
+        variant="secondary"
+        aria-haspopup="dialog"
+        onClick={() => setOpen(true)}
+      >
         Show all {total} amenities
       </Button>
       <dialog
@@ -36,8 +48,15 @@ export function AmenitiesModal({ total, groups }: { total: number; groups: { tit
         {open && (
           <>
             <div className="flex items-center justify-between border-b border-line px-6 py-3">
-              <h2 id="amenities-modal-title" className="font-display text-h3">Amenities</h2>
-              <button type="button" aria-label="Close amenities" onClick={() => setOpen(false)} className="grid size-11 place-items-center rounded-full hover:bg-ink/10">
+              <h2 id="amenities-modal-title" className="font-display text-h3">
+                Amenities
+              </h2>
+              <button
+                type="button"
+                aria-label="Close amenities"
+                onClick={() => setOpen(false)}
+                className="grid size-11 place-items-center rounded-full hover:bg-ink/10"
+              >
                 <X className="size-6" aria-hidden />
               </button>
             </div>
@@ -47,8 +66,14 @@ export function AmenitiesModal({ total, groups }: { total: number; groups: { tit
                   <h3 className="font-semibold">{g.title}</h3>
                   <ul className="mt-3 grid gap-3 sm:grid-cols-2">
                     {g.keys.map((k) => (
-                      <li key={k} className="flex items-center gap-3 text-small">
-                        <RoomAmenityIcon name={k} className="size-5 text-accent-ink" />
+                      <li
+                        key={k}
+                        className="flex items-center gap-3 text-small"
+                      >
+                        <RoomAmenityIcon
+                          name={k}
+                          className="size-5 text-accent-ink"
+                        />
                         {roomAmenityLabels[k]}
                       </li>
                     ))}
@@ -60,5 +85,5 @@ export function AmenitiesModal({ total, groups }: { total: number; groups: { tit
         )}
       </dialog>
     </>
-  )
+  );
 }

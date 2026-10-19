@@ -1,4 +1,4 @@
-import type { IRetryOptions } from "@/types/base.types";
+import type { IRetryOptions } from '@/types/base.types';
 
 export class RetryService {
   async execute<T>(

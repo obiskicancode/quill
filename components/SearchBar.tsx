@@ -1,17 +1,7 @@
-"use client";
+'use client';
 
-import { formatShort, nightsBetween, todayISO } from "@/lib/dates";
-import {
-  buildSearchHref,
-  guestSummary,
-  initialSearch,
-  MAX_ADULTS,
-  MAX_CHILDREN,
-  validateSearch,
-} from "@/lib/search";
-import type { SearchState } from "@/types/site.types";
-import { CalendarDays, Search, Users, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation';
+import { CalendarDays, Search, Users, X } from 'lucide-react';
 import {
   useEffect,
   useId,
@@ -20,12 +10,24 @@ import {
   useTransition,
   type MouseEvent,
   type ReactNode,
-} from "react";
-import { DatePicker, type DateRange } from "./DatePicker";
-import { GuestStepper } from "./GuestStepper";
-import { Button } from "./ui/Button";
+} from 'react';
 
-type Panel = "dates" | "guests" | null;
+import { formatShort, nightsBetween, todayISO } from '@/lib/dates';
+import {
+  buildSearchHref,
+  guestSummary,
+  initialSearch,
+  MAX_ADULTS,
+  MAX_CHILDREN,
+  validateSearch,
+} from '@/lib/search';
+import type { SearchState } from '@/types/site.types';
+
+import { DatePicker, type DateRange } from './DatePicker';
+import { GuestStepper } from './GuestStepper';
+import { Button } from './ui/Button';
+
+type Panel = 'dates' | 'guests' | null;
 
 interface FieldButtonProps {
   label: string;
@@ -57,11 +59,11 @@ function FieldButton({
       aria-controls={controls}
       onClick={onClick}
       className={`relative flex min-h-[4.5rem] items-center gap-3 rounded-control px-5 text-left transition-colors hover:bg-paper active:bg-line/60 ${
-        expanded ? "bg-paper" : ""
-      } ${invalid ? "ring-2 ring-inset ring-danger" : ""} ${
+        expanded ? 'bg-paper' : ''
+      } ${invalid ? 'ring-2 ring-inset ring-danger' : ''} ${
         separator
-          ? "after:absolute after:right-0 after:top-1/4 after:h-1/2 after:w-px after:bg-line"
-          : ""
+          ? 'after:absolute after:right-0 after:top-1/4 after:h-1/2 after:w-px after:bg-line'
+          : ''
       }`}
     >
       <span className="text-accent-ink">{icon}</span>
@@ -70,7 +72,7 @@ function FieldButton({
           {label}
         </span>
         <span
-          className={`block truncate ${value ? "font-semibold" : "text-muted"}`}
+          className={`block truncate ${value ? 'font-semibold' : 'text-muted'}`}
         >
           {value ?? placeholder}
         </span>
@@ -105,7 +107,7 @@ export function SearchBar() {
 
   const { checkIn, checkOut } = search;
   const nights = checkIn && checkOut ? nightsBetween(checkIn, checkOut) : 0;
-  const dateError = error !== null && !error.startsWith("At least one adult");
+  const dateError = error !== null && !error.startsWith('At least one adult');
   const summary =
     checkIn && checkOut
       ? `${formatShort(checkIn)} to ${formatShort(checkOut)}, ${guestSummary(search)}`
@@ -118,16 +120,16 @@ export function SearchBar() {
       if (!formRef.current?.contains(e.target as Node)) setPanel(null);
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         setPanel(null);
         lastTrigger.current?.focus();
       }
     };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
     };
   }, [panel]);
 
@@ -137,16 +139,16 @@ export function SearchBar() {
     if (!dialog) return;
     if (sheetOpen && !dialog.open) dialog.showModal();
     if (!sheetOpen && dialog.open) dialog.close();
-    document.body.style.overflow = sheetOpen ? "hidden" : "";
+    document.body.style.overflow = sheetOpen ? 'hidden' : '';
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     };
   }, [sheetOpen]);
 
   function setDates(next: DateRange) {
     setSearch((s) => ({ ...s, ...next }));
     setError(null);
-    if (next.checkIn && next.checkOut && panel === "dates") {
+    if (next.checkIn && next.checkOut && panel === 'dates') {
       setPanel(null);
       requestAnimationFrame(() => guestsTrigger.current?.focus());
     }
@@ -168,7 +170,7 @@ export function SearchBar() {
     }
     setError(null);
     startTransition(() => {
-      router.push(buildSearchHref("/rooms", search));
+      router.push(buildSearchHref('/rooms', search));
     });
   }
 
@@ -212,34 +214,34 @@ export function SearchBar() {
             value={checkIn ? formatShort(checkIn) : null}
             placeholder="Add date"
             icon={<CalendarDays className="size-5" aria-hidden />}
-            expanded={panel === "dates"}
+            expanded={panel === 'dates'}
             controls={ids.dates}
             invalid={dateError && !checkIn}
             separator
-            onClick={(e) => togglePanel("dates", e)}
+            onClick={(e) => togglePanel('dates', e)}
           />
           <FieldButton
             label="Check-out"
             value={
               checkOut
-                ? `${formatShort(checkOut)} (${nights} ${nights === 1 ? "night" : "nights"})`
+                ? `${formatShort(checkOut)} (${nights} ${nights === 1 ? 'night' : 'nights'})`
                 : null
             }
             placeholder="Add date"
             icon={<CalendarDays className="size-5" aria-hidden />}
-            expanded={panel === "dates"}
+            expanded={panel === 'dates'}
             controls={ids.dates}
             invalid={dateError && !checkOut}
             separator
-            onClick={(e) => togglePanel("dates", e)}
+            onClick={(e) => togglePanel('dates', e)}
           />
           <button
             ref={guestsTrigger}
             type="button"
-            aria-expanded={panel === "guests"}
+            aria-expanded={panel === 'guests'}
             aria-controls={ids.guests}
-            onClick={(e) => togglePanel("guests", e)}
-            className={`relative flex min-h-[4.5rem] items-center gap-3 rounded-control px-5 text-left transition-colors hover:bg-paper active:bg-line/60 ${panel === "guests" ? "bg-paper" : ""}`}
+            onClick={(e) => togglePanel('guests', e)}
+            className={`relative flex min-h-[4.5rem] items-center gap-3 rounded-control px-5 text-left transition-colors hover:bg-paper active:bg-line/60 ${panel === 'guests' ? 'bg-paper' : ''}`}
           >
             <span className="text-accent-ink">
               <Users className="size-5" aria-hidden />
@@ -260,7 +262,7 @@ export function SearchBar() {
             icon={<Search className="size-5" aria-hidden />}
             className="ml-2 self-stretch px-8"
           >
-            {isPending ? "Searching" : "Search"}
+            {isPending ? 'Searching' : 'Search'}
           </Button>
         </div>
 
@@ -274,7 +276,7 @@ export function SearchBar() {
           </p>
         )}
 
-        {panel === "dates" && (
+        {panel === 'dates' && (
           <div
             id={ids.dates}
             role="group"
@@ -299,7 +301,7 @@ export function SearchBar() {
           </div>
         )}
 
-        {panel === "guests" && (
+        {panel === 'guests' && (
           <div
             id={ids.guests}
             role="group"
@@ -333,7 +335,7 @@ export function SearchBar() {
           <span className="min-w-0">
             <span className="block font-semibold">Check availability</span>
             <span className="block truncate text-small text-muted">
-              {summary ?? "Add dates and guests"}
+              {summary ?? 'Add dates and guests'}
             </span>
           </span>
         </button>
@@ -385,7 +387,7 @@ export function SearchBar() {
                   icon={<Search className="size-5" aria-hidden />}
                   className="w-full"
                 >
-                  {isPending ? "Searching" : "Search"}
+                  {isPending ? 'Searching' : 'Search'}
                 </Button>
               </div>
             </>

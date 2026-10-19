@@ -1,6 +1,6 @@
-import BaseService from './base.service';
-
 import type { EnquiryResponse } from '@/schemas/content.schema';
+
+import BaseService from './base.service';
 
 /** The contact/enquiry form payload plus the idempotency key, the honeypot and the dev preview switch. */
 export interface EnquirySubmitInput {
@@ -30,7 +30,10 @@ class ContentService extends BaseService {
   }
 
   sendEnquiry(body: EnquirySubmitInput) {
-    return this.httpPost<EnquirySubmitInput, EnquiryResponse>('/enquiries', body);
+    return this.httpPost<EnquirySubmitInput, EnquiryResponse>(
+      '/enquiries',
+      body,
+    );
   }
 }
 

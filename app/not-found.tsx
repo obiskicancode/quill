@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { ButtonLink } from "@/components/ui/Button";
-import Link from "next/link";
+import Link from 'next/link';
+
+import { ButtonLink } from '@/components/ui/Button';
 
 /** Global 404. Rendered inside the root layout, so the header and footer stay in place. */
 export default function NotFound() {
@@ -28,7 +29,7 @@ export default function NotFound() {
           </ButtonLink>
         </div>
         <p className="mt-6 text-small text-muted">
-          Looking for something specific?{" "}
+          Looking for something specific?{' '}
           <Link
             href="/enquiry"
             className="font-semibold underline decoration-accent decoration-2 underline-offset-4"

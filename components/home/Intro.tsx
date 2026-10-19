@@ -1,15 +1,16 @@
-"use client";
+'use client';
 
-import { site } from "@/lib/site";
-import { Magnetic } from "../motion/Magnetic";
-import { Parallax } from "../motion/Parallax";
-import { Reveal } from "../motion/Reveal";
-import { StaggerGroup } from "../motion/StaggerGroup";
-import { StaggerItem } from "../motion/StaggerItem";
-import { TextReveal } from "../motion/TextReveal";
-import { scaleIn } from "../motion/variants";
-import { Photo } from "../ui/Photo";
-import { TextLink } from "../ui/TextLink";
+import { site } from '@/lib/site';
+
+import { Magnetic } from '../motion/Magnetic';
+import { Parallax } from '../motion/Parallax';
+import { Reveal } from '../motion/Reveal';
+import { StaggerGroup } from '../motion/StaggerGroup';
+import { StaggerItem } from '../motion/StaggerItem';
+import { TextReveal } from '../motion/TextReveal';
+import { scaleIn } from '../motion/variants';
+import { Photo } from '../ui/Photo';
+import { TextLink } from '../ui/TextLink';
 
 export function Intro() {
   const { heading, body, image, learnMoreHref } = site.intro;
@@ -21,9 +22,12 @@ export function Intro() {
             as="h2"
             id="intro-heading"
             text={heading}
-            className="max-w-xl font-display text-h2 text-balance"
+            className="max-w-xl text-balance font-display text-h2"
           />
-          <StaggerGroup className="mt-6 max-w-xl space-y-4 text-body-lg leading-[1.7] text-ink/85" staggerChildren={0.1}>
+          <StaggerGroup
+            className="mt-6 max-w-xl space-y-4 text-body-lg leading-[1.7] text-ink/85"
+            staggerChildren={0.1}
+          >
             {body.map((paragraph) => (
               <StaggerItem as="p" key={paragraph}>
                 {paragraph}
@@ -39,7 +43,7 @@ export function Intro() {
           </Reveal>
         </div>
         <div className="md:col-span-5">
-          <Parallax amount={8} className="md:max-w-md md:ml-auto">
+          <Parallax amount={8} className="md:ml-auto md:max-w-md">
             <Reveal variants={scaleIn}>
               <Photo
                 src={image.src}

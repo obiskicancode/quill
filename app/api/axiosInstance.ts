@@ -1,22 +1,22 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-import { config } from "@/config";
-import { AuthTokens } from "@/types/auth.types";
+import { config } from '@/config';
+import { AuthTokens } from '@/types/auth.types';
 
-import { TokenService } from "./services/token.service";
+import { TokenService } from './services/token.service';
 
 interface CustomConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
-const isServer = typeof window === "undefined";
-const BASE_PATH = "/api";
+const isServer = typeof window === 'undefined';
+const BASE_PATH = '/api';
 
 const apiClient = axios.create({
   baseURL: isServer ? config.API.BASE_URL + `${BASE_PATH}` : `${BASE_PATH}`,
   timeout: 30000,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
   withCredentials: true,
 });
@@ -69,7 +69,9 @@ apiClient.interceptors.response.use(
       !(err instanceof AxiosError) ||
       err.response?.status !== 401 ||
       originalRequest._retry ||
-      originalRequest.url?.includes("/auth/refresh")
+      originalRequest.url?.includes('/auth/refresh') ||
+      originalRequest.url?.startsWith('/admin') ||
+      !TokenService.getAccessToken()
     ) {
       return Promise.reject(err);
     }
@@ -95,7 +97,7 @@ apiClient.interceptors.response.use(
 
     try {
       const response = await refreshClient.post<{ tokens: AuthTokens }>(
-        "/auth/refresh",
+        '/auth/refresh',
         {},
         { withCredentials: true },
       );
@@ -112,7 +114,7 @@ apiClient.interceptors.response.use(
       TokenService.clearAccessToken();
 
       if (!isServer) {
-        window.dispatchEvent(new Event("auth:logout"));
+        window.dispatchEvent(new Event('auth:logout'));
       }
 
       if (refreshError instanceof Error) {

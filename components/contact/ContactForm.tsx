@@ -1,39 +1,41 @@
-"use client";
+'use client';
 
-import { ServiceError } from "@/app/api/services/base.service";
-import { newKey } from "@/app/api/services/checkout.service";
-import { contentService } from "@/app/api/services/content.service";
+import Link from 'next/link';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { CheckCircle2, MessageCircle } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+
+import { ServiceError } from '@/app/api/services/base.service';
+import { newKey } from '@/app/api/services/checkout.service';
+import { contentService } from '@/app/api/services/content.service';
 import {
   enquiryFormSchema,
   MAX_MESSAGE,
   normalizeTopic,
   STAY_TOPICS,
   topicLabels,
-} from "@/schemas/content.schema";
-import { CONTACT_TOPICS } from "@/types/content.types";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CheckCircle2, MessageCircle } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { Banner } from "../checkout/CheckoutStates";
-import { Field, inputClass } from "../checkout/Field";
-import { Reveal } from "../motion";
-import { EASE_OUT } from "../motion/variants";
-import { Button, ButtonLink } from "../ui/Button";
+} from '@/schemas/content.schema';
+import { CONTACT_TOPICS } from '@/types/content.types';
+
+import { Banner } from '../checkout/CheckoutStates';
+import { Field, inputClass } from '../checkout/Field';
+import { Reveal } from '../motion';
+import { EASE_OUT } from '../motion/variants';
+import { Button, ButtonLink } from '../ui/Button';
 
 type FieldName =
-  | "name"
-  | "email"
-  | "phone"
-  | "topic"
-  | "subject"
-  | "message"
-  | "checkIn"
-  | "checkOut"
-  | "guests"
-  | "roomType"
-  | "consent";
-type Status = "idle" | "submitting" | "success" | "ratelimited" | "error";
+  | 'name'
+  | 'email'
+  | 'phone'
+  | 'topic'
+  | 'subject'
+  | 'message'
+  | 'checkIn'
+  | 'checkOut'
+  | 'guests'
+  | 'roomType'
+  | 'consent';
+type Status = 'idle' | 'submitting' | 'success' | 'ratelimited' | 'error';
 
 interface ContactFormProps {
   initialTopic: string | null;
@@ -48,37 +50,10 @@ interface ContactFormProps {
   demo: string | null;
 }
 
-const labels: Record<FieldName, string> = {
-  name: "Name",
-  email: "Email",
-  phone: "Phone",
-  topic: "Topic",
-  subject: "Subject",
-  message: "Message",
-  checkIn: "Check-in",
-  checkOut: "Check-out",
-  guests: "Guests",
-  roomType: "Room type",
-  consent: "Consent",
-};
-const ORDER: FieldName[] = [
-  "name",
-  "email",
-  "phone",
-  "topic",
-  "subject",
-  "checkIn",
-  "checkOut",
-  "guests",
-  "roomType",
-  "message",
-  "consent",
-];
-
 /** A topic the contact form can actually show (the booking enquiry has its own page). */
 function contactTopic(raw: string | null): string {
   const t = normalizeTopic(raw);
-  return (CONTACT_TOPICS as string[]).includes(t) ? t : "general";
+  return (CONTACT_TOPICS as string[]).includes(t) ? t : 'general';
 }
 
 /** Contact form. Same Zod schema as the server. Input is never lost: errors, rate limits and server failures all keep it. */
@@ -94,30 +69,31 @@ export function ContactForm({
   const safeRef =
     initialRef && /^[A-Za-z0-9-]{4,30}$/.test(initialRef) ? initialRef : null;
   const [values, setValues] = useState({
-    name: "",
-    email: "",
-    phone: "",
+    name: '',
+    email: '',
+    phone: '',
     topic: contactTopic(initialTopic),
-    subject: "",
-    message: safeRef ? `Booking reference: ${safeRef}\n\n` : "",
-    checkIn: "",
-    checkOut: "",
-    guests: "",
+    subject: '',
+    message: safeRef ? `Booking reference: ${safeRef}\n\n` : '',
+    checkIn: '',
+    checkOut: '',
+    guests: '',
     roomType: rooms.some((r) => r.slug === initialRoom)
       ? (initialRoom as string)
-      : "",
+      : '',
     consent: false,
   });
-  const [website, setWebsite] = useState("");
+  const [website, setWebsite] = useState('');
   const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
-  const [status, setStatus] = useState<Status>("idle");
-  const [serverMessage, setServerMessage] = useState("");
-  const [reference, setReference] = useState("");
-  const [today, setToday] = useState("");
+  const [status, setStatus] = useState<Status>('idle');
+  const [serverMessage, setServerMessage] = useState('');
+  const [reference, setReference] = useState('');
+  const [today, setToday] = useState('');
   const key = useRef(newKey());
   const submitting = useRef(false);
   const reduced = useReducedMotion();
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time date probe after mount; must not run during SSR
   useEffect(() => setToday(new Date().toISOString().slice(0, 10)), []);
 
   const showStay = (STAY_TOPICS as string[]).includes(values.topic);
@@ -135,10 +111,10 @@ export function ContactForm({
   };
   const blur = (name: FieldName) =>
     setErrors((e) => ({ ...e, [name]: parse(values)[name] }));
-  const bind = (name: Exclude<FieldName, "consent">) => ({
+  const bind = (name: Exclude<FieldName, 'consent'>) => ({
     name,
     value: values[name],
-    disabled: status === "submitting",
+    disabled: status === 'submitting',
     onChange: (e: { target: { value: string } }) => set(name, e.target.value),
     onBlur: () => blur(name),
   });
@@ -148,47 +124,47 @@ export function ContactForm({
     const found = parse(values);
     // Stay fields only matter for group and event topics.
     if (!showStay)
-      for (const f of ["checkIn", "checkOut", "guests", "roomType"] as const)
+      for (const f of ['checkIn', 'checkOut', 'guests', 'roomType'] as const)
         delete found[f];
     setErrors(found);
     if (Object.keys(found).length > 0) {
       return;
     }
     submitting.current = true;
-    setStatus("submitting");
+    setStatus('submitting');
     try {
       const { data } = await contentService.sendEnquiry({
         ...values,
         ...(showStay
           ? {}
-          : { checkIn: "", checkOut: "", guests: "", roomType: "" }),
+          : { checkIn: '', checkOut: '', guests: '', roomType: '' }),
         idempotencyKey: key.current,
         website,
         demo,
       });
       setReference(data.reference);
-      setStatus("success");
+      setStatus('success');
     } catch (e) {
       const err = e instanceof ServiceError ? e : null;
       if (err?.status === 422 && err.body?.fieldErrors) {
         setErrors(err.body.fieldErrors as Partial<Record<FieldName, string>>);
-        setStatus("idle");
+        setStatus('idle');
       } else if (err?.status === 429) {
         setServerMessage(
           err.body?.message ??
-            "Please wait a few minutes before sending another message.",
+            'Please wait a few minutes before sending another message.',
         );
-        setStatus("ratelimited");
+        setStatus('ratelimited');
       } else if (err?.network) {
         setServerMessage("We couldn't reach the server.");
-        setStatus("error");
+        setStatus('error');
       } else {
         setServerMessage(
           err?.body?.message ??
             err?.message ??
             "We couldn't send your message.",
         );
-        setStatus("error");
+        setStatus('error');
       }
     } finally {
       submitting.current = false;
@@ -199,21 +175,16 @@ export function ContactForm({
     key.current = newKey();
     setValues((v) => ({
       ...v,
-      subject: "",
-      message: "",
-      checkIn: "",
-      checkOut: "",
-      guests: "",
+      subject: '',
+      message: '',
+      checkIn: '',
+      checkOut: '',
+      guests: '',
       consent: false,
     }));
     setErrors({});
-    setStatus("idle");
+    setStatus('idle');
   }
-
-  const summary = ORDER.filter((f) => errors[f]).map((f) => ({
-    id: `contact-${f}`,
-    message: `${labels[f]}: ${errors[f]}`,
-  }));
 
   const panelMotion = reduced
     ? {}
@@ -230,11 +201,11 @@ export function ContactForm({
     >
       <CheckCircle2 className="size-10 text-accent-ink" aria-hidden />
       <h2 id="form-title" className="font-display text-h2">
-        Thanks, we&rsquo;ll reply within {responseHours}{" "}
-        {responseHours === 1 ? "hour" : "hours"}
+        Thanks, we&rsquo;ll reply within {responseHours}{' '}
+        {responseHours === 1 ? 'hour' : 'hours'}
       </h2>
       <p className="text-ink/85">
-        Your message reference is{" "}
+        Your message reference is{' '}
         <span className="font-semibold">{reference}</span>. We have emailed you
         a copy.
       </p>
@@ -261,7 +232,7 @@ export function ContactForm({
     <section id="enquiry" aria-labelledby="form-title" className="section-y">
       <div className="container-page max-w-3xl">
         <AnimatePresence mode="wait" initial={false}>
-          {status === "success" ? (
+          {status === 'success' ? (
             <motion.div
               key="success"
               {...panelMotion}
@@ -279,17 +250,17 @@ export function ContactForm({
                 Send us a message
               </h2>
               <p className="mt-3 text-body-lg text-ink/85">
-                We reply within {responseHours}{" "}
-                {responseHours === 1 ? "hour" : "hours"}.
+                We reply within {responseHours}{' '}
+                {responseHours === 1 ? 'hour' : 'hours'}.
               </p>
 
               <div className="mt-6 space-y-6" aria-live="polite">
-                {status === "ratelimited" && (
+                {status === 'ratelimited' && (
                   <Banner role="alert" tone="warn" title="Please wait a little">
                     <p>{serverMessage} Your message is kept below.</p>
                   </Banner>
                 )}
-                {status === "error" && (
+                {status === 'error' && (
                   <Banner
                     role="alert"
                     tone="danger"
@@ -325,7 +296,7 @@ export function ContactForm({
                     {(a) => (
                       <input
                         {...a}
-                        {...bind("name")}
+                        {...bind('name')}
                         type="text"
                         autoComplete="name"
                         className={inputClass(errors.name)}
@@ -336,7 +307,7 @@ export function ContactForm({
                     {(a) => (
                       <input
                         {...a}
-                        {...bind("email")}
+                        {...bind('email')}
                         type="email"
                         inputMode="email"
                         autoComplete="email"
@@ -358,7 +329,7 @@ export function ContactForm({
                     {(a) => (
                       <input
                         {...a}
-                        {...bind("phone")}
+                        {...bind('phone')}
                         type="tel"
                         inputMode="tel"
                         autoComplete="tel"
@@ -374,7 +345,7 @@ export function ContactForm({
                     {(a) => (
                       <select
                         {...a}
-                        {...bind("topic")}
+                        {...bind('topic')}
                         className={inputClass(errors.topic)}
                       >
                         {CONTACT_TOPICS.map((t) => (
@@ -395,7 +366,7 @@ export function ContactForm({
                   {(a) => (
                     <input
                       {...a}
-                      {...bind("subject")}
+                      {...bind('subject')}
                       type="text"
                       autoComplete="off"
                       className={inputClass(errors.subject)}
@@ -418,7 +389,7 @@ export function ContactForm({
                         {(a) => (
                           <input
                             {...a}
-                            {...bind("checkIn")}
+                            {...bind('checkIn')}
                             type="date"
                             min={today || undefined}
                             className={inputClass(errors.checkIn)}
@@ -434,7 +405,7 @@ export function ContactForm({
                         {(a) => (
                           <input
                             {...a}
-                            {...bind("checkOut")}
+                            {...bind('checkOut')}
                             type="date"
                             min={values.checkIn || today || undefined}
                             className={inputClass(errors.checkOut)}
@@ -450,7 +421,7 @@ export function ContactForm({
                         {(a) => (
                           <input
                             {...a}
-                            {...bind("guests")}
+                            {...bind('guests')}
                             type="text"
                             inputMode="numeric"
                             autoComplete="off"
@@ -467,7 +438,7 @@ export function ContactForm({
                         {(a) => (
                           <select
                             {...a}
-                            {...bind("roomType")}
+                            {...bind('roomType')}
                             className={inputClass(errors.roomType)}
                           >
                             <option value="">No preference</option>
@@ -487,12 +458,12 @@ export function ContactForm({
                   id="contact-message"
                   label="Message"
                   error={errors.message}
-                  hint={`${values.message.length.toLocaleString("en-NG")} / ${MAX_MESSAGE.toLocaleString("en-NG")} characters`}
+                  hint={`${values.message.length.toLocaleString('en-NG')} / ${MAX_MESSAGE.toLocaleString('en-NG')} characters`}
                 >
                   {(a) => (
                     <textarea
                       {...a}
-                      {...bind("message")}
+                      {...bind('message')}
                       rows={6}
                       maxLength={MAX_MESSAGE + 200}
                       autoComplete="off"
@@ -525,16 +496,16 @@ export function ContactForm({
                       id="contact-consent"
                       type="checkbox"
                       checked={values.consent}
-                      disabled={status === "submitting"}
+                      disabled={status === 'submitting'}
                       aria-invalid={errors.consent ? true : undefined}
                       aria-describedby={
-                        errors.consent ? "contact-consent-error" : undefined
+                        errors.consent ? 'contact-consent-error' : undefined
                       }
-                      onChange={(e) => set("consent", e.target.checked)}
+                      onChange={(e) => set('consent', e.target.checked)}
                       className="mt-0.5 size-6 shrink-0 accent-ink"
                     />
                     <span className="text-small">
-                      I agree to the{" "}
+                      I agree to the{' '}
                       <Link
                         href="/policies/privacy"
                         target="_blank"
@@ -543,7 +514,7 @@ export function ContactForm({
                       >
                         Privacy Policy
                         <span className="sr-only"> (opens in a new tab)</span>
-                      </Link>{" "}
+                      </Link>{' '}
                       so the hotel can reply to me.
                     </span>
                   </label>
@@ -560,10 +531,10 @@ export function ContactForm({
                 <Button
                   type="submit"
                   size="lg"
-                  loading={status === "submitting"}
-                  disabled={status === "ratelimited"}
+                  loading={status === 'submitting'}
+                  disabled={status === 'ratelimited'}
                 >
-                  {status === "submitting" ? "Sending" : "Send message"}
+                  {status === 'submitting' ? 'Sending' : 'Send message'}
                 </Button>
               </form>
             </motion.div>

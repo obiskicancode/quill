@@ -1,11 +1,13 @@
-"use client";
+'use client';
 
-import { useConsent } from "@/providers/consent.provider";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Cookie } from "lucide-react";
-import Link from "next/link";
-import { EASE_OUT } from "./motion/variants";
-import { Button } from "./ui/Button";
+import Link from 'next/link';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { Cookie } from 'lucide-react';
+
+import { useConsent } from '@/providers/consent.provider';
+
+import { EASE_OUT } from './motion/variants';
+import { Button } from './ui/Button';
 
 interface ConsentBannerProps {
   /** True only when the hotel has an analytics or marketing provider configured. */
@@ -20,7 +22,7 @@ interface ConsentBannerProps {
 export function ConsentBanner({ enabled, privacyHref }: ConsentBannerProps) {
   const { consent, grant, deny } = useConsent();
   const reduced = useReducedMotion();
-  const show = enabled && consent === "unknown";
+  const show = enabled && consent === 'unknown';
 
   return (
     <AnimatePresence initial={false}>
@@ -46,7 +48,7 @@ export function ConsentBanner({ enabled, privacyHref }: ConsentBannerProps) {
               </p>
               <p className="mt-1 text-small text-ink/85">
                 We only use optional cookies when analytics or marketing is
-                configured. You can accept or reject them at any time. Read our{" "}
+                configured. You can accept or reject them at any time. Read our{' '}
                 <Link
                   href={privacyHref}
                   className="font-semibold underline decoration-accent decoration-2 underline-offset-4"

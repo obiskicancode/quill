@@ -1,13 +1,17 @@
-'use client'
+'use client';
 
-import { useEffect } from 'react'
-import { ButtonLink } from '@/components/ui/Button'
+import { useEffect } from 'react';
 
-export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
+import { ButtonLink } from '@/components/ui/Button';
+
+export default function GlobalError({
+  error,
+}: {
+  error: Error & { digest?: string };
+}) {
   useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.error(error)
-  }, [error])
+    console.error(error);
+  }, [error]);
 
   return (
     <html lang="en-NG">
@@ -18,7 +22,8 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
               Something went wrong
             </h1>
             <p className="mt-3 text-body-lg text-ink/85">
-              We ran into a technical problem. Please try again in a few moments.
+              We ran into a technical problem. Please try again in a few
+              moments.
             </p>
             <div className="mt-8">
               <ButtonLink href="/">Back to home</ButtonLink>
@@ -27,5 +32,5 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
         </main>
       </body>
     </html>
-  )
+  );
 }

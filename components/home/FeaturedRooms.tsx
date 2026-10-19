@@ -1,16 +1,17 @@
-import { whatsappHref } from "@/lib/site";
-import type { Room } from "@/types/site.types";
-import { RoomCard } from "../RoomCard";
-import { StaggerGroup } from "../motion/StaggerGroup";
-import { StaggerItem } from "../motion/StaggerItem";
-import { Tilt } from "../motion/Tilt";
-import { SectionHeading } from "../ui/SectionHeading";
-import { TextLink } from "../ui/TextLink";
+import { whatsappHref } from '@/lib/site';
+import type { Room } from '@/types/site.types';
+
+import { StaggerGroup } from '../motion/StaggerGroup';
+import { StaggerItem } from '../motion/StaggerItem';
+import { Tilt } from '../motion/Tilt';
+import { RoomCard } from '../RoomCard';
+import { SectionHeading } from '../ui/SectionHeading';
+import { TextLink } from '../ui/TextLink';
 
 export function FeaturedRooms({ rooms }: { rooms: Room[] }) {
   const visible = rooms.slice(0, 4);
   // Static class names so Tailwind can see them.
-  const columns = visible.length === 4 ? "xl:grid-cols-4" : "xl:grid-cols-3";
+  const columns = visible.length === 4 ? 'xl:grid-cols-4' : 'xl:grid-cols-3';
 
   return (
     <section aria-labelledby="rooms-heading" className="section-y pt-0">

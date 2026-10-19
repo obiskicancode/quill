@@ -1,13 +1,15 @@
-"use client";
+'use client';
 
-import { motion, useReducedMotion } from "framer-motion";
-import { MessageCircle } from "lucide-react";
-import { site, whatsappHref } from "@/lib/site";
-import { HeroVideo } from "./HeroVideo";
-import { TextReveal } from "./motion/TextReveal";
-import { EASE_OUT, fadeUp, stagger } from "./motion/variants";
-import { ButtonLink } from "./ui/Button";
-import { Photo } from "./ui/Photo";
+import { motion, useReducedMotion } from 'framer-motion';
+import { MessageCircle } from 'lucide-react';
+
+import { site, whatsappHref } from '@/lib/site';
+
+import { HeroVideo } from './HeroVideo';
+import { TextReveal } from './motion/TextReveal';
+import { EASE_OUT, fadeUp, stagger } from './motion/variants';
+import { ButtonLink } from './ui/Button';
+import { Photo } from './ui/Photo';
 
 /** Full-width hero. The photo is the poster for the optional video; a dark gradient keeps the text above 4.5:1 on any image. */
 export function Hero() {
@@ -25,7 +27,13 @@ export function Hero() {
         animate={reduced ? undefined : { scale: 1 }}
         transition={{ duration: 7, ease: EASE_OUT }}
       >
-        <Photo src={image.src} alt={image.alt} sizes="100vw" priority className="h-full w-full" />
+        <Photo
+          src={image.src}
+          alt={image.alt}
+          sizes="100vw"
+          priority
+          className="h-full w-full"
+        />
       </motion.div>
       {video && <HeroVideo src={video.src} type={video.type} />}
       <motion.div
@@ -39,8 +47,8 @@ export function Hero() {
       <motion.div
         className="container-page relative z-10 pb-24 pt-32 md:pb-32"
         variants={stagger(0.14, 0.9)}
-        initial={reduced ? false : "hidden"}
-        animate={reduced ? undefined : "visible"}
+        initial={reduced ? false : 'hidden'}
+        animate={reduced ? undefined : 'visible'}
       >
         <TextReveal
           id="hero-heading"
@@ -49,12 +57,18 @@ export function Hero() {
           onScroll={false}
           delayChildren={0.15}
           staggerChildren={0.06}
-          className="max-w-3xl font-display text-display text-balance"
+          className="max-w-3xl text-balance font-display text-display"
         />
-        <motion.p variants={fadeUp} className="mt-5 max-w-xl text-body-lg text-white/90">
+        <motion.p
+          variants={fadeUp}
+          className="mt-5 max-w-xl text-body-lg text-white/90"
+        >
           {subheadline}
         </motion.p>
-        <motion.div variants={fadeUp} className="mt-8 flex flex-col gap-3 sm:flex-row">
+        <motion.div
+          variants={fadeUp}
+          className="mt-8 flex flex-col gap-3 sm:flex-row"
+        >
           <ButtonLink href={site.bookingHref} size="lg">
             Book Now
           </ButtonLink>

@@ -1,27 +1,33 @@
-import type { Metadata } from 'next'
-import { CtaBand } from '@/components/CtaBand'
-import { PageHero } from '@/components/content/PageHero'
-import { Section } from '@/components/content/Section'
-import { SectionSkeleton } from '@/components/content/Skeletons'
-import { PolicyList } from '@/components/policies/PolicyList'
-import { config } from '@/config'
-import { parsePreview } from '@/lib/content/preview'
+import type { Metadata } from 'next';
+
+import { PageHero } from '@/components/content/PageHero';
+import { Section } from '@/components/content/Section';
+import { SectionSkeleton } from '@/components/content/Skeletons';
+import { CtaBand } from '@/components/CtaBand';
+import { PolicyList } from '@/components/policies/PolicyList';
+import { config } from '@/config';
+import { parsePreview } from '@/lib/content/preview';
 
 export const metadata: Metadata = {
   title: 'Policies',
   description:
     'Our terms of booking, privacy policy, cancellation policy and house rules, in one place.',
-}
+};
 
-const hero = { src: '/images/pages/contact-hero.webp', alt: 'The hotel reception desk' }
+const hero = {
+  src: '/images/pages/contact-hero.webp',
+  alt: 'The hotel reception desk',
+};
 
 export default async function PoliciesPage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   // Preview switches exist only in development.
-  const flags = config.isProd ? parsePreview(undefined) : parsePreview((await searchParams).preview)
+  const flags = config.isProd
+    ? parsePreview(undefined)
+    : parsePreview((await searchParams).preview);
 
   return (
     <>
@@ -32,7 +38,12 @@ export default async function PoliciesPage({
         image={hero}
       />
 
-      <Section label="our policies" skeleton={<SectionSkeleton variant="list" label="Loading our policies" />}>
+      <Section
+        label="our policies"
+        skeleton={
+          <SectionSkeleton variant="list" label="Loading our policies" />
+        }
+      >
         <div className="container-page section-y">
           <PolicyList flags={flags} />
         </div>
@@ -40,5 +51,5 @@ export default async function PoliciesPage({
 
       <CtaBand />
     </>
-  )
+  );
 }

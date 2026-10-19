@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { hasConsent, useConsent } from "@/providers/consent.provider";
-import type { AnalyticsSettings } from "@/types/content.types";
+import { hasConsent, useConsent } from '@/providers/consent.provider';
+import type { AnalyticsSettings } from '@/types/content.types';
 
 /**
  * Loads the hotel's analytics or marketing tag, but only after the visitor has granted consent.
@@ -15,9 +15,9 @@ export function AnalyticsScripts({
   const { consent } = useConsent();
 
   if (!hasConsent(consent)) return null;
-  if (settings.provider === "none" || !settings.measurementId) return null;
+  if (settings.provider === 'none' || !settings.measurementId) return null;
 
-  if (settings.provider === "ga4") {
+  if (settings.provider === 'ga4') {
     return (
       <>
         <script
@@ -33,7 +33,7 @@ export function AnalyticsScripts({
     );
   }
 
-  if (settings.provider === "plausible") {
+  if (settings.provider === 'plausible') {
     return (
       <script
         defer
@@ -43,7 +43,7 @@ export function AnalyticsScripts({
     );
   }
 
-  if (settings.provider === "meta_pixel") {
+  if (settings.provider === 'meta_pixel') {
     return (
       <script
         dangerouslySetInnerHTML={{

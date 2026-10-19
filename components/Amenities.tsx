@@ -1,14 +1,18 @@
-import type { Amenity } from '@/types/site.types'
-import { AmenityItem } from './AmenityItem'
-import { StaggerGroup } from './motion/StaggerGroup'
-import { SectionHeading } from './ui/SectionHeading'
-import { TextLink } from './ui/TextLink'
+import type { Amenity } from '@/types/site.types';
+
+import { AmenityItem } from './AmenityItem';
+import { StaggerGroup } from './motion/StaggerGroup';
+import { SectionHeading } from './ui/SectionHeading';
+import { TextLink } from './ui/TextLink';
 
 export function Amenities({ amenities }: { amenities: Amenity[] }) {
-  const items = amenities.slice(0, 8)
-  if (items.length === 0) return null
+  const items = amenities.slice(0, 8);
+  if (items.length === 0) return null;
   return (
-    <section aria-labelledby="amenities-heading" className="on-dark section-y bg-ink text-paper">
+    <section
+      aria-labelledby="amenities-heading"
+      className="on-dark section-y bg-ink text-paper"
+    >
       <div className="container-page">
         <SectionHeading
           id="amenities-heading"
@@ -27,5 +31,5 @@ export function Amenities({ amenities }: { amenities: Amenity[] }) {
         </StaggerGroup>
       </div>
     </section>
-  )
+  );
 }

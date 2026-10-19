@@ -1,29 +1,31 @@
-"use client";
+'use client';
 
-import { ServiceError } from "@/app/api/services/base.service";
+import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { ServiceError } from '@/app/api/services/base.service';
 import {
   checkoutService,
   loadProviderScript,
   newKey,
-} from "@/app/api/services/checkout.service";
+} from '@/app/api/services/checkout.service';
 import {
   checkProofFile,
   guestSchema,
   type GuestInput,
   type ReservationRequestInput,
-} from "@/schemas/checkout.schema";
+} from '@/schemas/checkout.schema';
 import type {
   BankDetails,
   CheckoutQuoteResponse,
   PaymentMethod,
-} from "@/types/checkout.types";
-import { formatMinor } from "@/types/stay.types";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { EASE_OUT } from "../motion/variants";
-import { Button } from "../ui/Button";
+} from '@/types/checkout.types';
+import { formatMinor } from '@/types/stay.types';
+
+import { EASE_OUT } from '../motion/variants';
+import { Button } from '../ui/Button';
 import {
   Banner,
   ConfirmingScreen,
@@ -35,47 +37,31 @@ import {
   RequestReceivedScreen,
   TransferSubmittedScreen,
   UnavailableState,
-} from "./CheckoutStates";
-import { DetailsStep, type GuestField } from "./DetailsStep";
-import { ExtrasStep } from "./ExtrasStep";
-import { PaymentStep } from "./PaymentStep";
-import { ProgressSteps, type StepInfo } from "./ProgressSteps";
+} from './CheckoutStates';
+import { DetailsStep, type GuestField } from './DetailsStep';
+import { ExtrasStep } from './ExtrasStep';
+import { PaymentStep } from './PaymentStep';
+import { ProgressSteps, type StepInfo } from './ProgressSteps';
 import {
   MobileSummary,
   SummaryCard,
   type OkQuote,
   type SummaryRoom,
-} from "./SummaryCard";
-import { useHoldCountdown } from "./useHoldCountdown";
+} from './SummaryCard';
+import { useHoldCountdown } from './useHoldCountdown';
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 30_000;
-const FIELD_ORDER: GuestField[] = [
-  "fullName",
-  "email",
-  "country",
-  "phone",
-  "arrivalTime",
-  "specialRequests",
-];
-const FIELD_LABELS: Record<GuestField, string> = {
-  fullName: "Full name",
-  email: "Email",
-  country: "Country",
-  phone: "Phone",
-  arrivalTime: "Arrival time",
-  specialRequests: "Special requests",
-};
 const TERMS_MESSAGE =
-  "Please accept the Terms, Privacy Policy and Cancellation Policy to continue.";
+  'Please accept the Terms, Privacy Policy and Cancellation Policy to continue.';
 
 type Phase =
-  | { name: "form" }
-  | { name: "redirecting" }
-  | { name: "confirming" }
-  | { name: "failed"; reason: "failed" | "cancelled" }
-  | { name: "transfer-submitted" }
-  | { name: "request-received"; reason: "pay_at_hotel" | "manual" };
+  | { name: 'form' }
+  | { name: 'redirecting' }
+  | { name: 'confirming' }
+  | { name: 'failed'; reason: 'failed' | 'cancelled' }
+  | { name: 'transfer-submitted' }
+  | { name: 'request-received'; reason: 'pay_at_hotel' | 'manual' };
 
 interface ReservationState {
   reference: string;
@@ -98,7 +84,6 @@ export function CheckoutFlow({
   stay,
   initialQuote,
   demo,
-  seenTotalMinor,
   resumeReference,
   hotelTimes,
 }: CheckoutFlowProps) {
@@ -120,33 +105,33 @@ export function CheckoutFlow({
   // A guest returning from the payment provider has already accepted the price.
   const resumed = resumeReference !== null;
   const [accepted, setAccepted] = useState(resumed);
-  const ok: OkQuote | null = quote.status === "ok" ? quote : null;
+  const ok: OkQuote | null = quote.status === 'ok' ? quote : null;
   const priceChange = ok?.priceChange && !accepted ? ok.priceChange : null;
 
   // --- form ---
   const [values, setValues] = useState<GuestInput>({
-    fullName: "",
-    email: "",
-    country: "NG",
-    phone: "",
-    arrivalTime: "",
-    specialRequests: "",
+    fullName: '',
+    email: '',
+    country: 'NG',
+    phone: '',
+    arrivalTime: '',
+    specialRequests: '',
   });
   const [errors, setErrors] = useState<Partial<Record<GuestField, string>>>({});
   const [terms, setTerms] = useState(resumed);
   const [termsError, setTermsError] = useState<string | undefined>();
-  const [website, setWebsite] = useState("");
+  const [website, setWebsite] = useState('');
   const [extraBed, setExtraBed] = useState(ok?.extraBed.selected ?? false);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [method, setMethod] = useState<PaymentMethod>(
-    ok?.payment.acceptedMethods[0] ?? "online",
+    ok?.payment.acceptedMethods[0] ?? 'online',
   );
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofError, setProofError] = useState<string | null>(null);
 
   // --- reservation and payment ---
   const [phase, setPhase] = useState<Phase>(
-    resumeReference ? { name: "confirming" } : { name: "form" },
+    resumeReference ? { name: 'confirming' } : { name: 'form' },
   );
   const [reservation, setReservation] = useState<ReservationState | null>(
     resumeReference
@@ -167,7 +152,7 @@ export function CheckoutFlow({
   const reserveKey = useRef(newKey()); // generated when the page loads
   const payKey = useRef<string | null>(null);
 
-  const inForm = phase.name === "form" || phase.name === "failed";
+  const inForm = phase.name === 'form' || phase.name === 'failed';
   const holdActive =
     reservation !== null && reservation.holdExpiresAt > 0 && inForm;
   const hold = useHoldCountdown(
@@ -197,10 +182,10 @@ export function CheckoutFlow({
         adults: String(stay.adults),
         children: String(stay.children),
       });
-      const keep = (demo ?? "")
-        .split(",")
-        .filter((d) => d && d !== "unavailable" && d !== "changed");
-      if (keep.length) p.set("demo", keep.join(","));
+      const keep = (demo ?? '')
+        .split(',')
+        .filter((d) => d && d !== 'unavailable' && d !== 'changed');
+      if (keep.length) p.set('demo', keep.join(','));
       return `/checkout?${p.toString()}`;
     },
     [room.slug, stay.adults, stay.children, demo],
@@ -234,7 +219,7 @@ export function CheckoutFlow({
       firstRun.current = false;
       return;
     }
-    if (reservation || quote.status !== "ok") return;
+    if (reservation || quote.status !== 'ok') return;
     const timer = window.setTimeout(async () => {
       setQuoteLoading(true);
       setQuoteFailed(false);
@@ -253,7 +238,7 @@ export function CheckoutFlow({
 
   // --- polling after the guest returns from the provider (only the verified webhook changes the status) ---
   useEffect(() => {
-    if (phase.name !== "confirming" || !reservation) return;
+    if (phase.name !== 'confirming' || !reservation) return;
     const reference = reservation.reference;
     let stopped = false;
     let timer: number | undefined;
@@ -268,14 +253,14 @@ export function CheckoutFlow({
           holdExpiresAt: Date.parse(s.holdExpiresAt),
           skewMs: Date.parse(s.serverTime) - Date.now(),
         });
-        if (s.status === "confirmed")
+        if (s.status === 'confirmed')
           return router.push(confirmationHref(reference));
-        if (s.status === "pending_approval")
-          return setPhase({ name: "request-received", reason: "manual" });
-        if (s.status === "payment_failed" || s.paymentStatus === "failed")
-          return setPhase({ name: "failed", reason: "failed" });
-        if (s.status === "cancelled" || s.paymentStatus === "cancelled")
-          return setPhase({ name: "failed", reason: "cancelled" });
+        if (s.status === 'pending_approval')
+          return setPhase({ name: 'request-received', reason: 'manual' });
+        if (s.status === 'payment_failed' || s.paymentStatus === 'failed')
+          return setPhase({ name: 'failed', reason: 'failed' });
+        if (s.status === 'cancelled' || s.paymentStatus === 'cancelled')
+          return setPhase({ name: 'failed', reason: 'cancelled' });
       } catch {
         /* keep polling until the timeout */
       }
@@ -304,26 +289,17 @@ export function CheckoutFlow({
 
   const onChange = (name: GuestField, value: string) => {
     setValues((v) => ({ ...v, [name]: value }));
-    if (errors[name] || (name === "country" && errors.phone))
+    if (errors[name] || (name === 'country' && errors.phone))
       setErrors((e) => ({
         ...e,
         [name]: undefined,
-        ...(name === "country" ? { phone: undefined } : {}),
+        ...(name === 'country' ? { phone: undefined } : {}),
       }));
   };
   const onBlur = (name: GuestField) => {
-    if (name === "specialRequests" && !values.specialRequests) return;
+    if (name === 'specialRequests' && !values.specialRequests) return;
     setErrors((e) => ({ ...e, [name]: issuesFor(values)[name] }));
   };
-
-  const summaryItems = [
-    ...FIELD_ORDER.filter((n) => errors[n]).map((n) => ({
-      id: `field-${n}`,
-      message: `${FIELD_LABELS[n]}: ${errors[n]}`,
-    })),
-    ...(termsError ? [{ id: "field-terms", message: termsError }] : []),
-    ...(proofError ? [{ id: "field-proof", message: proofError }] : []),
-  ];
 
   // --- actions ---
   function handleFailure(err: unknown) {
@@ -336,25 +312,25 @@ export function CheckoutFlow({
       return;
     }
     payKey.current = null;
-    if (body?.code === "validation" && body.fieldErrors) {
+    if (body?.code === 'validation' && body.fieldErrors) {
       const next: Partial<Record<GuestField, string>> = {};
       let termsMsg: string | undefined;
       for (const [key, message] of Object.entries(body.fieldErrors)) {
-        if (key.startsWith("guest."))
+        if (key.startsWith('guest.'))
           next[key.slice(6) as GuestField] = message;
-        if (key === "termsAccepted") termsMsg = message;
+        if (key === 'termsAccepted') termsMsg = message;
       }
       setErrors(next);
       setTermsError(termsMsg);
-    } else if (body?.code === "unavailable" && body.quote) {
+    } else if (body?.code === 'unavailable' && body.quote) {
       setQuote(body.quote as CheckoutQuoteResponse);
-    } else if (body?.code === "price_changed" && body.quote) {
+    } else if (body?.code === 'price_changed' && body.quote) {
       setQuote(body.quote as CheckoutQuoteResponse);
       setAccepted(false);
-    } else if (body?.code === "hold_expired") {
+    } else if (body?.code === 'hold_expired') {
       setReservation((r) => (r ? { ...r, holdExpiresAt: Date.now() - 1 } : r));
     } else {
-      setNetError(body?.message ?? "Something went wrong. Please try again.");
+      setNetError(body?.message ?? 'Something went wrong. Please try again.');
     }
   }
 
@@ -368,8 +344,8 @@ export function CheckoutFlow({
         demo,
       })
     ).data;
-    if (init.kind === "redirect") {
-      setPhase({ name: "redirecting" });
+    if (init.kind === 'redirect') {
+      setPhase({ name: 'redirecting' });
       window.location.assign(init.url); // the provider's hosted checkout. Confirmation comes only from its webhook.
       return;
     }
@@ -379,24 +355,24 @@ export function CheckoutFlow({
       amountMinor: init.amountMinor,
       reference: init.reference,
     });
-    setPhase({ name: "form" });
+    setPhase({ name: 'form' });
   }
 
   async function submitProof(reference: string) {
     if (!proofFile) {
-      setProofError("Choose your transfer receipt to upload.");
-      document.getElementById("field-proof")?.focus();
+      setProofError('Choose your transfer receipt to upload.');
+      document.getElementById('field-proof')?.focus();
       return;
     }
     const problem = checkProofFile(proofFile);
     if (problem) {
       setProofError(problem);
-      document.getElementById("field-proof")?.focus();
+      document.getElementById('field-proof')?.focus();
       return;
     }
     setProofError(null);
     await checkoutService.uploadProof(reference, proofFile);
-    setPhase({ name: "transfer-submitted" });
+    setPhase({ name: 'transfer-submitted' });
   }
 
   async function submit() {
@@ -440,12 +416,12 @@ export function CheckoutFlow({
         };
         setReservation(current);
       }
-      if (ok.payment.mode === "pay_at_hotel") {
+      if (ok.payment.mode === 'pay_at_hotel') {
         setPhase({
-          name: "request-received",
-          reason: ok.confirmationMode === "manual" ? "manual" : "pay_at_hotel",
+          name: 'request-received',
+          reason: ok.confirmationMode === 'manual' ? 'manual' : 'pay_at_hotel',
         });
-      } else if (method === "bank_transfer" && bank) {
+      } else if (method === 'bank_transfer' && bank) {
         await submitProof(current.reference);
       } else {
         await startPayment(current.reference);
@@ -470,7 +446,7 @@ export function CheckoutFlow({
       setProofFile(null);
       setNetError(null);
       setTimedOut(false);
-      setPhase({ name: "form" });
+      setPhase({ name: 'form' });
       router.replace(checkoutHref(stay));
       setAccepted(true);
       setQuote(
@@ -478,10 +454,10 @@ export function CheckoutFlow({
           await checkoutService.quote({
             ...quoteRequest(),
             demo:
-              (demo ?? "")
-                .split(",")
-                .filter((d) => d !== "unavailable")
-                .join(",") || null,
+              (demo ?? '')
+                .split(',')
+                .filter((d) => d !== 'unavailable')
+                .join(',') || null,
           })
         ).data,
       );
@@ -495,26 +471,26 @@ export function CheckoutFlow({
 
   const retryPayment = () => {
     payKey.current = null;
-    setPhase({ name: "form" });
+    setPhase({ name: 'form' });
     window.setTimeout(() => void submit(), 0);
   };
 
   const switchMethod = () => {
     payKey.current = null;
     setBank(null);
-    setPhase({ name: "form" });
-    document.getElementById("step-payment")?.scrollIntoView({ block: "start" });
+    setPhase({ name: 'form' });
+    document.getElementById('step-payment')?.scrollIntoView({ block: 'start' });
   };
 
   function chooseMethod(next: PaymentMethod) {
     setMethod(next);
-    if (next !== "bank_transfer") setBank(null);
+    if (next !== 'bank_transfer') setBank(null);
     payKey.current = null;
-    if (next === "online" && ok) loadProviderScript(ok.payment.provider);
+    if (next === 'online' && ok) loadProviderScript(ok.payment.provider);
   }
 
   // --- full-width states ---
-  if (quote.status === "unavailable") {
+  if (quote.status === 'unavailable') {
     return (
       <div className="container-page py-8 md:py-12">
         <UnavailableState
@@ -531,27 +507,27 @@ export function CheckoutFlow({
     return (
       <div className="container-page py-8 md:py-12">
         <Banner role="alert" tone="danger" title="We couldn't open checkout">
-          <p>{quote.status === "invalid" ? quote.message : ""}</p>
+          <p>{quote.status === 'invalid' ? quote.message : ''}</p>
         </Banner>
       </div>
     );
   }
 
   const payment = ok.payment;
-  const redirecting = phase.name === "redirecting";
+  const redirecting = phase.name === 'redirecting';
   const disabledAction =
     busy || redirecting || quoteLoading || expired || Boolean(priceChange);
   const label = busy
-    ? "Processing"
+    ? 'Processing'
     : redirecting
-      ? "Opening secure payment"
-      : payment.mode === "pay_at_hotel"
-        ? "Reserve now"
-        : method === "bank_transfer"
+      ? 'Opening secure payment'
+      : payment.mode === 'pay_at_hotel'
+        ? 'Reserve now'
+        : method === 'bank_transfer'
           ? bank
-            ? "Submit transfer details"
-            : "Continue to bank details"
-          : payment.mode === "deposit"
+            ? 'Submit transfer details'
+            : 'Continue to bank details'
+          : payment.mode === 'deposit'
             ? `Pay deposit ${formatMinor(payment.dueNowMinor)}`
             : `Pay ${formatMinor(payment.dueNowMinor)} securely`;
 
@@ -570,25 +546,25 @@ export function CheckoutFlow({
 
   const steps: StepInfo[] = [
     {
-      id: "details",
-      label: "Your details",
-      state: detailsValid ? "complete" : "current",
+      id: 'details',
+      label: 'Your details',
+      state: detailsValid ? 'complete' : 'current',
     },
     ...(showExtras
       ? [
           {
-            id: "extras",
-            label: "Extras",
+            id: 'extras',
+            label: 'Extras',
             state: (detailsValid
-              ? "complete"
-              : "upcoming") as StepInfo["state"],
+              ? 'complete'
+              : 'upcoming') as StepInfo['state'],
           },
         ]
       : []),
     {
-      id: "payment",
-      label: "Payment",
-      state: detailsValid ? "current" : "upcoming",
+      id: 'payment',
+      label: 'Payment',
+      state: detailsValid ? 'current' : 'upcoming',
     },
   ];
 
@@ -609,7 +585,7 @@ export function CheckoutFlow({
   };
 
   let main: React.ReactNode;
-  if (phase.name === "confirming") {
+  if (phase.name === 'confirming') {
     main = (
       <ConfirmingScreen
         timedOut={timedOut}
@@ -620,14 +596,14 @@ export function CheckoutFlow({
         }}
       />
     );
-  } else if (phase.name === "transfer-submitted" && reservation) {
+  } else if (phase.name === 'transfer-submitted' && reservation) {
     main = (
       <TransferSubmittedScreen
         reference={reservation.reference}
         confirmationHref={confirmationHref(reservation.reference)}
       />
     );
-  } else if (phase.name === "request-received" && reservation) {
+  } else if (phase.name === 'request-received' && reservation) {
     main = (
       <RequestReceivedScreen
         reason={phase.reason}
@@ -678,7 +654,7 @@ export function CheckoutFlow({
               <ExpiringBanner />
             </motion.div>
           )}
-          {phase.name === "failed" && !expired && (
+          {phase.name === 'failed' && !expired && (
             <motion.div
               key="failed"
               {...bannerMotion}
@@ -828,7 +804,7 @@ export function CheckoutFlow({
 
   const showBar = inForm && !priceChange && !expired;
 
-  const mainKey = priceChange ? "price-change" : phase.name;
+  const mainKey = priceChange ? 'price-change' : phase.name;
   const panelMotion = reduced
     ? {}
     : {
@@ -877,11 +853,11 @@ export function CheckoutFlow({
           <div className="flex items-center gap-3">
             <p className="shrink-0 text-small">
               <span className="block text-muted">
-                {payment.mode === "pay_at_hotel" ? "Pay at hotel" : "Due now"}
+                {payment.mode === 'pay_at_hotel' ? 'Pay at hotel' : 'Due now'}
               </span>
               <span className="font-semibold tabular-nums">
                 {formatMinor(
-                  payment.mode === "pay_at_hotel"
+                  payment.mode === 'pay_at_hotel'
                     ? payment.totalMinor
                     : payment.dueNowMinor,
                 )}

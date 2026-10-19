@@ -1,55 +1,72 @@
-import { formatNaira } from '@/lib/format'
-import type { RoomAvailability } from '@/lib/availability'
-import type { RoomType } from '@/lib/rooms'
+import type { RoomAvailability } from '@/lib/availability';
+import { formatNaira } from '@/lib/format';
+import type { RoomType } from '@/lib/rooms';
 
 interface PriceBlockProps {
-  room: Pick<RoomType, 'showPrice' | 'basePriceNgn' | 'taxesIncluded'>
+  room: Pick<RoomType, 'showPrice' | 'basePriceNgn' | 'taxesIncluded'>;
   /** Live result for the chosen dates, or null when there are none (or they could not be loaded). */
-  availability: RoomAvailability | null
+  availability: RoomAvailability | null;
   /** True when live prices failed to load, so a short note explains why only a starting rate shows. */
-  liveFailed?: boolean
+  liveFailed?: boolean;
 }
 
 /** Price states: contact us, stay total, and starting rate. */
-export function PriceBlock({ room, availability, liveFailed = false }: PriceBlockProps) {
+export function PriceBlock({
+  room,
+  availability,
+  liveFailed = false,
+}: PriceBlockProps) {
   if (!room.showPrice) {
     return (
       <div className="min-h-[5.5rem]">
         <p className="font-display text-xl">Contact us for price</p>
-        <p className="mt-1 text-small text-muted">We will reply with rates for your dates.</p>
+        <p className="mt-1 text-small text-muted">
+          We will reply with rates for your dates.
+        </p>
       </div>
-    )
+    );
   }
 
   if (availability?.status === 'available') {
-    const { totalNgn, nights, averageNgn, weekendNights } = availability
+    const { totalNgn, nights, averageNgn, weekendNights } = availability;
     return (
       <div className="min-h-[5.5rem]">
         <p>
           <span className="font-display text-2xl">{formatNaira(totalNgn)}</span>
-          <span className="text-small text-muted"> for {nights} {nights === 1 ? 'night' : 'nights'}</span>
+          <span className="text-small text-muted">
+            {' '}
+            for {nights} {nights === 1 ? 'night' : 'nights'}
+          </span>
         </p>
-        <p className="mt-1 text-small text-muted">{formatNaira(averageNgn)} / night on average</p>
+        <p className="mt-1 text-small text-muted">
+          {formatNaira(averageNgn)} / night on average
+        </p>
         <p className="text-small text-muted">
           {room.taxesIncluded ? 'Taxes included' : '+ taxes and fees'}
           {weekendNights > 0 && '. Includes weekend rates.'}
         </p>
       </div>
-    )
+    );
   }
 
   return (
     <div className="min-h-[5.5rem]">
       <p>
         <span className="text-small text-muted">From </span>
-        <span className="font-display text-2xl">{formatNaira(room.basePriceNgn)}</span>
+        <span className="font-display text-2xl">
+          {formatNaira(room.basePriceNgn)}
+        </span>
         <span className="text-small text-muted"> / night</span>
       </p>
       {liveFailed ? (
-        <p className="mt-1 text-small text-muted">Starting rate. Live price for your dates is unavailable.</p>
+        <p className="mt-1 text-small text-muted">
+          Starting rate. Live price for your dates is unavailable.
+        </p>
       ) : (
-        <p className="mt-1 text-small text-muted">{room.taxesIncluded ? 'Taxes included' : '+ taxes and fees'}</p>
+        <p className="mt-1 text-small text-muted">
+          {room.taxesIncluded ? 'Taxes included' : '+ taxes and fees'}
+        </p>
       )}
     </div>
-  )
+  );
 }

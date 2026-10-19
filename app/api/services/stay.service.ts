@@ -1,7 +1,7 @@
-import BaseService from './base.service';
-
 import type { AvailabilityMap, DemoMode } from '@/lib/availability';
 import type { QuoteDemo, QuoteResponse } from '@/types/stay.types';
+
+import BaseService from './base.service';
 
 const enc = encodeURIComponent;
 

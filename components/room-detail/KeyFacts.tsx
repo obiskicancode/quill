@@ -1,17 +1,27 @@
-import { BedDouble, MapPin, Ruler, Users } from 'lucide-react'
-import type { RoomDetail } from '@/lib/room-detail'
-import { StaggerGroup } from '../motion/StaggerGroup'
-import { StaggerItem } from '../motion/StaggerItem'
+import { BedDouble, MapPin, Ruler, Users } from 'lucide-react';
+
+import type { RoomDetail } from '@/lib/room-detail';
+
+import { StaggerGroup } from '../motion/StaggerGroup';
+import { StaggerItem } from '../motion/StaggerItem';
 
 export function KeyFacts({ room }: { room: RoomDetail }) {
   const facts = [
     { icon: BedDouble, label: 'Bed', value: room.bedConfig },
     { icon: Ruler, label: 'Size', value: `${room.sizeSqm} sqm` },
-    { icon: Users, label: 'Guests', value: `Up to ${room.maxAdults + room.maxChildren}` },
+    {
+      icon: Users,
+      label: 'Guests',
+      value: `Up to ${room.maxAdults + room.maxChildren}`,
+    },
     { icon: MapPin, label: 'View and floor', value: room.viewNotes },
-  ]
+  ];
   return (
-    <StaggerGroup as="dl" className="grid grid-cols-2 gap-x-6 gap-y-5 rounded-card border border-line bg-surface p-5 md:grid-cols-4" staggerChildren={0.08}>
+    <StaggerGroup
+      as="dl"
+      className="grid grid-cols-2 gap-x-6 gap-y-5 rounded-card border border-line bg-surface p-5 md:grid-cols-4"
+      staggerChildren={0.08}
+    >
       {facts.map(({ icon: Icon, label, value }) => (
         <StaggerItem as="div" key={label}>
           <dt className="flex items-center gap-2 text-caption font-semibold text-muted">
@@ -22,5 +32,5 @@ export function KeyFacts({ room }: { room: RoomDetail }) {
         </StaggerItem>
       ))}
     </StaggerGroup>
-  )
+  );
 }

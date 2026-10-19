@@ -1,9 +1,10 @@
-import { site } from "@/lib/site";
-import Image from "next/image";
-import Link from "next/link";
+import Image from 'next/image';
+import Link from 'next/link';
+
+import { site } from '@/lib/site';
 
 /** Uses the supplied logo when there is one, otherwise a text wordmark from the site config. */
-export function Logo({ className = "" }: { className?: string }) {
+export function Logo({ className = '' }: { className?: string }) {
   return (
     <Link
       href="/"

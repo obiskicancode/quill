@@ -1,15 +1,16 @@
-"use client";
+'use client';
 
-import { motion, useReducedMotion } from "framer-motion";
-import type { ReactNode } from "react";
-import { fadeUp, viewportOnce } from "./variants";
+import { motion, useReducedMotion } from 'framer-motion';
+import type { ReactNode } from 'react';
+
+import { fadeUp, viewportOnce } from './variants';
 
 interface RevealProps {
   children: ReactNode;
   /** Class for the wrapper element (e.g. spacing utilities). */
   className?: string;
   /** Which HTML element to render. Defaults to div. */
-  as?: "div" | "section" | "li" | "article" | "figure";
+  as?: 'div' | 'section' | 'li' | 'article' | 'figure';
   /** Override the default fade-up (e.g. pass scaleIn or blurIn). */
   variants?: typeof fadeUp;
   /** Delay before this reveal fires (seconds). */
@@ -20,7 +21,7 @@ interface RevealProps {
 export function Reveal({
   children,
   className,
-  as = "div",
+  as = 'div',
   variants = fadeUp,
   delay = 0,
 }: RevealProps) {

@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
 import {
   motion,
   useMotionValue,
   useReducedMotion,
   useSpring,
-} from "framer-motion";
-import { useRef, type ReactNode } from "react";
+} from 'framer-motion';
+import { useRef, type ReactNode } from 'react';
 
 interface MagneticProps {
   children: ReactNode;
@@ -20,7 +20,11 @@ interface MagneticProps {
  * Desktop pointers only; touch and reduced-motion users get the static element.
  * The child keeps its own layout — this only applies a small translate.
  */
-export function Magnetic({ children, className, strength = 0.35 }: MagneticProps) {
+export function Magnetic({
+  children,
+  className,
+  strength = 0.35,
+}: MagneticProps) {
   const ref = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
 

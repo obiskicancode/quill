@@ -1,6 +1,6 @@
 import { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 
-import type { ApiResult, ApiResponse } from '@/types/base.types';
+import type { ApiResponse, ApiResult } from '@/types/base.types';
 
 import { apiClient } from '../axiosInstance';
 import { RetryService } from './retry.service';
@@ -31,7 +31,8 @@ export class ServiceError extends Error {
 const RETRY_POLICY = {
   retries: 3,
   delay: 500,
-  shouldRetry: (error: unknown) => error instanceof ServiceError && (error.network || error.status >= 500),
+  shouldRetry: (error: unknown) =>
+    error instanceof ServiceError && (error.network || error.status >= 500),
 };
 
 export default abstract class BaseService {
@@ -62,20 +63,28 @@ export default abstract class BaseService {
   }
 
   private toServiceError(error: unknown): ServiceError {
-    const defaultMessage = 'An unexpected error occurred. Please try again later.';
+    const defaultMessage =
+      'An unexpected error occurred. Please try again later.';
 
     if (error instanceof AxiosError) {
       const envelope = error.response?.data as ApiResponse<unknown> | undefined;
       const body =
         envelope && typeof envelope === 'object' && 'data' in envelope
-          ? (envelope.data as ServiceErrorBody | null) ?? null
+          ? ((envelope.data as ServiceErrorBody | null) ?? null)
           : null;
       const message =
         (typeof envelope?.message === 'string' && envelope.message) ||
-        (error.response?.data && typeof error.response.data === 'string' ? error.response.data : null) ||
+        (error.response?.data && typeof error.response.data === 'string'
+          ? error.response.data
+          : null) ||
         error.message ||
         defaultMessage;
-      return new ServiceError(message, error.response?.status ?? 0, body, !error.response);
+      return new ServiceError(
+        message,
+        error.response?.status ?? 0,
+        body,
+        !error.response,
+      );
     }
 
     if (error instanceof Error) {
@@ -90,23 +99,45 @@ export default abstract class BaseService {
   }
 
   protected httpGet<IResponse>(url = '', config?: AxiosRequestConfig) {
-    return this.handleRequest<IResponse>(() => apiClient.get(this.buildUrl(url), config));
+    return this.handleRequest<IResponse>(() =>
+      apiClient.get(this.buildUrl(url), config),
+    );
   }
 
-  protected httpPost<IRequest, IResponse>(url = '', data?: IRequest, config?: AxiosRequestConfig) {
-    return this.handleRequest<IResponse>(() => apiClient.post(this.buildUrl(url), data, config));
+  protected httpPost<IRequest, IResponse>(
+    url = '',
+    data?: IRequest,
+    config?: AxiosRequestConfig,
+  ) {
+    return this.handleRequest<IResponse>(() =>
+      apiClient.post(this.buildUrl(url), data, config),
+    );
   }
 
-  protected httpPatch<IRequest, IResponse>(url = '', data?: IRequest, config?: AxiosRequestConfig) {
-    return this.handleRequest<IResponse>(() => apiClient.patch(this.buildUrl(url), data, config));
+  protected httpPatch<IRequest, IResponse>(
+    url = '',
+    data?: IRequest,
+    config?: AxiosRequestConfig,
+  ) {
+    return this.handleRequest<IResponse>(() =>
+      apiClient.patch(this.buildUrl(url), data, config),
+    );
   }
 
-  protected httpPut<IRequest, IResponse>(url = '', data?: IRequest, config?: AxiosRequestConfig) {
-    return this.handleRequest<IResponse>(() => apiClient.put(this.buildUrl(url), data, config));
+  protected httpPut<IRequest, IResponse>(
+    url = '',
+    data?: IRequest,
+    config?: AxiosRequestConfig,
+  ) {
+    return this.handleRequest<IResponse>(() =>
+      apiClient.put(this.buildUrl(url), data, config),
+    );
   }
 
   protected httpDelete<IResponse>(url = '', config?: AxiosRequestConfig) {
-    return this.handleRequest<IResponse>(() => apiClient.delete(this.buildUrl(url), config));
+    return this.handleRequest<IResponse>(() =>
+      apiClient.delete(this.buildUrl(url), config),
+    );
   }
 }
 

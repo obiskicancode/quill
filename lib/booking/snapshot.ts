@@ -1,10 +1,17 @@
-import type { CheckoutSettings } from '@/types/checkout.types'
-import type { CheckoutQuoteResponse } from '@/types/checkout.types'
-import { hotelSettings, type RoomDetail } from '../room-detail'
-import { site } from '../site'
-import type { ReservationSnapshot } from '@/types/booking.types'
+import type { ReservationSnapshot } from '@/types/booking.types';
+import type {
+  CheckoutQuoteResponse,
+  CheckoutSettings,
+} from '@/types/checkout.types';
 
-const providerNames = { paystack: 'Paystack', flutterwave: 'Flutterwave', stripe: 'Stripe' } as const
+import { hotelSettings, type RoomDetail } from '../room-detail';
+import { site } from '../site';
+
+const providerNames = {
+  paystack: 'Paystack',
+  flutterwave: 'Flutterwave',
+  stripe: 'Stripe',
+} as const;
 
 /**
  * Builds the policy and hotel snapshot stored on a reservation at creation time (MOCK values from site config).
@@ -15,15 +22,25 @@ export function buildSnapshot(
   quote: Extract<CheckoutQuoteResponse, { status: 'ok' }>,
   settings: CheckoutSettings,
 ): ReservationSnapshot {
-  const cover = room.gallery[0]
+  const cover = room.gallery[0];
   return {
-    room: { slug: room.slug, name: room.name, bedConfig: room.bedConfig, image: cover ? { src: cover.src, alt: cover.alt } : null },
+    room: {
+      slug: room.slug,
+      name: room.name,
+      bedConfig: room.bedConfig,
+      image: cover ? { src: cover.src, alt: cover.alt } : null,
+    },
     breakdown: quote.breakdown,
     policy: {
       cancellation: quote.policy,
       checkInRules: `Check-in from ${hotelSettings.checkInTime}. Early check-in depends on availability.`,
       checkOutRules: `Check-out by ${hotelSettings.checkOutTime}. Late check-out can be arranged on request.`,
-      houseRules: [hotelSettings.smokingPolicy, hotelSettings.petsPolicy, hotelSettings.childrenPolicy, '[Quiet hours, for example 10:00 pm to 6:00 am.]'],
+      houseRules: [
+        hotelSettings.smokingPolicy,
+        hotelSettings.petsPolicy,
+        hotelSettings.childrenPolicy,
+        '[Quiet hours, for example 10:00 pm to 6:00 am.]',
+      ],
       idRequired: true,
       idText: hotelSettings.idPolicy,
       afterDeadline: { kind: 'first_night' }, // [sample] what the hotel keeps after the free window
@@ -38,11 +55,18 @@ export function buildSnapshot(
       whatsappNumber: site.contact.whatsappNumber,
       reception: site.reception,
       landmarks: site.landmarks,
-      howToFindUs: '[A short note on how to find the entrance, for example: look for the green gate next to the pharmacy.]',
+      howToFindUs:
+        '[A short note on how to find the entrance, for example: look for the green gate next to the pharmacy.]',
     },
-    times: { checkIn: hotelSettings.checkInTime, checkOut: hotelSettings.checkOutTime, checkIn24: settings.checkInTime24, checkOut24: '12:00', timeZone: hotelSettings.timeZone },
+    times: {
+      checkIn: hotelSettings.checkInTime,
+      checkOut: hotelSettings.checkOutTime,
+      checkIn24: settings.checkInTime24,
+      checkOut24: '12:00',
+      timeZone: hotelSettings.timeZone,
+    },
     providerName: providerNames[settings.provider],
     approvalResponse: 'within 2 hours', // [sample]
     addExtras: { supported: false, catalog: settings.extras }, // set supported: true when guests may add extras after booking
-  }
+  };
 }

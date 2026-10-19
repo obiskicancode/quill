@@ -1,26 +1,32 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { site } from '@/lib/site'
-import { ButtonLink } from './ui/Button'
+import { useEffect, useState } from 'react';
+
+import { site } from '@/lib/site';
+
+import { ButtonLink } from './ui/Button';
 
 /**
  * Mobile-only Book Now bar. Hidden while the availability search is on screen (it would duplicate the main action).
  * On pages with no search bar it simply stays visible. Right padding leaves room for the WhatsApp button.
  */
 export function StickyBookBar() {
-  const [visible, setVisible] = useState(false)
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const target = document.getElementById('availability-search')
+    const target = document.getElementById('availability-search');
     if (!target) {
-      setVisible(true)
-      return
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time DOM probe after mount
+      setVisible(true);
+      return;
     }
-    const observer = new IntersectionObserver(([entry]) => setVisible(!entry.isIntersecting), { threshold: 0 })
-    observer.observe(target)
-    return () => observer.disconnect()
-  }, [])
+    const observer = new IntersectionObserver(
+      ([entry]) => setVisible(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div
@@ -32,5 +38,5 @@ export function StickyBookBar() {
         Book Now
       </ButtonLink>
     </div>
-  )
+  );
 }

@@ -1,7 +1,12 @@
-"use client";
+'use client';
 
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { useRef, type ReactNode } from "react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from 'framer-motion';
+import { useRef, type ReactNode } from 'react';
 
 interface ParallaxProps {
   children: ReactNode;
@@ -20,11 +25,15 @@ export function Parallax({ children, className, amount = 10 }: ParallaxProps) {
 
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ["start end", "end start"],
+    offset: ['start end', 'end start'],
   });
 
   // Map scroll progress to a small translate, centred so the element rests at 0 mid-view.
-  const y = useTransform(scrollYProgress, [0, 1], [`${-amount}%`, `${amount}%`]);
+  const y = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [`${-amount}%`, `${amount}%`],
+  );
 
   if (reduced) {
     return (

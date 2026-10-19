@@ -1,13 +1,14 @@
-"use client";
+'use client';
 
-import { motion, useReducedMotion } from "framer-motion";
-import { EASE_OUT } from "./variants";
+import { motion, useReducedMotion } from 'framer-motion';
+
+import { EASE_OUT } from './variants';
 
 interface TextRevealProps {
   text: string;
   className?: string;
   /** Which heading element to render. */
-  as?: "h1" | "h2" | "h3" | "p" | "span";
+  as?: 'h1' | 'h2' | 'h3' | 'p' | 'span';
   /** Gap between each word's entrance, in seconds. */
   staggerChildren?: number;
   /** Delay before the first word starts, in seconds. */
@@ -25,7 +26,7 @@ interface TextRevealProps {
 export function TextReveal({
   text,
   className,
-  as = "p",
+  as = 'p',
   staggerChildren = 0.05,
   delayChildren = 0,
   onScroll = true,
@@ -42,7 +43,7 @@ export function TextReveal({
     );
   }
 
-  const words = text.split(" ");
+  const words = text.split(' ');
 
   const container = {
     hidden: {},
@@ -52,9 +53,9 @@ export function TextReveal({
   };
 
   const child = {
-    hidden: { y: "100%" },
+    hidden: { y: '100%' },
     visible: {
-      y: "0%",
+      y: '0%',
       transition: { duration: 0.7, ease: EASE_OUT },
     },
   };
@@ -65,16 +66,18 @@ export function TextReveal({
         className="inline-block"
         variants={container}
         initial="hidden"
-        {...(onScroll ? { whileInView: "visible", viewport: { once: true, margin: "-10%" } } : { animate: "visible" })}
+        {...(onScroll
+          ? { whileInView: 'visible', viewport: { once: true, margin: '-10%' } }
+          : { animate: 'visible' })}
       >
         {words.map((word, i) => (
           <span
             key={`${word}-${i}`}
-            className="inline-block overflow-hidden align-bottom pb-[0.12em] -mb-[0.12em]"
+            className="-mb-[0.12em] inline-block overflow-hidden pb-[0.12em] align-bottom"
           >
             <motion.span className="inline-block" variants={child}>
               {word}
-              {i < words.length - 1 ? " " : ""}
+              {i < words.length - 1 ? ' ' : ''}
             </motion.span>
           </span>
         ))}

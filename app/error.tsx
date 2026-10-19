@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { Button, ButtonLink } from "@/components/ui/Button";
-import { useEffect } from "react";
+import { useEffect } from 'react';
+
+import { Button, ButtonLink } from '@/components/ui/Button';
 
 export default function Error({
   error,
@@ -11,7 +12,6 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // eslint-disable-next-line no-console
     console.error(error);
   }, [error]);
 

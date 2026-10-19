@@ -1,49 +1,84 @@
-'use client'
+'use client';
 
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { X } from 'lucide-react'
-import { formatNaira } from '@/lib/format'
-import { spring } from '../motion/variants'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { X } from 'lucide-react';
+
+import { formatNaira } from '@/lib/format';
 import {
-  bedTypeLabels, filterAmenityOptions, type FilterAmenity, type RoomFilters,
-} from '@/lib/rooms'
+  bedTypeLabels,
+  filterAmenityOptions,
+  type FilterAmenity,
+  type RoomFilters,
+} from '@/lib/rooms';
+
+import { spring } from '../motion/variants';
 
 interface Chip {
-  id: string
-  label: string
-  remove: (f: RoomFilters) => RoomFilters
+  id: string;
+  label: string;
+  remove: (f: RoomFilters) => RoomFilters;
 }
 
 function buildChips(f: RoomFilters): Chip[] {
-  const chips: Chip[] = []
+  const chips: Chip[] = [];
   if (f.minPrice !== null || f.maxPrice !== null) {
     const label =
       f.minPrice !== null && f.maxPrice !== null
         ? `${formatNaira(f.minPrice)} to ${formatNaira(f.maxPrice)}`
         : f.minPrice !== null
           ? `From ${formatNaira(f.minPrice)}`
-          : `Up to ${formatNaira(f.maxPrice as number)}`
-    chips.push({ id: 'price', label, remove: (x) => ({ ...x, minPrice: null, maxPrice: null }) })
+          : `Up to ${formatNaira(f.maxPrice as number)}`;
+    chips.push({
+      id: 'price',
+      label,
+      remove: (x) => ({ ...x, minPrice: null, maxPrice: null }),
+    });
   }
   if (f.minGuests !== null) {
-    chips.push({ id: 'guests', label: `${f.minGuests}+ guests`, remove: (x) => ({ ...x, minGuests: null }) })
+    chips.push({
+      id: 'guests',
+      label: `${f.minGuests}+ guests`,
+      remove: (x) => ({ ...x, minGuests: null }),
+    });
   }
   for (const bed of f.beds) {
-    chips.push({ id: `bed-${bed}`, label: bedTypeLabels[bed], remove: (x) => ({ ...x, beds: x.beds.filter((b) => b !== bed) }) })
+    chips.push({
+      id: `bed-${bed}`,
+      label: bedTypeLabels[bed],
+      remove: (x) => ({ ...x, beds: x.beds.filter((b) => b !== bed) }),
+    });
   }
   for (const key of f.amenities) {
-    const label = filterAmenityOptions.find((o) => o.key === key)?.label ?? key
-    chips.push({ id: `amenity-${key}`, label, remove: (x) => ({ ...x, amenities: x.amenities.filter((a) => a !== (key as FilterAmenity)) }) })
+    const label = filterAmenityOptions.find((o) => o.key === key)?.label ?? key;
+    chips.push({
+      id: `amenity-${key}`,
+      label,
+      remove: (x) => ({
+        ...x,
+        amenities: x.amenities.filter((a) => a !== (key as FilterAmenity)),
+      }),
+    });
   }
-  return chips
+  return chips;
 }
 
-export function FilterChips({ filters, onChange, onClearAll }: { filters: RoomFilters; onChange: (next: RoomFilters) => void; onClearAll: () => void }) {
-  const chips = buildChips(filters)
-  const reduced = useReducedMotion()
-  if (chips.length === 0) return null
+export function FilterChips({
+  filters,
+  onChange,
+  onClearAll,
+}: {
+  filters: RoomFilters;
+  onChange: (next: RoomFilters) => void;
+  onClearAll: () => void;
+}) {
+  const chips = buildChips(filters);
+  const reduced = useReducedMotion();
+  if (chips.length === 0) return null;
   return (
-    <ul aria-label="Active filters" className="flex flex-wrap items-center gap-2">
+    <ul
+      aria-label="Active filters"
+      className="flex flex-wrap items-center gap-2"
+    >
       <AnimatePresence initial={false}>
         {chips.map((chip) => (
           <motion.li
@@ -67,10 +102,14 @@ export function FilterChips({ filters, onChange, onClearAll }: { filters: RoomFi
         ))}
       </AnimatePresence>
       <li>
-        <button type="button" onClick={onClearAll} className="inline-flex min-h-11 items-center px-3 text-small font-semibold underline decoration-accent decoration-2 underline-offset-4">
+        <button
+          type="button"
+          onClick={onClearAll}
+          className="inline-flex min-h-11 items-center px-3 text-small font-semibold underline decoration-accent decoration-2 underline-offset-4"
+        >
           Clear all
         </button>
       </li>
     </ul>
-  )
+  );
 }

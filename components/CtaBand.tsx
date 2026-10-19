@@ -1,32 +1,45 @@
-"use client";
+'use client';
 
-import { MessageCircle } from "lucide-react";
-import { site, whatsappHref } from "@/lib/site";
-import { Magnetic } from "./motion/Magnetic";
-import { Reveal } from "./motion/Reveal";
-import { TextReveal } from "./motion/TextReveal";
-import { ButtonLink } from "./ui/Button";
+import { MessageCircle } from 'lucide-react';
+
+import { site, whatsappHref } from '@/lib/site';
+
+import { Magnetic } from './motion/Magnetic';
+import { Reveal } from './motion/Reveal';
+import { TextReveal } from './motion/TextReveal';
+import { ButtonLink } from './ui/Button';
 
 export function CtaBand() {
   return (
-    <section aria-labelledby="cta-heading" className="bg-accent py-14 text-ink md:py-20">
+    <section
+      aria-labelledby="cta-heading"
+      className="bg-accent py-14 text-ink md:py-20"
+    >
       <div className="container-page flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
         <div className="max-w-xl">
           <TextReveal
             as="h2"
             id="cta-heading"
             text={site.cta.heading}
-            className="font-display text-h2 text-balance"
+            className="text-balance font-display text-h2"
             staggerChildren={0.05}
           />
           <Reveal delay={0.15}>
             <p className="mt-3 text-body-lg">{site.cta.text}</p>
           </Reveal>
         </div>
-        <Reveal delay={0.2} className="flex w-full flex-col gap-3 sm:flex-row md:w-auto">
+        <Reveal
+          delay={0.2}
+          className="flex w-full flex-col gap-3 sm:flex-row md:w-auto"
+        >
           <Magnetic className="inline-flex w-full sm:w-auto">
             <span className="group relative inline-flex w-full overflow-hidden rounded-control">
-              <ButtonLink href={site.bookingHref} variant="dark" size="lg" className="w-full">
+              <ButtonLink
+                href={site.bookingHref}
+                variant="dark"
+                size="lg"
+                className="w-full"
+              >
                 Book Now
               </ButtonLink>
               <span

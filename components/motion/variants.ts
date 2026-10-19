@@ -1,4 +1,4 @@
-import type { Variants } from "framer-motion";
+import type { Variants } from 'framer-motion';
 
 /** Signature ease used across the site: slow out, gentle settle. */
 export const EASE_OUT: [number, number, number, number] = [0.22, 1, 0.36, 1];
@@ -48,20 +48,20 @@ export const fadeIn: Variants = {
 
 /** Blur-to-sharp — for large quotes and display text. */
 export const blurIn: Variants = {
-  hidden: { opacity: 0, filter: "blur(8px)" },
+  hidden: { opacity: 0, filter: 'blur(8px)' },
   visible: {
     opacity: 1,
-    filter: "blur(0px)",
+    filter: 'blur(0px)',
     transition: { duration: 0.9, ease: EASE_OUT },
   },
 };
 
 /** Blur-to-sharp container that also staggers its children in. Pair children with fadeUp. */
 export const blurStagger: Variants = {
-  hidden: { opacity: 0, filter: "blur(8px)" },
+  hidden: { opacity: 0, filter: 'blur(8px)' },
   visible: {
     opacity: 1,
-    filter: "blur(0px)",
+    filter: 'blur(0px)',
     transition: {
       duration: 0.8,
       ease: EASE_OUT,
@@ -72,7 +72,10 @@ export const blurStagger: Variants = {
 };
 
 /** Stagger container: pair with any of the item variants above. */
-export const stagger = (staggerChildren = 0.08, delayChildren = 0): Variants => ({
+export const stagger = (
+  staggerChildren = 0.08,
+  delayChildren = 0,
+): Variants => ({
   hidden: {},
   visible: {
     transition: { staggerChildren, delayChildren },
@@ -82,9 +85,13 @@ export const stagger = (staggerChildren = 0.08, delayChildren = 0): Variants => 
 /** Standard viewport config so reveals fire once, slightly before fully in view. */
 export const viewportOnce = {
   once: true,
-  margin: "-12% 0px -12% 0px",
+  margin: '-12% 0px -12% 0px',
 } as const;
 
 /** Spring config for interactive pieces (buttons, hover states). */
-export const spring = { type: "spring", stiffness: 320, damping: 24 } as const;
-export const springGentle = { type: "spring", stiffness: 180, damping: 26 } as const;
+export const spring = { type: 'spring', stiffness: 320, damping: 24 } as const;
+export const springGentle = {
+  type: 'spring',
+  stiffness: 180,
+  damping: 26,
+} as const;

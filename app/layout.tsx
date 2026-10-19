@@ -1,28 +1,30 @@
-import { AnalyticsScripts } from "@/components/AnalyticsScripts";
-import { ConsentBanner } from "@/components/ConsentBanner";
-import { Footer } from "@/components/Footer";
-import { Header } from "@/components/Header";
-import { HideOnCheckout } from "@/components/HideOnCheckout";
-import { StickyBookBar } from "@/components/StickyBookBar";
-import { WhatsAppFab } from "@/components/WhatsAppFab";
-import { getConsentSettings, getHotelSettings } from "@/lib/content/data";
-import { site } from "@/lib/site";
-import { ConsentProvider } from "@/providers/consent.provider";
-import type { Metadata, Viewport } from "next";
-import { Figtree, Young_Serif } from "next/font/google";
-import type { ReactNode } from "react";
-import "./globals.css";
+import { Figtree, Young_Serif } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
+import type { ReactNode } from 'react';
+
+import { AnalyticsScripts } from '@/components/AnalyticsScripts';
+import { ConsentBanner } from '@/components/ConsentBanner';
+import { Footer } from '@/components/Footer';
+import { Header } from '@/components/Header';
+import { HideOnCheckout } from '@/components/HideOnCheckout';
+import { StickyBookBar } from '@/components/StickyBookBar';
+import { WhatsAppFab } from '@/components/WhatsAppFab';
+import { getConsentSettings, getHotelSettings } from '@/lib/content/data';
+import { site } from '@/lib/site';
+import { ConsentProvider } from '@/providers/consent.provider';
+
+import './globals.css';
 
 const display = Young_Serif({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--font-display",
-  display: "swap",
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-display',
+  display: 'swap',
 });
 const body = Figtree({
-  subsets: ["latin"],
-  variable: "--font-body",
-  display: "swap",
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -35,14 +37,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: site.name,
     description: site.description,
-    type: "website",
-    locale: "en_NG",
+    type: 'website',
+    locale: 'en_NG',
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1C2126",
-  width: "device-width",
+  themeColor: '#1C2126',
+  width: 'device-width',
   initialScale: 1,
 };
 
@@ -51,7 +53,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const analytics = getHotelSettings().analytics;
   return (
     <html lang="en-NG" className={`${display.variable} ${body.variable}`}>
-      <body className="font-sans text-body antialiased min-w-[250px]">
+      <body className="min-w-[250px] font-sans text-body antialiased">
         <ConsentProvider>
           <a
             href="#main"
@@ -67,7 +69,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <Footer />
             <StickyBookBar />
           </HideOnCheckout>
-          <WhatsAppFab />
+          <HideOnCheckout>
+            <WhatsAppFab />
+          </HideOnCheckout>
           <ConsentBanner
             enabled={consent.enabled}
             privacyHref={consent.privacyPolicyHref}
