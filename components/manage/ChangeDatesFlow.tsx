@@ -10,6 +10,7 @@ import { manageService } from '@/app/api/services/manage.service';
 import { formatDeadline } from '@/lib/checkout/format';
 import { formatRange } from '@/lib/room-query';
 import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 import type { GuestReservation } from '@/types/booking.types';
 import type {
   ChangeQuoteResponse,
@@ -31,7 +32,6 @@ interface ChangeDatesFlowProps {
   onClose: () => void;
   v: GuestReservation;
   csrf: string;
-  demo: string | null;
   onUpdated: (next: GuestReservation, message: string) => void;
   onRefresh: () => Promise<void>;
   sessionExpired: boolean;
@@ -73,13 +73,13 @@ export function ChangeDatesFlow({
   onClose,
   v,
   csrf,
-  demo,
   onUpdated,
   onRefresh,
   sessionExpired,
   onSessionExpired,
   onReverified,
 }: ChangeDatesFlowProps) {
+  const site = useSite();
   const current: DateRange = {
     checkIn: v.stay.checkIn,
     checkOut: v.stay.checkOut,
@@ -134,7 +134,6 @@ export function ChangeDatesFlow({
             v.reference,
             { checkIn: r.checkIn, checkOut: r.checkOut },
             csrf,
-            demo,
           )
         ).data,
       );
@@ -169,7 +168,6 @@ export function ChangeDatesFlow({
           v.reference,
           { idempotencyKey: key.current, quoteId: quote.quoteId },
           csrf,
-          demo,
         )
       ).data;
       setConfirmed(quote);
@@ -212,6 +210,7 @@ export function ChangeDatesFlow({
 
   const askHotel = (extra: string) =>
     whatsappHref(
+      site,
       `Hello, I'd like to change booking ${v.reference}${range.checkIn && range.checkOut ? ` to ${formatRange(range.checkIn, range.checkOut)}` : ''}. ${extra}`,
     );
   const currentLabel =
@@ -280,7 +279,6 @@ export function ChangeDatesFlow({
         reference={v.reference}
         change={pending}
         csrf={csrf}
-        demo={demo}
         onRefresh={onRefresh}
         onSessionExpired={onSessionExpired}
       />

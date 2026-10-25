@@ -1,8 +1,24 @@
 'use client';
 
+import './globals.css';
+
+import { Figtree, Young_Serif } from 'next/font/google';
 import { useEffect } from 'react';
 
 import { ButtonLink } from '@/components/ui/Button';
+
+const display = Young_Serif({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const bodyFont = Figtree({
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
+});
 
 export default function GlobalError({
   error,
@@ -14,7 +30,7 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <html lang="en-NG">
+    <html lang="en-NG" className={`${display.variable} ${bodyFont.variable}`}>
       <body>
         <main className="container-page section-y">
           <div className="max-w-xl">

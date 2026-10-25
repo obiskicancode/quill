@@ -2,26 +2,51 @@ import Link from 'next/link';
 import {
   Facebook,
   Instagram,
+  Link2,
+  Linkedin,
   Mail,
   MapPin,
   MessageCircle,
+  Music2,
   Phone,
+  Twitter,
+  Youtube,
 } from 'lucide-react';
 
-import { site, telHref, whatsappHref } from '@/lib/site';
+import { telHref, whatsappHref } from '@/lib/site';
+import type { SiteConfig, SocialPlatform } from '@/types/site.types';
 
 import { CookieSettingsButton } from './CookieSettingsButton';
-import { Logo } from './Logo';
+import { SiteLogo } from './SiteLogo';
 
 const link =
   'inline-flex min-h-11 items-center underline-offset-4 hover:text-white hover:underline';
 
-export function Footer() {
+function SocialIcon({ platform }: { platform: SocialPlatform }) {
+  switch (platform) {
+    case 'instagram':
+      return <Instagram className="size-5" aria-hidden />;
+    case 'facebook':
+      return <Facebook className="size-5" aria-hidden />;
+    case 'x':
+      return <Twitter className="size-5" aria-hidden />;
+    case 'youtube':
+      return <Youtube className="size-5" aria-hidden />;
+    case 'linkedin':
+      return <Linkedin className="size-5" aria-hidden />;
+    case 'tiktok':
+      return <Music2 className="size-5" aria-hidden />;
+    case 'other':
+      return <Link2 className="size-5" aria-hidden />;
+  }
+}
+
+export function Footer({ site }: { site: SiteConfig }) {
   return (
     <footer className="on-dark bg-ink text-paper/80">
       <div className="container-page grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-4">
         <div className="text-paper">
-          <Logo />
+          <SiteLogo site={site} />
           <p className="mt-3 max-w-xs text-small text-paper/80">
             {site.description}
           </p>
@@ -33,11 +58,7 @@ export function Footer() {
                   aria-label={s.label}
                   className="grid size-11 place-items-center rounded-full border border-paper/40 transition-colors hover:bg-paper hover:text-ink"
                 >
-                  {s.platform === 'instagram' ? (
-                    <Instagram className="size-5" aria-hidden />
-                  ) : (
-                    <Facebook className="size-5" aria-hidden />
-                  )}
+                  <SocialIcon platform={s.platform} />
                 </a>
               </li>
             ))}
@@ -54,14 +75,14 @@ export function Footer() {
               </address>
             </li>
             <li>
-              <a href={telHref()} className={link}>
+              <a href={telHref(site)} className={link}>
                 <Phone className="mr-3 size-4" aria-hidden />
                 {site.contact.phoneDisplay}
               </a>
             </li>
             <li>
               <a
-                href={whatsappHref()}
+                href={whatsappHref(site)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={link}

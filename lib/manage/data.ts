@@ -1,24 +1,21 @@
 import type { ManageData, PendingChangeView } from '@/types/manage.types';
 
-import type { StoredReservation } from '../checkout/mock-db';
-import { getCheckoutSettings, parseDemos } from '../checkout/settings';
+import type { StoredReservation } from '../booking/store';
+import { getCheckoutSettings } from '../checkout/settings';
 import type { Clock } from '../stay-quote';
 import { timelineFrom } from './labels';
 import { allowedActions, previewCancellation } from './rules';
 import { getManageSettings } from './settings';
 
-/** Everything the manage page needs beyond the confirmation view. The server decides every action and every amount. */
-export function buildManageData(
+export async function buildManageData(
   r: StoredReservation,
   session: { csrf: string; expiresAt: number },
   clock: Clock,
-): ManageData {
-  const demos = parseDemos(r.demo);
-  const settings = getManageSettings(demos);
+): Promise<ManageData> {
+  const settings = await getManageSettings();
   const allowed = allowedActions(r, clock, settings);
-
   const pc = r.pendingChange;
-  const checkout = getCheckoutSettings(demos);
+  const checkout = await getCheckoutSettings();
   const pendingChange: PendingChangeView | null = pc
     ? {
         changeId: pc.changeId,

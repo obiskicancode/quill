@@ -10,9 +10,7 @@ import {
 } from '@/components/policies/PolicySummary';
 import { PolicyToc } from '@/components/policies/PolicyToc';
 import { PrintButton } from '@/components/policies/PrintButton';
-import { config } from '@/config';
 import { getPolicyPage, getPolicySettings } from '@/lib/content/data';
-import { parsePreview } from '@/lib/content/preview';
 import { policyHeadings } from '@/lib/content/rich';
 import { POLICY_SLUGS, type PolicySlug } from '@/types/content.types';
 
@@ -39,7 +37,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   if (!isPolicySlug(slug)) return { title: 'Policies' };
-  const page = await getPolicyPage(slug, parsePreview(undefined));
+  const page = await getPolicyPage(slug);
   if (!page) return { title: 'Policies' };
   const title = page.metaTitle ?? page.title;
   const description = page.metaDescription ?? page.summary;
@@ -52,22 +50,16 @@ export async function generateMetadata({
 
 export default async function PolicyPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { slug } = await params;
   if (!isPolicySlug(slug)) notFound();
-  // Preview switches exist only in development.
-  const flags = config.isProd
-    ? parsePreview(undefined)
-    : parsePreview((await searchParams).preview);
-  const page = await getPolicyPage(slug, flags);
+  const page = await getPolicyPage(slug);
   if (!page) notFound();
 
   const headings = policyHeadings(page.body);
-  const settings = getPolicySettings();
+  const settings = await getPolicySettings();
 
   return (
     <div className="container-page section-y">
@@ -97,7 +89,11 @@ export default async function PolicyPage({
 
           {slug === 'cancellation-policy' && (
             <div className="mt-6">
-              <CancellationSummary policy={settings.cancellation} />
+              <CancellationSummary
+                policy={settings.cancellation}
+                checkInTime={settings.houseRules.checkInTime}
+                checkOutTime={settings.houseRules.checkOutTime}
+              />
             </div>
           )}
           {slug === 'house-rules' && (

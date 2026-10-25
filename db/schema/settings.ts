@@ -105,6 +105,14 @@ export const hotelSettings = pgTable(
     maxAdvanceBookingDays: integer('max_advance_booking_days')
       .notNull()
       .default(365),
+    minNights: smallint('min_nights').notNull().default(1),
+    maxNights: smallint('max_nights').notNull().default(30),
+    sameDayCutoff: varchar('same_day_cutoff', { length: 5 })
+      .notNull()
+      .default('18:00'),
+    siteConfig: jsonb('site_config'),
+    manageSettings: jsonb('manage_settings'),
+    policySettings: jsonb('policy_settings'),
     holdMinutes: smallint('hold_minutes').notNull().default(15),
     autoExpireHolds: boolean('auto_expire_holds').notNull().default(true),
     confirmationModeDefault: text('confirmation_mode_default')

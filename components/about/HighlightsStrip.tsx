@@ -1,10 +1,9 @@
 import { StaggerGroup, StaggerItem } from '@/components/motion';
 import { getHighlights } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 
 /** Year established and number of rooms. Each figure shows only when it exists. */
-export async function HighlightsStrip({ flags }: { flags: PreviewFlags }) {
-  const { year, rooms } = await getHighlights(flags);
+export async function HighlightsStrip() {
+  const { year, rooms } = await getHighlights();
   const items = [
     year ? { label: 'Established', value: String(year) } : null,
     rooms

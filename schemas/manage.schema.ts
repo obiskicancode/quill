@@ -1,22 +1,21 @@
 import { z } from 'zod';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { detailsPatchSchema } from '@/schemas/checkout.schema';
 import { CANCEL_REASONS } from '@/types/manage.types';
 
 const key = z.string().min(16).max(64);
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date.');
+const isoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, ERROR_MESSAGES.INVALID_DATE);
 
 export const cancelRequestSchema = z.object({
   idempotencyKey: key,
   reason: z.enum(CANCEL_REASONS).nullish(),
-  note: z
-    .string()
-    .trim()
-    .max(300, 'Keep your note under 300 characters.')
-    .nullish(),
+  note: z.string().trim().max(300, ERROR_MESSAGES.NOTE_TOO_LONG).nullish(),
   /** The guest ticked "I understand this cannot be undone". */
   acknowledged: z.literal(true, {
-    message: 'Please confirm that you understand this cannot be undone.',
+    message: ERROR_MESSAGES.CANCEL_ACKNOWLEDGEMENT_REQUIRED,
   }),
   /** The refund the guest was shown. If the server now calculates something else, the cancel is refused and the guest sees the new amount. */
   expectedRefundMinor: z.number().int().nonnegative(),

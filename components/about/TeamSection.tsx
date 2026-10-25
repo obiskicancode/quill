@@ -1,12 +1,11 @@
 import { HoverZoom, StaggerGroup, StaggerItem } from '@/components/motion';
 import { getTeam } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 
 import { Photo } from '../ui/Photo';
 
 /** Photo, name, role and a short bio. Omitted when no team members are published. */
-export async function TeamSection({ flags }: { flags: PreviewFlags }) {
-  const team = await getTeam(flags);
+export async function TeamSection() {
+  const team = await getTeam();
   if (team.length === 0) return null;
   return (
     <section aria-labelledby="team-title" className="section-y">

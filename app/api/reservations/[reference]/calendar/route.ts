@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 
 import { buildIcs } from '@/lib/booking/ics';
 import { getAccess } from '@/lib/booking/session';
-import { isDemoRef, loadReservation } from '@/lib/booking/view';
-import { rateLimited } from '@/lib/checkout/mock-db';
+import { loadReservation } from '@/lib/booking/view';
+import { rateLimit } from '@/lib/rate-limit';
 
 /** Downloads the stay as an .ics file (hotel name, address, check-in time, a reminder the day before, the reference). */
 export async function GET(
@@ -11,18 +11,17 @@ export async function GET(
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
-  const demo = new URL(req.url).searchParams.get('demo');
   const client =
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
-  if (rateLimited(`calendar:${client}`, 20, 60_000))
+  if (!(await rateLimit(`calendar:${client}`, 20, 60_000)).allowed)
     return new NextResponse('Too many requests', {
       status: 429,
       headers: { 'Retry-After': '60' },
     });
-  if (!isDemoRef(reference) && !(await getAccess(reference)))
+  if (!(await getAccess(reference)))
     return new NextResponse('Not found', { status: 404 });
 
-  const r = await loadReservation(reference, demo);
+  const r = await loadReservation(reference);
   if (!r || !r.stay.checkIn || !r.stay.checkOut)
     return new NextResponse('Not found', { status: 404 });
 

@@ -12,7 +12,6 @@ import {
 
 import { StaggerGroup, StaggerItem } from '@/components/motion';
 import { getValueCards } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 import type { ValueIcon } from '@/types/content.types';
 
 const icons: Record<ValueIcon, LucideIcon> = {
@@ -26,8 +25,8 @@ const icons: Record<ValueIcon, LucideIcon> = {
   sparkles: Sparkles,
 };
 
-export async function ValueCards({ flags }: { flags: PreviewFlags }) {
-  const cards = await getValueCards(flags);
+export async function ValueCards() {
+  const cards = await getValueCards();
   if (cards.length === 0) return null;
   return (
     <section aria-labelledby="values-title" className="section-y bg-surface">

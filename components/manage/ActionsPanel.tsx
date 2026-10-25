@@ -5,6 +5,7 @@ import { CalendarClock, Gift, PencilLine, XCircle } from 'lucide-react';
 
 import { formatRange } from '@/lib/room-query';
 import { telHref, whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 import type { GuestReservation } from '@/types/booking.types';
 
 import { AnimatedList } from '../motion';
@@ -28,6 +29,7 @@ export function ActionsPanel({
   onChangeDates,
   onEdit,
 }: ActionsPanelProps) {
+  const site = useSite();
   const m = v.manage;
   const reduced = useReducedMotion();
   const li = reduced
@@ -49,14 +51,14 @@ export function ActionsPanel({
       ? formatRange(v.stay.checkIn, v.stay.checkOut)
       : 'my current dates';
   const askHotel = (text: string) =>
-    whatsappHref(`Hello, ${text} (booking ${v.reference}).`);
+    whatsappHref(site, `Hello, ${text} (booking ${v.reference}).`);
   const contact = (text: string) => (
     <div className="mt-3 flex flex-col gap-3 sm:flex-row">
       <ButtonLink href={askHotel(text)} external variant="secondary" size="sm">
         Ask the hotel on WhatsApp
         <span className="sr-only"> (opens in a new tab)</span>
       </ButtonLink>
-      <ButtonLink href={telHref()} variant="secondary" size="sm">
+      <ButtonLink href={telHref(site)} variant="secondary" size="sm">
         Call the hotel
       </ButtonLink>
     </div>

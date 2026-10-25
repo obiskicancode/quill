@@ -1,22 +1,19 @@
 import { apiFail, apiOk } from '@/app/api/envelope';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import {
   createManageValue,
   readManageValue,
   setAccessCookie,
   setManageCookie,
 } from '@/lib/booking/session';
-import {
-  buildGuestReservation,
-  demoStored,
-  isDemoRef,
-} from '@/lib/booking/view';
-import { rateLimited, refresh, store } from '@/lib/checkout/mock-db';
+import { buildGuestReservation, loadReservation } from '@/lib/booking/view';
+import { rateLimit } from '@/lib/rate-limit';
 import { verifyRequestSchema } from '@/schemas/booking.schema';
 import type { BookingApiError } from '@/types/booking.types';
 
 const noStore = { 'Cache-Control': 'no-store' };
-const GENERIC =
-  "We couldn't find a booking with those details. Check the reference and email and try again.";
+const GENERIC = ERROR_MESSAGES.VERIFY_NOT_FOUND;
 
 /**
  * Proves the guest owns the booking with the reference plus the email used.
@@ -25,10 +22,10 @@ const GENERIC =
 export async function POST(req: Request) {
   const client =
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
-  if (rateLimited(`verify:${client}`, 5, 10 * 60_000)) {
+  if (!(await rateLimit(`verify:${client}`, 5, 10 * 60_000)).allowed) {
     const error: BookingApiError = {
-      code: 'rate_limited',
-      message: 'Too many attempts. Please wait before trying again.',
+      code: ERROR_CODES.RATE_LIMITED,
+      message: ERROR_MESSAGES.VERIFY_TOO_MANY_ATTEMPTS,
       retryAfterSeconds: 600,
     };
     return apiFail(429, error.message, error, {
@@ -39,27 +36,25 @@ export async function POST(req: Request) {
     await req.json().catch(() => null),
   );
   if (!parsed.success) {
-    const error: BookingApiError = { code: 'not_verified', message: GENERIC };
+    const error: BookingApiError = {
+      code: ERROR_CODES.NOT_VERIFIED,
+      message: GENERIC,
+    };
     return apiFail(401, error.message, error, { headers: noStore });
   }
 
   const { reference, email, scope } = parsed.data;
 
-  // Dev preview only: the demo booking verifies with its sample email.
-  if (isDemoRef(reference) && email === 'ada.obi@example.com') {
-    const demo = buildGuestReservation(
-      await demoStored('confirmed'),
-      'verified',
-      scope === 'manage'
-        ? { manage: { csrf: 'demo-csrf', expiresAt: Date.now() + 30 * 60_000 } }
-        : {},
-    );
-    return apiOk(demo, { headers: noStore });
-  }
-
-  const reservation = store.reservations.get(reference);
-  if (!reservation || reservation.guest.email !== email) {
-    const error: BookingApiError = { code: 'not_verified', message: GENERIC };
+  const reservation = await loadReservation(reference);
+  if (
+    !reservation ||
+    !reservation.guest.email ||
+    reservation.guest.email.toLowerCase() !== email.toLowerCase()
+  ) {
+    const error: BookingApiError = {
+      code: ERROR_CODES.NOT_VERIFIED,
+      message: GENERIC,
+    };
     return apiFail(401, error.message, error, { headers: noStore });
   }
   if (scope === 'manage') {
@@ -67,7 +62,7 @@ export async function POST(req: Request) {
     const value = createManageValue(reference);
     const session = readManageValue(reference, value)!;
     const res = apiOk(
-      buildGuestReservation(refresh(reservation), 'verified', {
+      await buildGuestReservation(reservation, 'verified', {
         manage: { csrf: session.csrf, expiresAt: session.expiresAt },
       }),
       { headers: noStore },
@@ -75,7 +70,7 @@ export async function POST(req: Request) {
     setManageCookie(res, reference, value);
     return res;
   }
-  const res = apiOk(buildGuestReservation(refresh(reservation), 'verified'), {
+  const res = apiOk(await buildGuestReservation(reservation, 'verified'), {
     headers: noStore,
   });
   setAccessCookie(res, reference, 'verified');

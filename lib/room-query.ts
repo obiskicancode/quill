@@ -1,4 +1,3 @@
-import type { DemoMode } from './availability';
 import { fromISO, toISO, type ISODate } from './dates';
 import {
   emptyFilters,
@@ -19,8 +18,6 @@ export interface RoomQuery {
   children: number;
   sort: SortKey;
   filters: RoomFilters;
-  /** Preview helpers, used by the dev-only PreviewBar. */
-  demo: DemoMode | null;
   count: number | null;
 }
 
@@ -29,7 +26,6 @@ interface ParamsLike {
 }
 
 const BEDS: BedType[] = ['queen', 'king', 'twin', 'double'];
-const DEMOS: DemoMode[] = ['loading', 'error', 'soldout', 'low'];
 
 function validDate(value: string | null): ISODate | null {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
@@ -54,7 +50,6 @@ function list<T extends string>(
 
 export function parseRoomQuery(p: ParamsLike): RoomQuery {
   const sort = p.get('sort') as SortKey | null;
-  const demo = p.get('demo') as DemoMode | null;
   return {
     checkIn: validDate(p.get('checkIn')),
     checkOut: validDate(p.get('checkOut')),
@@ -73,7 +68,6 @@ export function parseRoomQuery(p: ParamsLike): RoomQuery {
         filterAmenityOptions.map((o) => o.key) as FilterAmenity[],
       ),
     },
-    demo: demo && DEMOS.includes(demo) ? demo : null,
     count: int(p.get('count'), 1, 8),
   };
 }
@@ -94,7 +88,6 @@ export function serializeRoomQuery(q: RoomQuery): string {
   if (f.minGuests !== null) p.set('minGuests', String(f.minGuests));
   if (f.beds.length) p.set('beds', f.beds.join(','));
   if (f.amenities.length) p.set('amenities', f.amenities.join(','));
-  if (q.demo) p.set('demo', q.demo);
   if (q.count) p.set('count', String(q.count));
   return p.toString();
 }

@@ -3,9 +3,9 @@ import type { Metadata } from 'next';
 
 import { CheckoutFlow } from '@/components/checkout/CheckoutFlow';
 import { CheckoutShell } from '@/components/checkout/CheckoutShell';
-import { store } from '@/lib/checkout/mock-db';
+import { loadReservation } from '@/lib/booking/view';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
-import { getRoomDetail, hotelSettings } from '@/lib/room-detail';
+import { getPricingSettings, getRoomDetail } from '@/lib/room-detail';
 import { parseRoomQuery } from '@/lib/room-query';
 import { needsExtraBed } from '@/lib/stay-quote';
 
@@ -28,13 +28,13 @@ export default async function CheckoutPage({
   };
 
   const slug = get('room');
-  const room = slug ? getRoomDetail(slug) : null;
+  const room = slug ? await getRoomDetail(slug) : null;
   const q = parseRoomQuery({ get });
   // Missing or invalid params go back to Rooms with a message.
   if (!room || !slug || !q.checkIn || !q.checkOut || q.checkOut <= q.checkIn)
     redirect('/rooms?notice=checkout');
 
-  const demo = get('demo');
+  const pricing = await getPricingSettings();
   const needs = needsExtraBed(room, q.adults, q.children);
   const seen = Number(get('seen'));
 
@@ -42,14 +42,7 @@ export default async function CheckoutPage({
   const reference = get('ref');
   const returning = Boolean(reference && get('return') === '1');
   const saved =
-    returning && reference ? store.reservations.get(reference) : undefined;
-  const quoteDemo = returning
-    ? (demo ?? '')
-        .split(',')
-        .filter((d) => d && d !== 'unavailable' && d !== 'changed')
-        .join(',') || null
-    : demo;
-
+    returning && reference ? await loadReservation(reference) : null;
   // The server re-quotes the stay. Prices in the URL are only used to show "Price updated", never to charge.
   const initialQuote = await buildCheckoutQuote({
     room: slug,
@@ -64,7 +57,6 @@ export default async function CheckoutPage({
       : Number.isInteger(seen) && seen > 0
         ? seen
         : null,
-    demo: quoteDemo,
   });
 
   if (initialQuote.status === 'invalid') {
@@ -93,12 +85,11 @@ export default async function CheckoutPage({
           children: q.children,
         }}
         initialQuote={initialQuote}
-        demo={demo}
         seenTotalMinor={Number.isInteger(seen) && seen > 0 ? seen : null}
         resumeReference={returning ? reference : null}
         hotelTimes={{
-          checkIn: hotelSettings.checkInTime,
-          checkOut: hotelSettings.checkOutTime,
+          checkIn: pricing.checkInTime,
+          checkOut: pricing.checkOutTime,
         }}
       />
     </CheckoutShell>

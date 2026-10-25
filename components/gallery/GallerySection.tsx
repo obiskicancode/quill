@@ -1,5 +1,4 @@
 import { getGalleryImages, getRoomTypeOptions } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 import {
   GALLERY_CATEGORIES,
   type GalleryCategory,
@@ -11,7 +10,6 @@ import { ButtonLink } from '../ui/Button';
 import { GalleryBrowser } from './GalleryBrowser';
 
 interface GallerySectionProps {
-  flags: PreviewFlags;
   category: string | null;
   room: string | null;
   image: string | null;
@@ -19,12 +17,11 @@ interface GallerySectionProps {
 
 /** Server part of the gallery: loads the photos, then hands them to the interactive browser. */
 export async function GallerySection({
-  flags,
   category,
   room,
   image,
 }: GallerySectionProps) {
-  const images = await getGalleryImages(flags);
+  const images = await getGalleryImages();
 
   if (images.length === 0) {
     return (
@@ -69,7 +66,7 @@ export async function GallerySection({
         </h2>
         <GalleryBrowser
           images={images}
-          roomTypes={getRoomTypeOptions()}
+          roomTypes={await getRoomTypeOptions()}
           initial={{
             category: startCategory,
             room: startCategory === 'rooms' ? room : null,

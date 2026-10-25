@@ -23,3 +23,17 @@ Drop files in `public/images/` (see the image list in DESIGN-SPEC.md). Missing f
 ## Routes this page links to
 
 `/book` (receives `checkIn`, `checkOut`, `adults`, `children`, and `room` from a room card), `/rooms`, `/rooms/[slug]`, `/about`, `/amenities`, `/gallery`, `/contact`, `/enquiry`, `/policies`, `/policies/[slug]` (terms, privacy, cancellation-policy, house-rules).
+
+## Local database with Docker Compose
+
+```bash
+cp .env.example .env
+pnpm db:up
+pnpm db:migrate
+pnpm db:seed
+```
+
+The app still runs on the host with `pnpm dev`; Compose starts PostgreSQL on
+`localhost:5432` with a named `postgres-data` volume. Stop it with `pnpm
+db:down` (the volume is kept). Use `docker compose down -v` only when you want
+to delete the database.

@@ -16,7 +16,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:check": "drizzle-kit check",
-    "db:drop": "drizzle-kit drop"
+    "db:drop": "drizzle-kit drop",
+    "db:seed": "node --env-file=.env --import tsx db/seed/index.ts"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -28,6 +29,7 @@
     ]
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1156.0",
     "@upstash/redis": "^1.39.0",
     "argon2": "^0.45.1",
     "axios": "^1.20.0",
@@ -63,6 +65,7 @@
     "prettier-plugin-sql": "^0.20.0",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.23.15",
     "typescript": "^5.7.0"
   }
 }

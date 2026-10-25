@@ -2,7 +2,8 @@
 
 import { MessageCircle } from 'lucide-react';
 
-import { site, whatsappHref } from '@/lib/site';
+import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 
 import { Magnetic } from './motion/Magnetic';
 import { Reveal } from './motion/Reveal';
@@ -10,6 +11,8 @@ import { TextReveal } from './motion/TextReveal';
 import { ButtonLink } from './ui/Button';
 
 export function CtaBand() {
+  const site = useSite();
+  if (!site.cta.heading) return null;
   return (
     <section
       aria-labelledby="cta-heading"
@@ -50,7 +53,7 @@ export function CtaBand() {
           </Magnetic>
           <Magnetic className="inline-flex w-full sm:w-auto">
             <ButtonLink
-              href={whatsappHref()}
+              href={whatsappHref(site)}
               external
               variant="secondary"
               size="lg"

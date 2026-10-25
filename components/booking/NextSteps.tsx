@@ -1,6 +1,9 @@
+'use client';
+
 import { Check } from 'lucide-react';
 
 import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 import type { GuestReservation, HeaderKind } from '@/types/booking.types';
 import { formatMinor } from '@/types/stay.types';
 
@@ -94,6 +97,7 @@ export function NextSteps({
   v: GuestReservation;
   kind: HeaderKind;
 }) {
+  const site = useSite();
   const steps = stepsFor(kind, v);
   return (
     <section
@@ -144,6 +148,7 @@ export function NextSteps({
               {v.guest.arrival}.{' '}
               <a
                 href={whatsappHref(
+                  site,
                   `Hello, my plans changed for booking ${v.reference}. I will now arrive at: `,
                 )}
                 target="_blank"

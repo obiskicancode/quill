@@ -1,5 +1,8 @@
+'use client';
+
 import { unitLabels } from '@/lib/checkout/format';
 import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 import type { GuestReservation } from '@/types/booking.types';
 import { formatMinor } from '@/types/stay.types';
 
@@ -15,6 +18,7 @@ export function AddExtrasStrip({
   /** 'whatsapp' sends the request to the hotel with the booking reference filled in. */ mode?:
     'link' | 'whatsapp';
 }) {
+  const site = useSite();
   const taken = new Set(v.breakdown.extras.map((e) => e.id));
   const open = v.addExtras.catalog.filter((e) => !taken.has(e.id));
   const live =
@@ -54,6 +58,7 @@ export function AddExtrasStrip({
               href={
                 mode === 'whatsapp'
                   ? whatsappHref(
+                      site,
                       `Hello, please add "${e.name}" to booking ${v.reference}.`,
                     )
                   : `/booking/manage?ref=${encodeURIComponent(v.reference)}&add=${encodeURIComponent(e.id)}`

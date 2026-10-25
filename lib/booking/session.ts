@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import type { NextResponse } from 'next/server';
 
 import { config } from '@/config';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 
 /**
  * Short-lived, httpOnly, signed access cookie bound to one booking reference.
@@ -18,7 +19,7 @@ function secret(): string {
   const s = config.BOOKING.COOKIE_SECRET;
   if (s) return s;
   if (config.isProd)
-    throw new Error('BOOKING_COOKIE_SECRET must be set in production');
+    throw new Error(ERROR_MESSAGES.BOOKING_COOKIE_SECRET_MISSING);
   return 'dev-only-secret-change-me';
 }
 

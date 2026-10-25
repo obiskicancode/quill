@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { stayService } from '@/app/api/services/stay.service';
-import type { QuoteDemo, QuoteResponse, StayInput } from '@/types/stay.types';
+import type { QuoteResponse, StayInput } from '@/types/stay.types';
 
 export type QuoteState =
   | { status: 'idle' }
@@ -12,16 +12,12 @@ export type QuoteState =
   | { status: 'error' };
 
 /** Asks the server for the price breakdown whenever the stay changes. Never calculates prices itself. */
-export function useQuote(
-  slug: string,
-  stay: StayInput | null,
-  demo: QuoteDemo | null,
-) {
+export function useQuote(slug: string, stay: StayInput | null) {
   const [state, setState] = useState<QuoteState>({ status: 'idle' });
   const [attempt, setAttempt] = useState(0);
   const key =
     stay?.checkIn && stay.checkOut
-      ? `${stay.checkIn}|${stay.checkOut}|${stay.adults}|${stay.children}|${stay.extraBed}|${demo}|${attempt}`
+      ? `${stay.checkIn}|${stay.checkOut}|${stay.adults}|${stay.children}|${stay.extraBed}|${attempt}`
       : 'none';
 
   useEffect(() => {
@@ -39,7 +35,6 @@ export function useQuote(
         adults: stay.adults,
         children: stay.children,
         extraBed: stay.extraBed,
-        demo,
       })
       .then((res) => {
         if (!cancelled) setState({ status: 'ready', data: res.data });

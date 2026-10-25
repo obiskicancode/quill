@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { countries, dialFor } from '@/lib/checkout/countries';
 
 /** Shared by the browser (inline validation) and the server (the real check). */
@@ -54,8 +55,7 @@ const phoneCheck = (
     ctx.addIssue({
       code: 'custom',
       path: ['phone'],
-      message:
-        'Enter a valid phone number. Include the country code if it is not from your selected country.',
+      message: ERROR_MESSAGES.INVALID_PHONE,
     });
   }
 };
@@ -65,28 +65,25 @@ export const guestFields = z.object({
   fullName: z
     .string()
     .trim()
-    .min(2, 'Enter your full name.')
-    .max(100, 'Keep your name under 100 characters.')
-    .refine((v) => v.includes(' '), 'Enter your first and last name.'),
+    .min(2, ERROR_MESSAGES.FULL_NAME_REQUIRED)
+    .max(100, ERROR_MESSAGES.NAME_TOO_LONG)
+    .refine((v) => v.includes(' '), ERROR_MESSAGES.FIRST_LAST_NAME_REQUIRED),
   email: z
     .string()
     .trim()
     .toLowerCase()
-    .min(1, 'Enter your email address.')
-    .email('Enter a valid email address, like name@example.com.'),
-  country: z.enum(countryCodes, { message: 'Choose your country.' }),
-  phone: z
-    .string()
-    .trim()
-    .min(1, 'Enter a phone number we can reach on WhatsApp.'),
+    .min(1, ERROR_MESSAGES.EMAIL_REQUIRED)
+    .email(ERROR_MESSAGES.EMAIL_INVALID),
+  country: z.enum(countryCodes, { message: ERROR_MESSAGES.COUNTRY_REQUIRED }),
+  phone: z.string().trim().min(1, ERROR_MESSAGES.PHONE_REQUIRED),
   arrivalTime: z.enum(arrivalValues, {
-    message: 'Choose roughly when you will arrive.',
+    message: ERROR_MESSAGES.ARRIVAL_REQUIRED,
   }),
   specialRequests: z
     .string()
     .max(
       MAX_REQUEST_LENGTH,
-      `Keep requests under ${MAX_REQUEST_LENGTH} characters.`,
+      ERROR_MESSAGES.REQUESTS_TOO_LONG(MAX_REQUEST_LENGTH),
     )
     .default(''),
 });
@@ -110,7 +107,9 @@ export const detailsPatchSchema = guestFields
 export type GuestInput = z.input<typeof guestSchema>;
 export type GuestDetails = z.output<typeof guestSchema>;
 
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date.');
+const isoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, ERROR_MESSAGES.INVALID_DATE);
 
 export const extraSelectionSchema = z.object({
   id: z.string().min(1).max(40),
@@ -126,7 +125,6 @@ export const quoteRequestSchema = z.object({
   extraBed: z.boolean(),
   extras: z.array(extraSelectionSchema).max(20),
   seenTotalMinor: z.number().int().nonnegative().nullish(),
-  demo: z.string().max(120).nullish(),
 });
 export type QuoteRequestInput = z.infer<typeof quoteRequestSchema>;
 
@@ -136,8 +134,7 @@ export const reservationRequestSchema = quoteRequestSchema.extend({
   /** The total the guest agreed to. If the server's total differs, the reservation is refused with price_changed. */
   expectedTotalMinor: z.number().int().positive(),
   termsAccepted: z.literal(true, {
-    message:
-      'Please accept the Terms, Privacy Policy and Cancellation Policy to continue.',
+    message: ERROR_MESSAGES.TERMS_ACCEPTANCE_REQUIRED,
   }),
   /** Honeypot: real guests never see or fill this. */
   website: z.string().max(200).optional(),
@@ -149,7 +146,6 @@ export const paymentInitSchema = z.object({
   reference: z.string().min(6).max(30),
   method: z.enum(['online', 'bank_transfer']),
   idempotencyKey: z.string().min(16).max(64),
-  demo: z.string().max(120).nullish(),
   purpose: z.enum(['booking', 'change']).optional(),
   changeId: z.string().max(40).optional(),
 });
@@ -169,9 +165,9 @@ export function checkProofFile(file: {
   size: number;
 }): string | null {
   if (!(PROOF_TYPES as readonly string[]).includes(file.type))
-    return 'Upload a JPG, PNG, WebP or PDF file.';
+    return ERROR_MESSAGES.PROOF_TYPE_INVALID;
   if (file.size > MAX_PROOF_BYTES)
-    return `The file is too large. Keep it under ${MAX_PROOF_BYTES / 1024 / 1024} MB.`;
-  if (file.size === 0) return 'That file is empty. Choose another.';
+    return ERROR_MESSAGES.PROOF_TOO_LARGE(MAX_PROOF_BYTES / 1024 / 1024);
+  if (file.size === 0) return ERROR_MESSAGES.PROOF_EMPTY;
   return null;
 }

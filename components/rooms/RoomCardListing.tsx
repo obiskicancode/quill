@@ -7,7 +7,8 @@ import { formatShort, type ISODate } from '@/lib/dates';
 import { formatNaira } from '@/lib/format';
 import { formatRange, stayHref, type RoomQuery } from '@/lib/room-query';
 import { roomAmenityLabels, type RoomType } from '@/lib/rooms';
-import { site, whatsappHref } from '@/lib/site';
+import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 
 import { Carousel } from '../Carousel';
 import { Button, ButtonLink } from '../ui/Button';
@@ -47,6 +48,7 @@ export function RoomCardListing({
   onCheckAvailability,
   onPickDates,
 }: RoomCardListingProps) {
+  const site = useSite();
   const nameId = `${room.id}-name`;
   const live = liveState === 'ready' ? availability : null;
   const soldOut = live?.status === 'sold-out';
@@ -58,6 +60,7 @@ export function RoomCardListing({
 
   const ask = (text: string) =>
     whatsappHref(
+      site,
       `Hello, ${text} (${room.name}${query.checkIn && query.checkOut ? `, ${formatRange(query.checkIn, query.checkOut)}` : ''}).`,
     );
 

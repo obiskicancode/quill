@@ -1,4 +1,3 @@
-import { hotelSettings } from '@/lib/room-detail';
 import type { PolicySettings } from '@/types/content.types';
 
 const policyTypeLabels: Record<
@@ -14,8 +13,12 @@ const policyTypeLabels: Record<
 /** Structured cancellation facts pulled from the hotel's settings, so this page can never disagree with checkout. */
 export function CancellationSummary({
   policy,
+  checkInTime,
+  checkOutTime,
 }: {
   policy: PolicySettings['cancellation'];
+  checkInTime: string;
+  checkOutTime: string;
 }) {
   const rows: { term: string; detail: string | null }[] = [
     {
@@ -73,11 +76,11 @@ export function CancellationSummary({
           ))}
         <div className="grid gap-1 sm:grid-cols-[11rem_1fr] sm:gap-6">
           <dt className="font-semibold">Check-in</dt>
-          <dd className="text-ink/85">From {hotelSettings.checkInTime}</dd>
+          <dd className="text-ink/85">From {checkInTime}</dd>
         </div>
         <div className="grid gap-1 sm:grid-cols-[11rem_1fr] sm:gap-6">
           <dt className="font-semibold">Check-out</dt>
-          <dd className="text-ink/85">By {hotelSettings.checkOutTime}</dd>
+          <dd className="text-ink/85">By {checkOutTime}</dd>
         </div>
       </dl>
     </section>

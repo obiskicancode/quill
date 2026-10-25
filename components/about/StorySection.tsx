@@ -1,6 +1,5 @@
 import { HoverZoom, Reveal } from '@/components/motion';
 import { getAboutPage } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 import type { RichBlock } from '@/types/content.types';
 
 import { RichText } from '../content/RichText';
@@ -18,8 +17,8 @@ function split(blocks: RichBlock[], parts: number): RichBlock[][] {
   return [blocks.slice(0, cut), blocks.slice(cut)].filter((p) => p.length > 0);
 }
 
-export async function StorySection({ flags }: { flags: PreviewFlags }) {
-  const page = await getAboutPage(flags);
+export async function StorySection() {
+  const page = await getAboutPage();
   if (page.body.length === 0) return null; // no story yet: the section is omitted
   const images = page.content.images.slice(0, 2);
   const chunks = split(page.body, Math.max(1, images.length));

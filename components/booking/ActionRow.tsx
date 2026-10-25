@@ -19,11 +19,9 @@ import { Button, ButtonLink } from '../ui/Button';
 /** Calendar (.ics and Google), print or save as PDF, WhatsApp share, and Manage booking. */
 export function ActionRow({
   v,
-  demo,
   hideManage = false,
 }: {
   v: GuestReservation;
-  demo: string | null;
   /** Hide "Manage booking" when already on the manage page. */ hideManage?: boolean;
 }) {
   const { checkIn, checkOut } = v.stay;
@@ -67,7 +65,7 @@ export function ActionRow({
           <motion.li key="ics" {...li}>
             {ready && event ? (
               <ButtonLink
-                href={bookingService.calendarUrl(v.reference, demo)}
+                href={bookingService.calendarUrl(v.reference)}
                 variant="secondary"
                 download
                 icon={<CalendarPlus className="size-5" aria-hidden />}

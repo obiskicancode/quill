@@ -6,7 +6,7 @@ import type {
   CancellationPreview,
 } from '@/types/manage.types';
 
-import type { StoredReservation } from '../checkout/mock-db';
+import type { StoredReservation } from '../booking/store';
 import { fromISO, nightsBetween, toISO, type ISODate } from '../dates';
 import type { Clock } from '../stay-quote';
 import { calculateRefund } from './refund';

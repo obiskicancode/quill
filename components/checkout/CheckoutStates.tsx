@@ -6,7 +6,8 @@ import { CheckCircle2, Clock, Loader2, RefreshCw, WifiOff } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
 import { formatRange } from '@/lib/room-query';
-import { site, telHref, whatsappHref } from '@/lib/site';
+import { telHref, whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 import { formatMinor } from '@/types/stay.types';
 
 import { DatePicker, type DateRange } from '../DatePicker';
@@ -272,6 +273,7 @@ export function ConfirmingScreen({
   onCheckAgain: () => void;
   checking: boolean;
 }) {
+  const site = useSite();
   const reduced = useReducedMotion();
   return (
     <section
@@ -318,7 +320,7 @@ export function ConfirmingScreen({
               again. We will email you as soon as it is confirmed. If you do not
               hear from us soon, contact the hotel on{' '}
               <a
-                href={telHref()}
+                href={telHref(site)}
                 className="font-semibold underline underline-offset-4"
               >
                 {site.contact.phoneDisplay}
@@ -326,6 +328,7 @@ export function ConfirmingScreen({
               or{' '}
               <a
                 href={whatsappHref(
+                  site,
                   'Hello, I paid for a booking and have not received a confirmation.',
                 )}
                 target="_blank"

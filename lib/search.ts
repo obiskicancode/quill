@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { SearchState } from '@/types/site.types';
 
 import type { ISODate } from './dates';
@@ -14,11 +15,10 @@ export const initialSearch: SearchState = {
 
 /** Returns a plain-language error, or null when the search can run. */
 export function validateSearch(s: SearchState, today: ISODate): string | null {
-  if (!s.checkIn || !s.checkOut)
-    return 'Choose your check-in and check-out dates.';
-  if (s.checkIn < today) return "Check-in can't be in the past.";
-  if (s.checkOut <= s.checkIn) return 'Check-out must be after check-in.';
-  if (s.adults < 1) return 'At least one adult is needed.';
+  if (!s.checkIn || !s.checkOut) return ERROR_MESSAGES.SEARCH_DATES_REQUIRED;
+  if (s.checkIn < today) return ERROR_MESSAGES.CHECKIN_IN_PAST;
+  if (s.checkOut <= s.checkIn) return ERROR_MESSAGES.CHECKOUT_AFTER_CHECKIN;
+  if (s.adults < 1) return ERROR_MESSAGES.SEARCH_ADULT_REQUIRED;
   return null;
 }
 

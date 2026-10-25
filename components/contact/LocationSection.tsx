@@ -1,5 +1,4 @@
 import { getLandmarks, getLocationInfo } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 
 import { MapCard, type MapCardData } from '../MapCard';
 
@@ -7,8 +6,8 @@ const real = (v: string | null | undefined) =>
   v && !v.includes('[') ? v : null;
 
 /** The shared MapCard with the hotel's location data. Loads the map only when it scrolls into view. */
-export async function LocationSection({ flags }: { flags: PreviewFlags }) {
-  const s = await getLocationInfo(flags);
+export async function LocationSection() {
+  const s = await getLocationInfo();
   if (!s) return null;
   const a = s.address;
   const lines = [
@@ -28,7 +27,7 @@ export async function LocationSection({ flags }: { flags: PreviewFlags }) {
   const data: MapCardData = {
     addressLines: lines,
     reception: s.receptionHours,
-    landmarks: getLandmarks(),
+    landmarks: await getLandmarks(),
     telHref: phone ? `tel:${phone.tel}` : '#',
     phoneDisplay: phone?.display,
     embedSrc:

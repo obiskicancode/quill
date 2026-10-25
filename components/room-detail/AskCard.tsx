@@ -1,13 +1,14 @@
 import { MessageCircle, Phone } from 'lucide-react';
 
+import { getPublicSite } from '@/lib/content/data';
 import type { ISODate } from '@/lib/dates';
 import { formatRange } from '@/lib/room-query';
-import { site, telHref, whatsappHref } from '@/lib/site';
+import { telHref, whatsappHref } from '@/lib/site';
 
 import { Reveal } from '../motion/Reveal';
 import { ButtonLink } from '../ui/Button';
 
-export function AskCard({
+export async function AskCard({
   roomName,
   checkIn,
   checkOut,
@@ -16,6 +17,7 @@ export function AskCard({
   checkIn: ISODate | null;
   checkOut: ISODate | null;
 }) {
+  const site = await getPublicSite();
   const dates =
     checkIn && checkOut ? ` for ${formatRange(checkIn, checkOut)}` : '';
   const message = `Hello ${site.name}, I have a question about the ${roomName}${dates}.`;
@@ -34,7 +36,7 @@ export function AskCard({
         </p>
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           <ButtonLink
-            href={whatsappHref(message)}
+            href={whatsappHref(site, message)}
             external
             variant="secondary"
             icon={<MessageCircle className="size-5" aria-hidden />}
@@ -42,7 +44,7 @@ export function AskCard({
             Ask on WhatsApp
           </ButtonLink>
           <ButtonLink
-            href={telHref()}
+            href={telHref(site)}
             variant="secondary"
             icon={<Phone className="size-5" aria-hidden />}
           >

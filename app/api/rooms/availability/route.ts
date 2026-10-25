@@ -1,10 +1,11 @@
 import { type NextRequest } from 'next/server';
 
 import { apiFail, apiOk } from '@/app/api/envelope';
-import { fetchAvailability, type DemoMode } from '@/lib/availability';
-import { roomTypes } from '@/lib/rooms';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { fetchAvailability } from '@/lib/availability';
+import { getRoomTypesWithDetails } from '@/lib/db/queries/content-data';
 
-const DEMOS: DemoMode[] = ['loading', 'error', 'soldout', 'low'];
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Live availability for a set of rooms on the chosen dates. The card list only ever displays what this returns. */
@@ -13,7 +14,9 @@ export async function GET(req: NextRequest) {
   const checkIn = sp.get('checkIn');
   const checkOut = sp.get('checkOut');
   if (!checkIn || !checkOut || !ISO.test(checkIn) || !ISO.test(checkOut)) {
-    return apiFail(400, 'Choose your dates.', { code: 'dates_required' });
+    return apiFail(400, ERROR_MESSAGES.CHOOSE_DATES, {
+      code: ERROR_CODES.DATES_REQUIRED,
+    });
   }
 
   const adults = Number(sp.get('adults') ?? 2);
@@ -24,8 +27,8 @@ export async function GET(req: NextRequest) {
     !Number.isInteger(children) ||
     children < 0
   ) {
-    return apiFail(400, 'Check the number of guests.', {
-      code: 'invalid_guests',
+    return apiFail(400, ERROR_MESSAGES.CHECK_GUEST_COUNT, {
+      code: ERROR_CODES.INVALID_GUESTS,
     });
   }
 
@@ -34,30 +37,25 @@ export async function GET(req: NextRequest) {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
+  const allRooms = (await getRoomTypesWithDetails()).map((r) => r.room);
   const rooms =
     wanted.length > 0
-      ? roomTypes.filter((r) => wanted.includes(r.id))
-      : roomTypes;
+      ? allRooms.filter((r) => wanted.includes(r.id))
+      : allRooms;
   if (rooms.length === 0)
-    return apiFail(400, 'No rooms matched those dates.', {
-      code: 'rooms_required',
+    return apiFail(400, ERROR_MESSAGES.NO_ROOMS_FOR_DATES, {
+      code: ERROR_CODES.ROOMS_REQUIRED,
     });
-
-  const rawDemo = sp.get('demo');
-  const demo = DEMOS.includes(rawDemo as DemoMode)
-    ? (rawDemo as DemoMode)
-    : null;
 
   try {
     const map = await fetchAvailability(
       { checkIn, checkOut, adults, children },
       rooms,
-      demo,
     );
     return apiOk(map, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
-    return apiFail(503, 'Availability is unavailable.', {
-      code: 'unavailable',
+    return apiFail(503, ERROR_MESSAGES.AVAILABILITY_UNAVAILABLE, {
+      code: ERROR_CODES.UNAVAILABLE,
     });
   }
 }

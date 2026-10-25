@@ -5,11 +5,7 @@ import { PrintReceiptButton } from '@/components/booking/PrintReceiptButton';
 import { CheckoutShell } from '@/components/checkout/CheckoutShell';
 import { PriceBreakdown } from '@/components/room-detail/PriceBreakdown';
 import { getAccess } from '@/lib/booking/session';
-import {
-  buildGuestReservation,
-  isDemoRef,
-  loadReservation,
-} from '@/lib/booking/view';
+import { buildGuestReservation, loadReservation } from '@/lib/booking/view';
 import { formatRange } from '@/lib/room-query';
 import { referenceSchema } from '@/schemas/booking.schema';
 import { formatMinor } from '@/types/stay.types';
@@ -33,15 +29,11 @@ export default async function ReceiptPage({
   const parsed = referenceSchema.safeParse(raw ?? '');
   if (!parsed.success) redirect('/booking/confirmation');
   const reference = parsed.data;
-  const demo = isDemoRef(reference)
-    ? ((Array.isArray(sp.demo) ? sp.demo[0] : sp.demo) ?? null)
-    : null;
-
-  const level = isDemoRef(reference) ? 'checkout' : await getAccess(reference);
-  const stored = level ? await loadReservation(reference, demo) : null;
+  const level = await getAccess(reference);
+  const stored = level ? await loadReservation(reference) : null;
   if (!level || !stored)
     redirect(`/booking/confirmation?ref=${encodeURIComponent(reference)}`);
-  const v = buildGuestReservation(stored, level);
+  const v = await buildGuestReservation(stored, level);
   const row = 'flex justify-between gap-6 border-b border-line py-2';
 
   return (

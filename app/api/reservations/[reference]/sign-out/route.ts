@@ -1,6 +1,6 @@
 import { apiOk } from '@/app/api/envelope';
 import { clearManageCookie } from '@/lib/booking/session';
-import { store } from '@/lib/checkout/mock-db';
+import { createAuditLog } from '@/lib/db/repositories/audit.repo';
 
 /** Ends the manage session for this booking. Safe to repeat. */
 export async function POST(
@@ -8,11 +8,11 @@ export async function POST(
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
-  store.audit.push({
-    at: Date.now(),
-    reference,
+  await createAuditLog({
+    entity: 'reservation',
+    entityId: reference,
     action: 'sign_out',
-    actor: 'guest',
+    changes: { actor: 'guest' },
   });
   const res = apiOk({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
   clearManageCookie(res, reference);

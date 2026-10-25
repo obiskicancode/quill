@@ -1,0 +1,1089 @@
+// =============================================================================
+// Divine Excellent Apartments - Booking Website (DBML v3, PostgreSQL 16)
+// Covers: 21 guest pages + 45 admin pages, as described in the page outline.
+//
+// Changes from v2
+//  + site_page_revisions   (content editor revision history)
+//  + enquiry_notes         (internal notes on enquiries)
+//  + idempotency_keys      (double-click / retry safety for every money or booking write)
+//  + seed_records          (tracks demo seed rows so they can be removed safely)
+//  + enquiries: is_spam, read_at, anonymised_at
+//  + payments: reconciliation fields, refund_of_payment_id, note
+//  + staff_users: invite and deactivation fields, nullable password while invited
+//  + staff_sessions: step_up_verified_at (step-up authentication)
+//  + password_reset_tokens: purpose (reset | invite)
+//  + notification_templates: updated_by; notification_logs: dedupe_key
+//  + reservations: guest email optional flag, change_count, confirmed_by, staff terms flag
+//  + hotel_settings: guest self-service rules, enquiry response time, hero/OG images
+//  + gallery_images / testimonials / team / facilities: storage keys and image alt text
+//  + audit_logs: actor_role, reason, user_agent; append-only (see SQL notes)
+//
+// Conventions
+//  - Single property: hotel_settings is a singleton row (id = 1).
+//  - No guest accounts. Guests use a booking reference + email. Only staff log in.
+//  - One room per reservation. check_in inclusive, check_out exclusive.
+//  - Money = integer minor units (kobo). Percentages = basis points (750 = 7.5%).
+//  - Optimistic locking uses updated_at as the version token.
+//  - DBML cannot express exclusion constraints, triggers, roles or expression indexes;
+//    run the SQL in the "Postgres notes" block at the bottom as migrations.
+// =============================================================================
+
+Project divine_excellent_apartments {
+  database_type: 'PostgreSQL'
+  Note: 'Hotel website, online booking, payments, enquiries, content and admin.'
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+Enum staff_role {
+  owner
+  manager
+  reception
+}
+
+Enum token_purpose {
+  reset
+  invite
+}
+
+Enum room_status {
+  active
+  maintenance
+  inactive
+}
+
+Enum reservation_status {
+  pending       // created; room held until hold_expires_at (or awaiting approval / transfer)
+  confirmed
+  checked_in
+  checked_out
+  cancelled
+  no_show
+  expired       // hold lapsed without payment
+}
+
+Enum booking_source {
+  website
+  admin
+  phone
+  walk_in
+}
+
+Enum payment_mode {
+  full_online
+  deposit_online
+  pay_at_hotel
+}
+
+Enum confirmation_mode {
+  instant
+  manual_approval
+}
+
+Enum payment_provider {
+  paystack
+  flutterwave
+  stripe
+  bank_transfer
+  cash
+}
+
+Enum payment_type {
+  deposit
+  balance
+  full
+  refund
+}
+
+Enum payment_status {
+  pending
+  paid
+  failed
+  refunded
+}
+
+Enum cancellation_policy_type {
+  flexible
+  moderate
+  strict
+  non_refundable
+  custom
+}
+
+Enum rate_adjustment_type {
+  fixed_price      // replaces the nightly price
+  percent_markup   // basis points; negative = discount
+  amount_markup    // minor units; negative = discount
+}
+
+Enum block_reason {
+  maintenance
+  owner_hold
+  renovation
+  other
+}
+
+Enum extra_pricing_unit {
+  per_stay
+  per_night
+  per_guest
+  per_guest_per_night
+}
+
+Enum enquiry_type {
+  booking_enquiry
+  general
+  group_booking
+  event_conference
+  corporate
+  complaint_feedback
+}
+
+Enum enquiry_status {
+  new
+  replied
+  closed
+  converted
+}
+
+Enum gallery_category {
+  rooms
+  facilities
+  exterior
+  dining
+  events
+  surroundings
+  other
+}
+
+Enum notification_channel {
+  email
+  whatsapp
+  sms
+}
+
+Enum notification_status {
+  queued
+  sent
+  failed
+}
+
+// ───────────────────────────── Property settings (singleton) ─────────────────────────────
+
+Table hotel_settings {
+  id smallint [pk, default: 1, note: 'Always 1 (CHECK constraint in migration)']
+
+  // Identity and brand
+  display_name varchar(200) [not null]
+  legal_name varchar(200)
+  registration_number varchar(100)
+  tagline varchar(255)
+  property_type varchar(50) [note: 'Hotel, Serviced apartments, Guest house...']
+  year_established smallint
+  description text
+  logo_url text
+  logo_alt varchar(255)
+  favicon_url text
+  primary_color varchar(9)
+  secondary_color varchar(9)
+  hero_title varchar(255)
+  hero_subtitle varchar(255)
+  hero_image_url text
+  hero_image_alt varchar(255)
+  default_og_image_url text
+
+  // Contact and location
+  address text [not null]
+  city varchar(100) [not null]
+  state varchar(100)
+  country varchar(2) [not null, default: 'NG']
+  latitude numeric(9,6)
+  longitude numeric(9,6)
+  google_maps_url text
+  google_maps_embed_url text
+  directions_text text
+  nearest_airport_note text
+  public_phones text[] [not null, default: '{}', note: 'E.164']
+  whatsapp_number varchar(30)
+  whatsapp_prefill_message text [default: 'Hello, I would like to enquire about a room.']
+  public_email varchar(255)
+  contact_form_recipient varchar(255)
+  reception_hours varchar(150)
+  google_reviews_url text
+  google_business_url text
+  enquiry_response_hours smallint [not null, default: 24, note: 'Shown on enquiry success page']
+
+  // Stay rules
+  timezone varchar(64) [not null, default: 'Africa/Lagos']
+  check_in_time time [not null, default: '14:00']
+  check_out_time time [not null, default: '12:00']
+  early_checkin_policy text
+  late_checkout_policy text
+  min_nights smallint [not null, default: 1]
+  max_nights smallint
+  max_advance_days smallint
+  same_day_cutoff_time time
+  children_policy text
+  pets_allowed boolean [not null, default: false]
+  smoking_policy text
+  id_required_at_checkin boolean [not null, default: true]
+  house_rules text
+  arrival_reminder_hours smallint [not null, default: 48, note: 'Hours before check-in to send reminder']
+
+  // Guest self-service (Manage booking)
+  guest_can_cancel boolean [not null, default: true]
+  guest_can_change_dates boolean [not null, default: true]
+  change_min_notice_hours smallint [not null, default: 48]
+  max_date_changes smallint [not null, default: 1]
+  allow_extras_after_booking boolean [not null, default: false]
+
+  // Pricing and tax
+  currency varchar(3) [not null, default: 'NGN']
+  secondary_currency varchar(3)
+  secondary_exchange_rate numeric(14,6)
+  secondary_rate_updated_at timestamptz
+  prices_include_tax boolean [not null, default: false]
+  tax_bps int [not null, default: 0]
+  service_charge_bps int [not null, default: 0]
+  other_levy_label varchar(100)
+  other_levy_minor bigint [not null, default: 0]
+
+  // Payment and confirmation
+  payment_mode payment_mode [not null, default: 'pay_at_hotel']
+  deposit_bps int [not null, default: 0]
+  online_provider payment_provider [default: 'paystack']
+  accepted_payment_methods text[] [not null, default: '{card,bank_transfer}']
+  confirmation_mode confirmation_mode [not null, default: 'manual_approval']
+  hold_minutes smallint [not null, default: 15]
+
+  // Cancellation
+  cancellation_policy_type cancellation_policy_type [not null, default: 'flexible']
+  free_cancellation_hours int [not null, default: 24]
+  refund_bps_after_window int [not null, default: 0]
+  refund_timeline_text varchar(255)
+  refund_policy_text text
+  no_show_policy text
+
+  // Tracking and language
+  google_analytics_id varchar(50)
+  meta_pixel_id varchar(50)
+  languages text[] [not null, default: '{en}']
+
+  updated_by uuid [ref: > staff_users.id]
+  updated_at timestamptz [not null, default: `now()`]
+}
+
+Table bank_accounts {
+  id uuid [pk, default: `gen_random_uuid()`]
+  bank_name varchar(100) [not null]
+  account_name varchar(150) [not null]
+  account_number varchar(30) [not null, note: 'Hotel receiving account, shown at bank-transfer step. Changes need step-up auth.']
+  is_active boolean [not null, default: true]
+  sort_order int [not null, default: 0]
+  updated_by uuid [ref: > staff_users.id]
+  updated_at timestamptz [not null, default: `now()`]
+}
+
+Table social_links {
+  id uuid [pk, default: `gen_random_uuid()`]
+  platform varchar(30) [not null, note: 'instagram, facebook, tiktok, x, youtube, tripadvisor, linkedin']
+  url text [not null]
+  sort_order int [not null, default: 0]
+
+  indexes {
+    platform [unique]
+  }
+}
+
+// ───────────────────────────── Staff and auth (admin area) ─────────────────────────────
+
+Table staff_users {
+  id uuid [pk, default: `gen_random_uuid()`]
+  email varchar(255) [not null, unique]
+  password_hash varchar(255) [note: 'argon2id. Null while an invite is pending']
+  full_name varchar(150) [not null]
+  phone varchar(30)
+  role staff_role [not null, default: 'reception']
+  two_factor_enabled boolean [not null, default: false]
+  two_factor_secret varchar(255) [note: 'Encrypted at rest']
+  is_active boolean [not null, default: true]
+  failed_login_count smallint [not null, default: 0]
+  locked_until timestamptz
+  last_login_at timestamptz
+  invited_by uuid [ref: > staff_users.id]
+  invite_accepted_at timestamptz
+  deactivated_at timestamptz
+  deactivated_by uuid [ref: > staff_users.id]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    role
+    is_active
+  }
+}
+
+Table staff_recovery_codes {
+  id uuid [pk, default: `gen_random_uuid()`]
+  staff_user_id uuid [not null, ref: > staff_users.id]
+  code_hash varchar(255) [not null]
+  used_at timestamptz
+
+  indexes {
+    staff_user_id
+  }
+}
+
+Table staff_sessions {
+  id uuid [pk, default: `gen_random_uuid()`]
+  staff_user_id uuid [not null, ref: > staff_users.id]
+  refresh_token_hash varchar(255) [not null, unique]
+  user_agent text
+  ip_address inet
+  step_up_verified_at timestamptz [note: 'Last password re-entry for sensitive actions; valid for a few minutes']
+  last_used_at timestamptz
+  expires_at timestamptz [not null]
+  revoked_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    staff_user_id
+    expires_at
+  }
+}
+
+Table password_reset_tokens {
+  id uuid [pk, default: `gen_random_uuid()`]
+  staff_user_id uuid [not null, ref: > staff_users.id]
+  purpose token_purpose [not null, default: 'reset', note: 'reset = 60 min, invite = 72 hours']
+  token_hash varchar(255) [not null, unique]
+  expires_at timestamptz [not null]
+  used_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (staff_user_id, purpose)
+  }
+}
+
+// ───────────────────────────── Rooms and inventory ─────────────────────────────
+
+Table room_types {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name varchar(150) [not null]
+  slug varchar(150) [not null, unique]
+  description text [not null]
+  bed_configuration varchar(150) [not null]
+  size_sqm numeric(6,2)
+  max_adults smallint [not null, default: 2]
+  max_children smallint [not null, default: 0]
+  extra_bed_available boolean [not null, default: false]
+  extra_bed_price_minor bigint [not null, default: 0, note: '0 = free when available']
+  base_price_minor bigint [not null]
+  weekend_price_minor bigint [note: 'Fri/Sat nights; null = use base']
+  show_price_publicly boolean [not null, default: true]
+  breakfast_included boolean [not null, default: false]
+  view_notes varchar(255)
+  meta_title varchar(160)
+  meta_description varchar(320)
+  is_active boolean [not null, default: true]
+  sort_order int [not null, default: 0]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (is_active, sort_order)
+  }
+}
+
+Table rooms {
+  id uuid [pk, default: `gen_random_uuid()`]
+  room_type_id uuid [not null, ref: > room_types.id]
+  room_number varchar(20) [not null, unique]
+  floor smallint
+  status room_status [not null, default: 'active']
+  notes text
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (room_type_id, status)
+  }
+}
+
+Table amenities {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name varchar(100) [not null, unique]
+  icon varchar(50)
+  sort_order int [not null, default: 0]
+}
+
+Table room_type_amenities {
+  room_type_id uuid [not null, ref: > room_types.id]
+  amenity_id uuid [not null, ref: > amenities.id]
+
+  indexes {
+    (room_type_id, amenity_id) [pk]
+  }
+}
+
+Table room_blocks {
+  id uuid [pk, default: `gen_random_uuid()`]
+  room_id uuid [not null, ref: > rooms.id]
+  start_date date [not null]
+  end_date date [not null, note: 'Exclusive: first available date again']
+  reason block_reason [not null, default: 'maintenance']
+  note text
+  created_by uuid [ref: > staff_users.id]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    room_id
+    (start_date, end_date)
+  }
+}
+
+// ───────────────────────────── Pricing rules ─────────────────────────────
+
+Table rate_rules {
+  id uuid [pk, default: `gen_random_uuid()`]
+  room_type_id uuid [ref: > room_types.id, note: 'Null = all room types']
+  name varchar(150) [not null]
+  start_date date [not null]
+  end_date date [not null, note: 'Inclusive']
+  days_of_week smallint[] [note: 'ISO 1-7; null = every day']
+  adjustment_type rate_adjustment_type [not null]
+  adjustment_value bigint [not null]
+  min_nights smallint [not null, default: 1]
+  priority int [not null, default: 0, note: 'Higher wins on overlap']
+  is_active boolean [not null, default: true]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (room_type_id, start_date, end_date)
+  }
+}
+
+Table extras {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name varchar(150) [not null]
+  description text
+  price_minor bigint [not null]
+  pricing_unit extra_pricing_unit [not null, default: 'per_stay']
+  is_active boolean [not null, default: true]
+  sort_order int [not null, default: 0]
+}
+
+// ───────────────────────────── Reservations ─────────────────────────────
+
+Table reservations {
+  id uuid [pk, default: `gen_random_uuid()`]
+  reference varchar(12) [not null, unique, note: 'Guest-facing code, e.g. DEA-8K2P9Q']
+  room_id uuid [not null, ref: > rooms.id]
+  room_type_id uuid [not null, ref: > room_types.id]
+  status reservation_status [not null, default: 'pending']
+  source booking_source [not null, default: 'website']
+
+  check_in date [not null]
+  check_out date [not null, note: 'Exclusive']
+  adults smallint [not null, default: 1]
+  children smallint [not null, default: 0]
+  extra_bed boolean [not null, default: false]
+
+  // Guest details (no accounts; manage booking = reference + email)
+  guest_name varchar(150) [not null]
+  guest_email varchar(255) [note: 'Null only when guest_email_missing = true (phone / walk-in bookings)']
+  guest_email_missing boolean [not null, default: false]
+  guest_phone varchar(30) [not null]
+  guest_country varchar(2)
+  arrival_time time
+  special_requests text
+  internal_notes text
+
+  // Money snapshot
+  currency varchar(3) [not null]
+  subtotal_minor bigint [not null]
+  extras_total_minor bigint [not null, default: 0]
+  discount_minor bigint [not null, default: 0]
+  discount_reason text
+  tax_minor bigint [not null, default: 0]
+  service_charge_minor bigint [not null, default: 0]
+  other_levy_minor bigint [not null, default: 0]
+  total_minor bigint [not null]
+  deposit_required_minor bigint [not null, default: 0]
+  amount_paid_minor bigint [not null, default: 0]
+  amount_refunded_minor bigint [not null, default: 0]
+  policy_snapshot jsonb [not null, default: '{}', note: 'Cancellation, payment, change and check-in rules at booking time']
+
+  hold_expires_at timestamptz [note: 'Set while pending']
+  change_count smallint [not null, default: 0, note: 'Guest-initiated date changes, checked against max_date_changes']
+  confirmed_at timestamptz
+  confirmed_by uuid [ref: > staff_users.id, note: 'Staff who approved or verified payment; null = automatic']
+  cancelled_at timestamptz
+  cancelled_by uuid [ref: > staff_users.id, note: 'Null when the guest cancelled']
+  cancellation_reason text
+  checked_in_at timestamptz
+  checked_out_at timestamptz
+  created_by uuid [ref: > staff_users.id, note: 'Staff member for admin / phone / walk-in bookings']
+  terms_accepted_at timestamptz
+  terms_accepted_by_staff boolean [not null, default: false]
+  ip_address inet
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (status, check_in)
+    check_in
+    check_out
+    (room_id, check_in)
+    room_type_id
+    guest_email
+    hold_expires_at
+    created_at
+  }
+}
+
+// Frozen nightly price snapshot, so later rate changes never alter past bookings.
+Table reservation_nights {
+  id uuid [pk, default: `gen_random_uuid()`]
+  reservation_id uuid [not null, ref: > reservations.id]
+  stay_date date [not null]
+  price_minor bigint [not null]
+  rate_rule_id uuid [ref: > rate_rules.id]
+
+  indexes {
+    (reservation_id, stay_date) [unique]
+  }
+}
+
+Table reservation_extras {
+  id uuid [pk, default: `gen_random_uuid()`]
+  reservation_id uuid [not null, ref: > reservations.id]
+  extra_id uuid [not null, ref: > extras.id]
+  name varchar(150) [not null, note: 'Snapshot of the extra name']
+  quantity int [not null, default: 1]
+  unit_price_minor bigint [not null]
+  total_minor bigint [not null]
+
+  indexes {
+    reservation_id
+  }
+}
+
+Table reservation_status_history {
+  id uuid [pk, default: `gen_random_uuid()`]
+  reservation_id uuid [not null, ref: > reservations.id]
+  from_status reservation_status
+  to_status reservation_status [not null]
+  changed_by uuid [ref: > staff_users.id, note: 'Null = guest or system']
+  note text
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (reservation_id, created_at)
+  }
+}
+
+// ───────────────────────────── Payments ─────────────────────────────
+
+Table payments {
+  id uuid [pk, default: `gen_random_uuid()`]
+  reservation_id uuid [not null, ref: > reservations.id]
+  provider payment_provider [not null]
+  type payment_type [not null, default: 'full']
+  status payment_status [not null, default: 'pending']
+  amount_minor bigint [not null]
+  currency varchar(3) [not null]
+  provider_reference varchar(255)
+  checkout_url text
+  idempotency_key varchar(100) [not null, unique]
+  refund_of_payment_id uuid [ref: > payments.id, note: 'For type = refund: the payment being refunded']
+  bank_account_id uuid [ref: > bank_accounts.id]
+  proof_url text [note: 'Transfer receipt uploaded by guest or staff']
+  note text
+  failure_reason text
+  raw_response jsonb [note: 'Owner-only in the UI; sensitive keys masked']
+  recorded_by uuid [ref: > staff_users.id]
+  paid_at timestamptz
+  reconciled_at timestamptz
+  reconciled_by uuid [ref: > staff_users.id]
+  reconciliation_note text
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    reservation_id
+    (provider, provider_reference) [unique]
+    (status, paid_at)
+    reconciled_at
+    refund_of_payment_id
+  }
+}
+
+Table payment_webhook_events {
+  id uuid [pk, default: `gen_random_uuid()`]
+  provider payment_provider [not null]
+  event_id varchar(255) [not null]
+  event_type varchar(100) [not null]
+  payload jsonb [not null]
+  processed_at timestamptz
+  failure_reason text
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (provider, event_id) [unique]
+    (processed_at, created_at)
+  }
+}
+
+// Replays of the same request return the stored response instead of repeating the action.
+Table idempotency_keys {
+  id uuid [pk, default: `gen_random_uuid()`]
+  scope varchar(60) [not null, note: 'e.g. reservation.create, payment.initialize, admin.cancel']
+  key varchar(100) [not null]
+  request_hash varchar(64) [not null, note: 'Rejects the same key used with a different body']
+  response_status smallint
+  response_body jsonb
+  created_at timestamptz [not null, default: `now()`]
+  expires_at timestamptz [not null]
+
+  indexes {
+    (scope, key) [unique]
+    expires_at
+  }
+}
+
+// ───────────────────────────── Enquiries ─────────────────────────────
+
+Table enquiries {
+  id uuid [pk, default: `gen_random_uuid()`]
+  type enquiry_type [not null, default: 'general']
+  status enquiry_status [not null, default: 'new']
+  is_spam boolean [not null, default: false]
+  name varchar(150) [not null]
+  email varchar(255) [not null]
+  phone varchar(30)
+  subject varchar(200)
+  message text
+  check_in date
+  check_out date
+  guests smallint
+  room_type_id uuid [ref: > room_types.id]
+  source_page varchar(100)
+  consent_given boolean [not null, default: false]
+  consent_at timestamptz
+  ip_address inet
+  assigned_to uuid [ref: > staff_users.id]
+  reservation_id uuid [ref: > reservations.id, note: 'Set when converted to a booking']
+  read_at timestamptz [note: 'First opened by staff (unread indicator)']
+  anonymised_at timestamptz [note: 'Personal fields replaced with "Removed"']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (status, is_spam, created_at)
+    type
+    email
+    phone
+    assigned_to
+  }
+}
+
+Table enquiry_replies {
+  id uuid [pk, default: `gen_random_uuid()`]
+  enquiry_id uuid [not null, ref: > enquiries.id]
+  channel notification_channel [not null, default: 'email']
+  message text [not null]
+  sent_by uuid [ref: > staff_users.id]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    enquiry_id
+  }
+}
+
+Table enquiry_notes {
+  id uuid [pk, default: `gen_random_uuid()`]
+  enquiry_id uuid [not null, ref: > enquiries.id]
+  body text [not null]
+  created_by uuid [not null, ref: > staff_users.id]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    enquiry_id
+  }
+}
+
+// ───────────────────────────── Public site content ─────────────────────────────
+
+Table site_pages {
+  id uuid [pk, default: `gen_random_uuid()`]
+  slug varchar(100) [not null, unique, note: 'home, about, terms, privacy, cancellation-policy, house-rules']
+  title varchar(200) [not null]
+  body text [note: 'Markdown, sanitised on save and on render']
+  content jsonb [note: 'Structured blocks, validated per page']
+  meta_title varchar(160)
+  meta_description varchar(320)
+  og_image_url text
+  is_published boolean [not null, default: false]
+  updated_by uuid [ref: > staff_users.id]
+  updated_at timestamptz [not null, default: `now()`]
+}
+
+Table site_page_revisions {
+  id uuid [pk, default: `gen_random_uuid()`]
+  page_id uuid [not null, ref: > site_pages.id]
+  title varchar(200) [not null]
+  body text
+  content jsonb
+  edited_by uuid [ref: > staff_users.id]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (page_id, created_at)
+  }
+}
+
+Table facilities {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name varchar(150) [not null]
+  slug varchar(150) [not null, unique]
+  description text
+  opening_hours varchar(255)
+  is_paid boolean [not null, default: false]
+  price_note varchar(255)
+  capacity varchar(100)
+  cta_label varchar(100)
+  enquiry_topic enquiry_type [note: 'Pre-selects the contact form topic from the CTA link']
+  image_url text
+  image_alt varchar(255)
+  is_published boolean [not null, default: true]
+  sort_order int [not null, default: 0]
+  updated_at timestamptz [not null, default: `now()`]
+}
+
+Table gallery_images {
+  id uuid [pk, default: `gen_random_uuid()`]
+  storage_key text [not null, note: 'Object storage key; used to delete the files']
+  url text [not null]
+  thumbnail_url text
+  blur_data_url text
+  mime_type varchar(50)
+  size_bytes int
+  alt_text varchar(255) [note: 'Required before publishing or activating']
+  caption varchar(255)
+  category gallery_category [not null, default: 'other']
+  room_type_id uuid [ref: > room_types.id, note: 'Room images; null = general gallery']
+  facility_id uuid [ref: > facilities.id]
+  width int
+  height int
+  is_cover boolean [not null, default: false]
+  is_published boolean [not null, default: false]
+  sort_order int [not null, default: 0]
+  uploaded_by uuid [ref: > staff_users.id]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (category, sort_order)
+    (room_type_id, sort_order)
+    facility_id
+  }
+}
+
+Table testimonials {
+  id uuid [pk, default: `gen_random_uuid()`]
+  display_name varchar(150) [not null, note: 'Full name, initials or Anonymous']
+  stay_type varchar(100)
+  comment text [not null]
+  rating smallint [note: '1-5, optional']
+  photo_url text
+  photo_alt varchar(255)
+  room_type_id uuid [ref: > room_types.id]
+  show_on_home boolean [not null, default: false]
+  is_published boolean [not null, default: false]
+  sort_order int [not null, default: 0]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (is_published, show_on_home)
+    room_type_id
+  }
+}
+
+Table faqs {
+  id uuid [pk, default: `gen_random_uuid()`]
+  question varchar(300) [not null]
+  answer text [not null, note: 'Markdown, sanitised']
+  category varchar(100)
+  is_published boolean [not null, default: true]
+  sort_order int [not null, default: 0]
+}
+
+Table team_members {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name varchar(150) [not null]
+  role_title varchar(150)
+  bio text
+  photo_url text
+  photo_alt varchar(255)
+  is_published boolean [not null, default: true]
+  sort_order int [not null, default: 0]
+}
+
+Table nearby_attractions {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name varchar(150) [not null]
+  description text
+  distance_note varchar(100)
+  sort_order int [not null, default: 0]
+}
+
+// ───────────────────────────── Notifications ─────────────────────────────
+
+Table notification_templates {
+  id uuid [pk, default: `gen_random_uuid()`]
+  key varchar(100) [not null, note: 'Must exist in the code registry']
+  channel notification_channel [not null, default: 'email']
+  subject varchar(255)
+  body text [not null, note: '{{placeholders}} validated against the registry']
+  is_active boolean [not null, default: true]
+  updated_by uuid [ref: > staff_users.id]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (key, channel) [unique]
+  }
+}
+
+Table notification_recipients {
+  id uuid [pk, default: `gen_random_uuid()`]
+  channel notification_channel [not null]
+  destination varchar(255) [not null, note: 'Email address or E.164 phone number']
+  label varchar(100)
+  receives_bookings boolean [not null, default: true]
+  receives_enquiries boolean [not null, default: true]
+  is_active boolean [not null, default: true]
+
+  indexes {
+    (channel, destination) [unique]
+  }
+}
+
+Table notification_logs {
+  id uuid [pk, default: `gen_random_uuid()`]
+  reservation_id uuid [ref: > reservations.id]
+  enquiry_id uuid [ref: > enquiries.id]
+  template_key varchar(100) [not null]
+  channel notification_channel [not null]
+  recipient varchar(255) [not null]
+  status notification_status [not null, default: 'queued']
+  attempts smallint [not null, default: 0, note: 'Maximum 5']
+  dedupe_key varchar(150) [unique, note: 'Stops the same notification being sent twice']
+  error text
+  sent_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (reservation_id, template_key)
+    enquiry_id
+    (status, created_at)
+  }
+}
+
+// ───────────────────────────── Audit and tooling ─────────────────────────────
+
+// Append-only. UPDATE and DELETE are rejected by a trigger and revoked from the app role.
+Table audit_logs {
+  id uuid [pk, default: `gen_random_uuid()`]
+  actor_id uuid [ref: > staff_users.id, note: 'Null = guest or system']
+  actor_role staff_role [note: 'Role at the time of the action']
+  entity varchar(50) [not null, note: 'reservation, room_type, rate_rule, settings, staff_user, payment...']
+  entity_id varchar(64) [not null]
+  action varchar(30) [not null, note: 'create | update | delete | cancel | login | export | step_up ...']
+  reason text
+  changes jsonb [note: 'Before and after of changed fields only; bodies stored as length + hash']
+  ip_address inet
+  user_agent text
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (entity, entity_id)
+    actor_id
+    created_at
+    action
+  }
+}
+
+// Demo seed rows only, so seed:reset-demo never touches real data.
+Table seed_records {
+  id uuid [pk, default: `gen_random_uuid()`]
+  table_name varchar(64) [not null]
+  row_id varchar(64) [not null]
+  seed_name varchar(50) [not null, note: 'demo | e2e']
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (table_name, row_id) [unique]
+    seed_name
+  }
+}
+
+/*
+──────────────────────── Postgres notes (run as raw SQL migrations) ────────────────────────
+
+-- 0. Extensions
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;   -- gen_random_uuid() on older versions
+CREATE EXTENSION IF NOT EXISTS pg_trgm;    -- fuzzy search on names, emails, messages
+
+-- 1. Singleton settings row
+ALTER TABLE hotel_settings ADD CONSTRAINT hotel_settings_singleton CHECK (id = 1);
+
+-- 2. No double-booking: one room cannot have two live reservations with overlapping
+--    stays. Dates are [check_in, check_out).
+ALTER TABLE reservations
+  ADD CONSTRAINT no_overlapping_reservations
+  EXCLUDE USING gist (
+    room_id WITH =,
+    daterange(check_in, check_out, '[)') WITH &&
+  ) WHERE (status IN ('pending', 'confirmed', 'checked_in'));
+
+-- 3. Blocks cannot overlap each other for the same room
+ALTER TABLE room_blocks
+  ADD CONSTRAINT no_overlapping_blocks
+  EXCLUDE USING gist (
+    room_id WITH =,
+    daterange(start_date, end_date, '[)') WITH &&
+  );
+
+-- 4. Reservations and blocks must not overlap each other
+CREATE OR REPLACE FUNCTION prevent_block_reservation_conflict() RETURNS trigger AS $$
+BEGIN
+  IF TG_TABLE_NAME = 'reservations' THEN
+    IF NEW.status IN ('pending', 'confirmed', 'checked_in') AND EXISTS (
+      SELECT 1 FROM room_blocks b
+       WHERE b.room_id = NEW.room_id
+         AND daterange(b.start_date, b.end_date, '[)') && daterange(NEW.check_in, NEW.check_out, '[)')
+    ) THEN
+      RAISE EXCEPTION 'Room is blocked for the selected dates' USING ERRCODE = '23P01';
+    END IF;
+  ELSE
+    IF EXISTS (
+      SELECT 1 FROM reservations r
+       WHERE r.room_id = NEW.room_id
+         AND r.status IN ('pending', 'confirmed', 'checked_in')
+         AND daterange(r.check_in, r.check_out, '[)') && daterange(NEW.start_date, NEW.end_date, '[)')
+    ) THEN
+      RAISE EXCEPTION 'Block overlaps an existing reservation' USING ERRCODE = '23P01';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_reservation_vs_blocks
+  BEFORE INSERT OR UPDATE OF room_id, check_in, check_out, status ON reservations
+  FOR EACH ROW EXECUTE FUNCTION prevent_block_reservation_conflict();
+
+CREATE TRIGGER trg_block_vs_reservations
+  BEFORE INSERT OR UPDATE OF room_id, start_date, end_date ON room_blocks
+  FOR EACH ROW EXECUTE FUNCTION prevent_block_reservation_conflict();
+
+-- 5. Sanity checks
+ALTER TABLE reservations
+  ADD CONSTRAINT chk_res_dates  CHECK (check_out > check_in),
+  ADD CONSTRAINT chk_res_guests CHECK (adults >= 1 AND children >= 0),
+  ADD CONSTRAINT chk_res_money  CHECK (total_minor >= 0 AND amount_paid_minor >= 0
+                                       AND amount_refunded_minor >= 0 AND deposit_required_minor >= 0),
+  ADD CONSTRAINT chk_res_email  CHECK (guest_email IS NOT NULL OR guest_email_missing);
+ALTER TABLE room_blocks  ADD CONSTRAINT chk_block_dates CHECK (end_date > start_date);
+ALTER TABLE rate_rules   ADD CONSTRAINT chk_rule_dates  CHECK (end_date >= start_date);
+ALTER TABLE room_types   ADD CONSTRAINT chk_rt_price    CHECK (base_price_minor >= 0 AND max_adults >= 1);
+ALTER TABLE testimonials ADD CONSTRAINT chk_rating      CHECK (rating IS NULL OR rating BETWEEN 1 AND 5);
+ALTER TABLE payments     ADD CONSTRAINT chk_pay_amount  CHECK (amount_minor > 0);
+ALTER TABLE hotel_settings
+  ADD CONSTRAINT chk_bps CHECK (
+    tax_bps BETWEEN 0 AND 10000 AND service_charge_bps BETWEEN 0 AND 10000
+    AND deposit_bps BETWEEN 0 AND 10000 AND refund_bps_after_window BETWEEN 0 AND 10000);
+
+-- 6. updated_at trigger: create set_updated_at() ( NEW.updated_at := now(); RETURN NEW; ) and attach
+--    BEFORE UPDATE to every table that has updated_at (or set it in the ORM).
+
+-- 7. Audit log is append-only
+CREATE OR REPLACE FUNCTION audit_logs_append_only() RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'audit_logs is append-only';
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_audit_no_update_delete
+  BEFORE UPDATE OR DELETE ON audit_logs
+  FOR EACH ROW EXECUTE FUNCTION audit_logs_append_only();
+CREATE TRIGGER trg_audit_no_truncate
+  BEFORE TRUNCATE ON audit_logs
+  FOR EACH STATEMENT EXECUTE FUNCTION audit_logs_append_only();
+
+-- 8. Database roles (set passwords outside the migration)
+--    app_migrator: owns the schema, runs migrations only.
+--    app_runtime : used by the web app and the worker.
+-- CREATE ROLE app_migrator LOGIN;
+-- CREATE ROLE app_runtime  LOGIN;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_runtime;
+-- GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_runtime;
+-- REVOKE UPDATE, DELETE, TRUNCATE ON audit_logs FROM app_runtime;
+
+-- 9. Search indexes (trigram) for admin search
+CREATE INDEX idx_res_guest_name_trgm  ON reservations USING gin (guest_name gin_trgm_ops);
+CREATE INDEX idx_res_guest_email_trgm ON reservations USING gin (guest_email gin_trgm_ops);
+CREATE INDEX idx_enq_name_trgm        ON enquiries    USING gin (name gin_trgm_ops);
+CREATE INDEX idx_enq_email_trgm       ON enquiries    USING gin (email gin_trgm_ops);
+CREATE INDEX idx_enq_message_trgm     ON enquiries    USING gin (message gin_trgm_ops);
+-- Guest manage-booking lookup: lower(guest_email) with the reference
+CREATE INDEX idx_res_email_lower ON reservations (lower(guest_email));
+
+-- 10. Background jobs (BullMQ repeatable jobs; all idempotent)
+--   every minute : UPDATE reservations SET status = 'expired', updated_at = now()
+--                   WHERE status = 'pending' AND hold_expires_at < now();
+--                  (also run inside the booking transaction for the target room first)
+--   retries      : failed notification_logs, up to 5 attempts, with backoff
+--   hourly       : arrival reminders (arrival_reminder_hours before check-in)
+--   daily        : delete expired idempotency_keys, expired sessions and used tokens;
+--                  keep only the latest 50 site_page_revisions per page
+--   nightly      : integrity check (overlaps, payment totals, confirmed bookings without
+--                  required payment); alert owners on any finding
+
+-- 11. Available rooms of a type for a stay (inside the booking transaction; the constraints
+--     above are the final guard):
+SELECT r.*
+  FROM rooms r
+ WHERE r.room_type_id = :room_type_id
+   AND r.status = 'active'
+   AND NOT EXISTS (
+         SELECT 1 FROM reservations x
+          WHERE x.room_id = r.id
+            AND x.status IN ('pending', 'confirmed', 'checked_in')
+            AND daterange(x.check_in, x.check_out, '[)') && daterange(:check_in, :check_out, '[)'))
+   AND NOT EXISTS (
+         SELECT 1 FROM room_blocks b
+          WHERE b.room_id = r.id
+            AND daterange(b.start_date, b.end_date, '[)') && daterange(:check_in, :check_out, '[)'))
+ ORDER BY r.room_number
+ LIMIT 1
+ FOR UPDATE OF r SKIP LOCKED;
+
+-- 12. Price resolution (application code, via the shared pricing helper):
+--    a) weekend_price_minor on Fri/Sat nights when set, else base_price_minor
+--    b) apply the highest-priority active rate_rules row that matches the date, day of week
+--       and minimum nights (this room type, or room_type_id null)
+--    c) store each night in reservation_nights and sum into subtotal_minor
+--    d) add extras, subtract discount, then service charge, tax and levy from hotel_settings
+--    e) deposit_required_minor = total * deposit_bps / 10000 when payment_mode = deposit_online
+
+-- 13. Not stored in Postgres (by design)
+--    Rate-limit counters and login throttling (Redis); BullMQ queues (Redis);
+--    guest booking session cookie (signed, httpOnly, bound to one reference);
+--    payment provider keys, email keys, 2FA encryption key (environment variables only).
+*/

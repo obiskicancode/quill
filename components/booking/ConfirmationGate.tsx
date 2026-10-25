@@ -14,12 +14,10 @@ export function ConfirmationGate({
   initial,
   reference,
   variant,
-  demo,
 }: {
   initial: GuestReservation | null;
   reference: string;
   variant: VerifyVariant;
-  demo: string | null;
 }) {
   const [view, setView] = useState<GuestReservation | null>(initial);
   const reduced = useReducedMotion();
@@ -35,7 +33,7 @@ export function ConfirmationGate({
     <AnimatePresence mode="wait" initial={false}>
       {view ? (
         <motion.div key="booking" {...transition}>
-          <ConfirmationView initial={view} demo={demo} />
+          <ConfirmationView initial={view} />
         </motion.div>
       ) : (
         <motion.div key="verify" {...transition}>

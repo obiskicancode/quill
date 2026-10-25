@@ -1,6 +1,11 @@
 import { apiOk } from '@/app/api/envelope';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view';
-import { store } from '@/lib/checkout/mock-db';
+import {
+  getIdempotencyRecord,
+  setIdempotency,
+} from '@/lib/db/repositories/idempotency.repo';
 import { saveDetails } from '@/lib/manage/actions';
 import {
   manageError,
@@ -18,8 +23,7 @@ export async function PATCH(
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
-  const demo = new URL(req.url).searchParams.get('demo');
-  const auth = await requireManage(req, reference, demo);
+  const auth = await requireManage(req, reference);
   if (!auth.ok) return auth.res;
 
   const parsed = detailsRequestSchema.safeParse(
@@ -27,37 +31,37 @@ export async function PATCH(
   );
   if (!parsed.success)
     return manageError(422, {
-      code: 'validation',
-      message: 'Some details need fixing.',
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.SOME_DETAILS_NEED_FIXING,
       fieldErrors: fieldErrorsFrom(parsed.error),
     });
 
-  const r = await loadReservation(reference, demo);
+  const r = await loadReservation(reference);
   if (!r)
     return manageError(404, {
-      code: 'not_found',
-      message: 'Booking not found.',
+      code: ERROR_CODES.NOT_FOUND,
+      message: ERROR_MESSAGES.BOOKING_NOT_FOUND,
     });
   const opts = await manageOpts(reference);
-  const done = () =>
-    apiOk(buildGuestReservation(r, 'verified', { manage: opts }), {
+  const done = async () =>
+    apiOk(await buildGuestReservation(r, 'verified', { manage: opts }), {
       headers: { 'Cache-Control': 'no-store' },
     });
 
   const key = replayKey('det', parsed.data.idempotencyKey);
-  if (store.idempotency.get(key) === reference) return done();
+  const previous = await getIdempotencyRecord(key);
+  if (previous?.reservationId === r.id) return done();
 
-  const demos = new Set((demo ?? '').split(',').map((t) => t.trim()));
-  const outcome = saveDetails(r, parsed.data.details, hotelClock(), demos);
+  const outcome = await saveDetails(r, parsed.data.details, hotelClock());
   if (outcome.status === 'not_allowed')
-    return manageError(409, { code: 'not_allowed', message: outcome.reason });
-  store.idempotency.set(key, reference);
-  if (demos.has('detailserror') && !store.failedOnce.has(key)) {
-    store.failedOnce.add(key);
-    return manageError(503, {
-      code: 'server',
-      message: 'The connection dropped.',
+    return manageError(409, {
+      code: ERROR_CODES.NOT_ALLOWED,
+      message: outcome.reason,
     });
-  }
+  await setIdempotency(key, { ok: true }, 200, 60, {
+    reservationId: r.id,
+    method: 'PATCH',
+    path: '/api/reservations/details',
+  });
   return done();
 }

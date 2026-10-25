@@ -13,18 +13,12 @@ interface ManageGateProps {
   initial: GuestReservation | null;
   /** Only pre-fills the reference field. It never unlocks the booking by itself. */
   reference: string;
-  demo: string | null;
   /** A short notice, for example after a redirect. */
   notice?: string;
 }
 
 /** Lookup form or the managed booking. Ending the session (sign out or timeout) returns to the lookup with a notice. */
-export function ManageGate({
-  initial,
-  reference,
-  demo,
-  notice,
-}: ManageGateProps) {
+export function ManageGate({ initial, reference, notice }: ManageGateProps) {
   const [view, setView] = useState<GuestReservation | null>(initial);
   const [message, setMessage] = useState<string | undefined>(notice);
   const reduced = useReducedMotion();
@@ -42,7 +36,6 @@ export function ManageGate({
         <motion.div key="manage" {...transition}>
           <ManageView
             initial={view}
-            demo={demo}
             onSignedOut={() => {
               setMessage('You have signed out of this booking.');
               setView(null);

@@ -1,8 +1,11 @@
+'use client';
+
 import { BedDouble, ImageIcon, Users } from 'lucide-react';
 
-import { amenityLabels } from '@/lib/data';
 import { formatNaira, formatSecondary } from '@/lib/format';
-import { site, whatsappHref } from '@/lib/site';
+import { roomAmenityLabels as amenityLabels } from '@/lib/rooms';
+import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 import type { Room } from '@/types/site.types';
 
 import { AmenityIcon } from './AmenityIcon';
@@ -51,6 +54,7 @@ function FeatureRoomCard({
   stayQuery?: string;
   compact?: boolean;
 }) {
+  const site = useSite();
   const nameId = `${room.id}-name`;
   const showPrice = !room.priceHidden && room.priceNgn !== null;
   const detailHref = `/rooms/${room.slug}${stayQuery ? `?${stayQuery}` : ''}`;
@@ -140,6 +144,7 @@ function FeatureRoomCard({
             <p>
               <a
                 href={whatsappHref(
+                  site,
                   `Hello, what is the price for the ${room.name}?`,
                 )}
                 target="_blank"

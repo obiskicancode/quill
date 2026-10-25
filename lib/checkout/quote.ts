@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type {
   BreakdownExtraLine,
   CheckoutQuoteResponse,
@@ -17,15 +18,13 @@ import {
   type Clock,
 } from '../stay-quote';
 import { unitLabels } from './format';
-import { getCheckoutSettings, parseDemos } from './settings';
+import { getCheckoutSettings } from './settings';
 
 /**
- * MOCK SERVER QUOTE. The only place prices, discount, levy, tax, deposit and availability are decided.
+ * The only place prices, discount, levy, tax, deposit and availability are decided.
  * It builds on the room page's pricing (stay-quote.ts) and adds extras, discount, levy and the payment plan.
- * Replace the body with your real pricing service and keep the return shape.
  */
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const roundToNaira = (minor: number) => Math.round(minor / 100) * 100;
 
 function unitMultiplier(
@@ -86,17 +85,13 @@ function cancellationPolicy(
 export async function buildCheckoutQuote(
   req: QuoteRequest,
 ): Promise<CheckoutQuoteResponse> {
-  const demos = parseDemos(req.demo);
-  if (demos.has('slowquote')) await sleep(2500);
-  if (demos.has('quoteerror')) throw new Error('Quote service unavailable');
-
   const serverTime = new Date().toISOString();
-  const room = getRoomDetail(req.room);
+  const room = await getRoomDetail(req.room);
   if (!room || !room.showPrice)
     return {
       status: 'invalid',
       reason: 'params',
-      message: 'That room cannot be booked online.',
+      message: ERROR_MESSAGES.ROOM_NOT_BOOKABLE_ONLINE,
     };
 
   const clock = hotelClock();
@@ -107,12 +102,7 @@ export async function buildCheckoutQuote(
     children: req.children,
     extraBed: req.extraBed,
   };
-  const base = await getQuoteResponse(
-    room,
-    stay,
-    demos.has('unavailable') ? 'soldout' : demos.has('avail') ? 'low' : null,
-    clock,
-  );
+  const base = await getQuoteResponse(room, stay, clock);
 
   if (base.status === 'invalid')
     return {
@@ -124,12 +114,12 @@ export async function buildCheckoutQuote(
     return {
       status: 'invalid',
       reason: 'params',
-      message: 'That room cannot be booked online.',
+      message: ERROR_MESSAGES.ROOM_NOT_BOOKABLE_ONLINE,
     };
   if (base.status === 'sold-out')
     return { status: 'unavailable', suggestions: base.suggestions, serverTime };
 
-  const settings = getCheckoutSettings(demos);
+  const settings = await getCheckoutSettings();
   const q = base.quote;
   const nights = nightsBetween(req.checkIn, req.checkOut);
   const guests = req.adults + req.children;
@@ -184,10 +174,7 @@ export async function buildCheckoutQuote(
     provider: settings.provider,
   };
 
-  const seen =
-    demos.has('changed') && req.seenTotalMinor == null
-      ? totalMinor - 500_000
-      : (req.seenTotalMinor ?? null);
+  const seen = req.seenTotalMinor ?? null;
 
   return {
     status: 'ok',

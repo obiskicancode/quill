@@ -3,7 +3,8 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 
-import { site, whatsappHref } from '@/lib/site';
+import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 
 import { HeroVideo } from './HeroVideo';
 import { TextReveal } from './motion/TextReveal';
@@ -13,6 +14,7 @@ import { Photo } from './ui/Photo';
 
 /** Full-width hero. The photo is the poster for the optional video; a dark gradient keeps the text above 4.5:1 on any image. */
 export function Hero() {
+  const site = useSite();
   const { headline, subheadline, image, video } = site.hero;
   const reduced = useReducedMotion();
 
@@ -73,7 +75,7 @@ export function Hero() {
             Book Now
           </ButtonLink>
           <ButtonLink
-            href={whatsappHref()}
+            href={whatsappHref(site)}
             external
             variant="secondaryOnDark"
             size="lg"

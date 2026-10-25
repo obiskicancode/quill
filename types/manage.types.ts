@@ -121,10 +121,6 @@ export interface PendingChange {
   holdExpiresAt: number;
   method: PaymentMethod | null;
   status: PendingChangeStatus;
-  payment: {
-    webhookAt: number;
-    outcome: 'paid' | 'failed' | 'cancelled';
-  } | null;
   roomReassigned: boolean;
   /** The cancellation deadline that will apply once the new dates take effect. */
   policy: PolicySummary;

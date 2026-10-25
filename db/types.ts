@@ -115,6 +115,16 @@ export type NewPaymentWebhookEvent = InferInsertModel<
 >;
 export type Quote = InferSelectModel<typeof schema.quotes>;
 export type NewQuote = InferInsertModel<typeof schema.quotes>;
+export type Refund = InferSelectModel<typeof schema.refunds>;
+export type NewRefund = InferInsertModel<typeof schema.refunds>;
+export type ReservationChange = InferSelectModel<
+  typeof schema.reservationChanges
+>;
+export type NewReservationChange = InferInsertModel<
+  typeof schema.reservationChanges
+>;
+export type PaymentProof = InferSelectModel<typeof schema.paymentProofs>;
+export type NewPaymentProof = InferInsertModel<typeof schema.paymentProofs>;
 
 // Content additional
 export type EnquiryReply = InferSelectModel<typeof schema.enquiryReplies>;

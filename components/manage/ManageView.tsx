@@ -46,7 +46,6 @@ const emailLead = {
 
 interface ManageViewProps {
   initial: GuestReservation;
-  demo: string | null;
   onSignedOut: () => void;
   onExpired: () => void;
 }
@@ -57,7 +56,6 @@ interface ManageViewProps {
  */
 export function ManageView({
   initial,
-  demo,
   onSignedOut,
   onExpired,
 }: ManageViewProps) {
@@ -103,7 +101,7 @@ export function ManageView({
     setRefreshing(true);
     setRefreshError(false);
     try {
-      applyView((await manageService.get(v.reference, demo)).data);
+      applyView((await manageService.get(v.reference)).data);
     } catch (e) {
       if (e instanceof ServiceError && e.body?.code === 'session_expired')
         setExpired(true);
@@ -111,7 +109,7 @@ export function ManageView({
     } finally {
       setRefreshing(false);
     }
-  }, [v.reference, demo, applyView]);
+  }, [v.reference, applyView]);
 
   // Session countdown: when the 30 minutes are up, ask the guest to verify again.
   useEffect(() => {
@@ -137,7 +135,7 @@ export function ManageView({
     const started = Date.now();
     const tick = async () => {
       try {
-        const next = (await manageService.get(v.reference, demo)).data;
+        const next = (await manageService.get(v.reference)).data;
         if (stopped) return;
         if (!next.manage) return setExpired(true);
         const changed =
@@ -163,7 +161,7 @@ export function ManageView({
   async function signOut() {
     setSigningOut(true);
     try {
-      await manageService.signOut(v.reference, csrf, demo);
+      await manageService.signOut(v.reference, csrf);
     } catch {
       /* the session ends on the server either way */
     }
@@ -173,7 +171,6 @@ export function ManageView({
   const flowProps = {
     v,
     csrf,
-    demo,
     sessionExpired: expired,
     onSessionExpired: () => setExpired(true),
     onReverified: () => {
@@ -267,7 +264,6 @@ export function ManageView({
                 reference={v.reference}
                 change={pending}
                 csrf={csrf}
-                demo={demo}
                 onRefresh={refresh}
                 onSessionExpired={() => setExpired(true)}
               />
@@ -288,7 +284,6 @@ export function ManageView({
               <EditDetailsPanel
                 v={v}
                 csrf={csrf}
-                demo={demo}
                 sessionExpired={expired}
                 onSessionExpired={() => setExpired(true)}
                 onReverified={() => {
@@ -307,13 +302,12 @@ export function ManageView({
           )}
         </AnimatePresence>
 
-        <ActionRow v={v} demo={demo} hideManage />
+        <ActionRow v={v} hideManage />
         {kind !== 'ended' && (
           <ResendEmail
             reference={v.reference}
             maskedEmail={v.guest.email}
             lead={emailLead[kind]}
-            demo={demo}
           />
         )}
 

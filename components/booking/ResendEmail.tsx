@@ -8,6 +8,7 @@ import { ServiceError } from '@/app/api/services/base.service';
 import { bookingService } from '@/app/api/services/booking.service';
 import { formatCountdown } from '@/lib/checkout/format';
 import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 
 import { EASE_OUT } from '../motion/variants';
 import { Button } from '../ui/Button';
@@ -19,7 +20,6 @@ interface ResendEmailProps {
   maskedEmail: string;
   /** Sentence start: "A confirmation was sent to" and similar. */
   lead: string;
-  demo: string | null;
 }
 
 /** One-line email note with Resend email: idle, sending, sent (cooldown timer), rate-limited and failed. Result is announced politely. */
@@ -27,8 +27,8 @@ export function ResendEmail({
   reference,
   maskedEmail,
   lead,
-  demo,
 }: ResendEmailProps) {
+  const site = useSite();
   const [state, setState] = useState<State>('idle');
   const [cooldown, setCooldown] = useState(0);
   const reduced = useReducedMotion();
@@ -46,7 +46,7 @@ export function ResendEmail({
     if (state === 'sending' || cooldown > 0) return;
     setState('sending');
     try {
-      const r = (await bookingService.resend(reference, demo)).data;
+      const r = (await bookingService.resend(reference)).data;
       setCooldown(r.cooldownSeconds);
       setState('sent');
     } catch (e) {
@@ -87,6 +87,7 @@ export function ResendEmail({
       </Button>
       <a
         href={whatsappHref(
+          site,
           `Hello, booking ${reference} was sent to the wrong email address.`,
         )}
         target="_blank"

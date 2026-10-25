@@ -1,31 +1,71 @@
 import { apiFail, apiOk } from '@/app/api/envelope';
+import { config } from '@/config';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { insertPayment, saveStoredReservation } from '@/lib/booking/store';
 import { loadReservation } from '@/lib/booking/view';
-import { refresh, store, type StoredReservation } from '@/lib/checkout/mock-db';
-import { getCheckoutSettings, parseDemos } from '@/lib/checkout/settings';
+import { getCheckoutSettings } from '@/lib/checkout/settings';
+import {
+  getIdempotencyRecord,
+  setIdempotency,
+} from '@/lib/db/repositories/idempotency.repo';
+import { createReference } from '@/lib/db/utils/reference';
 import { requireManage } from '@/lib/manage/auth';
+import {
+  tryGetPaymentProvider,
+  type PaymentProviderAdapter,
+} from '@/lib/payments';
 import { fieldErrorsFrom, paymentInitSchema } from '@/schemas/checkout.schema';
 import type { ApiError, PaymentInitResponse } from '@/types/checkout.types';
 
 const fail = (status: number, error: ApiError) =>
   apiFail(status, error.message, error);
 
-function returnUrl(r: StoredReservation, demo: string | null): string {
-  const p = new URLSearchParams({
-    room: r.roomSlug,
-    checkIn: r.stay.checkIn,
-    checkOut: r.stay.checkOut,
-    adults: String(r.stay.adults),
-    children: String(r.stay.children),
-    ref: r.reference,
-    return: '1',
+const unavailable = () =>
+  fail(503, {
+    code: ERROR_CODES.UNAVAILABLE,
+    message: ERROR_MESSAGES.ONLINE_PAYMENTS_UNAVAILABLE,
   });
-  if (demo) p.set('demo', demo);
-  return `/checkout?${p.toString()}`;
+
+function appUrl(path: string): string {
+  return `${config.SITE.URL.replace(/\/$/, '')}${path}`;
+}
+
+async function redirectToProvider(input: {
+  provider: PaymentProviderAdapter;
+  reference: string;
+  email: string;
+  amountMinor: number;
+  callbackUrl: string;
+  reservationId: string;
+  changeId?: string;
+}): Promise<string> {
+  const providerReference = createReference();
+  await insertPayment({
+    reservationId: input.reservationId,
+    reference: providerReference,
+    method: 'online',
+    amountMinor: input.amountMinor,
+    provider: input.provider.id,
+    providerReference,
+    note: input.changeId ?? null,
+  });
+  const { redirectUrl } = await input.provider.initialize({
+    email: input.email,
+    amountMinor: input.amountMinor,
+    reference: providerReference,
+    callbackUrl: input.callbackUrl,
+    metadata: {
+      reservationReference: input.reference,
+      ...(input.changeId ? { changeId: input.changeId } : {}),
+    },
+  });
+  return redirectUrl;
 }
 
 /**
- * Returns the provider's hosted checkout URL, or the hotel's bank details.
- * MOCK: the "provider" is simulated; a real integration returns the provider's URL and confirms only via its signed webhook.
+ * Starts a payment: returns the hotel's bank details, or a hosted redirect from the configured online provider.
+ * The payment row is persisted first, so a retry reuses the same provider reference.
  */
 export async function POST(req: Request) {
   const parsed = paymentInitSchema.safeParse(
@@ -33,85 +73,100 @@ export async function POST(req: Request) {
   );
   if (!parsed.success)
     return fail(422, {
-      code: 'validation',
-      message: 'Invalid payment request.',
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.INVALID_PAYMENT_REQUEST,
       fieldErrors: fieldErrorsFrom(parsed.error),
     });
-  const { reference, method, idempotencyKey, demo, purpose, changeId } =
-    parsed.data;
+  const { reference, method, idempotencyKey, purpose, changeId } = parsed.data;
 
-  const replay = store.paymentResponses.get(idempotencyKey);
-  if (replay) return apiOk(replay);
+  const idKey = `pay:${idempotencyKey}`;
+  const previous = await getIdempotencyRecord(idKey);
+  if (previous?.response)
+    return apiOk(previous.response as PaymentInitResponse);
 
-  // Paying the difference for a date change reuses this endpoint. The old dates stay valid until the payment lands.
+  const settings = await getCheckoutSettings();
+  const r = await loadReservation(reference);
+  if (!r)
+    return fail(404, {
+      code: ERROR_CODES.NOT_FOUND,
+      message: ERROR_MESSAGES.RESERVATION_NOT_FOUND,
+    });
+  if (r.status === 'expired')
+    return fail(410, {
+      code: ERROR_CODES.HOLD_EXPIRED,
+      message: ERROR_MESSAGES.HOLD_EXPIRED,
+    });
+
   if (purpose === 'change') {
-    const auth = await requireManage(req, reference, demo ?? null);
+    const auth = await requireManage(req, reference);
     if (!auth.ok) return auth.res;
-    const r = await loadReservation(reference, demo ?? null);
-    const pc = r ? refresh(r).pendingChange : null;
-    if (!r || !pc || pc.changeId !== changeId)
+    const pc = r.pendingChange;
+    if (!pc || pc.changeId !== changeId)
       return fail(409, {
-        code: 'validation',
-        message: 'There is no date change waiting for payment.',
+        code: ERROR_CODES.VALIDATION,
+        message: ERROR_MESSAGES.NO_PENDING_DATE_CHANGE,
       });
     if (pc.status === 'awaiting_verification')
       return fail(409, {
-        code: 'validation',
-        message: 'This change is already waiting for verification.',
+        code: ERROR_CODES.VALIDATION,
+        message: ERROR_MESSAGES.CHANGE_AWAITING_VERIFICATION,
       });
-    const demos = parseDemos(demo ?? r.demo);
+
     pc.method = method;
-    let changeResponse: PaymentInitResponse;
+    let response: PaymentInitResponse;
     if (method === 'bank_transfer') {
       pc.status = 'awaiting_transfer';
-      pc.payment = null;
-      changeResponse = {
+      response = {
         kind: 'bank_transfer',
-        bank: getCheckoutSettings(demos).bank,
+        bank: settings.bank,
         amountMinor: pc.amountDueMinor,
         reference,
       };
+      r.method = 'bank_transfer';
+      await saveStoredReservation(r);
     } else {
-      const outcome = demos.has('payfail')
-        ? 'failed'
-        : demos.has('paycancel')
-          ? 'cancelled'
-          : 'paid';
+      const provider = tryGetPaymentProvider();
+      if (!provider?.isConfigured()) return unavailable();
+      if (!r.guest.email)
+        return fail(422, {
+          code: ERROR_CODES.VALIDATION,
+          message: ERROR_MESSAGES.EMAIL_REQUIRED_FOR_ONLINE_PAYMENT,
+          fieldErrors: { 'guest.email': ERROR_MESSAGES.EMAIL_REQUIRED },
+        });
       pc.status = 'awaiting_payment';
-      pc.payment = {
-        webhookAt:
-          Date.now() +
-          (demos.has('slowwebhook')
-            ? 3_600_000
-            : outcome === 'paid'
-              ? 3500
-              : 1500),
-        outcome,
-      };
-      const p = new URLSearchParams({ ref: reference, return: 'change' });
-      if (demo) p.set('demo', demo);
-      changeResponse = {
-        kind: 'redirect',
-        url: `/booking/manage?${p.toString()}`,
-      };
+      await saveStoredReservation(r);
+      try {
+        const url = await redirectToProvider({
+          provider,
+          reference,
+          email: r.guest.email,
+          amountMinor: pc.amountDueMinor,
+          callbackUrl: appUrl(
+            `/booking/manage?ref=${encodeURIComponent(reference)}&return=change`,
+          ),
+          reservationId: r.id,
+          changeId: pc.changeId,
+        });
+        response = { kind: 'redirect', url };
+      } catch {
+        return fail(502, {
+          code: ERROR_CODES.SERVER,
+          message: ERROR_MESSAGES.PAYMENT_PROVIDER_UNREACHABLE,
+        });
+      }
     }
-    store.paymentResponses.set(idempotencyKey, changeResponse);
-    return apiOk(changeResponse);
+    await setIdempotency(idKey, response, 200, 60, {
+      reservationId: r.id,
+      method: 'POST',
+      path: '/api/payments/initialize',
+    });
+    return apiOk(response);
   }
 
-  const reservation = store.reservations.get(reference);
-  if (!reservation)
-    return fail(404, { code: 'not_found', message: 'Reservation not found.' });
-  refresh(reservation);
-  if (reservation.status === 'expired')
-    return fail(410, {
-      code: 'hold_expired',
-      message: 'The hold on this room has ended.',
-    });
-  if (reservation.mode === 'pay_at_hotel')
+  if (r.mode === 'pay_at_hotel')
     return fail(400, {
-      code: 'validation',
-      message: 'Nothing to pay online for this reservation.',
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.NOTHING_TO_PAY_ONLINE,
     });
   if (
     ![
@@ -119,46 +174,63 @@ export async function POST(req: Request) {
       'awaiting_transfer',
       'payment_failed',
       'cancelled',
-    ].includes(reservation.status)
-  ) {
+    ].includes(r.status)
+  )
     return fail(409, {
-      code: 'validation',
-      message: 'This reservation is already being processed.',
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.RESERVATION_ALREADY_PROCESSING,
     });
-  }
 
-  const demos = parseDemos(demo ?? reservation.demo);
-  reservation.method = method;
+  r.method = method;
   let response: PaymentInitResponse;
-
   if (method === 'bank_transfer') {
-    reservation.status = 'awaiting_transfer';
-    reservation.payment = null;
+    r.status = 'awaiting_transfer';
+    await insertPayment({
+      reservationId: r.id,
+      reference: createReference(),
+      method,
+      amountMinor: r.totals.dueNowMinor,
+      provider: 'bank_transfer',
+    });
     response = {
       kind: 'bank_transfer',
-      bank: getCheckoutSettings(demos).bank,
-      amountMinor: reservation.totals.dueNowMinor,
+      bank: settings.bank,
+      amountMinor: r.totals.dueNowMinor,
       reference,
     };
+    await saveStoredReservation(r);
   } else {
-    const outcome = demos.has('payfail')
-      ? 'failed'
-      : demos.has('paycancel')
-        ? 'cancelled'
-        : 'paid';
-    // slowwebhook: the provider call "succeeds" but the signed webhook does not arrive for a long time.
-    const delay = demos.has('slowwebhook')
-      ? 3_600_000
-      : outcome === 'paid'
-        ? 3500
-        : 1500;
-    reservation.status = 'pending_payment';
-    reservation.payment = { webhookAt: Date.now() + delay, outcome };
-    response = {
-      kind: 'redirect',
-      url: returnUrl(reservation, demo ?? reservation.demo),
-    };
+    const provider = tryGetPaymentProvider();
+    if (!provider?.isConfigured()) return unavailable();
+    if (!r.guest.email)
+      return fail(422, {
+        code: ERROR_CODES.VALIDATION,
+        message: ERROR_MESSAGES.EMAIL_REQUIRED_FOR_ONLINE_PAYMENT,
+        fieldErrors: { 'guest.email': ERROR_MESSAGES.EMAIL_REQUIRED },
+      });
+    try {
+      const url = await redirectToProvider({
+        provider,
+        reference,
+        email: r.guest.email,
+        amountMinor: r.totals.dueNowMinor,
+        callbackUrl: appUrl(
+          `/booking/confirmation?ref=${encodeURIComponent(reference)}&return=1`,
+        ),
+        reservationId: r.id,
+      });
+      response = { kind: 'redirect', url };
+    } catch {
+      return fail(502, {
+        code: ERROR_CODES.SERVER,
+        message: ERROR_MESSAGES.PAYMENT_PROVIDER_UNREACHABLE,
+      });
+    }
   }
-  store.paymentResponses.set(idempotencyKey, response);
+  await setIdempotency(idKey, response, 200, 60, {
+    reservationId: r.id,
+    method: 'POST',
+    path: '/api/payments/initialize',
+  });
   return apiOk(response);
 }

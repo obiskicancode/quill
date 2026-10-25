@@ -1,5 +1,5 @@
-import type { AvailabilityMap, DemoMode } from '@/lib/availability';
-import type { QuoteDemo, QuoteResponse } from '@/types/stay.types';
+import type { AvailabilityMap } from '@/lib/availability';
+import type { QuoteResponse } from '@/types/stay.types';
 
 import BaseService from './base.service';
 
@@ -11,7 +11,6 @@ export interface RoomQuoteParams {
   adults: number;
   children: number;
   extraBed: boolean;
-  demo: QuoteDemo | null;
 }
 
 export interface AvailabilityParams {
@@ -21,7 +20,6 @@ export interface AvailabilityParams {
   children: number;
   /** Room ids to check. Empty means every room. */
   rooms: string[];
-  demo: DemoMode | null;
 }
 
 /** Typed fetch helpers for the room detail page. Prices always come from the server. */
@@ -38,7 +36,6 @@ class StayService extends BaseService {
         adults: p.adults,
         children: p.children,
         extraBed: p.extraBed ? '1' : '0',
-        ...(p.demo ? { demo: p.demo } : {}),
       },
     });
   }
@@ -52,7 +49,6 @@ class StayService extends BaseService {
         adults: p.adults,
         children: p.children,
         rooms: p.rooms.join(','),
-        ...(p.demo ? { demo: p.demo } : {}),
       },
     });
   }

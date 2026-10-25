@@ -1,6 +1,7 @@
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import {
   formatMinor,
-  type QuoteDemo,
   type QuoteLine,
   type QuoteResponse,
   type StayInput,
@@ -12,16 +13,14 @@ import { fetchAvailability } from './availability';
 import { addDays, formatShort, nightsBetween, type ISODate } from './dates';
 import {
   baseGuests,
-  hotelSettings,
-  rateRules,
+  getPricingSettings,
   type HotelSettings,
   type RoomDetail,
 } from './room-detail';
 import { isWeekendNight } from './rooms';
 
 /**
- * MOCK SERVER PRICING. All money maths happens here (server only); the client just displays the result.
- * Replace the body of getQuoteResponse with a call to your real pricing service and keep the return shape.
+ * Server-side pricing. All money maths happens here; the client only displays the result.
  */
 
 export interface Clock {
@@ -32,10 +31,10 @@ export interface Clock {
 
 export function hotelClock(
   now: Date = new Date(),
-  demo: QuoteDemo | null = null,
+  timeZone = 'Africa/Lagos',
 ): Clock {
   const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: hotelSettings.timeZone,
+    timeZone,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -45,10 +44,7 @@ export function hotelClock(
   }).formatToParts(now);
   const get = (type: string) =>
     parts.find((p) => p.type === type)?.value ?? '00';
-  const minutes =
-    demo === 'late'
-      ? 20 * 60
-      : (Number(get('hour')) % 24) * 60 + Number(get('minute'));
+  const minutes = (Number(get('hour')) % 24) * 60 + Number(get('minute'));
   return { today: `${get('year')}-${get('month')}-${get('day')}`, minutes };
 }
 
@@ -61,12 +57,18 @@ const inRange = (md: string, start: string, end: string) =>
   start <= end ? md >= start && md <= end : md >= start || md <= end;
 const roundToNaira = (minor: number) => Math.round(minor / 100) * 100;
 
-function nightRate(room: RoomDetail, date: ISODate): QuoteLine {
+function nightRate(
+  room: RoomDetail,
+  date: ISODate,
+  hotel: HotelSettings,
+): QuoteLine {
   const weekend = isWeekendNight(date) && room.weekendPriceMinor !== null;
   let rate = weekend ? (room.weekendPriceMinor as number) : room.basePriceMinor;
   const notes: string[] = [];
   if (weekend) notes.push('Weekend rate');
-  const rule = rateRules.find((r) => inRange(date.slice(5), r.start, r.end));
+  const rule = (hotel.rateRules ?? []).find((r) =>
+    inRange(date.slice(5), r.start, r.end),
+  );
   if (rule) {
     rate = roundToNaira(rate * (1 + rule.upliftPercent / 100));
     notes.push(rule.label);
@@ -94,7 +96,7 @@ export function priceStay(
 ): StayQuote {
   const nights = nightsBetween(checkIn, checkOut);
   const lines = Array.from({ length: nights }, (_, i) =>
-    nightRate(room, addDays(checkIn, i)),
+    nightRate(room, addDays(checkIn, i), hotel),
   );
   const roomSubtotalMinor = lines.reduce((sum, l) => sum + l.rateMinor, 0);
   const perNight = room.extraBedPriceMinor ?? 0;
@@ -153,8 +155,8 @@ export function validateStay(
 
   if (s.checkOut <= s.checkIn) {
     out.push({
-      code: 'checkout-before-checkin',
-      message: 'Check-out must be after check-in.',
+      code: ERROR_CODES.CHECKOUT_BEFORE_CHECKIN,
+      message: ERROR_MESSAGES.CHECKOUT_AFTER_CHECKIN,
       fix: {
         label: `Set check-out to ${formatShort(addDays(s.checkIn, minNights))}`,
         patch: setCheckOut(minNights),
@@ -163,8 +165,8 @@ export function validateStay(
   } else {
     if (s.checkIn < clock.today) {
       out.push({
-        code: 'checkin-past',
-        message: "Check-in can't be in the past.",
+        code: ERROR_CODES.CHECKIN_PAST,
+        message: ERROR_MESSAGES.CHECKIN_IN_PAST,
         fix: { label: 'Clear dates', patch: { checkIn: null, checkOut: null } },
       });
     } else if (
@@ -172,8 +174,8 @@ export function validateStay(
       clock.minutes > toMinutes(hotel.sameDayCutoff)
     ) {
       out.push({
-        code: 'same-day-cutoff',
-        message: `Same-day bookings close at ${hotel.sameDayCutoff}. Choose tomorrow or later.`,
+        code: ERROR_CODES.SAME_DAY_CUTOFF,
+        message: ERROR_MESSAGES.SAME_DAY_CUTOFF(hotel.sameDayCutoff),
         fix: {
           label: 'Start tomorrow',
           patch: {
@@ -185,8 +187,8 @@ export function validateStay(
     }
     if (nights < minNights) {
       out.push({
-        code: 'min-nights',
-        message: `This room needs a stay of at least ${minNights} ${minNights === 1 ? 'night' : 'nights'}.`,
+        code: ERROR_CODES.MIN_NIGHTS,
+        message: ERROR_MESSAGES.MIN_NIGHTS(minNights),
         fix: {
           label: `Set check-out to ${formatShort(addDays(s.checkIn, minNights))}`,
           patch: setCheckOut(minNights),
@@ -195,8 +197,8 @@ export function validateStay(
     }
     if (nights > hotel.maxNights) {
       out.push({
-        code: 'max-nights',
-        message: `The longest stay we take online is ${hotel.maxNights} nights. For longer stays, message us.`,
+        code: ERROR_CODES.MAX_NIGHTS,
+        message: ERROR_MESSAGES.MAX_NIGHTS(hotel.maxNights),
         fix: {
           label: `Set check-out to ${formatShort(addDays(s.checkIn, hotel.maxNights))}`,
           patch: setCheckOut(hotel.maxNights),
@@ -205,8 +207,8 @@ export function validateStay(
     }
     if (s.checkIn > addDays(clock.today, hotel.bookingWindowDays)) {
       out.push({
-        code: 'booking-window',
-        message: `We take bookings up to ${hotel.bookingWindowDays} days ahead. Choose an earlier date.`,
+        code: ERROR_CODES.BOOKING_WINDOW,
+        message: ERROR_MESSAGES.BOOKING_WINDOW(hotel.bookingWindowDays),
         fix: { label: 'Clear dates', patch: { checkIn: null, checkOut: null } },
       });
     }
@@ -214,8 +216,8 @@ export function validateStay(
 
   if (s.adults > room.maxAdults || s.children > room.maxChildren) {
     out.push({
-      code: 'over-capacity',
-      message: `This room sleeps up to ${room.maxAdults} adults and ${room.maxChildren} children.`,
+      code: ERROR_CODES.OVER_CAPACITY,
+      message: ERROR_MESSAGES.ROOM_CAPACITY(room.maxAdults, room.maxChildren),
       fix: {
         label: 'Use the maximum allowed',
         patch: {
@@ -226,8 +228,13 @@ export function validateStay(
     });
   } else if (needsExtraBed(room, s.adults, s.children) && !s.extraBed) {
     out.push({
-      code: 'extra-bed-required',
-      message: `${guests} guests need the extra bed (${room.extraBedPriceMinor ? `${formatMinor(room.extraBedPriceMinor)} / night` : 'free'}). Add it, or reduce the number of guests.`,
+      code: ERROR_CODES.EXTRA_BED_REQUIRED,
+      message: ERROR_MESSAGES.EXTRA_BED_REQUIRED(
+        guests,
+        room.extraBedPriceMinor
+          ? `${formatMinor(room.extraBedPriceMinor)} / night`
+          : 'free',
+      ),
       fix: { label: 'Add the extra bed', patch: { extraBed: true } },
     });
   }
@@ -237,11 +244,11 @@ export function validateStay(
 export async function getQuoteResponse(
   room: RoomDetail,
   input: StayInput & { checkIn: ISODate; checkOut: ISODate },
-  demo: QuoteDemo | null,
   clock: Clock,
 ): Promise<QuoteResponse> {
   if (!room.showPrice) return { status: 'on-request' };
 
+  const hotelSettings = await getPricingSettings();
   const violations = validateStay(room, hotelSettings, input, clock);
   if (violations.length > 0) return { status: 'invalid', violations };
 
@@ -253,10 +260,7 @@ export async function getQuoteResponse(
     adults: input.adults,
     children: input.children,
   };
-  const availabilityDemo = demo === 'late' ? null : demo;
-  const result = (await fetchAvailability(stay, [room], availabilityDemo))[
-    room.id
-  ];
+  const result = (await fetchAvailability(stay, [room]))[room.id];
 
   if (result.status === 'sold-out') {
     return {
@@ -281,8 +285,8 @@ export async function getQuoteResponse(
       status: 'invalid',
       violations: [
         {
-          code: 'over-capacity',
-          message: 'This room cannot take your group for these dates.',
+          code: ERROR_CODES.OVER_CAPACITY,
+          message: ERROR_MESSAGES.GROUP_UNAVAILABLE,
         },
       ],
     };

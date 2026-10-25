@@ -1,24 +1,26 @@
 import { apiFail, apiOk } from '@/app/api/envelope';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { setAccessCookie } from '@/lib/booking/session';
 import { buildSnapshot } from '@/lib/booking/snapshot';
 import {
   createReference,
-  logEvent,
-  notify,
-  rateLimited,
-  refresh,
-  store,
+  insertReservation,
   toReservationResponse,
-  type StoredReservation,
-} from '@/lib/checkout/mock-db';
+} from '@/lib/booking/store';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
-import { getCheckoutSettings, parseDemos } from '@/lib/checkout/settings';
+import { getCheckoutSettings } from '@/lib/checkout/settings';
+import {
+  getIdempotencyRecord,
+  setIdempotency,
+} from '@/lib/db/repositories/idempotency.repo';
+import { rateLimit } from '@/lib/rate-limit';
 import { getRoomDetail } from '@/lib/room-detail';
 import {
   fieldErrorsFrom,
   reservationRequestSchema,
 } from '@/schemas/checkout.schema';
-import type { ApiError } from '@/types/checkout.types';
+import type { ApiError, ReservationResponse } from '@/types/checkout.types';
 
 const fail = (
   status: number,
@@ -33,12 +35,12 @@ const fail = (
 export async function POST(req: Request) {
   const client =
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
-  if (rateLimited(client)) {
+  if (!(await rateLimit(client, 10, 60_000)).allowed) {
     return fail(
       429,
       {
-        code: 'rate_limited',
-        message: 'Too many attempts. Please wait a minute and try again.',
+        code: ERROR_CODES.RATE_LIMITED,
+        message: ERROR_MESSAGES.BOOKING_RATE_LIMITED,
       },
       { 'Retry-After': '60' },
     );
@@ -48,30 +50,30 @@ export async function POST(req: Request) {
   const parsed = reservationRequestSchema.safeParse(body);
   if (!parsed.success) {
     return fail(422, {
-      code: 'validation',
-      message: 'Some details need fixing.',
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.SOME_DETAILS_NEED_FIXING,
       fieldErrors: fieldErrorsFrom(parsed.error),
     });
   }
   const data = parsed.data;
   if (data.website)
     return fail(400, {
-      code: 'rejected',
-      message: 'We could not process this request.',
+      code: ERROR_CODES.REJECTED,
+      message: ERROR_MESSAGES.REQUEST_REJECTED,
     });
 
-  // Idempotent replay.
-  const existingRef = store.idempotency.get(`res:${data.idempotencyKey}`);
-  const existing = existingRef
-    ? store.reservations.get(existingRef)
-    : undefined;
-  if (existing) {
-    const replay = apiOk(toReservationResponse(refresh(existing)));
-    setAccessCookie(replay, existing.reference, 'checkout');
+  const idKey = `res:${data.idempotencyKey}`;
+  const previous = await getIdempotencyRecord(idKey);
+  if (previous?.response) {
+    const replay = apiOk(previous.response as ReservationResponse);
+    setAccessCookie(
+      replay,
+      (previous.response as ReservationResponse).reference,
+      'checkout',
+    );
     return replay;
   }
 
-  // Never trust the client: re-quote on the server.
   const quote = await buildCheckoutQuote({
     room: data.room,
     checkIn: data.checkIn,
@@ -80,29 +82,40 @@ export async function POST(req: Request) {
     children: data.children,
     extraBed: data.extraBed,
     extras: data.extras,
-    demo: data.demo,
   });
   if (quote.status === 'unavailable')
     return fail(409, {
-      code: 'unavailable',
-      message: 'That room is no longer available for these dates.',
+      code: ERROR_CODES.UNAVAILABLE,
+      message: ERROR_MESSAGES.ROOM_UNAVAILABLE_DATES,
       quote,
     });
   if (quote.status === 'invalid')
-    return fail(409, { code: 'validation', message: quote.message });
+    return fail(409, { code: ERROR_CODES.VALIDATION, message: quote.message });
   if (quote.breakdown.totalMinor !== data.expectedTotalMinor) {
     return fail(409, {
-      code: 'price_changed',
-      message: 'The price has changed.',
+      code: ERROR_CODES.PRICE_CHANGED,
+      message: ERROR_MESSAGES.PRICE_CHANGED,
       quote,
     });
   }
 
-  const demos = parseDemos(data.demo);
-  const settings = getCheckoutSettings(demos);
-  const now = Date.now();
-  const noPayment = settings.paymentMode === 'pay_at_hotel';
-  const reservation: StoredReservation = {
+  const room = await getRoomDetail(data.room);
+  if (!room)
+    return fail(409, {
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.ROOM_UNAVAILABLE,
+    });
+  const settings = await getCheckoutSettings();
+  const guest = {
+    fullName: data.guest.fullName,
+    email: data.guest.email,
+    phone: data.guest.phone,
+    country: data.guest.country,
+    arrivalTime: data.guest.arrivalTime,
+    specialRequests: data.guest.specialRequests,
+  };
+  const snapshot = await buildSnapshot(room, quote, settings);
+  const reservation = await insertReservation({
     reference: createReference(),
     roomSlug: data.room,
     stay: {
@@ -113,56 +126,24 @@ export async function POST(req: Request) {
       extraBed: data.extraBed,
     },
     extras: data.extras,
-    totals: {
-      totalMinor: quote.payment.totalMinor,
-      dueNowMinor: quote.payment.dueNowMinor,
-      balanceAtHotelMinor: quote.payment.balanceAtHotelMinor,
-    },
-    mode: settings.paymentMode,
-    confirmationMode: settings.confirmationMode,
-    method: null,
-    status: noPayment
-      ? settings.confirmationMode === 'instant'
-        ? 'reserved_pay_at_hotel'
-        : 'pending_approval'
-      : 'pending_payment',
-    holdExpiresAt: now + quote.holdSeconds * 1000,
-    termsAcceptedAt: new Date(now).toISOString(),
-    createdAt: now,
-    demo: data.demo ?? null,
-    payment: null,
-    proof: null,
-    // Kept only for the confirmation page. Never logged.
-    guest: {
-      fullName: data.guest.fullName,
-      email: data.guest.email,
-      phone: data.guest.phone,
-      country: data.guest.country,
-      arrivalTime: data.guest.arrivalTime,
-      specialRequests: data.guest.specialRequests,
-    },
-    snapshot: buildSnapshot(getRoomDetail(data.room)!, quote, settings),
-    paidMinor: 0,
-    paymentReference: null,
-    paidAt: null,
-    history: [],
-    changeCount: 0,
-    cancellation: null,
-    refunds: [],
-    pendingChange: null,
-  };
-  logEvent(reservation, 'created', undefined, 'guest');
-  notify(reservation, 'booking_received', 'Booking details emailed to you.');
-  store.reservations.set(reservation.reference, reservation);
-  store.idempotency.set(`res:${data.idempotencyKey}`, reservation.reference);
+    quote,
+    settings,
+    guest,
+    snapshot,
+  });
+  if (!reservation)
+    return fail(409, {
+      code: ERROR_CODES.UNAVAILABLE,
+      message: ERROR_MESSAGES.ROOM_UNAVAILABLE_DATES,
+    });
 
-  // Mock switch: the first attempt "loses the connection" after the reservation was saved. The retry must not duplicate it.
-  if (demos.has('neterror') && !store.failedOnce.has(data.idempotencyKey)) {
-    store.failedOnce.add(data.idempotencyKey);
-    return fail(503, { code: 'server', message: 'The connection dropped.' });
-  }
-  // The guest's browser gets a short-lived signed cookie bound to this reference, so the confirmation page can load without exposing details by reference alone.
-  const created = apiOk(toReservationResponse(reservation), { status: 201 });
+  const response = toReservationResponse(reservation);
+  await setIdempotency(idKey, response, 201, 60, {
+    reservationId: reservation.id,
+    method: 'POST',
+    path: '/api/reservations',
+  });
+  const created = apiOk(response, { status: 201 });
   setAccessCookie(created, reservation.reference, 'checkout');
   return created;
 }

@@ -42,13 +42,7 @@ const emailLead = {
  * The confirmation page. The top block always follows the real status and never says "confirmed" early.
  * While a payment is still being verified it polls the status endpoint and updates in place.
  */
-export function ConfirmationView({
-  initial,
-  demo,
-}: {
-  initial: GuestReservation;
-  demo: string | null;
-}) {
+export function ConfirmationView({ initial }: { initial: GuestReservation }) {
   const [v, setV] = useState(initial);
   const [timedOut, setTimedOut] = useState(false);
   const [pollNonce, setPollNonce] = useState(0);
@@ -71,7 +65,7 @@ export function ConfirmationView({
     setRefreshing(true);
     setRefreshError(false);
     try {
-      const next = (await bookingService.get(v.reference, demo)).data;
+      const next = (await bookingService.get(v.reference)).data;
       setV((prev) => {
         if (prev.status !== next.status)
           setAnnouncement(
@@ -84,7 +78,7 @@ export function ConfirmationView({
     } finally {
       setRefreshing(false);
     }
-  }, [v.reference, demo]);
+  }, [v.reference]);
 
   // Poll while the payment is being verified.
   useEffect(() => {
@@ -94,7 +88,7 @@ export function ConfirmationView({
     const started = Date.now();
     const tick = async () => {
       try {
-        const s = (await bookingService.status(v.reference, demo)).data;
+        const s = (await bookingService.status(v.reference)).data;
         if (stopped) return;
         if (s.status !== v.status || s.paymentStatus !== v.paymentStatus)
           return void (await refresh());
@@ -191,14 +185,13 @@ export function ConfirmationView({
                 reference={v.reference}
                 maskedEmail={v.guest.email}
                 lead={emailLead[kind]}
-                demo={demo}
               />
             </motion.div>
           )}
         </AnimatePresence>
 
         <Reveal delay={0.05}>
-          <ActionRow v={v} demo={demo} />
+          <ActionRow v={v} />
         </Reveal>
 
         <Reveal delay={0.1}>

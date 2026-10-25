@@ -3,7 +3,9 @@
 import { Clock, MapPin, Navigation, Phone } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import { directionsHref, mapEmbedSrc, site, telHref } from '@/lib/site';
+import { addressHref, directionsHref, mapEmbedSrc, telHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
+import type { SiteConfig } from '@/types/site.types';
 
 import { Reveal } from './motion/Reveal';
 import { scaleIn } from './motion/variants';
@@ -35,14 +37,15 @@ interface MapCardProps {
   loadOnView?: boolean;
 }
 
-const fromSite = (): MapCardData => ({
+const fromSite = (site: SiteConfig): MapCardData => ({
   addressLines: site.address.lines,
   reception: site.reception,
   landmarks: site.landmarks,
-  telHref: telHref(),
-  embedSrc: mapEmbedSrc(),
-  directionsHref: directionsHref(),
-  addressHref: null,
+  telHref: telHref(site),
+  phoneDisplay: site.contact.phoneDisplay,
+  embedSrc: mapEmbedSrc(site),
+  directionsHref: directionsHref(site),
+  addressHref: addressHref(site),
 });
 
 /** Address, directions, call button and a map that loads late (on tap, or when scrolled into view), with a static fallback. */
@@ -51,7 +54,8 @@ export function MapCard({
   heading = 'Find us',
   loadOnView = false,
 }: MapCardProps) {
-  const d = data ?? fromSite();
+  const site = useSite();
+  const d = data ?? fromSite(site);
   const [loaded, setLoaded] = useState(false);
   const frame = useRef<HTMLDivElement>(null);
 

@@ -8,7 +8,7 @@ import { useRef, useState } from 'react';
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { contentService } from '@/app/api/services/content.service';
-import type { DemoMode, StayParams } from '@/lib/availability';
+import type { StayParams } from '@/lib/availability';
 import type { ISODate } from '@/lib/dates';
 import type { RoomType } from '@/lib/rooms';
 import { enquiryFormSchema, MAX_MESSAGE } from '@/schemas/content.schema';
@@ -42,8 +42,6 @@ interface EnquiryFormProps {
   initialRoom: string | null;
   /** Which page sent this enquiry. */
   sourcePage: string;
-  /** Development preview of the server's answer: "ratelimit" or "error". */
-  demo: string | null;
 }
 
 type FormValues = {
@@ -89,7 +87,6 @@ export function EnquiryForm({
   whatsappHref,
   initialRoom,
   sourcePage,
-  demo,
 }: EnquiryFormProps) {
   const source = sourcePage;
   const [values, setValues] = useState({
@@ -170,7 +167,6 @@ export function EnquiryForm({
         ...build(values, source),
         idempotencyKey: key.current,
         website,
-        demo,
       });
       setReference(data.reference);
       setStatus('success');
@@ -455,7 +451,6 @@ export function EnquiryForm({
                   rooms={rooms}
                   roomSlug={values.roomType}
                   stay={stay}
-                  demo={(demo as DemoMode | null) ?? null}
                 />
               </fieldset>
 

@@ -1,7 +1,10 @@
+'use client';
+
 import Link from 'next/link';
 
 import { countries } from '@/lib/checkout/countries';
 import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 import {
   arrivalOptions,
   MAX_REQUEST_LENGTH,
@@ -42,6 +45,7 @@ export function DetailsStep({
   mode = 'checkout',
   reference,
 }: DetailsStepProps) {
+  const site = useSite();
   const edit = mode === 'edit';
   const bind = (name: GuestField) => ({
     name,
@@ -122,6 +126,7 @@ export function DetailsStep({
         <p className="-mt-2 text-small">
           <a
             href={whatsappHref(
+              site,
               `Hello, I need to change the email on booking ${reference ?? ''}.`,
             )}
             target="_blank"

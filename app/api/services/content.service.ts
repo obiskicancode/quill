@@ -2,7 +2,7 @@ import type { EnquiryResponse } from '@/schemas/content.schema';
 
 import BaseService from './base.service';
 
-/** The contact/enquiry form payload plus the idempotency key, the honeypot and the dev preview switch. */
+/** The contact/enquiry form payload plus the idempotency key and the honeypot. */
 export interface EnquirySubmitInput {
   name: string;
   email: string;
@@ -20,7 +20,6 @@ export interface EnquirySubmitInput {
   consent: boolean;
   idempotencyKey: string;
   website?: string;
-  demo?: string | null;
 }
 
 /** Typed fetch helpers for the contact and booking enquiry forms. Retries are safe: the same key never sends twice. */

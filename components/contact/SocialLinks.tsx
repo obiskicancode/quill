@@ -10,7 +10,6 @@ import {
 
 import { StaggerGroup, StaggerItem, TextReveal } from '@/components/motion';
 import { getSocialLinks } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 import type { SocialLink } from '@/types/content.types';
 
 const icons: Record<SocialLink['platform'], LucideIcon> = {
@@ -23,8 +22,8 @@ const icons: Record<SocialLink['platform'], LucideIcon> = {
   other: Globe,
 };
 
-export async function SocialLinks({ flags }: { flags: PreviewFlags }) {
-  const links = await getSocialLinks(flags);
+export async function SocialLinks() {
+  const links = await getSocialLinks();
   if (links.length === 0) return null;
   return (
     <section aria-labelledby="social-title" className="pb-4">

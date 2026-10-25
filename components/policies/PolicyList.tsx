@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { ArrowRight, FileText } from 'lucide-react';
 
 import { getPolicyPages } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 
 const formatDate = (iso: string) =>
   new Date(iso + 'T00:00:00').toLocaleDateString('en-NG', {
@@ -12,8 +11,8 @@ const formatDate = (iso: string) =>
   });
 
 /** Cards for every published policy. Omitted entirely when there are none. */
-export async function PolicyList({ flags }: { flags: PreviewFlags }) {
-  const pages = await getPolicyPages(flags);
+export async function PolicyList() {
+  const pages = await getPolicyPages();
   if (pages.length === 0) {
     return (
       <p className="max-w-prose text-ink/85">

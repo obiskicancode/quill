@@ -5,8 +5,6 @@ import { Section } from '@/components/content/Section';
 import { SectionSkeleton } from '@/components/content/Skeletons';
 import { CtaBand } from '@/components/CtaBand';
 import { PolicyList } from '@/components/policies/PolicyList';
-import { config } from '@/config';
-import { parsePreview } from '@/lib/content/preview';
 
 export const metadata: Metadata = {
   title: 'Policies',
@@ -19,16 +17,7 @@ const hero = {
   alt: 'The hotel reception desk',
 };
 
-export default async function PoliciesPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  // Preview switches exist only in development.
-  const flags = config.isProd
-    ? parsePreview(undefined)
-    : parsePreview((await searchParams).preview);
-
+export default async function PoliciesPage() {
   return (
     <>
       <PageHero
@@ -45,7 +34,7 @@ export default async function PoliciesPage({
         }
       >
         <div className="container-page section-y">
-          <PolicyList flags={flags} />
+          <PolicyList />
         </div>
       </Section>
 

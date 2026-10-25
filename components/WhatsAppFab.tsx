@@ -4,16 +4,18 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 
 import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 
 import { spring } from './motion/variants';
 
 /** Floating WhatsApp button. On mobile it sits in the right-hand gap of the sticky Book Now bar. */
 export function WhatsAppFab() {
+  const site = useSite();
   const reduced = useReducedMotion();
 
   return (
     <motion.a
-      href={whatsappHref()}
+      href={whatsappHref(site)}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp (opens in a new tab)"

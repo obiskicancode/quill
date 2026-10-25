@@ -1,10 +1,13 @@
+'use client';
+
 import Link from 'next/link';
 import { Home, Lock, MessageCircle, Phone } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { site, telHref, whatsappHref } from '@/lib/site';
+import { telHref, whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 
-import { Logo } from '../Logo';
+import { SiteLogo } from '../SiteLogo';
 
 /** Simplified chrome so nothing pulls the guest away from paying. The global Header and Footer are hidden on /checkout. */
 interface CheckoutShellProps {
@@ -20,20 +23,21 @@ export function CheckoutShell({
   label = 'Secure checkout',
   backToHome = false,
 }: CheckoutShellProps) {
+  const site = useSite();
   const link =
     'inline-flex min-h-11 items-center gap-2 px-2 text-small font-medium underline-offset-4 hover:underline';
   return (
     <>
       <header className="checkout-chrome border-b border-line bg-paper">
         <div className="container-page flex min-h-16 items-center justify-between gap-4">
-          <Logo />
+          <SiteLogo site={site} />
           <p className="inline-flex items-center gap-2 text-small font-semibold">
             <Lock className="size-4 text-accent-ink" aria-hidden />
             {label}
           </p>
           <div className="flex items-center">
             <a
-              href={telHref()}
+              href={telHref(site)}
               className={link}
               aria-label={`Call ${site.contact.phoneDisplay}`}
             >
@@ -43,7 +47,7 @@ export function CheckoutShell({
               </span>
             </a>
             <a
-              href={whatsappHref()}
+              href={whatsappHref(site)}
               target="_blank"
               rel="noopener noreferrer"
               className={link}

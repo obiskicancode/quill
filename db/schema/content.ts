@@ -18,6 +18,7 @@ import {
   enquiryTypeEnum,
   galleryCategoryEnum,
 } from './enums';
+import { roomTypes } from './rooms';
 import { staffUsers } from './staff';
 
 export const enquiries = pgTable(
@@ -95,8 +96,12 @@ export const sitePages = pgTable('site_pages', {
     .default(sql`gen_random_uuid()`),
   slug: varchar('slug', { length: 150 }).notNull().unique(),
   title: varchar('title', { length: 200 }).notNull(),
+  intro: text('intro'),
   template: varchar('template', { length: 50 }).default('default'),
   status: varchar('status', { length: 20 }).notNull().default('draft'),
+  heroImageUrl: text('hero_image_url'),
+  heroImageAlt: varchar('hero_image_alt', { length: 255 }),
+  content: jsonb('content'),
   metaTitle: varchar('meta_title', { length: 160 }),
   metaDescription: varchar('meta_description', { length: 320 }),
   ogImageUrl: text('og_image_url'),
@@ -132,6 +137,17 @@ export const facilities = pgTable('facilities', {
   slug: varchar('slug', { length: 150 }).notNull().unique(),
   description: text('description'),
   icon: varchar('icon', { length: 50 }),
+  kind: varchar('kind', { length: 30 }).notNull().default('other'),
+  openingHours: varchar('opening_hours', { length: 255 }),
+  pricing: varchar('pricing', { length: 20 }),
+  priceNote: text('price_note'),
+  capacity: varchar('capacity', { length: 100 }),
+  layouts: text('layouts')
+    .array()
+    .notNull()
+    .default(sql`'{}'::text[]`),
+  ctaLabel: varchar('cta_label', { length: 100 }),
+  ctaTopic: varchar('cta_topic', { length: 50 }),
   imageUrl: text('image_url'),
   imageAlt: varchar('image_alt', { length: 255 }),
   storageKey: varchar('storage_key', { length: 255 }),
@@ -155,8 +171,17 @@ export const galleryImages = pgTable(
     title: varchar('title', { length: 150 }),
     altText: varchar('alt_text', { length: 255 }).notNull(),
     imageUrl: text('image_url').notNull(),
+    thumbnailUrl: text('thumbnail_url'),
     storageKey: varchar('storage_key', { length: 255 }),
     caption: text('caption'),
+    roomTypeId: uuid('room_type_id').references(() => roomTypes.id, {
+      onDelete: 'set null',
+    }),
+    facilityId: uuid('facility_id'),
+    width: integer('width'),
+    height: integer('height'),
+    color: varchar('color', { length: 9 }),
+    blurDataUrl: text('blur_data_url'),
     isActive: boolean('is_active').notNull().default(true),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true })
@@ -174,6 +199,9 @@ export const testimonials = pgTable('testimonials', {
     .primaryKey()
     .default(sql`gen_random_uuid()`),
   guestName: varchar('guest_name', { length: 150 }).notNull(),
+  roomTypeId: uuid('room_type_id').references(() => roomTypes.id, {
+    onDelete: 'set null',
+  }),
   location: varchar('location', { length: 100 }),
   quote: text('quote').notNull(),
   rating: integer('rating'),

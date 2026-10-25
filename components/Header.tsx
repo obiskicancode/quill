@@ -6,14 +6,16 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Menu, MessageCircle, Phone, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import { site, telHref, whatsappHref } from '@/lib/site';
+import { telHref, whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 
-import { Logo } from './Logo';
 import { EASE_OUT } from './motion/variants';
+import { SiteLogo } from './SiteLogo';
 import { ButtonLink } from './ui/Button';
 
 /** Fixed header. Transparent over the hero on the home page, solid and compact once scrolled. */
 export function Header() {
+  const site = useSite();
   const pathname = usePathname();
   const overHero = pathname === '/';
   const [scrolled, setScrolled] = useState(false);
@@ -71,7 +73,7 @@ export function Header() {
         <div
           className={`container-page flex items-center justify-between gap-3 transition-[height] duration-200 ${scrolled ? 'h-16' : 'h-[4.5rem] lg:h-20'}`}
         >
-          <Logo />
+          <SiteLogo site={site} />
 
           <nav aria-label="Primary" className="hidden lg:block">
             <ul className="flex items-center gap-1">
@@ -91,14 +93,14 @@ export function Header() {
 
           <div className="flex items-center gap-1 sm:gap-2">
             <a
-              href={telHref()}
+              href={telHref(site)}
               className="hidden min-h-11 items-center gap-2 px-2 font-medium xl:inline-flex"
             >
               <Phone className="size-4" aria-hidden />
               {site.contact.phoneDisplay}
             </a>
             <a
-              href={telHref()}
+              href={telHref(site)}
               aria-label={`Call reception on ${site.contact.phoneDisplay}`}
               className={`${iconButton} xl:hidden`}
             >
@@ -178,7 +180,7 @@ export function Header() {
                 className="mt-12 w-full max-w-sm"
               >
                 <ButtonLink
-                  href={whatsappHref()}
+                  href={whatsappHref(site)}
                   external
                   variant="secondary"
                   icon={<MessageCircle className="size-5" aria-hidden />}

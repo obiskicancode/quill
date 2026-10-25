@@ -1,6 +1,6 @@
 'use client';
 
-import { site } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 
 import { Magnetic } from '../motion/Magnetic';
 import { Parallax } from '../motion/Parallax';
@@ -13,7 +13,9 @@ import { Photo } from '../ui/Photo';
 import { TextLink } from '../ui/TextLink';
 
 export function Intro() {
+  const site = useSite();
   const { heading, body, image, learnMoreHref } = site.intro;
+  if (!heading && body.length === 0 && !image.src) return null;
   return (
     <section aria-labelledby="intro-heading" className="section-y">
       <div className="container-page grid items-center gap-10 md:grid-cols-12 md:gap-12">

@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 import { formatCountdown, formatDeadline } from '@/lib/checkout/format';
 import { formatRange } from '@/lib/room-query';
 import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 import type {
   CheckoutQuoteResponse,
   ConfirmationMode,
@@ -136,6 +137,7 @@ export function SummaryCard({
   holdSeconds,
   confirmationMode,
 }: SummaryProps) {
+  const site = useSite();
   const guests = stay.adults + stay.children;
   const nights = quote?.breakdown.nights;
 
@@ -241,6 +243,7 @@ export function SummaryCard({
         <li>
           <a
             href={whatsappHref(
+              site,
               `Hello, I need help with my booking for the ${room.name}.`,
             )}
             target="_blank"

@@ -1,7 +1,10 @@
 import { apiFail, apiOk } from '@/app/api/envelope';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { getAccess } from '@/lib/booking/session';
-import { isDemoRef, loadReservation } from '@/lib/booking/view';
-import { logEvent, rateLimited } from '@/lib/checkout/mock-db';
+import { logEvent, saveStoredReservation } from '@/lib/booking/store';
+import { loadReservation } from '@/lib/booking/view';
+import { rateLimit } from '@/lib/rate-limit';
 import type { BookingApiError, ResendResponse } from '@/types/booking.types';
 
 const COOLDOWN_SECONDS = 60;
@@ -11,49 +14,39 @@ const noStore = { 'Cache-Control': 'no-store' };
 
 const unauthorised = () => {
   const error: BookingApiError = {
-    code: 'unauthorised',
-    message: 'Verify your booking first.',
+    code: ERROR_CODES.UNAUTHORISED,
+    message: ERROR_MESSAGES.VERIFY_BOOKING_FIRST,
   };
   return apiFail(401, error.message, error, { headers: noStore });
 };
 
-/** Re-sends the confirmation email. One per minute and three per hour per booking. MOCK: no email is sent. */
+/** Re-sends the confirmation email. One per minute and three per hour per booking. */
 export async function POST(
   req: Request,
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
-  const demo = new URL(req.url).searchParams.get('demo');
-  if (!isDemoRef(reference) && !(await getAccess(reference)))
-    return unauthorised();
-  const found = await loadReservation(reference, demo);
+  if (!(await getAccess(reference))) return unauthorised();
+  const found = await loadReservation(reference);
   if (!found) return unauthorised();
 
-  const wait =
-    demo === 'resend-limit'
-      ? 45
-      : Math.ceil(
-          (COOLDOWN_SECONDS * 1000 -
-            (Date.now() - (lastSent.get(reference) ?? 0))) /
-            1000,
-        );
-  if (wait > 0 || rateLimited(`resend:${reference}`, 3, 60 * 60_000)) {
+  const wait = Math.ceil(
+    (COOLDOWN_SECONDS * 1000 - (Date.now() - (lastSent.get(reference) ?? 0))) /
+      1000,
+  );
+  if (
+    wait > 0 ||
+    !(await rateLimit(`resend:${reference}`, 3, 60 * 60_000)).allowed
+  ) {
     const retryAfterSeconds = wait > 0 ? wait : 3600;
     const error: BookingApiError = {
-      code: 'rate_limited',
-      message: 'Please wait before asking for another email.',
+      code: ERROR_CODES.RATE_LIMITED,
+      message: ERROR_MESSAGES.WAIT_FOR_EMAIL,
       retryAfterSeconds,
     };
     return apiFail(429, error.message, error, {
       headers: { ...noStore, 'Retry-After': String(retryAfterSeconds) },
     });
-  }
-  if (demo === 'resend-fail') {
-    const error: BookingApiError = {
-      code: 'server',
-      message: "We couldn't send the email.",
-    };
-    return apiFail(503, error.message, error, { headers: noStore });
   }
   lastSent.set(reference, Date.now());
   logEvent(
@@ -62,6 +55,12 @@ export async function POST(
     'Confirmation email sent again at your request.',
     'guest',
   );
+  found.notifications ??= [];
+  found.notifications.push({
+    kind: 'confirmation',
+    detail: 'Confirmation email sent again at your request.',
+  });
+  await saveStoredReservation(found);
   return apiOk<ResendResponse>(
     { sent: true, cooldownSeconds: COOLDOWN_SECONDS },
     { headers: noStore },

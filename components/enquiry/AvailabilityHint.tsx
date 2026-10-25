@@ -3,7 +3,7 @@
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 import { useMemo } from 'react';
 
-import type { DemoMode, StayParams } from '@/lib/availability';
+import type { StayParams } from '@/lib/availability';
 import { formatNaira } from '@/lib/format';
 import type { RoomType } from '@/lib/rooms';
 
@@ -15,7 +15,6 @@ interface AvailabilityHintProps {
   /** "" means no preferred room: every room is checked. */
   roomSlug: string;
   stay: StayParams | null;
-  demo: DemoMode | null;
 }
 
 /**
@@ -27,7 +26,6 @@ export function AvailabilityHint({
   rooms,
   roomSlug,
   stay,
-  demo,
 }: AvailabilityHintProps) {
   const subset = useMemo(() => {
     if (!roomSlug) return rooms;
@@ -35,7 +33,7 @@ export function AvailabilityHint({
     return one.length > 0 ? one : rooms;
   }, [rooms, roomSlug]);
 
-  const { status, data, retry } = useAvailability(subset, stay, demo);
+  const { status, data, retry } = useAvailability(subset, stay);
 
   if (!stay) {
     return (

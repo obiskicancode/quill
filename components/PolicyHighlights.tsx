@@ -1,11 +1,20 @@
 import { CalendarClock, Lock, Undo2 } from 'lucide-react';
 
-import { policyHighlights } from '@/lib/rooms';
+import { getPolicySettings } from '@/lib/content/data';
 
 import { TextLink } from './ui/TextLink';
 
-export function PolicyHighlights() {
-  const p = policyHighlights;
+export async function PolicyHighlights() {
+  const policies = await getPolicySettings();
+  const p = {
+    checkIn: policies.houseRules.checkInTime,
+    checkOut: policies.houseRules.checkOutTime,
+    cancellation:
+      policies.cancellation.freeCancellationHours === null
+        ? 'This rate cannot be cancelled free of charge.'
+        : `Free cancellation up to ${policies.cancellation.freeCancellationHours} hours before arrival.`,
+    fullPoliciesHref: '/policies/cancellation-policy',
+  };
   const items = [
     {
       icon: CalendarClock,

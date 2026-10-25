@@ -1,4 +1,4 @@
-/** MOCK hotel rules for managing a booking. In production these come from hotel settings. Values are samples. */
+/** Hotel rules for managing a booking, read from hotel settings. */
 export interface ManageSettings {
   /** Dates can be changed online until this many hours before check-in. */
   minNoticeHours: number;
@@ -10,13 +10,17 @@ export interface ManageSettings {
   holdSeconds: number;
 }
 
-export function getManageSettings(demos: Set<string>): ManageSettings {
+export async function getManageSettings(): Promise<ManageSettings> {
+  const { getHotelRow } = await import('../db/queries/content-data');
+  const row = await getHotelRow();
+  const stored = (row?.manageSettings ?? {}) as Partial<ManageSettings>;
   return {
-    minNoticeHours: 48,
-    maxChanges: 2,
-    refundTimeline: '5 to 10 business days',
-    manualRefundTimeline: '7 to 14 business days',
-    quoteTtlMinutes: 10,
-    holdSeconds: demos.has('shorthold') ? 150 : 15 * 60,
+    minNoticeHours: stored.minNoticeHours ?? 48,
+    maxChanges: stored.maxChanges ?? 2,
+    refundTimeline: stored.refundTimeline ?? '5 to 10 business days',
+    manualRefundTimeline:
+      stored.manualRefundTimeline ?? '7 to 14 business days',
+    quoteTtlMinutes: stored.quoteTtlMinutes ?? 10,
+    holdSeconds: stored.holdSeconds ?? (row?.holdMinutes ?? 15) * 60,
   };
 }

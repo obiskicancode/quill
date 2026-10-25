@@ -4,25 +4,38 @@ import type {
   CheckoutSettings,
 } from '@/types/checkout.types';
 
-import { hotelSettings, type RoomDetail } from '../room-detail';
-import { site } from '../site';
+import {
+  getHotelSettings,
+  getLandmarks,
+  getPolicySettings,
+} from '../content/data';
+import { paymentProviderLabel } from '../payments';
+import { getPricingSettings } from '../room-detail';
+import type { RoomDetail } from '../room-detail';
 
-const providerNames = {
-  paystack: 'Paystack',
-  flutterwave: 'Flutterwave',
-  stripe: 'Stripe',
-} as const;
-
-/**
- * Builds the policy and hotel snapshot stored on a reservation at creation time (MOCK values from site config).
- * Later changes to hotel settings never alter what this guest agreed to.
- */
-export function buildSnapshot(
+export async function buildSnapshot(
   room: RoomDetail,
   quote: Extract<CheckoutQuoteResponse, { status: 'ok' }>,
   settings: CheckoutSettings,
-): ReservationSnapshot {
+): Promise<ReservationSnapshot> {
   const cover = room.gallery[0];
+  const [hotel, pricing, policies, landmarks] = await Promise.all([
+    getHotelSettings(),
+    getPricingSettings(),
+    getPolicySettings(),
+    getLandmarks(),
+  ]);
+  const addressLines = [
+    hotel.address.line1,
+    [hotel.address.area, hotel.address.city, hotel.address.state]
+      .filter(Boolean)
+      .join(', '),
+    hotel.address.country,
+  ].filter(Boolean);
+  const mapQuery =
+    hotel.latitude !== null && hotel.longitude !== null
+      ? `${hotel.latitude},${hotel.longitude}`
+      : addressLines.join(', ');
   return {
     room: {
       slug: room.slug,
@@ -33,40 +46,46 @@ export function buildSnapshot(
     breakdown: quote.breakdown,
     policy: {
       cancellation: quote.policy,
-      checkInRules: `Check-in from ${hotelSettings.checkInTime}. Early check-in depends on availability.`,
-      checkOutRules: `Check-out by ${hotelSettings.checkOutTime}. Late check-out can be arranged on request.`,
+      checkInRules: `Check-in from ${pricing.checkInTime}. Early check-in depends on availability.`,
+      checkOutRules: `Check-out by ${pricing.checkOutTime}. Late check-out can be arranged on request.`,
       houseRules: [
-        hotelSettings.smokingPolicy,
-        hotelSettings.petsPolicy,
-        hotelSettings.childrenPolicy,
-        '[Quiet hours, for example 10:00 pm to 6:00 am.]',
-      ],
+        policies.houseRules.childrenPolicy,
+        policies.houseRules.petsAllowed
+          ? policies.houseRules.petsNote
+          : 'No pets.',
+        policies.houseRules.smokingPolicy === 'not_allowed'
+          ? policies.houseRules.smokingNote
+          : 'Smoking is allowed only in designated areas.',
+        ...(policies.houseRules.quietHours
+          ? [`Quiet hours: ${policies.houseRules.quietHours}.`]
+          : []),
+      ].filter(Boolean),
       idRequired: true,
-      idText: hotelSettings.idPolicy,
-      afterDeadline: { kind: 'first_night' }, // [sample] what the hotel keeps after the free window
+      idText:
+        'A valid government-issued photo ID is required for every adult at check-in.',
+      afterDeadline: { kind: 'first_night' },
       freeCancellationHours: settings.freeCancellationHours,
     },
     hotel: {
-      name: site.name,
-      addressLines: site.address.lines,
-      mapQuery: site.address.mapQuery,
-      phoneDisplay: site.contact.phoneDisplay,
-      phoneTel: site.contact.phoneTel,
-      whatsappNumber: site.contact.whatsappNumber,
-      reception: site.reception,
-      landmarks: site.landmarks,
-      howToFindUs:
-        '[A short note on how to find the entrance, for example: look for the green gate next to the pharmacy.]',
+      name: hotel.displayName,
+      addressLines,
+      mapQuery,
+      phoneDisplay: hotel.publicPhones[0]?.display ?? '',
+      phoneTel: hotel.publicPhones[0]?.tel ?? '',
+      whatsappNumber: hotel.whatsappNumber,
+      reception: hotel.receptionHours ?? '',
+      landmarks,
+      howToFindUs: hotel.directionsText ?? '',
     },
     times: {
-      checkIn: hotelSettings.checkInTime,
-      checkOut: hotelSettings.checkOutTime,
+      checkIn: pricing.checkInTime,
+      checkOut: pricing.checkOutTime,
       checkIn24: settings.checkInTime24,
-      checkOut24: '12:00',
-      timeZone: hotelSettings.timeZone,
+      checkOut24: pricing.checkOutTime,
+      timeZone: pricing.timeZone,
     },
-    providerName: providerNames[settings.provider],
-    approvalResponse: 'within 2 hours', // [sample]
-    addExtras: { supported: false, catalog: settings.extras }, // set supported: true when guests may add extras after booking
+    providerName: paymentProviderLabel(settings.provider),
+    approvalResponse: `within ${hotel.enquiryResponseHours} hours`,
+    addExtras: { supported: false, catalog: settings.extras },
   };
 }

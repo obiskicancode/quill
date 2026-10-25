@@ -1,13 +1,12 @@
 import { StaggerGroup, TextReveal } from '@/components/motion';
 import { getRoomAmenities } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 
 import { AmenityItem } from '../AmenityItem';
 import { TextLink } from '../ui/TextLink';
 
 /** The in-room amenities most room types share, worked out from the real room data. */
-export async function RoomAmenitiesSummary({ flags }: { flags: PreviewFlags }) {
-  const items = await getRoomAmenities(flags);
+export async function RoomAmenitiesSummary() {
+  const items = await getRoomAmenities();
   if (items.length === 0) return null;
   return (
     <section

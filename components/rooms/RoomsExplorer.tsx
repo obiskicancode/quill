@@ -34,7 +34,6 @@ import { Button } from '../ui/Button';
 import { EmptyState } from './EmptyState';
 import { FilterChips } from './FilterChips';
 import { FilterPanel, FilterSheet } from './FilterPanel';
-import { PreviewBar } from './PreviewBar';
 import { SkeletonCard } from './SkeletonCard';
 import { SortMenu } from './SortMenu';
 import { StaySelector } from './StaySelector';
@@ -92,7 +91,7 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
       ),
     [base, query.filters, query.sort],
   );
-  const { status, data, retry } = useAvailability(base, stay, query.demo);
+  const { status, data, retry } = useAvailability(base, stay);
 
   const prices = base.filter((r) => r.showPrice).map((r) => r.basePriceNgn);
   const priceBounds = prices.length
@@ -112,7 +111,6 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
 
   return (
     <div>
-      <PreviewBar query={query} onChange={update} />
       <StaySelector
         query={query}
         problem={problem}

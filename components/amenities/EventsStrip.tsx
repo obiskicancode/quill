@@ -1,12 +1,11 @@
 import { Reveal, TextReveal } from '@/components/motion';
 import { getEventFacilities } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 
 import { ButtonLink } from '../ui/Button';
 
 /** Conference and events: capacity, layouts and an Enquire button. Shown only when such a facility exists. */
-export async function EventsStrip({ flags }: { flags: PreviewFlags }) {
-  const items = await getEventFacilities(flags);
+export async function EventsStrip() {
+  const items = await getEventFacilities();
   if (items.length === 0) return null;
   const capacity = items.map((i) => i.capacity).find(Boolean);
   const layouts = [...new Set(items.flatMap((i) => i.layouts))];

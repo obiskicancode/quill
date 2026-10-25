@@ -1,4 +1,4 @@
-import type { ImageAsset } from '@/types/site.types';
+import type { ImageAsset, SocialPlatform } from '@/types/site.types';
 
 /** Typed shapes for the content pages. They mirror the admin's data fields. Money is integer kobo. */
 
@@ -41,14 +41,7 @@ export interface PublicPhone {
 
 export interface SocialLink {
   id: string;
-  platform:
-    | 'instagram'
-    | 'facebook'
-    | 'x'
-    | 'youtube'
-    | 'linkedin'
-    | 'tiktok'
-    | 'other';
+  platform: SocialPlatform;
   label: string;
   url: string;
 }

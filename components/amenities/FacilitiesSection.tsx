@@ -7,7 +7,6 @@ import {
   StaggerItem,
 } from '@/components/motion';
 import { getFacilities } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 
 import { Badge } from '../rooms/AvailabilityBadge';
 import { ButtonLink } from '../ui/Button';
@@ -17,8 +16,8 @@ import { Photo } from '../ui/Photo';
  * One block per facility, in sort order. Image and text alternate on desktop and stack on mobile.
  * A sticky jump menu appears only when there are four or more facilities. Missing fields (image, hours, capacity, CTA) are simply left out.
  */
-export async function FacilitiesSection({ flags }: { flags: PreviewFlags }) {
-  const facilities = await getFacilities(flags);
+export async function FacilitiesSection() {
+  const facilities = await getFacilities();
   if (facilities.length === 0) return null;
 
   return (

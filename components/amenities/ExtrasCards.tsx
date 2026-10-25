@@ -1,12 +1,11 @@
 import { StaggerGroup, StaggerItem, TextReveal } from '@/components/motion';
 import { unitLabels } from '@/lib/checkout/format';
 import { getExtras } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 import { formatMinor } from '@/types/stay.types';
 
 /** The hotel's active paid extras. Prices come as kobo and are shown in naira. */
-export async function ExtrasCards({ flags }: { flags: PreviewFlags }) {
-  const extras = await getExtras(flags);
+export async function ExtrasCards() {
+  const extras = await getExtras();
   if (extras.length === 0) return null;
   return (
     <section aria-labelledby="extras-title" className="section-y">

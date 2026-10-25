@@ -12,35 +12,29 @@ import {
 } from '@/components/room-detail/BookingCard';
 import { GoodToKnow } from '@/components/room-detail/GoodToKnow';
 import { KeyFacts } from '@/components/room-detail/KeyFacts';
-import { PreviewLinks } from '@/components/room-detail/PreviewLinks';
 import { ReadMore } from '@/components/room-detail/ReadMore';
 import { RoomGallery } from '@/components/room-detail/RoomGallery';
 import { RoomReviews } from '@/components/room-detail/RoomReviews';
 import { SimilarRooms } from '@/components/room-detail/SimilarRooms';
 import { TitleBlock } from '@/components/room-detail/TitleBlock';
+import { getPublicSite } from '@/lib/content/data';
 import {
   baseGuests,
+  getPricingSettings,
   getRoomDetail,
   getSimilarRooms,
-  hotelSettings,
   type RoomDetail,
 } from '@/lib/room-detail';
 import { parseRoomQuery, stayHref } from '@/lib/room-query';
 import { bedTypeLabels, maxGuests, roomAmenityLabels } from '@/lib/rooms';
-import { site } from '@/lib/site';
 import {
   hotelClock,
   needsExtraBed,
   priceStay,
   validateStay,
 } from '@/lib/stay-quote';
-import {
-  bookingHref,
-  QUOTE_DEMOS,
-  stayParams,
-  type QuoteDemo,
-  type StayInput,
-} from '@/types/stay.types';
+import type { SiteConfig } from '@/types/site.types';
+import { bookingHref, stayParams, type StayInput } from '@/types/stay.types';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 interface PageProps {
@@ -59,7 +53,10 @@ export async function generateMetadata({
   params,
 }: Pick<PageProps, 'params'>): Promise<Metadata> {
   const { slug } = await params;
-  const room = getRoomDetail(slug);
+  const [room, site] = await Promise.all([
+    getRoomDetail(slug),
+    getPublicSite(),
+  ]);
   if (!room) return { title: 'Room not found' };
   const description =
     room.metaDescription ??
@@ -83,6 +80,7 @@ function buildJsonLd(
   room: RoomDetail,
   offerHref: string | null,
   totalMinor: number | null,
+  site: SiteConfig,
 ) {
   const absolute = (src: string) => new URL(src, site.url).toString();
   const hotelRoom: Record<string, unknown> = {
@@ -125,15 +123,15 @@ function buildJsonLd(
 
 export default async function RoomPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
-  const room = getRoomDetail(slug);
+  const [room, hotelSettings, site] = await Promise.all([
+    getRoomDetail(slug),
+    getPricingSettings(),
+    getPublicSite(),
+  ]);
   if (!room) notFound();
 
   const sp = await searchParams;
   const q = parseRoomQuery(paramsLike(sp));
-  const rawDemo = paramsLike(sp).get('demo');
-  const demo = QUOTE_DEMOS.includes(rawDemo as QuoteDemo)
-    ? (rawDemo as QuoteDemo)
-    : null;
 
   const needs = needsExtraBed(room, q.adults, q.children);
   const initial: StayInput = {
@@ -184,13 +182,12 @@ export default async function RoomPage({ params, searchParams }: PageProps) {
     }
   }
   const jsonLd = JSON.stringify(
-    buildJsonLd(room, offerHref, totalMinor),
+    buildJsonLd(room, offerHref, totalMinor, site),
   ).replace(/</g, '\\u003c');
   const stayQuery = stayParams(initial).toString();
 
   return (
     <>
-      <PreviewLinks slug={room.slug} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd }}
@@ -237,13 +234,15 @@ export default async function RoomPage({ params, searchParams }: PageProps) {
           <BookingCard
             room={bookingRoom}
             initial={initial}
-            demo={demo}
             bestPriceDirect={hotelSettings.bestPriceDirect}
           />
         </aside>
       </div>
 
-      <SimilarRooms rooms={getSimilarRooms(room, 3)} stayQuery={stayQuery} />
+      <SimilarRooms
+        rooms={await getSimilarRooms(room, 3)}
+        stayQuery={stayQuery}
+      />
       <div className="mt-16 md:mt-24">
         <CtaBand />
       </div>

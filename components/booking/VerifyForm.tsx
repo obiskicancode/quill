@@ -7,6 +7,7 @@ import { ServiceError } from '@/app/api/services/base.service';
 import { bookingService } from '@/app/api/services/booking.service';
 import { formatCountdown } from '@/lib/checkout/format';
 import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 import { verifyRequestSchema } from '@/schemas/booking.schema';
 import type { GuestReservation } from '@/types/booking.types';
 
@@ -52,6 +53,7 @@ export function VerifyForm({
   notice,
   embedded = false,
 }: VerifyFormProps) {
+  const site = useSite();
   const [ref, setRef] = useState(reference);
   const [email, setEmail] = useState('');
   const [errors, setErrors] = useState<{ reference?: string; email?: string }>(
@@ -198,7 +200,7 @@ export function VerifyForm({
 
       <p className="mt-6 text-small">
         <a
-          href={whatsappHref('Hello, I need help finding my booking.')}
+          href={whatsappHref(site, 'Hello, I need help finding my booking.')}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-accent decoration-2 underline-offset-4"

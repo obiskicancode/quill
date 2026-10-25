@@ -1,14 +1,13 @@
 import { Reveal, TextReveal } from '@/components/motion';
 import { getFaqs } from '@/lib/content/data';
 import { faqJsonLd } from '@/lib/content/jsonld';
-import type { PreviewFlags } from '@/lib/content/preview';
 
 import { JsonLd } from '../content/JsonLd';
 import { FaqAccordion } from './FaqAccordion';
 
 /** Published FAQs. Omitted when there are none, and the FAQPage data is only emitted when they are shown. */
-export async function FaqSection({ flags }: { flags: PreviewFlags }) {
-  const faqs = await getFaqs(flags);
+export async function FaqSection() {
+  const faqs = await getFaqs();
   if (faqs.length === 0) return null;
   const ld = faqJsonLd(faqs);
   return (

@@ -46,8 +46,6 @@ interface ContactFormProps {
   rooms: { slug: string; name: string }[];
   responseHours: number;
   whatsappHref: string;
-  /** Development preview of the server's answer: "ratelimit" or "error". */
-  demo: string | null;
 }
 
 /** A topic the contact form can actually show (the booking enquiry has its own page). */
@@ -64,7 +62,6 @@ export function ContactForm({
   rooms,
   responseHours,
   whatsappHref,
-  demo,
 }: ContactFormProps) {
   const safeRef =
     initialRef && /^[A-Za-z0-9-]{4,30}$/.test(initialRef) ? initialRef : null;
@@ -140,7 +137,6 @@ export function ContactForm({
           : { checkIn: '', checkOut: '', guests: '', roomType: '' }),
         idempotencyKey: key.current,
         website,
-        demo,
       });
       setReference(data.reference);
       setStatus('success');

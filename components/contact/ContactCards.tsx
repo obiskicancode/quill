@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 
 import { StaggerGroup, StaggerItem } from '@/components/motion';
 import { getContactInfo } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 
 import { CopyButton } from '../checkout/PaymentStep';
 
@@ -44,8 +43,8 @@ const link =
   'inline-flex min-h-11 items-center underline decoration-accent decoration-2 underline-offset-4';
 
 /** Call (every public number), WhatsApp, email and reception hours. Each card has a copy action. Cards with no data are left out. */
-export async function ContactCards({ flags }: { flags: PreviewFlags }) {
-  const s = await getContactInfo(flags);
+export async function ContactCards() {
+  const s = await getContactInfo();
   const cards: ReactNode[] = [];
 
   for (const p of s.publicPhones) {

@@ -14,6 +14,9 @@ export type AmenityKey =
   | 'laundry'
   | 'workdesk';
 
+export type SocialPlatform =
+  'instagram' | 'facebook' | 'x' | 'youtube' | 'linkedin' | 'tiktok' | 'other';
+
 export interface ImageAsset {
   src: string;
   alt: string;
@@ -79,10 +82,19 @@ export interface SiteConfig {
     whatsappMessage: string;
     email: string;
   };
-  address: { lines: string[]; mapQuery: string | null };
+  address: {
+    lines: string[];
+    mapQuery: string | null;
+    /** Full embed URL stored in the database, when one is configured. */
+    mapEmbedUrl?: string | null;
+    /** Full directions URL stored in the database. */
+    directionsUrl?: string | null;
+    /** Full address-search URL stored in the database. */
+    addressUrl?: string | null;
+  };
   reception: string;
   landmarks: { name: string; distance: string }[];
-  social: { label: string; href: string; platform: 'instagram' | 'facebook' }[];
+  social: { label: string; href: string; platform: SocialPlatform }[];
   googleReviewsUrl: string | null;
   reviews: { rating: number | null; count: number | null };
   policies: NavItem[];

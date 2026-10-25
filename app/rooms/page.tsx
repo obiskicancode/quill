@@ -10,7 +10,7 @@ import { TextReveal } from '@/components/motion/TextReveal';
 import { PolicyHighlights } from '@/components/PolicyHighlights';
 import { RoomsExplorer } from '@/components/rooms/RoomsExplorer';
 import { SkeletonCard } from '@/components/rooms/SkeletonCard';
-import { roomTypes } from '@/lib/rooms';
+import { getRoomTypesWithDetails } from '@/lib/db/queries/content-data';
 
 export const metadata: Metadata = {
   title: 'Rooms & Accommodation',
@@ -32,7 +32,8 @@ function ExplorerFallback() {
   );
 }
 
-export default function RoomsPage() {
+export default async function RoomsPage() {
+  const rooms = (await getRoomTypesWithDetails()).map((r) => r.room);
   return (
     <>
       <section
@@ -61,7 +62,7 @@ export default function RoomsPage() {
       </section>
 
       <Suspense fallback={<ExplorerFallback />}>
-        <RoomsExplorer rooms={roomTypes} />
+        <RoomsExplorer rooms={rooms} />
       </Suspense>
 
       <Reveal>

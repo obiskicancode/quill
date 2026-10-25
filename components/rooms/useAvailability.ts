@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { stayService } from '@/app/api/services/stay.service';
-import type { AvailabilityMap, DemoMode, StayParams } from '@/lib/availability';
+import type { AvailabilityMap, StayParams } from '@/lib/availability';
 import type { RoomType } from '@/lib/rooms';
 
 type State = {
@@ -12,15 +12,11 @@ type State = {
 };
 
 /** Loads availability whenever the stay changes. With no valid stay it stays idle and no request is made. */
-export function useAvailability(
-  rooms: RoomType[],
-  stay: StayParams | null,
-  demo: DemoMode | null,
-) {
+export function useAvailability(rooms: RoomType[], stay: StayParams | null) {
   const [state, setState] = useState<State>({ status: 'idle', data: null });
   const [attempt, setAttempt] = useState(0);
   const key = stay
-    ? `${stay.checkIn}|${stay.checkOut}|${stay.adults}|${stay.children}|${demo}|${attempt}`
+    ? `${stay.checkIn}|${stay.checkOut}|${stay.adults}|${stay.children}|${attempt}`
     : 'none';
 
   useEffect(() => {
@@ -32,7 +28,7 @@ export function useAvailability(
     let cancelled = false;
     setState({ status: 'loading', data: null });
     stayService
-      .availability({ ...stay, rooms: rooms.map((r) => r.id), demo })
+      .availability({ ...stay, rooms: rooms.map((r) => r.id) })
       .then(
         (res) => !cancelled && setState({ status: 'ready', data: res.data }),
       )

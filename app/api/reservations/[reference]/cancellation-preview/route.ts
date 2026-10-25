@@ -1,6 +1,7 @@
 import { apiOk } from '@/app/api/envelope';
-import { isDemoRef, loadReservation } from '@/lib/booking/view';
-import { parseDemos } from '@/lib/checkout/settings';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { loadReservation } from '@/lib/booking/view';
 import { manageError, manageOpts } from '@/lib/manage/auth';
 import { allowedActions, previewCancellation } from '@/lib/manage/rules';
 import { getManageSettings } from '@/lib/manage/settings';
@@ -12,31 +13,25 @@ export async function GET(
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
-  const demo = new URL(req.url).searchParams.get('demo');
   if (!(await manageOpts(reference)))
     return manageError(401, {
-      code: 'session_expired',
-      message: 'Your session has ended. Please verify again.',
+      code: ERROR_CODES.SESSION_EXPIRED,
+      message: ERROR_MESSAGES.SESSION_EXPIRED,
     });
-  const r = await loadReservation(reference, demo);
+  const r = await loadReservation(reference);
   if (!r)
     return manageError(404, {
-      code: 'not_found',
-      message: 'Booking not found.',
+      code: ERROR_CODES.NOT_FOUND,
+      message: ERROR_MESSAGES.BOOKING_NOT_FOUND,
     });
 
-  if (isDemoRef(reference) && parseDemos(demo).has('previewerror'))
-    return manageError(503, {
-      code: 'server',
-      message: "We couldn't work out your refund.",
-    });
-  const settings = getManageSettings(parseDemos(r.demo));
+  const settings = await getManageSettings();
   const clock = hotelClock();
   const allowed = allowedActions(r, clock, settings).canCancel;
   if (!allowed.allowed)
     return manageError(409, {
-      code: 'not_allowed',
-      message: allowed.reason ?? 'This booking cannot be cancelled online.',
+      code: ERROR_CODES.NOT_ALLOWED,
+      message: allowed.reason ?? ERROR_MESSAGES.CANNOT_CANCEL_ONLINE,
     });
   return apiOk(previewCancellation(r, clock, settings), {
     headers: { 'Cache-Control': 'no-store' },

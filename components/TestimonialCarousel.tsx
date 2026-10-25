@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { Star } from 'lucide-react';
 
-import { site } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 import type { Testimonial } from '@/types/site.types';
 
 import { Carousel } from './Carousel';
@@ -110,6 +110,7 @@ export function TestimonialCarousel({
 }: {
   testimonials: Testimonial[];
 }) {
+  const site = useSite();
   const items = testimonials.slice(0, 6);
   if (items.length === 0) return null;
   return (

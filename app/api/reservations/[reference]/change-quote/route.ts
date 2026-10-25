@@ -1,4 +1,6 @@
 import { apiOk } from '@/app/api/envelope';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { loadReservation } from '@/lib/booking/view';
 import { quoteChange } from '@/lib/manage/actions';
 import { manageError, requireManage } from '@/lib/manage/auth';
@@ -12,8 +14,7 @@ export async function POST(
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
-  const demo = new URL(req.url).searchParams.get('demo');
-  const auth = await requireManage(req, reference, demo);
+  const auth = await requireManage(req, reference);
   if (!auth.ok) return auth.res;
 
   const parsed = changeQuoteRequestSchema.safeParse(
@@ -21,23 +22,16 @@ export async function POST(
   );
   if (!parsed.success)
     return manageError(422, {
-      code: 'validation',
-      message: 'Choose valid dates.',
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.CHOOSE_VALID_DATES,
       fieldErrors: fieldErrorsFrom(parsed.error),
     });
-  const r = await loadReservation(reference, demo);
+  const r = await loadReservation(reference);
   if (!r)
     return manageError(404, {
-      code: 'not_found',
-      message: 'Booking not found.',
+      code: ERROR_CODES.NOT_FOUND,
+      message: ERROR_MESSAGES.BOOKING_NOT_FOUND,
     });
-  const demos = new Set((demo ?? '').split(',').map((t) => t.trim()));
-  if (demos.has('quoteerror'))
-    return manageError(503, {
-      code: 'server',
-      message: "We couldn't check those dates.",
-    });
-
-  const quote = await quoteChange(r, parsed.data, hotelClock(), demos);
+  const quote = await quoteChange(r, parsed.data, hotelClock());
   return apiOk(quote, { headers: { 'Cache-Control': 'no-store' } });
 }

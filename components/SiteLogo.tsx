@@ -1,10 +1,16 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { site } from '@/lib/site';
+import type { SiteConfig } from '@/types/site.types';
 
-/** Uses the supplied logo when there is one, otherwise a text wordmark from the site config. */
-export function Logo({ className = '' }: { className?: string }) {
+/** Logo for the public app, using the database-backed site config. */
+export function SiteLogo({
+  site,
+  className = '',
+}: {
+  site: SiteConfig;
+  className?: string;
+}) {
   return (
     <Link
       href="/"

@@ -1,17 +1,18 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { AmenityKey, Room } from '@/types/site.types';
 
 import {
-  maxGuests,
-  roomTypes,
-  type RoomAmenityKey,
-  type RoomType,
-} from './rooms';
-
-/*
- * MOCK DATABASE LAYER. Replace getRoomDetail / getSimilarRooms with real queries.
- * Money here is integer minor units (kobo), as it will be in the database.
- * Everything marked [sample] is placeholder content to replace before launch.
- */
+  mapRateRule,
+  mapRoomDetail,
+  mapRoomHotelSettings,
+} from './db/mappers/rooms.mapper';
+import {
+  getHotelRow,
+  getRoomRelations,
+  getRoomTypesWithDetails,
+} from './db/queries/content-data';
+import { listRoomRateRules } from './db/repositories/rooms.repo';
+import { maxGuests, type RoomAmenityKey, type RoomType } from './rooms';
 
 export interface GalleryImage {
   src: string;
@@ -67,128 +68,36 @@ export interface HotelSettings {
   idPolicy: string;
   /** Show "Best price when you book direct" only if the hotel stands behind it. */
   bestPriceDirect: boolean;
+  rateRules?: RateRule[];
 }
 
-export const hotelSettings: HotelSettings = {
-  timeZone: 'Africa/Lagos',
-  checkInTime: '[2:00 pm]',
-  checkOutTime: '[12:00 noon]',
-  taxPercent: 7.5, // [sample]
-  serviceChargePercent: 5, // [sample]
-  minNights: 1,
-  maxNights: 30,
-  bookingWindowDays: 365,
-  sameDayCutoff: '18:00', // [sample]
-  freeCancellationHours: 48, // [sample]
-  cancellationSummary:
-    '[Add a short summary, for example: free cancellation up to 48 hours before arrival; after that the first night is charged.]',
-  childrenPolicy:
-    '[Children of any age are welcome. Children under 12 stay free in existing beds.]',
-  petsPolicy: '[Pets are not allowed.]',
-  smokingPolicy: '[Smoking is not allowed in rooms.]',
-  idPolicy:
-    '[A valid government-issued photo ID is required for every adult at check-in.]',
-  bestPriceDirect: true, // [confirm with the hotel]
-};
+export async function getPricingSettings(): Promise<HotelSettings> {
+  const [row, rules] = await Promise.all([getHotelRow(), listRoomRateRules()]);
+  if (!row) throw new Error(ERROR_MESSAGES.HOTEL_PRICING_SETTINGS_MISSING);
+  return mapRoomHotelSettings(row, rules.map(mapRateRule));
+}
 
-export const rateRules: RateRule[] = [
-  { label: 'Peak season', start: '12-15', end: '01-05', upliftPercent: 20 }, // [sample]
-];
-
-const viewNotes: Record<string, string> = {
-  'classic-room': 'Courtyard view, first floor',
-  'deluxe-room': 'Balcony over the garden, second floor',
-  'executive-suite': 'Corner suite with city view, third floor',
-  'one-bedroom-apartment': 'Quiet side of the building, second floor',
-  'twin-room': 'Courtyard view, first floor',
-  'family-apartment': 'Garden view, ground floor',
-  'studio-apartment': 'Street view, second floor',
-  'two-bedroom-apartment': 'Top-floor apartment with city view',
-};
-
-const meta: Record<string, { title: string; description: string }> = {
-  'deluxe-room': {
-    title: 'Deluxe Room with balcony and breakfast',
-    description:
-      'A 28 sqm king-bed room with a private balcony, work desk and breakfast included. Check dates and book direct.',
-  },
-};
-
-const captions = [
-  'The bedroom',
-  'Seating and work area',
-  'The bathroom',
-  'Natural light by the window',
-  'Balcony',
-  'Entrance',
-  'Kitchenette',
-  'Living area',
-];
-
-const testimonialsBySlug: Record<string, RoomTestimonial[]> = {
-  'deluxe-room': [
-    {
-      id: 'rt1',
-      quote:
-        '[Sample quote] The balcony and the quiet made the stay. Breakfast was a good start every morning.',
-      guestName: 'Chidinma O.',
-      stayType: 'Business trip',
-      rating: 5,
-    },
-    {
-      id: 'rt2',
-      quote:
-        '[Sample quote] Clean, comfortable, and the bed was excellent. Easy check-in.',
-      guestName: 'Tunde A.',
-      stayType: "Couple's getaway",
-      rating: 4,
-    },
-  ],
-  'classic-room': [
-    {
-      id: 'rt3',
-      quote: '[Sample quote] Simple, quiet and good value for a short stay.',
-      guestName: 'Hauwa M.',
-      stayType: 'Business trip',
-      rating: 4,
-    },
-  ],
-};
-
-const inactiveSlugs = new Set<string>(); // add a slug here to preview the 404 for an inactive room
-
-export function getRoomDetail(slug: string): RoomDetail | null {
-  const rt = roomTypes.find((r) => r.slug === slug);
-  if (!rt || inactiveSlugs.has(slug)) return null;
-  const m = meta[slug];
-  return {
-    ...rt,
-    active: true,
-    basePriceMinor: rt.basePriceNgn * 100,
-    weekendPriceMinor:
-      rt.weekendPriceNgn === null ? null : rt.weekendPriceNgn * 100,
-    extraBedPriceMinor: rt.extraBed.available
-      ? (rt.extraBed.feeNgn ?? 0) * 100
-      : null,
-    viewNotes: viewNotes[slug] ?? '[View and floor to be added]',
-    metaTitle: m?.title ?? null,
-    metaDescription: m?.description ?? null,
-    gallery: rt.images.map((img, i) => ({
-      src: img.src,
-      alt: img.alt,
-      caption: captions[i] ?? `Photo ${i + 1}`,
-    })),
-    testimonials: testimonialsBySlug[slug] ?? [],
-  };
+export async function getRoomDetail(slug: string): Promise<RoomDetail | null> {
+  const [rows, relations] = await Promise.all([
+    getRoomTypesWithDetails(),
+    getRoomRelations(),
+  ]);
+  const found = rows.find((r) => r.row.slug === slug);
+  return found ? mapRoomDetail(found.row, relations) : null;
 }
 
 /** Other rooms closest in price to this one (rooms with no public price rank last). */
-export function getSimilarRooms(room: RoomType, count = 3): RoomType[] {
+export async function getSimilarRooms(
+  room: RoomType,
+  count = 3,
+): Promise<RoomType[]> {
+  const rows = await getRoomTypesWithDetails();
   const distance = (r: RoomType) =>
     r.showPrice && room.showPrice
       ? Math.abs(r.basePriceNgn - room.basePriceNgn)
       : Number.MAX_SAFE_INTEGER;
-  return roomTypes
+  return rows
+    .map((r) => r.room)
     .filter((r) => r.slug !== room.slug)
     .sort((a, b) => distance(a) - distance(b))
     .slice(0, count);

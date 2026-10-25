@@ -8,8 +8,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-import { site } from '@/lib/site';
-import type { TrustItem } from '@/types/site.types';
+import { useSite } from '@/providers/site.provider';
+import type { SiteConfig, TrustItem } from '@/types/site.types';
 
 import { StaggerGroup } from './motion/StaggerGroup';
 import { StaggerItem } from './motion/StaggerItem';
@@ -21,7 +21,7 @@ const icons: Record<TrustItem['id'], LucideIcon> = {
   'power-security': ShieldCheck,
 };
 
-function reviewsLabel(fallback: string): string {
+function reviewsLabel(site: SiteConfig, fallback: string): string {
   const { rating, count } = site.reviews;
   // No invented numbers: show the score only once real values are supplied.
   return rating !== null && count !== null
@@ -29,8 +29,9 @@ function reviewsLabel(fallback: string): string {
     : fallback;
 }
 
-/** Trust signals under the search bar. Items switch on and off in site.ts. */
+/** Trust signals under the search bar, loaded from the database settings. */
 export function TrustStrip({ revealDelay = 0 }: { revealDelay?: number }) {
+  const site = useSite();
   const items = site.trust.filter((t) => t.enabled);
   if (items.length === 0) return null;
 
@@ -44,7 +45,7 @@ export function TrustStrip({ revealDelay = 0 }: { revealDelay?: number }) {
       {items.map((item) => {
         const Icon = icons[item.id];
         const label =
-          item.id === 'reviews' ? reviewsLabel(item.label) : item.label;
+          item.id === 'reviews' ? reviewsLabel(site, item.label) : item.label;
         const inner = (
           <>
             <Icon className="size-5 shrink-0 text-accent-ink" aria-hidden />

@@ -25,7 +25,6 @@ interface ChangePaymentProps {
   reference: string;
   change: PendingChangeView;
   csrf: string;
-  demo: string | null;
   /** Reloads the booking so the new status shows. */
   onRefresh: () => Promise<void>;
   onSessionExpired: () => void;
@@ -39,7 +38,6 @@ export function ChangePayment({
   reference,
   change,
   csrf,
-  demo,
   onRefresh,
   onSessionExpired,
 }: ChangePaymentProps) {
@@ -85,7 +83,6 @@ export function ChangePayment({
           reference,
           { changeId: change.changeId, method, idempotencyKey: key.current },
           csrf,
-          demo,
         )
       ).data;
       if (init.kind === 'redirect') {
@@ -113,7 +110,6 @@ export function ChangePayment({
         change.changeId,
         file,
         csrf,
-        demo,
       );
       await onRefresh();
     } catch (e) {

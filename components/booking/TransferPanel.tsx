@@ -6,7 +6,6 @@ import { useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { checkoutService } from '@/app/api/services/checkout.service';
-import { config } from '@/config';
 import { checkProofFile, MAX_PROOF_BYTES } from '@/schemas/checkout.schema';
 import type { GuestReservation } from '@/types/booking.types';
 import { formatMinor } from '@/types/stay.types';
@@ -45,10 +44,7 @@ export function TransferPanel({
     setError(null);
     setBusy(true);
     try {
-      // Dev preview reference has no stored reservation, so the upload is simulated.
-      if (config.isDev && v.reference === 'DEMO-01')
-        await new Promise((r) => setTimeout(r, 600));
-      else await checkoutService.uploadProof(v.reference, file);
+      await checkoutService.uploadProof(v.reference, file);
       onUploaded();
     } catch (e) {
       setError(

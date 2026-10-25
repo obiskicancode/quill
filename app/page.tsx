@@ -8,13 +8,20 @@ import { Intro } from '@/components/home/Intro';
 import { MapCard } from '@/components/MapCard';
 import { TestimonialCarousel } from '@/components/TestimonialCarousel';
 import {
-  featuredAmenities,
-  featuredRooms,
-  galleryPreview,
-  testimonials,
-} from '@/lib/data';
+  getFeaturedAmenities,
+  getFeaturedRooms,
+  getGalleryPreview,
+  getHomeTestimonials,
+} from '@/lib/content/data';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [featuredRooms, featuredAmenities, galleryPreview, testimonials] =
+    await Promise.all([
+      getFeaturedRooms(),
+      getFeaturedAmenities(),
+      getGalleryPreview(),
+      getHomeTestimonials(),
+    ]);
   return (
     <>
       <Hero />
@@ -22,7 +29,9 @@ export default function HomePage() {
       <Intro />
       <FeaturedRooms rooms={featuredRooms} />
       <Amenities amenities={featuredAmenities} />
-      <GalleryGrid images={galleryPreview} />
+      <GalleryGrid
+        images={galleryPreview.map((g) => ({ src: g.url, alt: g.altText }))}
+      />
       <TestimonialCarousel testimonials={testimonials} />
       <MapCard />
       <CtaBand />

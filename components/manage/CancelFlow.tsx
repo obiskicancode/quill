@@ -23,7 +23,6 @@ interface CancelFlowProps {
   onClose: () => void;
   v: GuestReservation;
   csrf: string;
-  demo: string | null;
   onUpdated: (next: GuestReservation, message: string) => void;
   sessionExpired: boolean;
   onSessionExpired: () => void;
@@ -99,7 +98,6 @@ export function CancelFlow({
   onClose,
   v,
   csrf,
-  demo,
   onUpdated,
   sessionExpired,
   onSessionExpired,
@@ -135,9 +133,7 @@ export function CancelFlow({
   async function loadPreview() {
     setLoadState('loading');
     try {
-      setPreview(
-        (await manageService.cancellationPreview(v.reference, demo)).data,
-      );
+      setPreview((await manageService.cancellationPreview(v.reference)).data);
       setLoadState('ready');
     } catch (e) {
       if (e instanceof ServiceError && e.body?.code === 'session_expired')
@@ -180,7 +176,6 @@ export function CancelFlow({
             expectedRefundMinor: preview.refundMinor,
           },
           csrf,
-          demo,
         )
       ).data;
       setResult(next);

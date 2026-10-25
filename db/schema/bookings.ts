@@ -304,3 +304,91 @@ export const quotes = pgTable(
     index('idx_quotes_expires').on(table.expiresAt),
   ],
 );
+
+export const paymentProofs = pgTable(
+  'payment_proofs',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    paymentId: uuid('payment_id')
+      .notNull()
+      .references(() => payments.id, { onDelete: 'cascade' }),
+    storageKey: text('storage_key').notNull(),
+    mimeType: varchar('mime_type', { length: 100 }).notNull(),
+    sizeBytes: integer('size_bytes').notNull(),
+    uploadedAt: timestamp('uploaded_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index('idx_pp_payment').on(table.paymentId)],
+);
+
+export const refunds = pgTable(
+  'refunds',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    reservationId: uuid('reservation_id')
+      .notNull()
+      .references(() => reservations.id, { onDelete: 'cascade' }),
+    paymentId: uuid('payment_id').references(() => payments.id),
+    amountMinor: integer('amount_minor').notNull(),
+    method: varchar('method', { length: 30 }).notNull().default('none'),
+    status: varchar('status', { length: 30 }).notNull().default('none'),
+    timeline: varchar('timeline', { length: 100 }),
+    reason: text('reason'),
+    providerRef: varchar('provider_ref', { length: 150 }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    processedAt: timestamp('processed_at', { withTimezone: true }),
+  },
+  (table) => [
+    index('idx_refunds_res').on(table.reservationId),
+    index('idx_refunds_status').on(table.status),
+  ],
+);
+
+export const reservationChanges = pgTable(
+  'reservation_changes',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    reservationId: uuid('reservation_id')
+      .notNull()
+      .references(() => reservations.id, { onDelete: 'cascade' }),
+    quoteId: uuid('quote_id').references(() => quotes.id, {
+      onDelete: 'set null',
+    }),
+    newRoomId: uuid('new_room_id').references(() => rooms.id),
+    checkIn: date('check_in').notNull(),
+    checkOut: date('check_out').notNull(),
+    breakdown: jsonb('breakdown').notNull(),
+    totalMinor: integer('total_minor').notNull(),
+    amountDueMinor: integer('amount_due_minor').notNull(),
+    status: varchar('status', { length: 30 })
+      .notNull()
+      .default('awaiting_payment'),
+    method: varchar('method', { length: 20 }),
+    roomReassigned: boolean('room_reassigned').notNull().default(false),
+    policy: jsonb('policy').notNull(),
+    holdExpiresAt: timestamp('hold_expires_at', {
+      withTimezone: true,
+    }).notNull(),
+    paymentId: uuid('payment_id').references(() => payments.id),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('idx_rc_res').on(table.reservationId),
+    index('idx_rc_status').on(table.status),
+    index('idx_rc_hold').on(table.holdExpiresAt),
+  ],
+);

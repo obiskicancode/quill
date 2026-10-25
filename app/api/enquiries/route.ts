@@ -1,8 +1,13 @@
 import { apiFail, apiOk } from '@/app/api/envelope';
-import { config } from '@/config';
-import { rateLimited } from '@/lib/checkout/mock-db';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { getHotelSettings } from '@/lib/content/data';
-import { enquiryStore, saveEnquiry } from '@/lib/content/enquiries';
+import { createEnquiry } from '@/lib/db/repositories/enquiries.repo';
+import {
+  getIdempotencyRecord,
+  setIdempotency,
+} from '@/lib/db/repositories/idempotency.repo';
+import { rateLimit } from '@/lib/rate-limit';
 import { fieldErrorsFrom } from '@/schemas/checkout.schema';
 import {
   enquirySchema,
@@ -24,72 +29,75 @@ const tooMany = () =>
   fail(
     429,
     {
-      code: 'rate_limited',
-      message:
-        'You have sent a few messages already. Please wait a few minutes, or message us on WhatsApp.',
+      code: ERROR_CODES.RATE_LIMITED,
+      message: ERROR_MESSAGES.RATE_LIMITED_ENQUIRY,
       retryAfterSeconds: 600,
     },
     { 'Retry-After': '600' },
   );
 
+const referenceOf = (id: string) =>
+  `ENQ-${id.replace(/-/g, '').slice(0, 6).toUpperCase()}`;
+
 /**
- * Stores a contact enquiry (type, status "new"), emails the contact form recipient, alerts the hotel's notification
- * recipients and sends the guest an auto-reply. Safe to retry: the same idempotency key never creates a second enquiry.
+ * Stores a contact enquiry (type, status "new"). Safe to retry: the same idempotency key never creates a second enquiry.
  */
 export async function POST(req: Request) {
   const client =
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
 
-  // Mistakes in the form are cheap and must not use up the guest's sending allowance, so they get their own generous limit.
   const parsed = enquirySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    if (rateLimited(`enquiry-invalid:${client}`, 30, 10 * 60_000))
+    if (
+      !(await rateLimit(`enquiry-invalid:${client}`, 30, 10 * 60_000)).allowed
+    )
       return tooMany();
     return fail(422, {
-      code: 'validation',
-      message: 'Some details need fixing.',
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.SOME_DETAILS_NEED_FIXING,
       fieldErrors: fieldErrorsFrom(parsed.error),
     });
   }
   const data = parsed.data;
-  const responseHours = getHotelSettings().enquiryResponseHours;
+  const responseHours = (await getHotelSettings()).enquiryResponseHours;
 
-  // Honeypot: bots fill the hidden field. Reply as if it worked, store nothing.
   if (data.website)
     return apiOk<EnquiryResponse>(
       { reference: 'ENQ-000000', responseHours },
       { headers: noStore },
     );
 
-  // Replay of the same key returns the same enquiry and does not count against the limit.
-  const earlier = enquiryStore.keys.get(data.idempotencyKey);
-  if (earlier)
-    return apiOk<EnquiryResponse>(
-      { reference: earlier, responseHours },
-      { headers: noStore },
-    );
+  const idKey = `enquiry:${data.idempotencyKey}`;
+  const earlier = await getIdempotencyRecord(idKey);
+  if (earlier?.response)
+    return apiOk(earlier.response as EnquiryResponse, { headers: noStore });
 
-  // Preview switches (development only).
-  if (config.isDev) {
-    if (data.demo === 'ratelimit') return tooMany();
-    if (
-      data.demo === 'error' &&
-      !enquiryStore.failedOnce.has(data.idempotencyKey)
-    ) {
-      enquiryStore.failedOnce.add(data.idempotencyKey);
-      return fail(503, {
-        code: 'server',
-        message: "We couldn't send your message.",
-      });
-    }
-  }
+  if (!(await rateLimit(`enquiry:${client}`, 3, 10 * 60_000)).allowed)
+    return tooMany();
 
-  // Three new messages per ten minutes per visitor.
-  if (rateLimited(`enquiry:${client}`, 3, 10 * 60_000)) return tooMany();
-
-  const row = saveEnquiry(data);
-  return apiOk<EnquiryResponse>(
-    { reference: row.reference, responseHours },
-    { status: 201, headers: noStore },
-  );
+  const row = await createEnquiry({
+    type: data.topic === 'corporate_account' ? 'corporate' : data.topic,
+    name: data.name,
+    email: data.email,
+    phone: data.phone || null,
+    subject: data.subject || null,
+    message: data.message,
+    checkIn: data.checkIn || null,
+    checkOut: data.checkOut || null,
+    guests: data.guests ? Number(data.guests) : null,
+    roomTypeInterest: data.roomType || null,
+    status: 'new',
+    source: data.source_page ?? null,
+    ipAddress: client === 'local' ? null : client,
+    userAgent: req.headers.get('user-agent'),
+  });
+  const response: EnquiryResponse = {
+    reference: referenceOf(row.id),
+    responseHours,
+  };
+  await setIdempotency(idKey, response, 201, 60 * 24, {
+    method: 'POST',
+    path: '/api/enquiries',
+  });
+  return apiOk(response, { status: 201, headers: noStore });
 }

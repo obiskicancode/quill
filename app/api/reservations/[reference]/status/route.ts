@@ -1,11 +1,13 @@
 import { apiFail, apiOk } from '@/app/api/envelope';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { getAccess } from '@/lib/booking/session';
-import { isDemoRef, loadReservation, statusOf } from '@/lib/booking/view';
+import { loadReservation, statusOf } from '@/lib/booking/view';
 
 const noStore = { 'Cache-Control': 'no-store' };
 
 /**
- * Polled by checkout and by the confirmation page. Needs the signed booking cookie (or the dev demo reference),
+ * Polled by checkout and by the confirmation page. Needs the signed booking cookie,
  * so a bare reference cannot be probed. The answer is the same whether the reference is unknown or not yours.
  */
 export async function GET(
@@ -13,14 +15,13 @@ export async function GET(
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
-  const demo = new URL(req.url).searchParams.get('demo');
-  const allowed = isDemoRef(reference) || (await getAccess(reference)) !== null;
-  const reservation = allowed ? await loadReservation(reference, demo) : null;
+  const allowed = (await getAccess(reference)) !== null;
+  const reservation = allowed ? await loadReservation(reference) : null;
   if (!reservation)
     return apiFail(
       404,
-      'Reservation not found.',
-      { code: 'not_found' },
+      ERROR_MESSAGES.RESERVATION_NOT_FOUND,
+      { code: ERROR_CODES.NOT_FOUND },
       { headers: noStore },
     );
   return apiOk(statusOf(reservation), { headers: noStore });

@@ -1,28 +1,51 @@
 import { apiFail, apiOk } from '@/app/api/envelope';
-import { loadReservation } from '@/lib/booking/view';
-import { logEvent, refresh, store, toStatus } from '@/lib/checkout/mock-db';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { db } from '@/db';
+import { paymentProofs } from '@/db/schema';
+import {
+  createReference,
+  insertPayment,
+  logEvent,
+  saveStoredReservation,
+} from '@/lib/booking/store';
+import { loadReservation, statusOf } from '@/lib/booking/view';
 import { requireManage } from '@/lib/manage/auth';
+import { proofStorageConfigured, uploadProof } from '@/lib/storage/proofs';
 import { checkProofFile } from '@/schemas/checkout.schema';
 import type { ApiError } from '@/types/checkout.types';
 
 const fail = (status: number, error: ApiError) =>
   apiFail(status, error.message, error);
 
-/** Receives the bank-transfer receipt (JPG, PNG, WebP or PDF, up to 5 MB). MOCK: stores only the file's type and size. */
+/** Receives the bank-transfer receipt (JPG, PNG, WebP or PDF, up to 5 MB) and records it against the pending payment. */
 export async function POST(
   req: Request,
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
   const url = new URL(req.url);
+  const form = await req.formData().catch(() => null);
+  const file = form?.get('file');
+  if (!(file instanceof File))
+    return fail(422, {
+      code: ERROR_CODES.BAD_FILE,
+      message: ERROR_MESSAGES.CHOOSE_RECEIPT,
+    });
+  const problem = checkProofFile(file);
+  if (problem)
+    return fail(422, { code: ERROR_CODES.BAD_FILE, message: problem });
+  if (!proofStorageConfigured())
+    return fail(503, {
+      code: ERROR_CODES.UNAVAILABLE,
+      message: ERROR_MESSAGES.RECEIPT_UPLOADS_UNAVAILABLE,
+    });
 
-  // Receipt for the extra payment on a date change (manage page): needs the manage session and CSRF token.
   const changeId = url.searchParams.get('change');
   if (changeId) {
-    const demo = url.searchParams.get('demo');
-    const auth = await requireManage(req, reference, demo);
+    const auth = await requireManage(req, reference);
     if (!auth.ok) return auth.res;
-    const r = await loadReservation(reference, demo);
+    const r = await loadReservation(reference);
     const pc = r?.pendingChange;
     if (
       !r ||
@@ -31,49 +54,79 @@ export async function POST(
       pc.status !== 'awaiting_transfer'
     )
       return fail(409, {
-        code: 'validation',
-        message: 'This date change is not waiting for a transfer.',
+        code: ERROR_CODES.VALIDATION,
+        message: ERROR_MESSAGES.CHANGE_NOT_AWAITING_TRANSFER,
       });
-    const f = (await req.formData().catch(() => null))?.get('file');
-    if (!(f instanceof File))
-      return fail(422, {
-        code: 'bad_file',
-        message: 'Choose a receipt to upload.',
+    let storageKey: string;
+    try {
+      storageKey = await uploadProof({ reference, file });
+    } catch {
+      return fail(502, {
+        code: ERROR_CODES.SERVER,
+        message: ERROR_MESSAGES.RECEIPT_STORAGE_FAILED,
       });
-    const problem = checkProofFile(f);
-    if (problem) return fail(422, { code: 'bad_file', message: problem });
+    }
+    const paymentId = await insertPayment({
+      reservationId: r.id,
+      reference: createReference(),
+      method: 'bank_transfer',
+      amountMinor: pc.amountDueMinor,
+      provider: 'bank_transfer',
+    });
+    await db.insert(paymentProofs).values({
+      paymentId,
+      storageKey,
+      mimeType: file.type,
+      sizeBytes: file.size,
+    });
     pc.status = 'awaiting_verification';
     logEvent(r, 'transfer_proof_received', 'For your new dates', 'guest');
+    await saveStoredReservation(r);
     return apiOk({ ok: true });
   }
 
-  const reservation = store.reservations.get(reference);
+  const reservation = await loadReservation(reference);
   if (!reservation)
-    return fail(404, { code: 'not_found', message: 'Reservation not found.' });
-  refresh(reservation);
+    return fail(404, {
+      code: ERROR_CODES.NOT_FOUND,
+      message: ERROR_MESSAGES.RESERVATION_NOT_FOUND,
+    });
   if (reservation.status === 'expired')
     return fail(410, {
-      code: 'hold_expired',
-      message: 'The hold on this room has ended.',
+      code: ERROR_CODES.HOLD_EXPIRED,
+      message: ERROR_MESSAGES.HOLD_EXPIRED,
     });
   if (reservation.status !== 'awaiting_transfer')
     return fail(409, {
-      code: 'validation',
-      message: 'This reservation is not waiting for a transfer.',
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.RESERVATION_NOT_AWAITING_TRANSFER,
     });
 
-  const form = await req.formData().catch(() => null);
-  const file = form?.get('file');
-  if (!(file instanceof File))
-    return fail(422, {
-      code: 'bad_file',
-      message: 'Choose a receipt to upload.',
+  let storageKey: string;
+  try {
+    storageKey = await uploadProof({ reference, file });
+  } catch {
+    return fail(502, {
+      code: ERROR_CODES.SERVER,
+      message: ERROR_MESSAGES.RECEIPT_STORAGE_FAILED,
     });
-  const problem = checkProofFile(file);
-  if (problem) return fail(422, { code: 'bad_file', message: problem });
-
+  }
+  const paymentId = await insertPayment({
+    reservationId: reservation.id,
+    reference: createReference(),
+    method: 'bank_transfer',
+    amountMinor: reservation.totals.dueNowMinor,
+    provider: 'bank_transfer',
+  });
+  await db.insert(paymentProofs).values({
+    paymentId,
+    storageKey,
+    mimeType: file.type,
+    sizeBytes: file.size,
+  });
   reservation.proof = { type: file.type, size: file.size };
   reservation.status = 'awaiting_verification';
   logEvent(reservation, 'transfer_proof_received', undefined, 'guest');
-  return apiOk(toStatus(reservation));
+  await saveStoredReservation(reservation);
+  return apiOk(statusOf(reservation));
 }

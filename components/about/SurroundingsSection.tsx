@@ -1,15 +1,12 @@
 import { Reveal, StaggerGroup, StaggerItem } from '@/components/motion';
 import { getAttractions, getSitePage } from '@/lib/content/data';
-import type { PreviewFlags } from '@/lib/content/preview';
 
 import { TextLink } from '../ui/TextLink';
 
 /** Short text about the area, a list of nearby attractions and a link to Contact. Omitted when there is nothing to say. */
-export async function SurroundingsSection({ flags }: { flags: PreviewFlags }) {
-  const attractions = await getAttractions(flags);
-  const text = flags.has('empty', 'surroundings')
-    ? ''
-    : (getSitePage('about').content.surroundingsText ?? '');
+export async function SurroundingsSection() {
+  const attractions = await getAttractions();
+  const text = (await getSitePage('about')).content.surroundingsText ?? '';
   if (!text && attractions.length === 0) return null;
   return (
     <section aria-labelledby="area-title" className="section-y bg-surface">

@@ -92,8 +92,6 @@ export interface QuoteRequest {
   extras: ExtraSelection[];
   /** What the guest last saw on the room page. Only used to show "Price updated". */
   seenTotalMinor?: number | null;
-  /** Comma-separated mock switches (see the preview checklist). */
-  demo?: string | null;
 }
 
 export type CheckoutQuoteResponse =
@@ -162,7 +160,6 @@ export interface PaymentInitRequest {
   reference: string;
   method: PaymentMethod;
   idempotencyKey: string;
-  demo?: string | null;
   /** 'change' pays the difference for a date change on the manage page. */
   purpose?: 'booking' | 'change';
   changeId?: string;

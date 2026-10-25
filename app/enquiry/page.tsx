@@ -7,10 +7,8 @@ import { SectionSkeleton } from '@/components/content/Skeletons';
 import { CtaBand } from '@/components/CtaBand';
 import { EnquiryForm } from '@/components/enquiry/EnquiryForm';
 import { EnquirySection } from '@/components/enquiry/EnquirySection';
-import { config } from '@/config';
 import { getFormSettings, getHotelSettings } from '@/lib/content/data';
-import { parsePreview } from '@/lib/content/preview';
-import { roomTypes } from '@/lib/rooms';
+import { getRoomTypesWithDetails } from '@/lib/db/queries/content-data';
 
 export const metadata: Metadata = {
   title: 'Booking enquiry',
@@ -38,15 +36,14 @@ export default async function EnquiryPage({
     const v = sp[name];
     return Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
   };
-  const flags = config.isProd
-    ? parsePreview(undefined)
-    : parsePreview(sp.preview);
-  const settings = await getFormSettings(flags);
+  const settings = await getFormSettings();
   if (!settings) notFound();
-  const hotel = getHotelSettings();
+  const [hotel, roomRows] = await Promise.all([
+    getHotelSettings(),
+    getRoomTypesWithDetails(),
+  ]);
   const refCode = safeRef(get('ref'));
   const room = get('room');
-  const demo = get('demo');
 
   const whatsapp = `https://wa.me/${hotel.whatsappNumber}?text=${encodeURIComponent(hotel.whatsappPrefillMessage)}`;
 
@@ -71,12 +68,11 @@ export default async function EnquiryPage({
       >
         <div className="container-page section-y max-w-4xl">
           <EnquiryForm
-            rooms={roomTypes}
+            rooms={roomRows.map((r) => r.room)}
             responseHours={settings.responseHours}
             whatsappHref={whatsapp}
             initialRoom={room}
             sourcePage={source}
-            demo={demo}
           />
         </div>
       </Section>

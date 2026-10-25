@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { normalizePhone } from '@/schemas/checkout.schema';
 import { ENQUIRY_TOPICS, type EnquiryTopic } from '@/types/content.types';
 
@@ -47,54 +49,47 @@ export const enquiryFields = z.object({
     .string()
     .trim()
     .min(2, 'Enter your name.')
-    .max(100, 'Keep your name under 100 characters.'),
+    .max(100, ERROR_MESSAGES.NAME_TOO_LONG),
   email: z
     .string()
     .trim()
     .toLowerCase()
-    .min(1, 'Enter your email address.')
-    .email('Enter a valid email address, like name@example.com.'),
-  phone: z
-    .string()
-    .trim()
-    .max(30, 'That phone number is too long.')
-    .default(''),
+    .min(1, ERROR_MESSAGES.EMAIL_REQUIRED)
+    .email(ERROR_MESSAGES.EMAIL_INVALID),
+  phone: z.string().trim().max(30, ERROR_MESSAGES.PHONE_TOO_LONG).default(''),
   topic: z.enum(ENQUIRY_TOPICS, {
-    message: 'Choose what your message is about.',
+    message: ERROR_MESSAGES.TOPIC_REQUIRED,
   }),
   subject: z
     .string()
     .trim()
-    .max(120, 'Keep the subject under 120 characters.')
+    .max(120, ERROR_MESSAGES.SUBJECT_TOO_LONG)
     .default(''),
   message: z
     .string()
     .trim()
-    .min(10, 'Tell us a little more, at least 10 characters.')
-    .max(
-      MAX_MESSAGE,
-      `Keep your message under ${MAX_MESSAGE.toLocaleString('en-NG')} characters.`,
-    ),
+    .min(10, ERROR_MESSAGES.ENQUIRY_MESSAGE_TOO_SHORT)
+    .max(MAX_MESSAGE, ERROR_MESSAGES.ENQUIRY_MESSAGE_TOO_LONG(MAX_MESSAGE)),
   checkIn: isoOrEmpty.default(''),
   checkOut: isoOrEmpty.default(''),
   guests: z
     .string()
-    .regex(/^\d{0,4}$/, 'Enter the number of guests as a whole number.')
+    .regex(/^\d{0,4}$/, ERROR_MESSAGES.GUESTS_INVALID)
     .default(''),
   /** Booking enquiry: adults and children are asked separately. */
   adults: z
     .string()
-    .regex(/^\d{0,2}$/, 'Enter the number of adults as a whole number.')
+    .regex(/^\d{0,2}$/, ERROR_MESSAGES.ADULTS_INVALID)
     .default(''),
   children: z
     .string()
-    .regex(/^\d{0,2}$/, 'Enter the number of children as a whole number.')
+    .regex(/^\d{0,2}$/, ERROR_MESSAGES.CHILDREN_INVALID)
     .default(''),
   roomType: z.string().max(80).default(''),
   /** Which page sent this. Helps the hotel spot a broken link. */
   source_page: z.string().trim().max(40).default(''),
   consent: z.literal(true, {
-    message: 'Please agree to the Privacy Policy so we can reply to you.',
+    message: ERROR_MESSAGES.CONSENT_REQUIRED,
   }),
 });
 
@@ -111,8 +106,7 @@ function refine(
     ctx.addIssue({
       code: 'custom',
       path: ['phone'],
-      message:
-        'Enter a valid phone number. Include the country code if it is not a Nigerian number.',
+      message: ERROR_MESSAGES.INVALID_NIGERIAN_PHONE,
     });
   }
   const stayShown =
@@ -121,7 +115,7 @@ function refine(
     ctx.addIssue({
       code: 'custom',
       path: ['checkOut'],
-      message: 'Check-out must be after check-in.',
+      message: ERROR_MESSAGES.CHECKOUT_AFTER_CHECKIN,
     });
   }
   if (STAY_REQUIRED_TOPICS.includes(v.topic)) {
@@ -129,26 +123,26 @@ function refine(
       ctx.addIssue({
         code: 'custom',
         path: ['checkIn'],
-        message: 'Choose your check-in date.',
+        message: ERROR_MESSAGES.CHECKIN_REQUIRED,
       });
     if (!v.checkOut)
       ctx.addIssue({
         code: 'custom',
         path: ['checkOut'],
-        message: 'Choose your check-out date.',
+        message: ERROR_MESSAGES.CHECKOUT_REQUIRED,
       });
     if (Number(v.adults || v.guests) < 1)
       ctx.addIssue({
         code: 'custom',
         path: ['adults'],
-        message: 'Enter at least 1 adult.',
+        message: ERROR_MESSAGES.ADULT_REQUIRED,
       });
   }
   if (v.guests && Number(v.guests) < 1)
     ctx.addIssue({
       code: 'custom',
       path: ['guests'],
-      message: 'Enter at least 1 guest.',
+      message: ERROR_MESSAGES.GUEST_REQUIRED,
     });
 }
 
@@ -161,8 +155,6 @@ export const enquirySchema = enquiryFields
     idempotencyKey: z.string().min(16).max(64),
     /** Honeypot: people never see or fill this. */
     website: z.string().max(200).optional(),
-    /** Dev-only preview switch (ratelimit, error). Ignored in production. */
-    demo: z.string().max(40).nullish(),
   })
   .superRefine(refine);
 
@@ -175,7 +167,10 @@ export interface EnquiryResponse {
 }
 
 export interface EnquiryError {
-  code: 'validation' | 'rate_limited' | 'server';
+  code:
+    | typeof ERROR_CODES.VALIDATION
+    | typeof ERROR_CODES.RATE_LIMITED
+    | typeof ERROR_CODES.SERVER;
   message: string;
   fieldErrors?: Record<string, string>;
   retryAfterSeconds?: number;

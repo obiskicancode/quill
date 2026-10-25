@@ -14,12 +14,12 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { formatShort } from '@/lib/dates';
 import { formatNaira } from '@/lib/format';
 import { formatRange } from '@/lib/room-query';
-import { site, whatsappHref } from '@/lib/site';
+import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 import {
   bookingHref,
   formatMinor,
   stayParams,
-  type QuoteDemo,
   type StayInput,
   type StayPatch,
 } from '@/types/stay.types';
@@ -49,7 +49,6 @@ export interface BookingRoom {
 interface BookingCardProps {
   room: BookingRoom;
   initial: StayInput;
-  demo: QuoteDemo | null;
   bestPriceDirect: boolean;
 }
 
@@ -61,9 +60,9 @@ interface BookingCardProps {
 export function BookingCard({
   room,
   initial,
-  demo,
   bestPriceDirect,
 }: BookingCardProps) {
+  const site = useSite();
   const router = useRouter();
   const pathname = usePathname();
   const [stay, setStay] = useState<StayInput>(initial);
@@ -76,7 +75,7 @@ export function BookingCard({
   const needsExtra = room.extraBed.available && guests > room.baseGuests;
   const complete = Boolean(stay.checkIn && stay.checkOut);
   const quoteInput = room.showPrice && complete ? stay : null;
-  const { state, retry } = useQuote(room.slug, quoteInput, demo);
+  const { state, retry } = useQuote(room.slug, quoteInput);
   const data = state.status === 'ready' ? state.data : null;
 
   const patch = (p: StayPatch) => setStay((s) => ({ ...s, ...p }));
@@ -98,9 +97,8 @@ export function BookingCard({
     }
     const p = stayParams(stay);
     if (needsExtra && !stay.extraBed) p.set('extraBed', '0');
-    if (demo) p.set('demo', demo);
     router.replace(`${pathname}?${p.toString()}`, { scroll: false });
-  }, [stay, demo, needsExtra, pathname, router]);
+  }, [stay, needsExtra, pathname, router]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -428,7 +426,7 @@ export function BookingCard({
       <div className="space-y-3">
         {primary}
         <ButtonLink
-          href={whatsappHref(whatsappMessage)}
+          href={whatsappHref(site, whatsappMessage)}
           external
           variant="secondary"
           className="w-full"

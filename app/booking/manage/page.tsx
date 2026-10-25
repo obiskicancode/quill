@@ -3,11 +3,7 @@ import type { Metadata } from 'next';
 import { CheckoutShell } from '@/components/checkout/CheckoutShell';
 import { ManageGate } from '@/components/manage/ManageGate';
 import { getManageSession } from '@/lib/booking/session';
-import {
-  buildGuestReservation,
-  isDemoRef,
-  loadReservation,
-} from '@/lib/booking/view';
+import { buildGuestReservation, loadReservation } from '@/lib/booking/view';
 import { manageOpts } from '@/lib/manage/auth';
 import { referenceSchema } from '@/schemas/booking.schema';
 import type { GuestReservation } from '@/types/booking.types';
@@ -37,39 +33,20 @@ export default async function ManagePage({
   // ?ref= only pre-fills the lookup form. Only a live session cookie opens a booking.
   const parsed = referenceSchema.safeParse(get('ref') ?? '');
   const reference = parsed.success ? parsed.data : '';
-  const demo = reference && isDemoRef(reference) ? get('demo') : null;
 
   let initial: GuestReservation | null = null;
-  if (reference) {
-    if (isDemoRef(reference)) {
-      if (demo !== 'lookup') {
-        if (demo?.split(',').includes('slowload'))
-          await new Promise((r) => setTimeout(r, 3000));
-        const stored = await loadReservation(reference, demo);
-        const opts = await manageOpts(reference);
-        if (stored)
-          initial = buildGuestReservation(stored, 'verified', { manage: opts });
-      }
-    } else if (await getManageSession(reference)) {
-      const stored = await loadReservation(reference, null);
-      const opts = await manageOpts(reference);
-      if (stored && opts)
-        initial = buildGuestReservation(stored, 'verified', { manage: opts });
-    }
+  if (reference && (await getManageSession(reference))) {
+    const stored = await loadReservation(reference);
+    const opts = await manageOpts(reference);
+    if (stored && opts)
+      initial = await buildGuestReservation(stored, 'verified', {
+        manage: opts,
+      });
   }
 
   return (
     <CheckoutShell label="Manage booking" backToHome>
-      <ManageGate
-        initial={initial}
-        reference={reference}
-        demo={demo}
-        notice={
-          demo === 'lookup'
-            ? 'Your session ended for your security. Please look up your booking again.'
-            : undefined
-        }
-      />
+      <ManageGate initial={initial} reference={reference} notice={undefined} />
     </CheckoutShell>
   );
 }

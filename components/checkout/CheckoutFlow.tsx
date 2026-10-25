@@ -73,7 +73,6 @@ interface CheckoutFlowProps {
   room: SummaryRoom & { slug: string };
   stay: { checkIn: string; checkOut: string; adults: number; children: number };
   initialQuote: CheckoutQuoteResponse;
-  demo: string | null;
   seenTotalMinor: number | null;
   resumeReference: string | null;
   hotelTimes: { checkIn: string; checkOut: string };
@@ -83,7 +82,6 @@ export function CheckoutFlow({
   room,
   stay,
   initialQuote,
-  demo,
   resumeReference,
   hotelTimes,
 }: CheckoutFlowProps) {
@@ -182,13 +180,9 @@ export function CheckoutFlow({
         adults: String(stay.adults),
         children: String(stay.children),
       });
-      const keep = (demo ?? '')
-        .split(',')
-        .filter((d) => d && d !== 'unavailable' && d !== 'changed');
-      if (keep.length) p.set('demo', keep.join(','));
       return `/checkout?${p.toString()}`;
     },
-    [room.slug, stay.adults, stay.children, demo],
+    [room.slug, stay.adults, stay.children],
   );
   const staySearch = new URLSearchParams({
     checkIn: stay.checkIn,
@@ -206,10 +200,9 @@ export function CheckoutFlow({
       extraBed,
       extras: selections,
       seenTotalMinor: null,
-      demo,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [room.slug, stay, extraBed, quantities, demo],
+    [room.slug, stay, extraBed, quantities],
   );
 
   // --- live re-quote when extras or the extra bed change ---
@@ -341,7 +334,6 @@ export function CheckoutFlow({
         reference,
         method,
         idempotencyKey: key,
-        demo,
       })
     ).data;
     if (init.kind === 'redirect') {
@@ -406,7 +398,6 @@ export function CheckoutFlow({
           expectedTotalMinor: ok.breakdown.totalMinor,
           termsAccepted: true,
           website,
-          demo,
         };
         const res = (await checkoutService.createReservation(body)).data;
         current = {
@@ -453,11 +444,6 @@ export function CheckoutFlow({
         (
           await checkoutService.quote({
             ...quoteRequest(),
-            demo:
-              (demo ?? '')
-                .split(',')
-                .filter((d) => d !== 'unavailable')
-                .join(',') || null,
           })
         ).data,
       );

@@ -1,17 +1,11 @@
 import { addDays, nightsBetween, todayISO, type ISODate } from './dates';
+import { countAvailableRoomsByType } from './db/repositories/rooms.repo';
 import {
   isWeekendNight,
   maxGuests,
   nightlyPrice,
   type RoomType,
 } from './rooms';
-
-/**
- * MOCK availability. Replace fetchAvailability with a call to your real endpoint and keep the return shape.
- * Results are deterministic per room and date, so the same dates always give the same answer.
- */
-
-export type DemoMode = 'loading' | 'error' | 'soldout' | 'low';
 
 export interface StayParams {
   checkIn: ISODate;
@@ -42,26 +36,6 @@ export type RoomAvailability =
 
 export type AvailabilityMap = Record<string, RoomAvailability>;
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-function hash(s: string): number {
-  let h = 0;
-  for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return h;
-}
-
-/** Rooms left for a given arrival date: 0 means sold out. */
-function remainingFor(
-  room: RoomType,
-  checkIn: ISODate,
-  demo: DemoMode | null,
-  requested: boolean,
-): number {
-  if (requested && demo === 'soldout') return 0;
-  if (requested && demo === 'low') return 1;
-  return hash(room.id + checkIn) % 6;
-}
-
 function totalFor(room: RoomType, checkIn: ISODate, nights: number): number {
   let total = 0;
   for (let i = 0; i < nights; i++)
@@ -72,13 +46,31 @@ function totalFor(room: RoomType, checkIn: ISODate, nights: number): number {
 export async function fetchAvailability(
   stay: StayParams,
   rooms: RoomType[],
-  demo: DemoMode | null,
 ): Promise<AvailabilityMap> {
-  await sleep(demo === 'loading' ? 20_000 : 600);
-  if (demo === 'error') throw new Error('Availability service unavailable');
-
   const nights = nightsBetween(stay.checkIn, stay.checkOut);
+  const availability = await countAvailableRoomsByType(
+    rooms.map((r) => r.id),
+    stay.checkIn,
+    stay.checkOut,
+  );
   const result: AvailabilityMap = {};
+
+  const suggestionDates = rooms.flatMap(() =>
+    [-2, -1, 1, 2, 3].map((offset) => addDays(stay.checkIn, offset)),
+  );
+  const uniqueDates = [...new Set(suggestionDates)].filter(
+    (date) => date >= todayISO() && date !== stay.checkIn,
+  );
+  const suggestionsByDate = await Promise.all(
+    uniqueDates.map(async (date) => ({
+      date,
+      availability: await countAvailableRoomsByType(
+        rooms.map((r) => r.id),
+        date,
+        addDays(date, nights),
+      ),
+    })),
+  );
 
   for (const room of rooms) {
     if (
@@ -105,19 +97,17 @@ export async function fetchAvailability(
       };
       continue;
     }
-    const remaining = remainingFor(room, stay.checkIn, demo, true);
+    const count = availability.get(room.id);
+    const remaining = count ? Math.max(0, count.available) : 0;
     if (remaining === 0) {
       const suggestions: DateSuggestion[] = [];
-      for (const offset of [-2, -1, 1, 2, 3]) {
-        const start = addDays(stay.checkIn, offset);
-        if (start < todayISO()) continue;
-        if (remainingFor(room, start, demo, false) > 0) {
-          suggestions.push({
-            checkIn: start,
-            checkOut: addDays(start, nights),
-            totalNgn: totalFor(room, start, nights),
-          });
-        }
+      for (const { date, availability: slots } of suggestionsByDate) {
+        if ((slots.get(room.id)?.available ?? 0) <= 0) continue;
+        suggestions.push({
+          checkIn: date,
+          checkOut: addDays(date, nights),
+          totalNgn: totalFor(room, date, nights),
+        });
         if (suggestions.length === 3) break;
       }
       result[room.id] = { status: 'sold-out', suggestions };

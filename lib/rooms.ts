@@ -1,12 +1,5 @@
 import type { AmenityKey, ImageAsset } from '@/types/site.types';
 
-import { amenityLabels } from './data';
-
-/*
- * PLACEHOLDER CONTENT. In production these come from the database.
- * Prices, sizes and policies below are samples: replace them before launch.
- */
-
 export type RoomAmenityKey = AmenityKey | 'kitchenette' | 'balcony';
 export type BedType = 'queen' | 'king' | 'twin' | 'double';
 
@@ -42,11 +35,23 @@ export interface RoomType {
 }
 
 export const roomAmenityLabels: Record<RoomAmenityKey, string> = {
-  ...amenityLabels,
+  wifi: 'Wi-Fi',
+  parking: 'Free parking',
+  restaurant: 'Restaurant',
+  pool: 'Pool',
+  power: '24/7 power',
+  security: 'Security',
+  conference: 'Conference room',
+  airport: 'Airport transfer',
+  ac: 'Air conditioning',
+  tv: 'Smart TV',
+  kitchen: 'Kitchen',
+  breakfast: 'Breakfast',
+  laundry: 'Laundry',
+  workdesk: 'Work desk',
   kitchenette: 'Kitchenette',
   balcony: 'Balcony',
 };
-
 export const bedTypeLabels: Record<BedType, string> = {
   queen: 'Queen bed',
   king: 'King bed',
@@ -148,213 +153,3 @@ export function nightlyPrice(room: RoomType, iso: string): number {
     ? room.weekendPriceNgn
     : room.basePriceNgn;
 }
-
-const photos = (prefix: string, count: number, name: string): ImageAsset[] =>
-  Array.from({ length: count }, (_, i) => ({
-    src: `/images/rooms/${prefix}-${i + 1}.webp`,
-    alt: `${name}, photo ${i + 1} of ${count}`,
-  }));
-
-export const roomTypes: RoomType[] = [
-  {
-    id: 'rt-classic',
-    slug: 'classic-room',
-    name: 'Classic Room',
-    description:
-      'A quiet, well-lit room with a queen bed and a work corner. Good for a short business stay.',
-    bedConfig: '1 queen bed',
-    bedType: 'queen',
-    sizeSqm: 22,
-    maxAdults: 2,
-    maxChildren: 1,
-    extraBed: { available: true, feeNgn: 10000 },
-    basePriceNgn: 45000,
-    weekendPriceNgn: 50000,
-    showPrice: true,
-    breakfastIncluded: false,
-    taxesIncluded: true,
-    minStayNights: 1,
-    popular: false,
-    amenities: ['ac', 'wifi', 'tv', 'workdesk', 'power', 'security'],
-    images: photos('classic', 3, 'Classic Room'),
-  },
-  {
-    id: 'rt-deluxe',
-    slug: 'deluxe-room',
-    name: 'Deluxe Room',
-    description:
-      'More space, a king bed and a private balcony. Breakfast is included in the rate.',
-    bedConfig: '1 king bed',
-    bedType: 'king',
-    sizeSqm: 28,
-    maxAdults: 2,
-    maxChildren: 1,
-    extraBed: { available: true, feeNgn: 10000 },
-    basePriceNgn: 65000,
-    weekendPriceNgn: 72000,
-    showPrice: true,
-    breakfastIncluded: true,
-    taxesIncluded: true,
-    minStayNights: 1,
-    popular: true,
-    amenities: ['ac', 'wifi', 'workdesk', 'tv', 'balcony', 'power'],
-    images: photos('deluxe', 4, 'Deluxe Room'),
-  },
-  {
-    id: 'rt-executive',
-    slug: 'executive-suite',
-    name: 'Executive Suite',
-    description:
-      'A king bedroom with a separate lounge and kitchenette. Suits longer work trips and small meetings.',
-    bedConfig: '1 king bed and lounge',
-    bedType: 'king',
-    sizeSqm: 40,
-    maxAdults: 2,
-    maxChildren: 2,
-    extraBed: { available: true, feeNgn: 0 },
-    basePriceNgn: 110000,
-    weekendPriceNgn: 120000,
-    showPrice: true,
-    breakfastIncluded: true,
-    taxesIncluded: false,
-    minStayNights: 1,
-    popular: false,
-    amenities: [
-      'ac',
-      'wifi',
-      'workdesk',
-      'kitchenette',
-      'balcony',
-      'tv',
-      'power',
-    ],
-    images: photos('executive', 5, 'Executive Suite'),
-  },
-  {
-    id: 'rt-one-bed',
-    slug: 'one-bedroom-apartment',
-    name: 'One-Bedroom Apartment',
-    description:
-      'A full apartment with a bedroom, living area and kitchenette. Best for stays of two nights or more.',
-    bedConfig: '1 king bed and sofa bed',
-    bedType: 'king',
-    sizeSqm: 55,
-    maxAdults: 3,
-    maxChildren: 1,
-    extraBed: { available: false, feeNgn: null },
-    basePriceNgn: 95000,
-    weekendPriceNgn: 105000,
-    showPrice: true,
-    breakfastIncluded: false,
-    taxesIncluded: true,
-    minStayNights: 2,
-    popular: false,
-    amenities: ['kitchenette', 'ac', 'wifi', 'tv', 'power', 'security'],
-    images: photos('one-bed', 3, 'One-Bedroom Apartment'),
-  },
-  {
-    id: 'rt-twin',
-    slug: 'twin-room',
-    name: 'Twin Room',
-    description:
-      'Two single beds in a calm room, ideal for colleagues or friends travelling together.',
-    bedConfig: '2 single beds',
-    bedType: 'twin',
-    sizeSqm: 24,
-    maxAdults: 2,
-    maxChildren: 1,
-    extraBed: { available: false, feeNgn: null },
-    basePriceNgn: 52000,
-    weekendPriceNgn: 58000,
-    showPrice: true,
-    breakfastIncluded: false,
-    taxesIncluded: true,
-    minStayNights: 1,
-    popular: false,
-    amenities: ['ac', 'wifi', 'tv'],
-    images: photos('twin', 2, 'Twin Room'),
-  },
-  {
-    id: 'rt-family',
-    slug: 'family-apartment',
-    name: 'Family Apartment',
-    description:
-      'Two bedrooms worth of space with a kitchenette and balcony. Rates depend on the dates and group size.',
-    bedConfig: '2 double beds',
-    bedType: 'double',
-    sizeSqm: 70,
-    maxAdults: 4,
-    maxChildren: 2,
-    extraBed: { available: true, feeNgn: 15000 },
-    basePriceNgn: 0,
-    weekendPriceNgn: null,
-    showPrice: false,
-    breakfastIncluded: false,
-    taxesIncluded: true,
-    minStayNights: 1,
-    popular: false,
-    amenities: ['kitchenette', 'ac', 'tv', 'wifi', 'balcony', 'parking'],
-    images: photos('family', 3, 'Family Apartment'),
-  },
-  {
-    id: 'rt-studio',
-    slug: 'studio-apartment',
-    name: 'Studio Apartment',
-    description:
-      'An open-plan studio with a queen bed, kitchenette and desk. Self-contained and easy to settle into.',
-    bedConfig: '1 queen bed',
-    bedType: 'queen',
-    sizeSqm: 35,
-    maxAdults: 2,
-    maxChildren: 1,
-    extraBed: { available: true, feeNgn: 10000 },
-    basePriceNgn: 78000,
-    weekendPriceNgn: 85000,
-    showPrice: true,
-    breakfastIncluded: false,
-    taxesIncluded: true,
-    minStayNights: 1,
-    popular: false,
-    amenities: ['kitchenette', 'ac', 'wifi', 'workdesk'],
-    images: photos('studio', 1, 'Studio Apartment'),
-  },
-  {
-    id: 'rt-two-bed',
-    slug: 'two-bedroom-apartment',
-    name: 'Two-Bedroom Apartment with Dining Area',
-    description:
-      'Two bedrooms, a dining area and a full kitchenette. Room for a family or a small team.',
-    bedConfig: '1 king bed and 2 single beds',
-    bedType: 'king',
-    sizeSqm: 85,
-    maxAdults: 4,
-    maxChildren: 2,
-    extraBed: { available: true, feeNgn: 0 },
-    basePriceNgn: 150000,
-    weekendPriceNgn: 165000,
-    showPrice: true,
-    breakfastIncluded: true,
-    taxesIncluded: false,
-    minStayNights: 1,
-    popular: false,
-    amenities: [
-      'kitchenette',
-      'ac',
-      'wifi',
-      'tv',
-      'balcony',
-      'parking',
-      'power',
-      'security',
-    ],
-    images: photos('two-bed', 8, 'Two-Bedroom Apartment'),
-  },
-];
-
-export const policyHighlights = {
-  checkIn: '[2:00 pm]',
-  checkOut: '[12:00 noon]',
-  cancellation:
-    '[Add a one-line cancellation summary, for example free cancellation until 48 hours before arrival.]',
-  fullPoliciesHref: '/policies/cancellation-policy',
-};

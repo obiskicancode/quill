@@ -1,7 +1,10 @@
+'use client';
+
 import { MessageCircle, Phone } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { site, telHref, whatsappHref } from '@/lib/site';
+import { telHref, whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 
 import { ButtonLink } from './ui/Button';
 
@@ -20,13 +23,17 @@ export function HelpBlock({
   variant = 'section',
   title = 'Not sure which room fits?',
   text = 'Tell us who is travelling and for how long. We will suggest the right room and check the dates for you.',
-  message = `Hello ${site.name}, I'm not sure which room suits us. Can you help?`,
+  message,
   children,
 }: HelpBlockProps) {
+  const site = useSite();
+  const whatsappMessage =
+    message ??
+    `Hello ${site.name}, I'm not sure which room suits us. Can you help?`;
   const buttons = (
     <div className="flex flex-col gap-3 sm:flex-row">
       <ButtonLink
-        href={whatsappHref(message)}
+        href={whatsappHref(site, whatsappMessage)}
         external
         variant="whatsapp"
         icon={<MessageCircle className="size-5" aria-hidden />}
@@ -34,7 +41,7 @@ export function HelpBlock({
         Chat on WhatsApp
       </ButtonLink>
       <ButtonLink
-        href={telHref()}
+        href={telHref(site)}
         variant="secondary"
         icon={<Phone className="size-5" aria-hidden />}
       >

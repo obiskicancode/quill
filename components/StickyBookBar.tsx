@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { site } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 
 import { ButtonLink } from './ui/Button';
 
@@ -11,6 +11,7 @@ import { ButtonLink } from './ui/Button';
  * On pages with no search bar it simply stays visible. Right padding leaves room for the WhatsApp button.
  */
 export function StickyBookBar() {
+  const site = useSite();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {

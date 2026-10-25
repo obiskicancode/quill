@@ -1,3 +1,4 @@
+import { getPublicSite } from '@/lib/content/data';
 import { whatsappHref } from '@/lib/site';
 import type { Room } from '@/types/site.types';
 
@@ -8,7 +9,8 @@ import { RoomCard } from '../RoomCard';
 import { SectionHeading } from '../ui/SectionHeading';
 import { TextLink } from '../ui/TextLink';
 
-export function FeaturedRooms({ rooms }: { rooms: Room[] }) {
+export async function FeaturedRooms({ rooms }: { rooms: Room[] }) {
+  const site = await getPublicSite();
   const visible = rooms.slice(0, 4);
   // Static class names so Tailwind can see them.
   const columns = visible.length === 4 ? 'xl:grid-cols-4' : 'xl:grid-cols-3';
@@ -43,7 +45,7 @@ export function FeaturedRooms({ rooms }: { rooms: Room[] }) {
               your dates.
             </p>
             <div className="mt-4">
-              <TextLink href={whatsappHref()} external>
+              <TextLink href={whatsappHref(site)} external>
                 Chat on WhatsApp
               </TextLink>
             </div>

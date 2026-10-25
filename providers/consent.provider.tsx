@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
 export type ConsentState = 'unknown' | 'granted' | 'denied';
@@ -42,7 +43,7 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
 
 export function useConsent() {
   const ctx = useContext(ConsentContext);
-  if (!ctx) throw new Error('useConsent must be used within ConsentProvider');
+  if (!ctx) throw new Error(ERROR_MESSAGES.CONSENT_PROVIDER_MISSING);
   return ctx;
 }
 

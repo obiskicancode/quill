@@ -9,17 +9,16 @@ import { PageHero } from '@/components/content/PageHero';
 import { Section } from '@/components/content/Section';
 import { SectionSkeleton } from '@/components/content/Skeletons';
 import { CtaBand } from '@/components/CtaBand';
-import { config } from '@/config';
 import {
   getFacilities,
   getHotelSettings,
+  getPublicSite,
   getSitePage,
 } from '@/lib/content/data';
 import { hotelJsonLd } from '@/lib/content/jsonld';
-import { parsePreview } from '@/lib/content/preview';
 
-export function generateMetadata(): Metadata {
-  const page = getSitePage('amenities');
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getSitePage('amenities');
   const title = page.metaTitle ?? page.title;
   const description = page.metaDescription ?? page.intro;
   return {
@@ -36,25 +35,19 @@ export function generateMetadata(): Metadata {
   };
 }
 
-export default async function AmenitiesPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  // Preview switches exist only in development. Not reading searchParams in production keeps this page static.
-  const flags = config.isProd
-    ? parsePreview(undefined)
-    : parsePreview((await searchParams).preview);
-  const page = getSitePage('amenities');
+export default async function AmenitiesPage() {
+  const [page, settings, site] = await Promise.all([
+    getSitePage('amenities'),
+    getHotelSettings(),
+    getPublicSite(),
+  ]);
   // For the structured data only: a failing facilities section must not stop the page.
-  const facilities = await getFacilities(parsePreview(undefined)).catch(
-    () => [],
-  );
+  const facilities = await getFacilities().catch(() => []);
 
   return (
     <>
       <JsonLd
-        data={hotelJsonLd(getHotelSettings(), {
+        data={hotelJsonLd(settings, site, {
           description: page.metaDescription ?? page.intro,
           image: page.heroImage.src,
           facilities,
@@ -73,7 +66,7 @@ export default async function AmenitiesPage({
           <SectionSkeleton variant="text-image" label="Loading facilities" />
         }
       >
-        <FacilitiesSection flags={flags} />
+        <FacilitiesSection />
       </Section>
       <Section
         label="room amenities"
@@ -81,7 +74,7 @@ export default async function AmenitiesPage({
           <SectionSkeleton variant="cards" label="Loading room amenities" />
         }
       >
-        <RoomAmenitiesSummary flags={flags} />
+        <RoomAmenitiesSummary />
       </Section>
       <Section
         label="paid extras"
@@ -89,7 +82,7 @@ export default async function AmenitiesPage({
           <SectionSkeleton variant="cards" label="Loading paid extras" />
         }
       >
-        <ExtrasCards flags={flags} />
+        <ExtrasCards />
       </Section>
       <Section
         label="conference and events"
@@ -100,7 +93,7 @@ export default async function AmenitiesPage({
           />
         }
       >
-        <EventsStrip flags={flags} />
+        <EventsStrip />
       </Section>
 
       <CtaBand />

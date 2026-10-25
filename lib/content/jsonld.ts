@@ -4,14 +4,14 @@ import type {
   GalleryImageRecord,
   HotelSettings,
 } from '@/types/content.types';
-
-import { site } from '../site';
+import type { SiteConfig } from '@/types/site.types';
 
 /** JSON-LD builders. Placeholder values (anything in [brackets]) and empty fields are left out, so no fake data reaches search engines. */
 
 const real = (v: string | null | undefined): v is string =>
   Boolean(v) && !v!.startsWith('[') && !v!.includes('[');
-const abs = (src: string) => new URL(src, site.url).toString();
+const abs = (src: string, site: SiteConfig) =>
+  new URL(src, site.url).toString();
 
 interface HotelOptions {
   description?: string;
@@ -22,6 +22,7 @@ interface HotelOptions {
 
 export function hotelJsonLd(
   s: HotelSettings,
+  site: SiteConfig,
   o: HotelOptions = {},
 ): Record<string, unknown> {
   const a = s.address;
@@ -39,7 +40,7 @@ export function hotelJsonLd(
     name: s.displayName,
     url: site.url,
     ...(o.description && { description: o.description }),
-    ...(o.image && { image: abs(o.image) }),
+    ...(o.image && { image: abs(o.image, site) }),
     ...(Object.keys(address).length > 2 && { address }),
     ...(phone && { telephone: phone.tel }),
     ...(s.yearEstablished && { foundingDate: String(s.yearEstablished) }),
@@ -89,6 +90,7 @@ export function faqJsonLd(all: Faq[]): Record<string, unknown> | null {
 export function imageGalleryJsonLd(
   name: string,
   images: GalleryImageRecord[],
+  site: SiteConfig,
   max = 12,
 ): Record<string, unknown> {
   return {
@@ -97,8 +99,8 @@ export function imageGalleryJsonLd(
     name,
     image: images.slice(0, max).map((g) => ({
       '@type': 'ImageObject',
-      contentUrl: abs(g.url),
-      thumbnailUrl: abs(g.thumbnailUrl),
+      contentUrl: abs(g.url, site),
+      thumbnailUrl: abs(g.thumbnailUrl, site),
       ...(real(g.caption) && { caption: g.caption }),
       ...(real(g.altText) && { description: g.altText }),
       width: g.width,

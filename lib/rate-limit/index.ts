@@ -1,5 +1,7 @@
 import { Redis } from '@upstash/redis';
 
+import { config } from '@/config';
+
 type RateLimitResult = { allowed: boolean; remaining: number };
 
 class MemoryStore {
@@ -23,8 +25,8 @@ let redis: Redis | null = null;
 
 function getRedis(): Redis | null {
   if (redis) return redis;
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const url = config.UPSTASH.REDIS_REST_URL;
+  const token = config.UPSTASH.REDIS_REST_TOKEN;
   if (url && token) {
     try {
       redis = new Redis({ url, token });
@@ -61,16 +63,4 @@ export async function rateLimit(
     }
   }
   return memory.check(key, limit, windowMs);
-}
-
-export function rateLimited(
-  clientId: string,
-  limit = 5,
-  windowMs = 60_000,
-): boolean {
-  // Synchronous fallback for compatibility; async version preferred
-  const res = memory.check(clientId, limit, windowMs);
-  // Try async redis in background if configured (best effort)
-  rateLimit(clientId, limit, windowMs).catch(() => {});
-  return !res.allowed;
 }

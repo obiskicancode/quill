@@ -1,8 +1,9 @@
-import { site } from '@/lib/site';
+import { getPublicSite } from '@/lib/content/data';
 
 import { ButtonLink } from './ui/Button';
 
-export function GroupEventStrip() {
+export async function GroupEventStrip() {
+  const site = await getPublicSite();
   return (
     <section aria-labelledby="group-heading" className="section-y pb-0">
       <div className="container-page">

@@ -65,15 +65,6 @@ export type QuoteResponse =
   | { status: 'on-request' }
   | { status: 'invalid'; violations: Violation[] };
 
-export type QuoteDemo = 'loading' | 'error' | 'soldout' | 'low' | 'late';
-export const QUOTE_DEMOS: QuoteDemo[] = [
-  'loading',
-  'error',
-  'soldout',
-  'low',
-  'late',
-];
-
 export const formatMinor = (minor: number): string => formatNaira(minor / 100);
 
 export function stayParams(s: StayInput): URLSearchParams {

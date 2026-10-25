@@ -1,6 +1,11 @@
 import { apiFail, apiOk } from '@/app/api/envelope';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view';
-import { store } from '@/lib/checkout/mock-db';
+import {
+  getIdempotencyRecord,
+  setIdempotency,
+} from '@/lib/db/repositories/idempotency.repo';
 import { commitChange } from '@/lib/manage/actions';
 import {
   manageError,
@@ -22,8 +27,7 @@ export async function POST(
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
-  const demo = new URL(req.url).searchParams.get('demo');
-  const auth = await requireManage(req, reference, demo);
+  const auth = await requireManage(req, reference);
   if (!auth.ok) return auth.res;
 
   const parsed = changeDatesRequestSchema.safeParse(
@@ -31,49 +35,53 @@ export async function POST(
   );
   if (!parsed.success)
     return manageError(422, {
-      code: 'validation',
-      message: 'Something is missing from the request.',
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.REQUEST_MISSING_DETAILS,
       fieldErrors: fieldErrorsFrom(parsed.error),
     });
   const { idempotencyKey, quoteId } = parsed.data;
 
-  const r = await loadReservation(reference, demo);
+  const r = await loadReservation(reference);
   if (!r)
     return manageError(404, {
-      code: 'not_found',
-      message: 'Booking not found.',
+      code: ERROR_CODES.NOT_FOUND,
+      message: ERROR_MESSAGES.BOOKING_NOT_FOUND,
     });
   const opts = await manageOpts(reference);
-  const respond = (status: 'completed' | 'payment_required') =>
+  const respond = async (status: 'completed' | 'payment_required') =>
     apiOk(
-      { status, view: buildGuestReservation(r, 'verified', { manage: opts }) },
+      {
+        status,
+        view: await buildGuestReservation(r, 'verified', { manage: opts }),
+      },
       { headers: { 'Cache-Control': 'no-store' } },
     );
 
   const key = replayKey('chg', idempotencyKey);
-  const earlier = store.results.get(key) as
-    'completed' | 'payment_required' | undefined;
-  if (earlier) return respond(earlier);
+  const earlier = await getIdempotencyRecord(key);
+  if (earlier?.response)
+    return respond(
+      (earlier.response as { status: 'completed' | 'payment_required' }).status,
+    );
 
-  const demos = new Set((demo ?? '').split(',').map((t) => t.trim()));
-  const outcome = await commitChange(r, quoteId, hotelClock(), demos);
+  const outcome = await commitChange(r, quoteId, hotelClock());
   if (outcome.status === 'not_allowed')
-    return manageError(409, { code: 'not_allowed', message: outcome.reason });
+    return manageError(409, {
+      code: ERROR_CODES.NOT_ALLOWED,
+      message: outcome.reason,
+    });
   if (outcome.status === 'stale')
     return apiFail(
       409,
-      'The price or availability changed. Please review the new details.',
-      { code: 'quote_stale', quote: outcome.quote },
+      ERROR_MESSAGES.QUOTE_STALE,
+      { code: ERROR_CODES.QUOTE_STALE, quote: outcome.quote },
       { headers: { 'Cache-Control': 'no-store' } },
     );
 
-  store.results.set(key, outcome.status);
-  if (demos.has('changeerror') && !store.failedOnce.has(key)) {
-    store.failedOnce.add(key);
-    return manageError(503, {
-      code: 'server',
-      message: 'The connection dropped.',
-    });
-  }
+  await setIdempotency(key, { status: outcome.status }, 200, 60, {
+    reservationId: r.id,
+    method: 'POST',
+    path: '/api/reservations/change-dates',
+  });
   return respond(outcome.status);
 }

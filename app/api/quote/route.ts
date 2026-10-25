@@ -1,4 +1,6 @@
 import { apiFail, apiOk } from '@/app/api/envelope';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
 import { fieldErrorsFrom, quoteRequestSchema } from '@/schemas/checkout.schema';
 import type { ApiError } from '@/types/checkout.types';
@@ -9,8 +11,8 @@ export async function POST(req: Request) {
   const parsed = quoteRequestSchema.safeParse(body);
   if (!parsed.success) {
     const error: ApiError = {
-      code: 'validation',
-      message: 'Check the stay details and try again.',
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.CHECK_STAY_DETAILS,
       fieldErrors: fieldErrorsFrom(parsed.error),
     };
     return apiFail(422, error.message, error);
@@ -23,8 +25,8 @@ export async function POST(req: Request) {
     return apiOk(quote, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
     const error: ApiError = {
-      code: 'server',
-      message: "We couldn't calculate your price.",
+      code: ERROR_CODES.SERVER,
+      message: ERROR_MESSAGES.PRICE_CALCULATION_FAILED,
     };
     return apiFail(503, error.message, error);
   }

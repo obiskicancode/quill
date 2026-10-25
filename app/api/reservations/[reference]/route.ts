@@ -1,17 +1,15 @@
 import { apiFail, apiOk } from '@/app/api/envelope';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { getAccess } from '@/lib/booking/session';
-import {
-  buildGuestReservation,
-  isDemoRef,
-  loadReservation,
-} from '@/lib/booking/view';
+import { buildGuestReservation, loadReservation } from '@/lib/booking/view';
 import { manageOpts } from '@/lib/manage/auth';
 import type { BookingApiError } from '@/types/booking.types';
 
 const deny = () => {
   const error: BookingApiError = {
-    code: 'unauthorised',
-    message: 'Verify your booking to see it.',
+    code: ERROR_CODES.UNAUTHORISED,
+    message: ERROR_MESSAGES.VERIFY_BOOKING_TO_VIEW,
   };
   return apiFail(401, error.message, error, {
     headers: { 'Cache-Control': 'no-store' },
@@ -24,29 +22,20 @@ export async function GET(
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
-  const demo = new URL(req.url).searchParams.get('demo');
-  const params = new URL(req.url).searchParams;
-  const level = isDemoRef(reference)
-    ? demo === 'verified'
-      ? 'verified'
-      : 'checkout'
-    : await getAccess(reference);
+  const level = await getAccess(reference);
   if (!level) return deny();
-  // A manage session (or the dev preview with manage=1) adds the allowed actions, activity timeline and CSRF token.
-  const manage =
-    isDemoRef(reference) && params.get('manage') !== '1'
-      ? undefined
-      : await manageOpts(reference);
+  // A manage session adds the allowed actions, activity timeline and CSRF token.
+  const manage = await manageOpts(reference);
   try {
-    const reservation = await loadReservation(reference, demo);
+    const reservation = await loadReservation(reference);
     if (!reservation) return deny(); // unknown references look exactly like missing access
-    return apiOk(buildGuestReservation(reservation, level, { manage }), {
+    return apiOk(await buildGuestReservation(reservation, level, { manage }), {
       headers: { 'Cache-Control': 'no-store' },
     });
   } catch {
     const error: BookingApiError = {
-      code: 'server',
-      message: 'We could not load your booking.',
+      code: ERROR_CODES.SERVER,
+      message: ERROR_MESSAGES.BOOKING_LOAD_FAILED,
     };
     return apiFail(503, error.message, error);
   }

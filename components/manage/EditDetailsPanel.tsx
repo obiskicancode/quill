@@ -7,6 +7,7 @@ import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { manageService } from '@/app/api/services/manage.service';
 import { whatsappHref } from '@/lib/site';
+import { useSite } from '@/providers/site.provider';
 import { detailsPatchSchema, type GuestInput } from '@/schemas/checkout.schema';
 import type { GuestReservation } from '@/types/booking.types';
 
@@ -27,7 +28,6 @@ const EDITABLE: GuestField[] = [
 interface EditDetailsPanelProps {
   v: GuestReservation;
   csrf: string;
-  demo: string | null;
   onSaved: (next: GuestReservation) => void;
   onClose: () => void;
   sessionExpired: boolean;
@@ -39,13 +39,13 @@ interface EditDetailsPanelProps {
 export function EditDetailsPanel({
   v,
   csrf,
-  demo,
   onSaved,
   onClose,
   sessionExpired,
   onSessionExpired,
   onReverified,
 }: EditDetailsPanelProps) {
+  const site = useSite();
   const m = v.manage!;
   const initial: GuestInput = { ...m.editable, email: m.contact.email };
   const [values, setValues] = useState<GuestInput>(initial);
@@ -102,7 +102,6 @@ export function EditDetailsPanel({
             },
           },
           csrf,
-          demo,
         )
       ).data;
       setSaved(values);
@@ -254,6 +253,7 @@ export function EditDetailsPanel({
         <div className="mt-3">
           <ButtonLink
             href={whatsappHref(
+              site,
               `Hello, I need to change the guests, room or price on booking ${v.reference}.`,
             )}
             external

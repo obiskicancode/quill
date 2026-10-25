@@ -1,6 +1,11 @@
 import { apiOk } from '@/app/api/envelope';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view';
-import { store } from '@/lib/checkout/mock-db';
+import {
+  getIdempotencyRecord,
+  setIdempotency,
+} from '@/lib/db/repositories/idempotency.repo';
 import { cancelBooking } from '@/lib/manage/actions';
 import {
   manageError,
@@ -21,8 +26,7 @@ export async function POST(
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
-  const demo = new URL(req.url).searchParams.get('demo');
-  const auth = await requireManage(req, reference, demo);
+  const auth = await requireManage(req, reference);
   if (!auth.ok) return auth.res;
 
   const parsed = cancelRequestSchema.safeParse(
@@ -30,46 +34,45 @@ export async function POST(
   );
   if (!parsed.success)
     return manageError(422, {
-      code: 'validation',
-      message: 'Please check the form.',
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.CHECK_FORM,
       fieldErrors: fieldErrorsFrom(parsed.error),
     });
   const body = parsed.data;
 
-  const r = await loadReservation(reference, demo);
+  const r = await loadReservation(reference);
   if (!r)
     return manageError(404, {
-      code: 'not_found',
-      message: 'Booking not found.',
+      code: ERROR_CODES.NOT_FOUND,
+      message: ERROR_MESSAGES.BOOKING_NOT_FOUND,
     });
   const opts = await manageOpts(reference);
-  const done = () =>
-    apiOk(buildGuestReservation(r, 'verified', { manage: opts }), {
+  const done = async () =>
+    apiOk(await buildGuestReservation(r, 'verified', { manage: opts }), {
       headers: { 'Cache-Control': 'no-store' },
     });
 
   const key = replayKey('cancel', body.idempotencyKey);
-  if (store.idempotency.get(key) === reference) return done(); // replay: nothing is repeated
+  const previous = await getIdempotencyRecord(key);
+  if (previous?.reservationId === r.id) return done(); // replay: nothing is repeated
 
-  const demos = new Set((demo ?? '').split(',').map((t) => t.trim()));
-  const outcome = cancelBooking(r, body, hotelClock(), demos);
+  const outcome = await cancelBooking(r, body, hotelClock());
   if (outcome.status === 'not_allowed')
-    return manageError(409, { code: 'not_allowed', message: outcome.reason });
+    return manageError(409, {
+      code: ERROR_CODES.NOT_ALLOWED,
+      message: outcome.reason,
+    });
   if (outcome.status === 'preview_changed')
     return manageError(409, {
-      code: 'preview_changed',
-      message: 'The refund amount has changed. Please review it.',
+      code: ERROR_CODES.PREVIEW_CHANGED,
+      message: ERROR_MESSAGES.REFUND_PREVIEW_CHANGED,
       preview: outcome.preview,
     });
 
-  store.idempotency.set(key, reference);
-  // Preview switch: the first attempt "loses the connection" after the cancellation was saved. The retry must not repeat it.
-  if (demos.has('cancelerror') && !store.failedOnce.has(key)) {
-    store.failedOnce.add(key);
-    return manageError(503, {
-      code: 'server',
-      message: 'The connection dropped.',
-    });
-  }
+  await setIdempotency(key, { ok: true }, 200, 60, {
+    reservationId: r.id,
+    method: 'POST',
+    path: '/api/reservations/cancel',
+  });
   return done();
 }

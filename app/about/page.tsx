@@ -11,13 +11,15 @@ import { PageHero } from '@/components/content/PageHero';
 import { Section } from '@/components/content/Section';
 import { SectionSkeleton } from '@/components/content/Skeletons';
 import { CtaBand } from '@/components/CtaBand';
-import { config } from '@/config';
-import { getHotelSettings, getSitePage } from '@/lib/content/data';
+import {
+  getHotelSettings,
+  getPublicSite,
+  getSitePage,
+} from '@/lib/content/data';
 import { hotelJsonLd } from '@/lib/content/jsonld';
-import { parsePreview } from '@/lib/content/preview';
 
-export function generateMetadata(): Metadata {
-  const page = getSitePage('about');
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getSitePage('about');
   const title = page.metaTitle ?? page.title;
   const description = page.metaDescription ?? page.intro;
   const image = (page.ogImage ?? page.heroImage).src;
@@ -33,21 +35,17 @@ export function generateMetadata(): Metadata {
   };
 }
 
-export default async function AboutPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  // Preview switches exist only in development. Not reading searchParams in production keeps this page static.
-  const flags = config.isProd
-    ? parsePreview(undefined)
-    : parsePreview((await searchParams).preview);
-  const page = getSitePage('about');
+export default async function AboutPage() {
+  const [page, settings, site] = await Promise.all([
+    getSitePage('about'),
+    getHotelSettings(),
+    getPublicSite(),
+  ]);
 
   return (
     <>
       <JsonLd
-        data={hotelJsonLd(getHotelSettings(), {
+        data={hotelJsonLd(settings, site, {
           description: page.metaDescription ?? page.intro,
           image: page.heroImage.src,
         })}
@@ -65,7 +63,7 @@ export default async function AboutPage({
           <SectionSkeleton variant="text-image" label="Loading our story" />
         }
       >
-        <StorySection flags={flags} />
+        <StorySection />
       </Section>
       <Section
         label="what to expect"
@@ -73,7 +71,7 @@ export default async function AboutPage({
           <SectionSkeleton variant="cards" label="Loading what to expect" />
         }
       >
-        <ValueCards flags={flags} />
+        <ValueCards />
       </Section>
       <Section
         label="highlights"
@@ -81,13 +79,13 @@ export default async function AboutPage({
           <SectionSkeleton variant="strip" label="Loading highlights" />
         }
       >
-        <HighlightsStrip flags={flags} />
+        <HighlightsStrip />
       </Section>
       <Section
         label="the team"
         skeleton={<SectionSkeleton variant="cards" label="Loading the team" />}
       >
-        <TeamSection flags={flags} />
+        <TeamSection />
       </Section>
       <Section
         label="the surroundings"
@@ -95,7 +93,7 @@ export default async function AboutPage({
           <SectionSkeleton variant="list" label="Loading the surroundings" />
         }
       >
-        <SurroundingsSection flags={flags} />
+        <SurroundingsSection />
       </Section>
       <Section
         label="guest reviews"
@@ -103,7 +101,7 @@ export default async function AboutPage({
           <SectionSkeleton variant="strip" label="Loading guest reviews" />
         }
       >
-        <AboutTestimonials flags={flags} />
+        <AboutTestimonials />
       </Section>
 
       <CtaBand />
