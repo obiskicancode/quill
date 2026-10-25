@@ -1,0 +1,52 @@
+import { eq } from 'drizzle-orm';
+
+import { db } from '@/db';
+import { extras } from '@/db/schema';
+import type { Extra, NewExtra } from '@/db/types';
+
+export async function listExtras(activeOnly = true): Promise<Extra[]> {
+  if (activeOnly) {
+    return db.select().from(extras).where(eq(extras.isActive, true));
+  }
+  return db.select().from(extras);
+}
+
+export async function getExtraById(id: string): Promise<Extra | null> {
+  const [row] = await db
+    .select()
+    .from(extras)
+    .where(eq(extras.id, id))
+    .limit(1);
+  return row ?? null;
+}
+
+export async function getExtraBySlug(slug: string): Promise<Extra | null> {
+  const [row] = await db
+    .select()
+    .from(extras)
+    .where(eq(extras.slug, slug))
+    .limit(1);
+  return row ?? null;
+}
+
+export async function createExtra(data: NewExtra): Promise<Extra> {
+  const [row] = await db.insert(extras).values(data).returning();
+  return row;
+}
+
+export async function updateExtra(
+  id: string,
+  data: Partial<NewExtra>,
+): Promise<Extra | null> {
+  const [row] = await db
+    .update(extras)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(extras.id, id))
+    .returning();
+  return row ?? null;
+}
+
+export async function deleteExtra(id: string): Promise<Extra | null> {
+  const [row] = await db.delete(extras).where(eq(extras.id, id)).returning();
+  return row ?? null;
+}

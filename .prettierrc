@@ -3,8 +3,10 @@
   "trailingComma": "all",
   "plugins": [
     "@ianvs/prettier-plugin-sort-imports",
-    "prettier-plugin-tailwindcss"
+    "prettier-plugin-tailwindcss",
+    "prettier-plugin-sql"
   ],
+  "language": "postgresql",
   "importOrder": [
     "^next/(.*)$",
     "<THIRD_PARTY_MODULES>",

@@ -19,6 +19,9 @@ export const config = {
   PAYMENT: {
     POPUP: process.env.NEXT_PUBLIC_PAYMENT_POPUP === '1',
   },
+  DB: {
+    URL: process.env.DATABASE_URL || '',
+  },
   BOOKING: {
     COOKIE_SECRET: process.env.BOOKING_COOKIE_SECRET,
   },
@@ -36,6 +39,14 @@ export function assertJwtSecrets(): void {
   if (!config.JWT.ACCESS_SECRET || !config.JWT.REFRESH_SECRET) {
     throw new Error(
       'JWT secrets are not defined in the environment variables.',
+    );
+  }
+}
+
+export function assertDbUrl(): void {
+  if (!config.DB.URL) {
+    throw new Error(
+      'Database URL is not defined in the environment variables.',
     );
   }
 }
