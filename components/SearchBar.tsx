@@ -20,7 +20,7 @@ import {
   MAX_ADULTS,
   MAX_CHILDREN,
   validateSearch,
-} from '@/lib/search';
+} from '@/lib/rooms';
 import type { SearchState } from '@/types/site.types';
 
 import { DatePicker, type DateRange } from './DatePicker';

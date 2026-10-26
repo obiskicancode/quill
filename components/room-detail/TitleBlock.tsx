@@ -1,6 +1,6 @@
 import { BedDouble, Ruler, Users } from 'lucide-react';
 
-import type { RoomDetail } from '@/lib/room-detail';
+import type { RoomDetail } from '@/lib/rooms';
 
 import { Reveal } from '../motion/Reveal';
 import { StaggerGroup } from '../motion/StaggerGroup';

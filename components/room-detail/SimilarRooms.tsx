@@ -1,4 +1,4 @@
-import { toFeatureRoom } from '@/lib/room-detail';
+import { toFeatureRoom } from '@/lib/rooms';
 import type { RoomType } from '@/lib/rooms';
 
 import { StaggerGroup } from '../motion/StaggerGroup';

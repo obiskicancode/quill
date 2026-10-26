@@ -1,8 +1,8 @@
-import { apiFail, apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { getAccess } from '@/lib/booking/session';
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view';
+import { apiFail, apiOk } from '@/lib/http/envelope';
 import { manageOpts } from '@/lib/manage/auth';
 import type { BookingApiError } from '@/types/booking.types';
 
@@ -12,7 +12,7 @@ const deny = () => {
     message: ERROR_MESSAGES.VERIFY_BOOKING_TO_VIEW,
   };
   return apiFail(401, error.message, error, {
-    headers: { 'Cache-Control': 'no-store' },
+    noCache: true,
   });
 };
 
@@ -30,7 +30,7 @@ export async function GET(
     const reservation = await loadReservation(reference);
     if (!reservation) return deny(); // unknown references look exactly like missing access
     return apiOk(await buildGuestReservation(reservation, level, { manage }), {
-      headers: { 'Cache-Control': 'no-store' },
+      noCache: true,
     });
   } catch {
     const error: BookingApiError = {

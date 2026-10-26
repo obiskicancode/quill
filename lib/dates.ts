@@ -1,6 +1,12 @@
 /** All dates are local calendar dates as "YYYY-MM-DD". Never use toISOString() for these (it shifts to UTC). */
 export type ISODate = string;
 
+export interface Clock {
+  today: ISODate;
+  /** Minutes since midnight in the hotel's time zone. */
+  minutes: number;
+}
+
 const pad = (n: number) => String(n).padStart(2, '0');
 
 export function toISO(d: Date): ISODate {
@@ -59,6 +65,32 @@ const monthFmt = new Intl.DateTimeFormat('en-NG', {
   year: 'numeric',
 });
 
+export function formatDate(value: string): string {
+  return new Intl.DateTimeFormat('en-NG', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
 export const formatShort = (iso: ISODate) => shortFmt.format(fromISO(iso));
 export const formatLong = (iso: ISODate) => longFmt.format(fromISO(iso));
 export const formatMonthYear = (iso: ISODate) => monthFmt.format(fromISO(iso));
+
+export function hotelClock(
+  now: Date = new Date(),
+  timeZone = 'Africa/Lagos',
+): Clock {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(now);
+  const get = (type: string) =>
+    parts.find((p) => p.type === type)?.value ?? '00';
+  const minutes = (Number(get('hour')) % 24) * 60 + Number(get('minute'));
+  return { today: `${get('year')}-${get('month')}-${get('day')}`, minutes };
+}

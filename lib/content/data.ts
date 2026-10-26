@@ -227,7 +227,7 @@ export const getPolicySettings = cache(async (): Promise<PolicySettings> => {
 });
 
 export const getFeaturedRooms = async (): Promise<Room[]> => {
-  const { toFeatureRoom } = await import('../room-detail');
+  const { toFeatureRoom } = await import('../rooms');
   return (await allRooms())
     .filter((room) => room.popular)
     .slice(0, 3)

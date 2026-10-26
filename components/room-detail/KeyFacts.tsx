@@ -1,6 +1,6 @@
 import { BedDouble, MapPin, Ruler, Users } from 'lucide-react';
 
-import type { RoomDetail } from '@/lib/room-detail';
+import type { RoomDetail } from '@/lib/rooms';
 
 import { StaggerGroup } from '../motion/StaggerGroup';
 import { StaggerItem } from '../motion/StaggerItem';

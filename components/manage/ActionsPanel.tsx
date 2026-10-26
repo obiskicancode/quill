@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { CalendarClock, Gift, PencilLine, XCircle } from 'lucide-react';
 
-import { formatRange } from '@/lib/room-query';
+import { formatRange } from '@/lib/rooms';
 import { telHref, whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 import type { GuestReservation } from '@/types/booking.types';

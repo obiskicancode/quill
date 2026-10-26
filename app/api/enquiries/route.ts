@@ -1,4 +1,3 @@
-import { apiFail, apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { getHotelSettings } from '@/lib/content/data';
@@ -7,6 +6,8 @@ import {
   getIdempotencyRecord,
   setIdempotency,
 } from '@/lib/db/repositories/idempotency.repo';
+import { apiFail, apiOk } from '@/lib/http/envelope';
+import { clientIp } from '@/lib/http/request';
 import { rateLimit } from '@/lib/rate-limit';
 import { fieldErrorsFrom } from '@/schemas/checkout.schema';
 import {
@@ -15,14 +16,14 @@ import {
   type EnquiryResponse,
 } from '@/schemas/content.schema';
 
-const noStore = { 'Cache-Control': 'no-store' };
 const fail = (
   status: number,
   error: EnquiryError,
   headers: Record<string, string> = {},
 ) =>
   apiFail(status, error.message, error, {
-    headers: { ...noStore, ...headers },
+    noCache: true,
+    headers,
   });
 
 const tooMany = () =>
@@ -43,8 +44,7 @@ const referenceOf = (id: string) =>
  * Stores a contact enquiry (type, status "new"). Safe to retry: the same idempotency key never creates a second enquiry.
  */
 export async function POST(req: Request) {
-  const client =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
+  const client = clientIp(req) ?? 'local';
 
   const parsed = enquirySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
@@ -64,13 +64,13 @@ export async function POST(req: Request) {
   if (data.website)
     return apiOk<EnquiryResponse>(
       { reference: 'ENQ-000000', responseHours },
-      { headers: noStore },
+      { noCache: true },
     );
 
   const idKey = `enquiry:${data.idempotencyKey}`;
   const earlier = await getIdempotencyRecord(idKey);
   if (earlier?.response)
-    return apiOk(earlier.response as EnquiryResponse, { headers: noStore });
+    return apiOk(earlier.response as EnquiryResponse, { noCache: true });
 
   if (!(await rateLimit(`enquiry:${client}`, 3, 10 * 60_000)).allowed)
     return tooMany();
@@ -99,5 +99,5 @@ export async function POST(req: Request) {
     method: 'POST',
     path: '/api/enquiries',
   });
-  return apiOk(response, { status: 201, headers: noStore });
+  return apiOk(response, { status: 201, noCache: true });
 }

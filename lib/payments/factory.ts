@@ -1,3 +1,4 @@
+import { config } from '@/config';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { PaymentProvider } from '@/types/checkout.types';
 
@@ -22,7 +23,7 @@ export function registerPaymentProvider(
 }
 
 export function getActivePaymentProviderId(): PaymentProvider {
-  const configured = (process.env.PAYMENT_PROVIDER ?? 'paystack').toLowerCase();
+  const configured = (config.PAYMENT.PROVIDER ?? 'paystack').toLowerCase();
   if (!isPaymentProviderId(configured))
     throw new Error(ERROR_MESSAGES.UNSUPPORTED_PAYMENT_PROVIDER(configured));
   return configured;

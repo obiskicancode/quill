@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Images } from 'lucide-react';
 import { useState } from 'react';
 
-import type { GalleryImage } from '@/lib/room-detail';
+import type { GalleryImage } from '@/lib/rooms';
 
 import { Carousel } from '../Carousel';
 import { HoverZoom } from '../motion/HoverZoom';

@@ -25,11 +25,11 @@ import {
   type StoredReservation,
 } from '../booking/store';
 import { buildCheckoutQuote } from '../checkout/quote';
-import { nightsBetween, type ISODate } from '../dates';
+import { nightsBetween, type Clock, type ISODate } from '../dates';
 import { getPaymentProvider, isPaymentProviderId } from '../payments';
-import { getPricingSettings, getRoomDetail } from '../room-detail';
-import { formatRange } from '../room-query';
-import { validateStay, type Clock } from '../stay-quote';
+import { formatRange } from '../rooms';
+import { getPricingSettings, getRoomDetail } from '../rooms/detail';
+import { validateStay } from '../rooms/pricing';
 import { allowedActions, freeDeadline, previewCancellation } from './rules';
 import { getManageSettings } from './settings';
 

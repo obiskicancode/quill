@@ -1,11 +1,12 @@
 import { type NextRequest } from 'next/server';
 
-import { apiFail, apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { getRoomDetail } from '@/lib/room-detail';
-import { parseRoomQuery } from '@/lib/room-query';
-import { getQuoteResponse, hotelClock } from '@/lib/stay-quote';
+import { hotelClock } from '@/lib/dates';
+import { apiFail, apiOk } from '@/lib/http/envelope';
+import { parseRoomQuery } from '@/lib/rooms';
+import { getRoomDetail } from '@/lib/rooms/detail';
+import { getQuoteResponse } from '@/lib/rooms/pricing';
 
 /** Server-side price breakdown for the chosen dates. The booking card only displays what this returns. */
 export async function GET(
@@ -38,7 +39,7 @@ export async function GET(
       },
       hotelClock(new Date()),
     );
-    return apiOk(body, { headers: { 'Cache-Control': 'no-store' } });
+    return apiOk(body, { noCache: true });
   } catch {
     return apiFail(503, ERROR_MESSAGES.PRICING_UNAVAILABLE, {
       code: ERROR_CODES.UNAVAILABLE,

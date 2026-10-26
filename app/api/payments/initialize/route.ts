@@ -1,15 +1,15 @@
-import { apiFail, apiOk } from '@/app/api/envelope';
 import { config } from '@/config';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { insertPayment, saveStoredReservation } from '@/lib/booking/store';
 import { loadReservation } from '@/lib/booking/view';
 import { getCheckoutSettings } from '@/lib/checkout/settings';
+import { createReference } from '@/lib/db/reference';
 import {
   getIdempotencyRecord,
   setIdempotency,
 } from '@/lib/db/repositories/idempotency.repo';
-import { createReference } from '@/lib/db/utils/reference';
+import { apiFail, apiOk } from '@/lib/http/envelope';
 import { requireManage } from '@/lib/manage/auth';
 import {
   tryGetPaymentProvider,

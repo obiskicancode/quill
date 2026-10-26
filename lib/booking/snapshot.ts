@@ -10,8 +10,7 @@ import {
   getPolicySettings,
 } from '../content/data';
 import { paymentProviderLabel } from '../payments';
-import { getPricingSettings } from '../room-detail';
-import type { RoomDetail } from '../room-detail';
+import { getPricingSettings, type RoomDetail } from '../rooms/detail';
 
 export async function buildSnapshot(
   room: RoomDetail,

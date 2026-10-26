@@ -11,7 +11,7 @@ import { mapExtra } from '../db/mappers/content.mapper';
 import { getBankAccountRows, getHotelRow } from '../db/queries/content-data';
 import { listExtras } from '../db/repositories/extras.repo';
 import { getActivePaymentProviderId } from '../payments';
-import { getPricingSettings, type HotelSettings } from '../room-detail';
+import { getPricingSettings, type HotelSettings } from '../rooms/detail';
 
 type ManageSettings = {
   paymentMode?: PaymentMode;

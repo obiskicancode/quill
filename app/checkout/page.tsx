@@ -5,9 +5,9 @@ import { CheckoutFlow } from '@/components/checkout/CheckoutFlow';
 import { CheckoutShell } from '@/components/checkout/CheckoutShell';
 import { loadReservation } from '@/lib/booking/view';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
-import { getPricingSettings, getRoomDetail } from '@/lib/room-detail';
-import { parseRoomQuery } from '@/lib/room-query';
-import { needsExtraBed } from '@/lib/stay-quote';
+import { parseRoomQuery } from '@/lib/rooms';
+import { getPricingSettings, getRoomDetail } from '@/lib/rooms/detail';
+import { needsExtraBed } from '@/lib/rooms/pricing';
 
 export const metadata: Metadata = {
   title: 'Secure checkout',

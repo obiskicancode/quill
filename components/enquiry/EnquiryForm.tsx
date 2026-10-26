@@ -8,9 +8,8 @@ import { useRef, useState } from 'react';
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { contentService } from '@/app/api/services/content.service';
-import type { StayParams } from '@/lib/availability';
 import type { ISODate } from '@/lib/dates';
-import type { RoomType } from '@/lib/rooms';
+import type { RoomType, StayParams } from '@/lib/rooms';
 import { enquiryFormSchema, MAX_MESSAGE } from '@/schemas/content.schema';
 
 import { Banner } from '../checkout/CheckoutStates';

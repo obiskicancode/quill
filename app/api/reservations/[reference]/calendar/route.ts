@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { buildIcs } from '@/lib/booking/ics';
 import { getAccess } from '@/lib/booking/session';
 import { loadReservation } from '@/lib/booking/view';
+import { NO_STORE_HEADERS } from '@/lib/http/envelope';
+import { clientIp, tooManyRequests } from '@/lib/http/request';
 import { rateLimit } from '@/lib/rate-limit';
 
 /** Downloads the stay as an .ics file (hotel name, address, check-in time, a reminder the day before, the reference). */
@@ -11,13 +13,9 @@ export async function GET(
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
-  const client =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
+  const client = clientIp(req) ?? 'local';
   if (!(await rateLimit(`calendar:${client}`, 20, 60_000)).allowed)
-    return new NextResponse('Too many requests', {
-      status: 429,
-      headers: { 'Retry-After': '60' },
-    });
+    return tooManyRequests(60);
   if (!(await getAccess(reference)))
     return new NextResponse('Not found', { status: 404 });
 
@@ -41,7 +39,7 @@ export async function GET(
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
       'Content-Disposition': `attachment; filename="booking-${r.reference}.ics"`,
-      'Cache-Control': 'no-store',
+      ...NO_STORE_HEADERS,
     },
   });
 }

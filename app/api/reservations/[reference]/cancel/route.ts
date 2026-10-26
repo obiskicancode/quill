@@ -1,11 +1,12 @@
-import { apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view';
+import { hotelClock } from '@/lib/dates';
 import {
   getIdempotencyRecord,
   setIdempotency,
 } from '@/lib/db/repositories/idempotency.repo';
+import { apiOk } from '@/lib/http/envelope';
 import { cancelBooking } from '@/lib/manage/actions';
 import {
   manageError,
@@ -13,7 +14,6 @@ import {
   replayKey,
   requireManage,
 } from '@/lib/manage/auth';
-import { hotelClock } from '@/lib/stay-quote';
 import { fieldErrorsFrom } from '@/schemas/checkout.schema';
 import { cancelRequestSchema } from '@/schemas/manage.schema';
 
@@ -49,7 +49,7 @@ export async function POST(
   const opts = await manageOpts(reference);
   const done = async () =>
     apiOk(await buildGuestReservation(r, 'verified', { manage: opts }), {
-      headers: { 'Cache-Control': 'no-store' },
+      noCache: true,
     });
 
   const key = replayKey('cancel', body.idempotencyKey);

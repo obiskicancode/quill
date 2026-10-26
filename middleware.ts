@@ -1,7 +1,12 @@
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 
 import { config as appConfig } from '@/config';
+import {
+  ADMIN_CSRF_COOKIE,
+  createCsrfValue,
+  CSRF_TTL_SECONDS,
+} from '@/lib/auth/cookies';
 
 const MAINTENANCE = appConfig.MAINTENANCE_MODE;
 
@@ -9,11 +14,30 @@ const MAINTENANCE = appConfig.MAINTENANCE_MODE;
  * Returns 503 and serves /maintenance for all requests except:
  * - requests for assets (favicons, images, css, js)
  * - requests for the maintenance page itself
+ * - admin pages, which stay reachable during maintenance
  */
 export function middleware(request: NextRequest) {
-  if (!MAINTENANCE) return NextResponse.next();
-
   const { pathname } = request.nextUrl;
+  const isAdminPage = pathname === '/admin' || pathname.startsWith('/admin/');
+
+  if (!MAINTENANCE || isAdminPage) {
+    const response = NextResponse.next();
+    if (
+      isAdminPage &&
+      request.method === 'GET' &&
+      !request.cookies.get(ADMIN_CSRF_COOKIE)
+    ) {
+      response.cookies.set(ADMIN_CSRF_COOKIE, createCsrfValue(), {
+        httpOnly: false,
+        secure: appConfig.isProd,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: CSRF_TTL_SECONDS,
+      });
+    }
+    return response;
+  }
+
   if (pathname.startsWith('/maintenance')) return NextResponse.next();
   if (
     /\.(ico|svg|png|jpg|jpeg|webp|avif|css|js|map|woff2|woff|ttf|txt)$/.test(

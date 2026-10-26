@@ -8,7 +8,7 @@ import type {
 
 import type { StoredReservation } from '../booking/store';
 import { fromISO, nightsBetween, toISO, type ISODate } from '../dates';
-import type { Clock } from '../stay-quote';
+import type { Clock } from '../dates';
 import { calculateRefund } from './refund';
 import type { ManageSettings } from './settings';
 

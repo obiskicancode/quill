@@ -88,11 +88,13 @@ export default async function RootLayout({
             <HideOnCheckout>
               <WhatsAppFab />
             </HideOnCheckout>
-            <ConsentBanner
-              enabled={consent.enabled}
-              privacyHref={consent.privacyPolicyHref}
-            />
-            <AnalyticsScripts settings={analytics} />
+            <HideOnCheckout>
+              <ConsentBanner
+                enabled={consent.enabled}
+                privacyHref={consent.privacyPolicyHref}
+              />
+              <AnalyticsScripts settings={analytics} />
+            </HideOnCheckout>
           </ConsentProvider>
         </SiteProvider>
       </body>

@@ -1,6 +1,6 @@
-import { apiOk } from '@/app/api/envelope';
 import { clearManageCookie } from '@/lib/booking/session';
 import { createAuditLog } from '@/lib/db/repositories/audit.repo';
+import { apiOk } from '@/lib/http/envelope';
 
 /** Ends the manage session for this booking. Safe to repeat. */
 export async function POST(
@@ -14,7 +14,7 @@ export async function POST(
     action: 'sign_out',
     changes: { actor: 'guest' },
   });
-  const res = apiOk({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
+  const res = apiOk({ ok: true }, { noCache: true });
   clearManageCookie(res, reference);
   return res;
 }

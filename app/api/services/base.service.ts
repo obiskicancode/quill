@@ -1,25 +1,21 @@
-import { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import {
+  AxiosError,
+  AxiosInstance,
+  AxiosRequestConfig,
+  AxiosResponse,
+} from 'axios';
 
-import type { ApiResponse, ApiResult } from '@/types/base.types';
+import type { ApiErrorBody, ApiResponse, ApiResult } from '@/types/base.types';
 
 import { apiClient } from '../axiosInstance';
 import { RetryService } from './retry.service';
-
-/** The original error body (code, fieldErrors, …) preserved inside the envelope's `data`. */
-export interface ServiceErrorBody {
-  code?: string;
-  message?: string;
-  fieldErrors?: Record<string, string>;
-  retryAfterSeconds?: number;
-  [key: string]: unknown;
-}
 
 /** The single error type every service throws. `status` is 0 for network failures. */
 export class ServiceError extends Error {
   constructor(
     message: string,
     public status: number,
-    public body: ServiceErrorBody | null = null,
+    public body: ApiErrorBody | null = null,
     public network = false,
   ) {
     super(message);
@@ -37,10 +33,13 @@ const RETRY_POLICY = {
 
 export default abstract class BaseService {
   protected clientUrl: string;
+  protected client: AxiosInstance;
+  protected retryPolicy = RETRY_POLICY;
   private retry = new RetryService();
 
-  constructor(url: string) {
+  constructor(url: string, client: AxiosInstance = apiClient) {
     this.clientUrl = url;
+    this.client = client;
   }
 
   protected buildUrl(endpoint = ''): string {
@@ -59,7 +58,7 @@ export default abstract class BaseService {
       } catch (error) {
         throw this.toServiceError(error);
       }
-    }, RETRY_POLICY);
+    }, this.retryPolicy);
   }
 
   private toServiceError(error: unknown): ServiceError {
@@ -70,7 +69,7 @@ export default abstract class BaseService {
       const envelope = error.response?.data as ApiResponse<unknown> | undefined;
       const body =
         envelope && typeof envelope === 'object' && 'data' in envelope
-          ? ((envelope.data as ServiceErrorBody | null) ?? null)
+          ? ((envelope.data as ApiErrorBody | null) ?? null)
           : null;
       const message =
         (typeof envelope?.message === 'string' && envelope.message) ||
@@ -100,7 +99,7 @@ export default abstract class BaseService {
 
   protected httpGet<IResponse>(url = '', config?: AxiosRequestConfig) {
     return this.handleRequest<IResponse>(() =>
-      apiClient.get(this.buildUrl(url), config),
+      this.client.get(this.buildUrl(url), config),
     );
   }
 
@@ -110,7 +109,7 @@ export default abstract class BaseService {
     config?: AxiosRequestConfig,
   ) {
     return this.handleRequest<IResponse>(() =>
-      apiClient.post(this.buildUrl(url), data, config),
+      this.client.post(this.buildUrl(url), data, config),
     );
   }
 
@@ -120,7 +119,7 @@ export default abstract class BaseService {
     config?: AxiosRequestConfig,
   ) {
     return this.handleRequest<IResponse>(() =>
-      apiClient.patch(this.buildUrl(url), data, config),
+      this.client.patch(this.buildUrl(url), data, config),
     );
   }
 
@@ -130,13 +129,13 @@ export default abstract class BaseService {
     config?: AxiosRequestConfig,
   ) {
     return this.handleRequest<IResponse>(() =>
-      apiClient.put(this.buildUrl(url), data, config),
+      this.client.put(this.buildUrl(url), data, config),
     );
   }
 
   protected httpDelete<IResponse>(url = '', config?: AxiosRequestConfig) {
     return this.handleRequest<IResponse>(() =>
-      apiClient.delete(this.buildUrl(url), config),
+      this.client.delete(this.buildUrl(url), config),
     );
   }
 }

@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { stayService } from '@/app/api/services/stay.service';
-import type { AvailabilityMap, StayParams } from '@/lib/availability';
-import type { RoomType } from '@/lib/rooms';
+import type { AvailabilityMap, RoomType, StayParams } from '@/lib/rooms';
 
 type State = {
   status: 'idle' | 'loading' | 'ready' | 'error';

@@ -1,15 +1,14 @@
-import { apiFail } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { apiFail } from '@/lib/http/envelope';
+import { clientIp } from '@/lib/http/request';
 import type { ManageApiError } from '@/types/manage.types';
 
 import { getManageSession } from '../booking/session';
 import { rateLimit } from '../rate-limit';
 
-const noStore = { 'Cache-Control': 'no-store' };
-
 export const manageError = (status: number, error: ManageApiError) =>
-  apiFail(status, error.message, error, { headers: noStore });
+  apiFail(status, error.message, error, { noCache: true });
 
 /**
  * Every change needs: a live manage session cookie, a matching CSRF token and a rate-limit pass.
@@ -18,8 +17,7 @@ export async function requireManage(
   req: Request,
   reference: string,
 ): Promise<{ ok: true } | { ok: false; res: Response }> {
-  const client =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
+  const client = clientIp(req) ?? 'local';
   if (!(await rateLimit(`manage:${client}`, 40, 60_000)).allowed) {
     return {
       ok: false,

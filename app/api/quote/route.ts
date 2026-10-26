@@ -1,7 +1,7 @@
-import { apiFail, apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
+import { apiFail, apiOk } from '@/lib/http/envelope';
 import { fieldErrorsFrom, quoteRequestSchema } from '@/schemas/checkout.schema';
 import type { ApiError } from '@/types/checkout.types';
 
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       ...parsed.data,
       extras: parsed.data.extras,
     });
-    return apiOk(quote, { headers: { 'Cache-Control': 'no-store' } });
+    return apiOk(quote, { noCache: true });
   } catch {
     const error: ApiError = {
       code: ERROR_CODES.SERVER,

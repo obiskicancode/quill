@@ -3,9 +3,8 @@
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 import { useMemo } from 'react';
 
-import type { StayParams } from '@/lib/availability';
 import { formatNaira } from '@/lib/format';
-import type { RoomType } from '@/lib/rooms';
+import type { RoomType, StayParams } from '@/lib/rooms';
 
 import { useAvailability } from '../rooms/useAvailability';
 import { Button } from '../ui/Button';

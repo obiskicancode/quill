@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
-import { unitLabels } from '@/lib/checkout/format';
+import { unitLabels } from '@/lib/format';
 import type { ExtraItem } from '@/types/checkout.types';
 import { formatMinor } from '@/types/stay.types';
 

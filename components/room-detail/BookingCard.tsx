@@ -13,7 +13,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { formatShort } from '@/lib/dates';
 import { formatNaira } from '@/lib/format';
-import { formatRange } from '@/lib/room-query';
+import { formatRange } from '@/lib/rooms';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 import {

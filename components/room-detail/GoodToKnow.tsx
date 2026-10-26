@@ -1,4 +1,4 @@
-import type { HotelSettings, RoomDetail } from '@/lib/room-detail';
+import type { HotelSettings, RoomDetail } from '@/lib/rooms';
 import { formatMinor } from '@/types/stay.types';
 
 import { Reveal } from '../motion/Reveal';

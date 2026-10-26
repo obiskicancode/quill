@@ -9,12 +9,14 @@ import type {
 import type { AmenityKey, ImageAsset } from '@/types/site.types';
 
 import type {
+  BedType,
   HotelSettings,
   RateRule,
+  RoomAmenityKey,
   RoomDetail,
   RoomTestimonial,
-} from '../../room-detail';
-import type { BedType, RoomAmenityKey, RoomType } from '../../rooms';
+  RoomType,
+} from '../../rooms';
 
 function bedType(label: string | null): BedType {
   const value = (label ?? '').toLowerCase();

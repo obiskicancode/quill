@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { manageService } from '@/app/api/services/manage.service';
-import { formatCountdown } from '@/lib/checkout/format';
+import { formatCountdown } from '@/lib/format';
 import { headerKind, type GuestReservation } from '@/types/booking.types';
 
 import { ActionRow } from '../booking/ActionRow';

@@ -9,7 +9,7 @@ import {
   reservationStatusHistory,
 } from '@/db/schema';
 import type { Reservation } from '@/db/types';
-import { createReference } from '@/lib/db/utils/reference';
+import { createReference } from '@/lib/db/reference';
 
 export async function findReservationByReference(reference: string) {
   const [row] = await db

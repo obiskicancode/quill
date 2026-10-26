@@ -1,10 +1,10 @@
-import { apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { loadReservation } from '@/lib/booking/view';
+import { hotelClock } from '@/lib/dates';
+import { apiOk } from '@/lib/http/envelope';
 import { quoteChange } from '@/lib/manage/actions';
 import { manageError, requireManage } from '@/lib/manage/auth';
-import { hotelClock } from '@/lib/stay-quote';
 import { fieldErrorsFrom } from '@/schemas/checkout.schema';
 import { changeQuoteRequestSchema } from '@/schemas/manage.schema';
 
@@ -33,5 +33,5 @@ export async function POST(
       message: ERROR_MESSAGES.BOOKING_NOT_FOUND,
     });
   const quote = await quoteChange(r, parsed.data, hotelClock());
-  return apiOk(quote, { headers: { 'Cache-Control': 'no-store' } });
+  return apiOk(quote, { noCache: true });
 }

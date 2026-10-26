@@ -14,4 +14,4 @@ export * from './content.repo';
 export * from './notifications.repo';
 export * from './audit.repo';
 export * from './payment-webhooks.repo';
-export * from '../utils/reference';
+export * from '../reference';

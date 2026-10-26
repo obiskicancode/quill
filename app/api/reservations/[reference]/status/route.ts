@@ -1,10 +1,8 @@
-import { apiFail, apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { getAccess } from '@/lib/booking/session';
 import { loadReservation, statusOf } from '@/lib/booking/view';
-
-const noStore = { 'Cache-Control': 'no-store' };
+import { apiFail, apiOk } from '@/lib/http/envelope';
 
 /**
  * Polled by checkout and by the confirmation page. Needs the signed booking cookie,
@@ -22,7 +20,7 @@ export async function GET(
       404,
       ERROR_MESSAGES.RESERVATION_NOT_FOUND,
       { code: ERROR_CODES.NOT_FOUND },
-      { headers: noStore },
+      { noCache: true },
     );
-  return apiOk(statusOf(reservation), { headers: noStore });
+  return apiOk(statusOf(reservation), { noCache: true });
 }

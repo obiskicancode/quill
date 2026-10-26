@@ -1,4 +1,3 @@
-import { apiFail, apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { db } from '@/db';
@@ -10,6 +9,7 @@ import {
   saveStoredReservation,
 } from '@/lib/booking/store';
 import { loadReservation, statusOf } from '@/lib/booking/view';
+import { apiFail, apiOk } from '@/lib/http/envelope';
 import { requireManage } from '@/lib/manage/auth';
 import { proofStorageConfigured, uploadProof } from '@/lib/storage/proofs';
 import { checkProofFile } from '@/schemas/checkout.schema';

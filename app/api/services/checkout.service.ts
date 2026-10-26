@@ -49,6 +49,11 @@ class CheckoutService extends BaseService {
     return this.httpPost<FormData, StatusResponse>(
       `/reservations/${enc(reference)}/transfer-proof`,
       form,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      },
     );
   }
 }

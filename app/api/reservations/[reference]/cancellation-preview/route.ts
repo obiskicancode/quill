@@ -1,11 +1,11 @@
-import { apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { loadReservation } from '@/lib/booking/view';
+import { hotelClock } from '@/lib/dates';
+import { apiOk } from '@/lib/http/envelope';
 import { manageError, manageOpts } from '@/lib/manage/auth';
 import { allowedActions, previewCancellation } from '@/lib/manage/rules';
 import { getManageSettings } from '@/lib/manage/settings';
-import { hotelClock } from '@/lib/stay-quote';
 
 /** What cancelling right now would do: refund, amount kept, the policy rule applied, the method and the expected wait. */
 export async function GET(
@@ -34,6 +34,6 @@ export async function GET(
       message: allowed.reason ?? ERROR_MESSAGES.CANNOT_CANCEL_ONLINE,
     });
   return apiOk(previewCancellation(r, clock, settings), {
-    headers: { 'Cache-Control': 'no-store' },
+    noCache: true,
   });
 }

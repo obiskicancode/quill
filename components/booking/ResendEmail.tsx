@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { bookingService } from '@/app/api/services/booking.service';
-import { formatCountdown } from '@/lib/checkout/format';
+import { formatCountdown } from '@/lib/format';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 

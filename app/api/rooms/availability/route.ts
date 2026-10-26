@@ -1,10 +1,10 @@
 import { type NextRequest } from 'next/server';
 
-import { apiFail, apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { fetchAvailability } from '@/lib/availability';
 import { getRoomTypesWithDetails } from '@/lib/db/queries/content-data';
+import { apiFail, apiOk } from '@/lib/http/envelope';
+import { fetchAvailability } from '@/lib/rooms/availability';
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
       { checkIn, checkOut, adults, children },
       rooms,
     );
-    return apiOk(map, { headers: { 'Cache-Control': 'no-store' } });
+    return apiOk(map, { noCache: true });
   } catch {
     return apiFail(503, ERROR_MESSAGES.AVAILABILITY_UNAVAILABLE, {
       code: ERROR_CODES.UNAVAILABLE,

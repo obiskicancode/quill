@@ -1,6 +1,6 @@
-import { apiFail } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { apiFail } from '@/lib/http/envelope';
 import { isPaymentProviderId } from '@/lib/payments/provider';
 import { handlePaymentWebhook } from '@/lib/payments/webhook';
 

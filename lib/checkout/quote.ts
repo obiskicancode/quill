@@ -9,15 +9,17 @@ import type {
   QuoteRequest,
 } from '@/types/checkout.types';
 
-import { fromISO, nightsBetween, toISO, type ISODate } from '../dates';
-import { getRoomDetail } from '../room-detail';
 import {
-  getQuoteResponse,
+  fromISO,
   hotelClock,
-  needsExtraBed,
+  nightsBetween,
+  toISO,
   type Clock,
-} from '../stay-quote';
-import { unitLabels } from './format';
+  type ISODate,
+} from '../dates';
+import { unitLabels } from '../format';
+import { getRoomDetail } from '../rooms/detail';
+import { getQuoteResponse, needsExtraBed } from '../rooms/pricing';
 import { getCheckoutSettings } from './settings';
 
 /**

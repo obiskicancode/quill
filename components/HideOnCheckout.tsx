@@ -3,12 +3,15 @@
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-/** Wraps site chrome that must not appear on /checkout /booking/confirmation or /booking/manage (each brings its own header and footer). */
+/** Hides public site chrome on focused flows and the admin app. */
 export function HideOnCheckout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  return ['/checkout', '/booking/confirmation', '/booking/manage'].some((p) =>
-    pathname.startsWith(p),
-  ) ? null : (
+  return [
+    '/checkout',
+    '/booking/confirmation',
+    '/booking/manage',
+    '/admin',
+  ].some((p) => pathname.startsWith(p)) ? null : (
     <>{children}</>
   );
 }

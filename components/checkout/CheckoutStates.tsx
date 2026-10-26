@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, Clock, Loader2, RefreshCw, WifiOff } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
-import { formatRange } from '@/lib/room-query';
+import { formatRange } from '@/lib/rooms';
 import { telHref, whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 import { formatMinor } from '@/types/stay.types';

@@ -18,11 +18,11 @@ import {
 } from '@/db/schema';
 import { auditLogs } from '@/db/schema/audit';
 import type { Reservation } from '@/db/types';
+import { createReference } from '@/lib/db/reference';
 import {
   findAvailableRoom,
   findRoomTypeBySlug,
 } from '@/lib/db/repositories/rooms.repo';
-import { createReference } from '@/lib/db/utils/reference';
 import type { GuestInfo, ReservationSnapshot } from '@/types/booking.types';
 import type {
   CheckoutBreakdown,

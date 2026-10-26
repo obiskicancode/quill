@@ -1,9 +1,9 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
 import { cookies } from 'next/headers';
 import type { NextResponse } from 'next/server';
 
 import { config } from '@/config';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { hmacSign, safeEqual } from '@/lib/auth/crypto';
 
 /**
  * Short-lived, httpOnly, signed access cookie bound to one booking reference.
@@ -23,8 +23,7 @@ function secret(): string {
   return 'dev-only-secret-change-me';
 }
 
-const sign = (data: string) =>
-  createHmac('sha256', secret()).update(data).digest('base64url');
+const sign = (data: string) => hmacSign(data, secret());
 
 export function createAccessValue(
   reference: string,
@@ -42,10 +41,7 @@ export function readAccessValue(
   if (!value) return null;
   const [exp, lvl, sig] = value.split('.');
   if (!exp || !lvl || !sig || Number(exp) < Date.now() / 1000) return null;
-  const expected = Buffer.from(sign(`${reference}.${exp}.${lvl}`));
-  const given = Buffer.from(sig);
-  if (expected.length !== given.length || !timingSafeEqual(expected, given))
-    return null;
+  if (!safeEqual(sign(`${reference}.${exp}.${lvl}`), sig)) return null;
   return lvl === 'v' ? 'verified' : 'checkout';
 }
 
@@ -86,10 +82,7 @@ export function readManageValue(
   if (!value) return null;
   const [exp, sig] = value.split('.');
   if (!exp || !sig || Number(exp) < Date.now() / 1000) return null;
-  const expected = Buffer.from(sign(`${reference}.mg.${exp}`));
-  const given = Buffer.from(sig);
-  if (expected.length !== given.length || !timingSafeEqual(expected, given))
-    return null;
+  if (!safeEqual(sign(`${reference}.mg.${exp}`), sig)) return null;
   return {
     expiresAt: Number(exp) * 1000,
     csrf: sign(`${reference}.csrf.${exp}`).slice(0, 32),
@@ -113,8 +106,6 @@ export function setManageCookie(
 ): ManageSession {
   res.cookies.set(manageCookieName(reference), value, {
     httpOnly: true,
-    // Lax, not Strict: the guest returns from the payment provider by a cross-site redirect and must still be signed in.
-    // Changes are protected by the CSRF token instead.
     sameSite: 'lax',
     secure: config.isProd,
     path: '/',

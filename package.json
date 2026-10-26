@@ -17,7 +17,8 @@
     "db:studio": "drizzle-kit studio",
     "db:check": "drizzle-kit check",
     "db:drop": "drizzle-kit drop",
-    "db:seed": "node --env-file=.env --import tsx db/seed/index.ts"
+    "db:seed": "node --env-file=.env --import tsx db/seed/index.ts",
+    "db:owner": "node --env-file=.env --import tsx db/seed/create-owner.ts"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

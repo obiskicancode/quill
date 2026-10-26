@@ -1,4 +1,4 @@
-import type { AvailabilityMap } from '@/lib/availability';
+import type { AvailabilityMap } from '@/lib/rooms';
 import type { QuoteResponse } from '@/types/stay.types';
 
 import BaseService from './base.service';

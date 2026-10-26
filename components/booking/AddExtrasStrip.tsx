@@ -1,6 +1,6 @@
 'use client';
 
-import { unitLabels } from '@/lib/checkout/format';
+import { unitLabels } from '@/lib/format';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 import type { GuestReservation } from '@/types/booking.types';

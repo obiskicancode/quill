@@ -9,7 +9,7 @@ import {
   whatsappShareUrl,
   type CalendarEvent,
 } from '@/lib/booking/ics';
-import { formatRange } from '@/lib/room-query';
+import { formatRange } from '@/lib/rooms';
 import type { GuestReservation } from '@/types/booking.types';
 
 import { AnimatedList } from '../motion';

@@ -18,21 +18,22 @@ import { RoomReviews } from '@/components/room-detail/RoomReviews';
 import { SimilarRooms } from '@/components/room-detail/SimilarRooms';
 import { TitleBlock } from '@/components/room-detail/TitleBlock';
 import { getPublicSite } from '@/lib/content/data';
+import { hotelClock } from '@/lib/dates';
 import {
   baseGuests,
+  bedTypeLabels,
+  maxGuests,
+  parseRoomQuery,
+  roomAmenityLabels,
+  stayHref,
+  type RoomDetail,
+} from '@/lib/rooms';
+import {
   getPricingSettings,
   getRoomDetail,
   getSimilarRooms,
-  type RoomDetail,
-} from '@/lib/room-detail';
-import { parseRoomQuery, stayHref } from '@/lib/room-query';
-import { bedTypeLabels, maxGuests, roomAmenityLabels } from '@/lib/rooms';
-import {
-  hotelClock,
-  needsExtraBed,
-  priceStay,
-  validateStay,
-} from '@/lib/stay-quote';
+} from '@/lib/rooms/detail';
+import { needsExtraBed, priceStay, validateStay } from '@/lib/rooms/pricing';
 import type { SiteConfig } from '@/types/site.types';
 import { bookingHref, stayParams, type StayInput } from '@/types/stay.types';
 

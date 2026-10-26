@@ -1,6 +1,6 @@
 import { Star } from 'lucide-react';
 
-import type { RoomTestimonial } from '@/lib/room-detail';
+import type { RoomTestimonial } from '@/lib/rooms';
 
 import { StaggerGroup } from '../motion/StaggerGroup';
 import { StaggerItem } from '../motion/StaggerItem';

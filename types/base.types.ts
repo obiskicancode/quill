@@ -15,5 +15,14 @@ export interface ApiResponse<T> {
   data?: T;
 }
 
+/** Standard error body shape used across all API surfaces. */
+export interface ApiErrorBody {
+  code?: string;
+  message?: string;
+  fieldErrors?: Record<string, string>;
+  retryAfterSeconds?: number;
+  [key: string]: unknown;
+}
+
 /** A returned response is always 2xx — non-2xx throws ServiceError, so data is always present. */
 export type ApiResult<T> = ApiResponse<T> & { data: T };

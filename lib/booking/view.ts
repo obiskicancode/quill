@@ -7,16 +7,32 @@ import type {
 import type { StatusResponse } from '@/types/checkout.types';
 
 import { getCheckoutSettings } from '../checkout/settings';
-import { nightsBetween } from '../dates';
+import { hotelClock, nightsBetween } from '../dates';
 import { buildManageData } from '../manage/data';
-import { hotelClock } from '../stay-quote';
-import { maskEmail, maskPhone } from './mask';
 import type { AccessLevel } from './session';
 import {
   loadStoredReservation,
   toStatus,
   type StoredReservation,
 } from './store';
+
+export function maskEmail(email: string): string {
+  const [local = '', domain = ''] = email.split('@');
+  const dot = domain.lastIndexOf('.');
+  const host = dot > 0 ? domain.slice(0, dot) : domain;
+  const tld = dot > 0 ? domain.slice(dot) : '';
+  const star = (s: string) =>
+    s.length <= 1 ? s : s[0] + '*'.repeat(Math.min(s.length - 1, 6));
+  return `${star(local)}@${star(host)}${tld}`;
+}
+
+export function maskPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  const country = phone.startsWith('+')
+    ? `+${digits.slice(0, Math.max(1, digits.length - 10))}`
+    : '';
+  return `${country} ••• ••• ${digits.slice(-4)}`.trim();
+}
 
 function paymentLabel(r: StoredReservation): PaymentLabel {
   if (r.status === 'cancelled' && r.cancellation) {

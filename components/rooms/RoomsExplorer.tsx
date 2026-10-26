@@ -5,23 +5,21 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
 import { useCallback, useMemo, useState, useTransition } from 'react';
 
-import type { StayParams } from '@/lib/availability';
 import { todayISO } from '@/lib/dates';
-import {
-  formatRange,
-  hasFilters,
-  parseRoomQuery,
-  serializeRoomQuery,
-  stayProblem,
-  type RoomQuery,
-} from '@/lib/room-query';
+import type { StayParams } from '@/lib/rooms';
 import {
   countActiveFilters,
   emptyFilters,
+  formatRange,
+  hasFilters,
   matchesFilters,
   maxGuests,
+  parseRoomQuery,
+  serializeRoomQuery,
   sortOptions,
   sortRooms,
+  stayProblem,
+  type RoomQuery,
   type RoomType,
 } from '@/lib/rooms';
 

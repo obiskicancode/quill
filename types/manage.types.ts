@@ -1,4 +1,5 @@
 import type { ISODate } from '@/lib/dates';
+import type { ApiErrorBody } from '@/types/base.types';
 import type {
   BankDetails,
   CheckoutBreakdown,
@@ -172,12 +173,10 @@ export type ManageErrorCode =
   | 'server'
   | 'not_found';
 
-export interface ManageApiError {
+export interface ManageApiError extends ApiErrorBody {
   code: ManageErrorCode;
   message: string;
-  fieldErrors?: Record<string, string>;
   preview?: CancellationPreview;
-  retryAfterSeconds?: number;
 }
 
 export const CANCEL_REASONS = [

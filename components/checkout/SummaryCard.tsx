@@ -12,8 +12,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-import { formatCountdown, formatDeadline } from '@/lib/checkout/format';
-import { formatRange } from '@/lib/room-query';
+import { formatCountdown, formatDeadline } from '@/lib/format';
+import { formatRange } from '@/lib/rooms';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 import type {

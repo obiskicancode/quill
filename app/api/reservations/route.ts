@@ -1,4 +1,3 @@
-import { apiFail, apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { setAccessCookie } from '@/lib/booking/session';
@@ -14,8 +13,10 @@ import {
   getIdempotencyRecord,
   setIdempotency,
 } from '@/lib/db/repositories/idempotency.repo';
+import { apiFail, apiOk } from '@/lib/http/envelope';
+import { clientIp } from '@/lib/http/request';
 import { rateLimit } from '@/lib/rate-limit';
-import { getRoomDetail } from '@/lib/room-detail';
+import { getRoomDetail } from '@/lib/rooms/detail';
 import {
   fieldErrorsFrom,
   reservationRequestSchema,
@@ -26,15 +27,14 @@ const fail = (
   status: number,
   error: ApiError,
   headers?: Record<string, string>,
-) => apiFail(status, error.message, error, headers ? { headers } : undefined);
+) => apiFail(status, error.message, error, { noCache: true, headers });
 
 /**
  * Creates the pending reservation and starts the hold. Safe to retry: the same idempotency key always returns
  * the same reservation, so a dropped connection can never create two.
  */
 export async function POST(req: Request) {
-  const client =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
+  const client = clientIp(req) ?? 'local';
   if (!(await rateLimit(client, 10, 60_000)).allowed) {
     return fail(
       429,

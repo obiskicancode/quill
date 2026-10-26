@@ -13,6 +13,7 @@ export const ERROR_MESSAGES = {
   CHECK_GUEST_COUNT: 'Check the number of guests.',
   NO_ROOMS_FOR_DATES: 'No rooms matched those dates.',
   AVAILABILITY_UNAVAILABLE: 'Availability is unavailable.',
+  ITEM_NOT_FOUND: 'That item could not be found.',
   ROOM_NOT_FOUND: 'Room not found.',
   PRICING_UNAVAILABLE: 'Pricing is unavailable.',
   ROOM_UNAVAILABLE_DATES: 'That room is no longer available for these dates.',
@@ -162,6 +163,48 @@ export const ERROR_MESSAGES = {
   PROOF_STORAGE_NOT_CONFIGURED: 'Proof storage is not configured.',
   S3_CREDENTIALS_MISSING: 'S3 credentials are not configured.',
   S3_BUCKET_MISSING: 'S3 bucket is not configured.',
+
+  // Admin authentication
+  ADMIN_INVALID_CREDENTIALS: 'Email or password is incorrect.',
+  ADMIN_ACCOUNT_LOCKED:
+    'Too many failed attempts. Try again after the countdown.',
+  RATE_LIMITED: 'Too many requests. Please wait a moment.',
+  ADMIN_SESSION_EXPIRED: 'Your session expired. Sign in again to continue.',
+  ADMIN_FORBIDDEN: 'You do not have permission to view that page.',
+  ADMIN_MFA_REQUIRED: 'Enter the code from your authenticator app.',
+  ADMIN_MFA_INVALID: 'That code is not valid. Try again.',
+  ADMIN_MFA_EXPIRED: 'Your sign-in attempt expired. Start again.',
+  ADMIN_MFA_SETUP_REQUIRED:
+    'Owners must set up two-factor authentication before continuing.',
+  ADMIN_MFA_NOT_ENABLED: 'Two-factor authentication is not enabled.',
+  ADMIN_MFA_ALREADY_ENABLED:
+    'Two-factor authentication is already enabled. Disable it first to set it up again.',
+  ADMIN_OWNER_MFA_CANNOT_DISABLE:
+    'Owners must keep two-factor authentication enabled.',
+  ADMIN_CURRENT_PASSWORD_INVALID: 'Your current password is incorrect.',
+  ADMIN_PASSWORD_TOO_SHORT: 'Use at least 10 characters for your password.',
+  ADMIN_PASSWORD_TOO_LONG: 'Keep your password under 200 characters.',
+  ADMIN_PASSWORD_TOO_COMMON:
+    'That password is too common. Choose something less predictable.',
+  ADMIN_PASSWORD_MISMATCH: 'The passwords do not match.',
+  ADMIN_PASSWORD_UNCHANGED: 'Choose a password you have not used here before.',
+  ADMIN_RESET_INVALID: 'This reset link is invalid or has expired.',
+  ADMIN_RESET_SENT:
+    'If that email belongs to a staff account, a reset link has been sent.',
+  ADMIN_RECOVERY_INVALID: 'That recovery code is not valid or has been used.',
+  ADMIN_CSRF_FAILED:
+    'This request could not be verified. Reload the page and try again.',
+  ADMIN_NAME_REQUIRED: 'Enter a first and last name.',
+  ADMIN_NAME_TOO_LONG: 'Keep names under 100 characters.',
+  ADMIN_EMAIL_TOO_LONG: 'Keep the email address under 255 characters.',
+  ADMIN_PHONE_TOO_LONG: 'Keep the phone number under 30 characters.',
+  ADMIN_SERVER_ERROR: 'Something went wrong. Please try again.',
+  ADMIN_2FA_SETUP_STARTED:
+    'Scan the QR code, then enter a code from your app to finish.',
+  ADMIN_2FA_ENABLED: 'Two-factor authentication is now enabled.',
+  ADMIN_2FA_DISABLED: 'Two-factor authentication is disabled.',
+  ADMIN_RECOVERY_CODES_ROTATED:
+    'New recovery codes were generated. The old codes no longer work.',
 
   // Environment and app configuration
   BOOKING_COOKIE_SECRET_MISSING:

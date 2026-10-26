@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { GalleryImage } from '@/lib/room-detail';
+import type { GalleryImage } from '@/lib/rooms';
 
 interface LightboxProps {
   roomName: string;

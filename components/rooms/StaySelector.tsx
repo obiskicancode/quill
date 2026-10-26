@@ -4,8 +4,14 @@ import { CalendarDays, Pencil, Users, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type MouseEvent } from 'react';
 
 import { formatShort } from '@/lib/dates';
-import { formatRange, totalGuests, type RoomQuery } from '@/lib/room-query';
-import { guestSummary, MAX_ADULTS, MAX_CHILDREN } from '@/lib/search';
+import {
+  formatRange,
+  guestSummary,
+  MAX_ADULTS,
+  MAX_CHILDREN,
+  totalGuests,
+  type RoomQuery,
+} from '@/lib/rooms';
 
 import { DatePicker, type DateRange } from '../DatePicker';
 import { GuestStepper } from '../GuestStepper';

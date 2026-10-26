@@ -1,129 +1,120 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 import { config } from '@/config';
-import { AuthTokens } from '@/types/auth.types';
+import { ADMIN_CSRF_COOKIE } from '@/lib/auth/cookies';
 
-import { TokenService } from './services/token.service';
-
-interface CustomConfig extends InternalAxiosRequestConfig {
-  _retry?: boolean;
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    skipRefresh?: boolean;
+  }
+  interface InternalAxiosRequestConfig {
+    _retry?: boolean;
+  }
 }
+
+type CustomRequestConfig = InternalAxiosRequestConfig;
 
 const isServer = typeof window === 'undefined';
 const BASE_PATH = '/api';
+const baseURL = isServer ? config.API.BASE_URL + BASE_PATH : BASE_PATH;
 
-const apiClient = axios.create({
-  baseURL: isServer ? config.API.BASE_URL + `${BASE_PATH}` : `${BASE_PATH}`,
+// Utility to parse specific CSRF cookies from document context
+function readCsrfToken(cookieName: string = ADMIN_CSRF_COOKIE): string {
+  if (typeof document === 'undefined') return '';
+  for (const part of document.cookie.split(';')) {
+    const [key, ...rest] = part.trim().split('=');
+    if (key === cookieName) return decodeURIComponent(rest.join('='));
+  }
+  return '';
+}
+
+export const apiClient = axios.create({
+  baseURL,
   timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true, // Crucial for cookie propagation
 });
 
+// Dedicated Single Refresh Client (Prevents interceptor looping)
 const refreshClient = axios.create({
-  baseURL: isServer ? config.API.BASE_URL + BASE_PATH : BASE_PATH,
+  baseURL,
   withCredentials: true,
 });
 
+// Unified Concurrent Request Queue State
 let isRefreshing = false;
 let failedQueue: Array<{
-  resolve: (token: string) => void;
-  reject: (err: Error) => void;
+  resolve: () => void;
+  reject: (error: unknown) => void;
 }> = [];
 
-const processQueue = (error: Error | null, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token!);
-    }
-  });
+function processQueue(error: unknown) {
+  for (const entry of failedQueue) {
+    if (error) entry.reject(error);
+    else entry.resolve();
+  }
   failedQueue = [];
-};
+}
 
-apiClient.interceptors.request.use(
-  (config) => {
-    const accessToken = TokenService.getAccessToken();
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
-    }
-    return config;
-  },
-  (error) => {
-    if (error instanceof Error) {
-      return Promise.reject(error);
-    }
-  },
-);
+/**
+ * Inject CSRF Token on state-changing methods
+ */
+apiClient.interceptors.request.use((request) => {
+  const method = request.method?.toUpperCase() ?? 'GET';
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    request.headers['x-csrf-token'] = readCsrfToken(ADMIN_CSRF_COOKIE);
+  }
+  return request;
+});
 
+/**
+ * Handle 401 Expirations with Smart Path Routing
+ */
 apiClient.interceptors.response.use(
   (response) => response,
+  async (error) => {
+    if (!(error instanceof AxiosError)) throw error;
 
-  async (e) => {
-    const err = e as AxiosError;
-    const originalRequest = err.config as CustomConfig;
-
+    const originalRequest = error.config as CustomRequestConfig | undefined;
     if (
-      !(err instanceof AxiosError) ||
-      err.response?.status !== 401 ||
+      !originalRequest ||
+      error.response?.status !== 401 ||
       originalRequest._retry ||
-      originalRequest.url?.includes('/auth/refresh') ||
-      originalRequest.url?.startsWith('/admin') ||
-      !TokenService.getAccessToken()
+      originalRequest.skipRefresh ||
+      originalRequest.url?.includes('/auth/refresh')
     ) {
-      return Promise.reject(err);
+      throw error;
     }
 
+    // Queue concurrent requests while a single refresh operation is actively running
     if (isRefreshing) {
-      return new Promise<string>((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
-      })
-        .then((token) => {
-          originalRequest.headers = originalRequest.headers || {};
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return apiClient(originalRequest);
-        })
-        .catch((error) => {
-          if (error instanceof Error) {
-            return Promise.reject(error);
-          }
-        });
+      }).then(() => apiClient(originalRequest));
     }
 
     originalRequest._retry = true;
     isRefreshing = true;
 
     try {
-      const response = await refreshClient.post<{ tokens: AuthTokens }>(
-        '/auth/refresh',
+      // Execute refresh request using secure cookie exchange mechanisms
+      await refreshClient.post(
+        '/admin/auth/refresh',
         {},
-        { withCredentials: true },
+        { headers: { 'x-csrf-token': readCsrfToken(ADMIN_CSRF_COOKIE) } },
       );
 
-      const { access_token } = response.data.tokens;
-
-      TokenService.setAccessToken(access_token);
-      processQueue(null, access_token);
-
-      originalRequest.headers.Authorization = `Bearer ${access_token}`;
+      processQueue(null);
       return apiClient(originalRequest);
     } catch (refreshError) {
-      processQueue(refreshError as Error);
-      TokenService.clearAccessToken();
+      processQueue(refreshError);
 
       if (!isServer) {
-        window.dispatchEvent(new Event('auth:logout'));
+        window.dispatchEvent(new Event('admin:session-expired'));
       }
-
-      if (refreshError instanceof Error) {
-        return Promise.reject(err);
-      }
+      throw error;
     } finally {
       isRefreshing = false;
     }
   },
 );
-
-export { apiClient };

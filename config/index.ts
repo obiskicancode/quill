@@ -16,6 +16,7 @@ export const config = {
       'http://localhost:3000',
   },
   SITE: {
+    NAME: process.env.NEXT_PUBLIC_SITE_NAME ?? 'Divine Excellent Apartments',
     URL: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
   },
   DB: {
@@ -23,6 +24,9 @@ export const config = {
   },
   BOOKING: {
     COOKIE_SECRET: process.env.BOOKING_COOKIE_SECRET,
+  },
+  ADMIN: {
+    MFA_ENCRYPTION_KEY: process.env.ADMIN_MFA_ENCRYPTION_KEY,
   },
   MAINTENANCE_MODE: process.env.MAINTENANCE_MODE === 'true',
   JWT: {

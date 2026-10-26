@@ -1,23 +1,22 @@
-import { apiFail, apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { getAccess } from '@/lib/booking/session';
 import { logEvent, saveStoredReservation } from '@/lib/booking/store';
 import { loadReservation } from '@/lib/booking/view';
+import { apiFail, apiOk } from '@/lib/http/envelope';
 import { rateLimit } from '@/lib/rate-limit';
 import type { BookingApiError, ResendResponse } from '@/types/booking.types';
 
 const COOLDOWN_SECONDS = 60;
 const g = globalThis as unknown as { __deaResend?: Map<string, number> };
 const lastSent = (g.__deaResend ??= new Map<string, number>());
-const noStore = { 'Cache-Control': 'no-store' };
 
 const unauthorised = () => {
   const error: BookingApiError = {
     code: ERROR_CODES.UNAUTHORISED,
     message: ERROR_MESSAGES.VERIFY_BOOKING_FIRST,
   };
-  return apiFail(401, error.message, error, { headers: noStore });
+  return apiFail(401, error.message, error, { noCache: true });
 };
 
 /** Re-sends the confirmation email. One per minute and three per hour per booking. */
@@ -45,7 +44,8 @@ export async function POST(
       retryAfterSeconds,
     };
     return apiFail(429, error.message, error, {
-      headers: { ...noStore, 'Retry-After': String(retryAfterSeconds) },
+      noCache: true,
+      headers: { 'Retry-After': String(retryAfterSeconds) },
     });
   }
   lastSent.set(reference, Date.now());
@@ -63,6 +63,6 @@ export async function POST(
   await saveStoredReservation(found);
   return apiOk<ResendResponse>(
     { sent: true, cooldownSeconds: COOLDOWN_SECONDS },
-    { headers: noStore },
+    { noCache: true },
   );
 }

@@ -1,4 +1,3 @@
-import { apiFail, apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { completeOnlinePayment } from '@/lib/booking/store';
@@ -7,6 +6,7 @@ import {
   findWebhookEvent,
   markWebhookProcessed,
 } from '@/lib/db/repositories/payment-webhooks.repo';
+import { apiFail, apiOk } from '@/lib/http/envelope';
 import type { PaymentProvider } from '@/types/checkout.types';
 
 import { tryGetPaymentProvider } from './factory';

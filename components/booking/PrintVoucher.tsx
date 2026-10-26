@@ -1,5 +1,5 @@
-import { formatDeadline } from '@/lib/checkout/format';
-import { formatRange } from '@/lib/room-query';
+import { formatDeadline } from '@/lib/format';
+import { formatRange } from '@/lib/rooms';
 import type { GuestReservation } from '@/types/booking.types';
 import { formatMinor } from '@/types/stay.types';
 

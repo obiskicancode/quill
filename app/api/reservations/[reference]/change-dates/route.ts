@@ -1,11 +1,12 @@
-import { apiFail, apiOk } from '@/app/api/envelope';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view';
+import { hotelClock } from '@/lib/dates';
 import {
   getIdempotencyRecord,
   setIdempotency,
 } from '@/lib/db/repositories/idempotency.repo';
+import { apiFail, apiOk } from '@/lib/http/envelope';
 import { commitChange } from '@/lib/manage/actions';
 import {
   manageError,
@@ -13,7 +14,6 @@ import {
   replayKey,
   requireManage,
 } from '@/lib/manage/auth';
-import { hotelClock } from '@/lib/stay-quote';
 import { fieldErrorsFrom } from '@/schemas/checkout.schema';
 import { changeDatesRequestSchema } from '@/schemas/manage.schema';
 
@@ -54,7 +54,7 @@ export async function POST(
         status,
         view: await buildGuestReservation(r, 'verified', { manage: opts }),
       },
-      { headers: { 'Cache-Control': 'no-store' } },
+      { noCache: true },
     );
 
   const key = replayKey('chg', idempotencyKey);
@@ -75,7 +75,7 @@ export async function POST(
       409,
       ERROR_MESSAGES.QUOTE_STALE,
       { code: ERROR_CODES.QUOTE_STALE, quote: outcome.quote },
-      { headers: { 'Cache-Control': 'no-store' } },
+      { noCache: true },
     );
 
   await setIdempotency(key, { status: outcome.status }, 200, 60, {
