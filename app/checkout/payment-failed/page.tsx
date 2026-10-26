@@ -30,7 +30,7 @@ export default async function PaymentFailedPage({
     <CheckoutShell label="Secure checkout" backToHome>
       <section aria-labelledby="pf-title" className="container-page section-y">
         <div className="mx-auto max-w-xl space-y-5">
-          <AlertTriangle className="size-10 text-danger" aria-hidden />
+          <AlertTriangle className="text-danger size-10" aria-hidden />
           <h1 id="pf-title" className="font-display text-h2">
             Payment not completed
           </h1>
@@ -65,7 +65,7 @@ export default async function PaymentFailedPage({
             a few days. If you think you were charged in error,{' '}
             <Link
               href="/contact"
-              className="font-semibold underline decoration-accent decoration-2 underline-offset-4"
+              className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
             >
               contact us
             </Link>

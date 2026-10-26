@@ -8,9 +8,9 @@ export function SkeletonCard() {
   return (
     <div
       aria-hidden
-      className="flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface"
+      className="rounded-card border-line bg-surface flex h-full flex-col overflow-hidden border"
     >
-      <div className="aspect-[4/3] w-full bg-ink/10 motion-safe:animate-pulse" />
+      <div className="bg-ink/10 aspect-[4/3] w-full motion-safe:animate-pulse" />
       <div className="flex flex-1 flex-col gap-4 p-5">
         <div className="min-h-[2.6em] space-y-2">
           <div className={`${bar} h-5 w-3/4`} />
@@ -38,8 +38,8 @@ export function SkeletonCard() {
             <div className={`${bar} h-4 w-1/2`} />
           </div>
           <div className="flex gap-3">
-            <div className={`${bar} h-11 flex-1 rounded-control`} />
-            <div className={`${bar} h-11 flex-1 rounded-control`} />
+            <div className={`${bar} rounded-control h-11 flex-1`} />
+            <div className={`${bar} rounded-control h-11 flex-1`} />
           </div>
         </div>
       </div>

@@ -134,7 +134,7 @@ export function EditDetailsPanel({
 
   if (sessionExpired) {
     return (
-      <section className="rounded-card border border-line bg-surface p-5 shadow-raised md:p-6 print:hidden">
+      <section className="rounded-card border-line bg-surface shadow-raised border p-5 md:p-6 print:hidden">
         <VerifyForm
           embedded
           scope="manage"
@@ -150,7 +150,7 @@ export function EditDetailsPanel({
   return (
     <section
       aria-labelledby="edit-title"
-      className="rounded-card border border-line bg-surface p-5 shadow-raised md:p-6 print:hidden"
+      className="rounded-card border-line bg-surface shadow-raised border p-5 md:p-6 print:hidden"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="edit-title" className="font-display text-h3">
@@ -187,7 +187,7 @@ export function EditDetailsPanel({
         />
 
         {Object.values(errors).some(Boolean) && (
-          <p role="alert" className="text-small font-medium text-danger">
+          <p role="alert" className="text-small text-danger font-medium">
             Please fix the highlighted fields.
           </p>
         )}
@@ -221,7 +221,7 @@ export function EditDetailsPanel({
           aria-live="polite"
           className={
             justSaved
-              ? 'rounded-control bg-paper p-3 text-small font-semibold'
+              ? 'rounded-control bg-paper text-small p-3 font-semibold'
               : 'sr-only'
           }
         >
@@ -244,9 +244,9 @@ export function EditDetailsPanel({
         </div>
       </form>
 
-      <div className="mt-6 border-t border-line pt-4 text-small">
+      <div className="border-line text-small mt-6 border-t pt-4">
         <p className="font-semibold">Need to change something else?</p>
-        <p className="mt-1 text-ink/85">
+        <p className="text-ink/85 mt-1">
           The number of guests, the room type and prices can&rsquo;t be changed
           here.
         </p>

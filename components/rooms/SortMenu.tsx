@@ -24,7 +24,7 @@ export function SortMenu({
           id={id}
           value={value}
           onChange={(e) => onChange(e.target.value as SortKey)}
-          className="min-h-11 appearance-none rounded-control border border-ink/60 bg-surface py-2 pl-4 pr-10 text-small font-medium hover:bg-paper"
+          className="rounded-control border-ink/60 bg-surface text-small hover:bg-paper min-h-11 appearance-none border py-2 pr-10 pl-4 font-medium"
         >
           {sortOptions.map((o) => (
             <option key={o.key} value={o.key}>
@@ -33,7 +33,7 @@ export function SortMenu({
           ))}
         </select>
         <ChevronDown
-          className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2"
+          className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2"
           aria-hidden
         />
       </div>

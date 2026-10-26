@@ -5,7 +5,7 @@ export function AdminLoading({ label = 'Loading' }: { label?: string }) {
   return (
     <div
       role="status"
-      className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-card border border-line bg-surface text-small text-muted"
+      className="rounded-card border-line bg-surface text-small text-muted flex min-h-40 flex-col items-center justify-center gap-3 border"
     >
       <Loader2
         className="size-6 animate-spin motion-reduce:animate-none"
@@ -24,10 +24,10 @@ export function AdminEmpty({
   children?: ReactNode;
 }) {
   return (
-    <div className="rounded-card border border-dashed border-line bg-paper px-5 py-10 text-center">
+    <div className="rounded-card border-line bg-paper border border-dashed px-5 py-10 text-center">
       <p className="font-semibold">{title}</p>
       {children && (
-        <p className="mx-auto mt-1 max-w-md text-small text-muted">
+        <p className="text-small text-muted mx-auto mt-1 max-w-md">
           {children}
         </p>
       )}
@@ -45,7 +45,7 @@ export function AdminError({
   return (
     <div
       role="alert"
-      className="rounded-card border border-danger/30 bg-danger/5 px-5 py-6 text-small text-danger"
+      className="rounded-card border-danger/30 bg-danger/5 text-small text-danger border px-5 py-6"
     >
       <p>{message}</p>
       {action && <div className="mt-3">{action}</div>}

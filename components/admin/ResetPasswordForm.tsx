@@ -49,11 +49,11 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
   return (
     <div>
-      <p className="text-caption font-semibold uppercase tracking-wide text-muted">
+      <p className="text-caption text-muted font-semibold tracking-wide uppercase">
         Account recovery
       </p>
-      <h1 className="mt-2 font-display text-h2">Choose a new password</h1>
-      <p className="mt-2 text-small text-muted">
+      <h1 className="font-display text-h2 mt-2">Choose a new password</h1>
+      <p className="text-small text-muted mt-2">
         Use at least 10 characters. All other sessions will be signed out.
       </p>
 
@@ -63,10 +63,10 @@ export function ResetPasswordForm({ token }: { token: string }) {
         </div>
       )}
       {invalidToken && (
-        <p className="mt-3 text-small">
+        <p className="text-small mt-3">
           <Link
             href="/admin/forgot-password"
-            className="font-semibold underline decoration-line underline-offset-4 hover:decoration-ink"
+            className="decoration-line hover:decoration-ink font-semibold underline underline-offset-4"
           >
             Request a new reset link
           </Link>
@@ -96,7 +96,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute inset-y-0 right-0 grid w-12 place-items-center text-muted hover:text-ink"
+                className="text-muted hover:text-ink absolute inset-y-0 right-0 grid w-12 place-items-center"
               >
                 {showPassword ? (
                   <EyeOff className="size-5" aria-hidden />

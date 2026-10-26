@@ -50,7 +50,7 @@ export function GuestStepper({
         </button>
         <output
           aria-live="polite"
-          className="w-6 text-center text-body-lg font-semibold tabular-nums"
+          className="text-body-lg w-6 text-center font-semibold tabular-nums"
         >
           {value}
         </output>

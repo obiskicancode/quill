@@ -28,11 +28,11 @@ export function CheckoutShell({
     'inline-flex min-h-11 items-center gap-2 px-2 text-small font-medium underline-offset-4 hover:underline';
   return (
     <>
-      <header className="checkout-chrome border-b border-line bg-paper">
+      <header className="checkout-chrome border-line bg-paper border-b">
         <div className="container-page flex min-h-16 items-center justify-between gap-4">
           <SiteLogo site={site} />
-          <p className="inline-flex items-center gap-2 text-small font-semibold">
-            <Lock className="size-4 text-accent-ink" aria-hidden />
+          <p className="text-small inline-flex items-center gap-2 font-semibold">
+            <Lock className="text-accent-ink size-4" aria-hidden />
             {label}
           </p>
           <div className="flex items-center">
@@ -68,8 +68,8 @@ export function CheckoutShell({
 
       {children}
 
-      <footer className="checkout-chrome border-t border-line bg-paper pb-28 pt-6 lg:pb-8">
-        <div className="container-page flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-small text-muted">
+      <footer className="checkout-chrome border-line bg-paper border-t pt-6 pb-28 lg:pb-8">
+        <div className="container-page text-small text-muted flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
           <p>
             &copy; {new Date().getFullYear()} {site.name}
           </p>

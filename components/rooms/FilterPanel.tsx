@@ -45,10 +45,10 @@ function PriceField({
   };
   return (
     <div className="flex-1">
-      <label htmlFor={id} className="text-caption font-semibold text-muted">
+      <label htmlFor={id} className="text-caption text-muted font-semibold">
         {label}
       </label>
-      <div className="mt-1 flex min-h-11 items-center gap-1 rounded-control border border-ink/60 bg-surface px-3 focus-within:ring-2 focus-within:ring-ink">
+      <div className="rounded-control border-ink/60 bg-surface focus-within:ring-ink mt-1 flex min-h-11 items-center gap-1 border px-3 focus-within:ring-2">
         <span aria-hidden className="text-muted">
           ₦
         </span>
@@ -91,13 +91,13 @@ function CheckGroup<T extends string>({
         {options.map((o) => (
           <label
             key={o.key}
-            className="flex min-h-11 cursor-pointer items-center gap-3 text-small"
+            className="text-small flex min-h-11 cursor-pointer items-center gap-3"
           >
             <input
               type="checkbox"
               checked={selected.includes(o.key)}
               onChange={() => onToggle(o.key)}
-              className="size-5 shrink-0 accent-ink"
+              className="accent-ink size-5 shrink-0"
             />
             {o.label}
           </label>
@@ -152,7 +152,7 @@ export function FilterPanel({
             />
           </div>
           {priceBounds && (
-            <p className="mt-2 text-caption text-muted">
+            <p className="text-caption text-muted mt-2">
               Rooms run from {formatNaira(priceBounds.min)} to{' '}
               {formatNaira(priceBounds.max)}. Rooms with no published price
               always show.
@@ -162,7 +162,7 @@ export function FilterPanel({
       </StaggerItem>
 
       <StaggerItem>
-        <div className="border-t border-line">
+        <div className="border-line border-t">
           <GuestStepper
             label="Minimum guests"
             hint="Rooms that sleep at least this many"
@@ -177,7 +177,7 @@ export function FilterPanel({
       </StaggerItem>
 
       <StaggerItem>
-        <div className="border-t border-line pt-4">
+        <div className="border-line border-t pt-4">
           <CheckGroup
             legend="Bed type"
             options={bedOptions}
@@ -190,7 +190,7 @@ export function FilterPanel({
       </StaggerItem>
 
       <StaggerItem>
-        <div className="border-t border-line pt-4">
+        <div className="border-line border-t pt-4">
           <CheckGroup<FilterAmenity>
             legend="Amenities"
             options={filterAmenityOptions}
@@ -250,11 +250,11 @@ export function FilterSheet({
       ref={ref}
       aria-labelledby={titleId}
       onClose={onClose}
-      className="inset-x-0 bottom-0 top-auto m-0 max-h-[90dvh] w-full max-w-none bg-transparent p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col"
+      className="text-ink backdrop:bg-ink/60 inset-x-0 top-auto bottom-0 m-0 max-h-[90dvh] w-full max-w-none bg-transparent p-0 open:flex open:flex-col"
     >
       {open && (
-        <div className="animate-sheet-rise flex max-h-[90dvh] min-h-0 w-full flex-col overflow-hidden rounded-t-card bg-paper">
-          <div className="flex items-center justify-between border-b border-line px-5 py-2">
+        <div className="animate-sheet-rise rounded-t-card bg-paper flex max-h-[90dvh] min-h-0 w-full flex-col overflow-hidden">
+          <div className="border-line flex items-center justify-between border-b px-5 py-2">
             <h2 id={titleId} className="font-display text-h3">
               Filters
             </h2>
@@ -262,7 +262,7 @@ export function FilterSheet({
               type="button"
               aria-label="Close filters"
               onClick={onClose}
-              className="grid size-11 place-items-center rounded-full hover:bg-ink/10"
+              className="hover:bg-ink/10 grid size-11 place-items-center rounded-full"
             >
               <X className="size-6" aria-hidden />
             </button>
@@ -275,7 +275,7 @@ export function FilterSheet({
               maxGuestsAvailable={maxGuestsAvailable}
             />
           </div>
-          <div className="flex items-center gap-3 border-t border-line bg-surface px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
+          <div className="border-line bg-surface flex items-center gap-3 border-t px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <Button
               variant="ghost"
               size="md"

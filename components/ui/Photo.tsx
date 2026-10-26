@@ -39,7 +39,7 @@ export function Photo({
 
   return (
     <div
-      className={`relative overflow-hidden bg-ink/10 ${className}`}
+      className={`bg-ink/10 relative overflow-hidden ${className}`}
       style={
         placeholderColor ? { backgroundColor: placeholderColor } : undefined
       }
@@ -48,7 +48,7 @@ export function Photo({
         <div
           role="img"
           aria-label={alt}
-          className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-ink/15 to-ink/5 px-4 text-center text-ink/60"
+          className="from-ink/15 to-ink/5 text-ink/60 absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br px-4 text-center"
         >
           <ImageIcon className="size-8" aria-hidden />
           <span className="text-caption">Photo coming soon</span>
@@ -58,7 +58,7 @@ export function Photo({
           {status === 'loading' && (
             <div
               aria-hidden
-              className="absolute inset-0 animate-pulse bg-ink/5"
+              className="bg-ink/5 absolute inset-0 animate-pulse"
             />
           )}
           <Image

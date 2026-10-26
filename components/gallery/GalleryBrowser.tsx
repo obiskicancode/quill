@@ -58,17 +58,17 @@ function Chip({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`relative inline-flex min-h-11 items-center rounded-full border px-4 text-small font-semibold transition-colors ${active ? 'border-ink text-paper' : 'border-ink/50 bg-surface hover:bg-ink hover:text-paper'}`}
+      className={`text-small relative inline-flex min-h-11 items-center rounded-full border px-4 font-semibold transition-colors ${active ? 'border-ink text-paper' : 'border-ink/50 bg-surface hover:bg-ink hover:text-paper'}`}
     >
       {showPill && (
         <motion.span
           layoutId={pillId}
-          className="absolute inset-0 rounded-full bg-ink"
+          className="bg-ink absolute inset-0 rounded-full"
           transition={spring}
         />
       )}
       {active && reduced && (
-        <span className="absolute inset-0 rounded-full bg-ink" />
+        <span className="bg-ink absolute inset-0 rounded-full" />
       )}
       <span className="relative">{children}</span>
     </button>
@@ -221,7 +221,7 @@ export function GalleryBrowser({
       <p
         role="status"
         aria-live="polite"
-        className="mt-6 text-small text-muted"
+        className="text-small text-muted mt-6"
       >
         Showing {shown.length} of {filtered.length}{' '}
         {filtered.length === 1 ? 'photo' : 'photos'}
@@ -261,13 +261,13 @@ export function GalleryBrowser({
                   setLightbox({ open: true, index: i });
                   syncUrl({ category, room, image: img.id });
                 }}
-                className="group/media block w-full overflow-hidden rounded-card"
+                className="group/media rounded-card block w-full overflow-hidden"
               >
                 <HoverZoom
                   className="rounded-card"
                   caption={img.caption}
                   affordance={
-                    <span className="grid size-9 place-items-center rounded-full bg-ink/60 backdrop-blur">
+                    <span className="bg-ink/60 grid size-9 place-items-center rounded-full backdrop-blur">
                       <Expand className="size-4" aria-hidden />
                     </span>
                   }

@@ -1,0 +1,274 @@
+'use client';
+
+import { CheckCircle2, FileImage, Loader2, XCircle } from 'lucide-react';
+import { useState } from 'react';
+
+import { adminService } from '@/app/api/services/admin.service';
+import { Button } from '@/components/ui/Button';
+import { formatNaira } from '@/lib/format';
+import type {
+  ReservationDetail,
+  ReservationPaymentItem,
+} from '@/types/reservation.types';
+
+import { ActionModal } from './ActionModal';
+
+interface VerifyTransferModalProps {
+  open: boolean;
+  onClose: () => void;
+  reservation: ReservationDetail;
+  payment: ReservationPaymentItem;
+  onSuccess: (updated: ReservationDetail) => void;
+  onRefresh: () => void;
+}
+
+export function VerifyTransferModal({
+  open,
+  onClose,
+  reservation,
+  payment,
+  onSuccess,
+  onRefresh,
+}: VerifyTransferModalProps) {
+  const [mode, setMode] = useState<'verify' | 'reject'>('verify');
+  const [verifiedNaira, setVerifiedNaira] = useState(
+    (payment.amountMinor / 100).toString(),
+  );
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      if (mode === 'verify') {
+        const num = parseFloat(verifiedNaira);
+        if (isNaN(num) || num <= 0) {
+          setError('Please specify a valid positive verified amount.');
+          setSubmitting(false);
+          return;
+        }
+
+        const updated = await adminService.verifyTransfer(
+          reservation.id,
+          payment.id,
+          {
+            action: 'verify',
+            amountMinor: Math.round(num * 100),
+            note: note.trim() || undefined,
+            version: reservation.updatedAt,
+            idempotencyKey: crypto.randomUUID(),
+          },
+        );
+        onSuccess(updated.data);
+        onClose();
+      } else {
+        if (!rejectionReason || rejectionReason.trim().length < 3) {
+          setError(
+            'A detailed rejection reason is required to notify the guest.',
+          );
+          setSubmitting(false);
+          return;
+        }
+
+        const updated = await adminService.rejectTransfer(
+          reservation.id,
+          payment.id,
+          {
+            action: 'reject',
+            rejectionReason: rejectionReason.trim(),
+            note: note.trim() || undefined,
+            version: reservation.updatedAt,
+            idempotencyKey: crypto.randomUUID(),
+          },
+        );
+        onSuccess(updated.data);
+        onClose();
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to process bank transfer',
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <ActionModal
+      open={open}
+      onClose={onClose}
+      title="Verify Bank Transfer Proof"
+      description={`Inspect transfer receipt and confirm receipt of funds for ${reservation.reference}.`}
+      error={error}
+      maxWidth="xl"
+      onRefresh={onRefresh}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Receipt and Details Row */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Left: Receipt Preview */}
+          <div className="bg-canvas rounded-control border-line flex flex-col items-center justify-center border p-4 text-center">
+            {payment.proofKey ? (
+              <div className="space-y-2">
+                <FileImage
+                  className="text-accent mx-auto size-12"
+                  aria-hidden="true"
+                />
+                <p className="text-small text-ink font-semibold">
+                  Transfer Receipt Attached
+                </p>
+                <a
+                  href={`/api/admin/reservations/${reservation.id}/proof`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-caption text-accent inline-flex items-center font-semibold hover:underline"
+                >
+                  Open receipt in new tab &rarr;
+                </a>
+              </div>
+            ) : (
+              <p className="text-small text-muted">
+                No image receipt uploaded for this transaction.
+              </p>
+            )}
+          </div>
+
+          {/* Right: Payment details */}
+          <div className="bg-canvas rounded-control border-line text-small space-y-2 border p-4">
+            <div>
+              <span className="text-caption text-muted">Reference:</span>
+              <p className="text-ink font-mono font-semibold">
+                {payment.reference}
+              </p>
+            </div>
+            <div>
+              <span className="text-caption text-muted">Expected Amount:</span>
+              <p className="text-ink font-bold">
+                {formatNaira(payment.amountMinor / 100)}
+              </p>
+            </div>
+            <div>
+              <span className="text-caption text-muted">Guest Name:</span>
+              <p className="text-ink">{reservation.guestName}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Toggle */}
+        <div className="border-line grid grid-cols-2 gap-2 border-t pt-3">
+          <button
+            type="button"
+            onClick={() => setMode('verify')}
+            className={`rounded-control text-small flex items-center justify-center gap-2 border p-2.5 font-semibold transition-colors ${
+              mode === 'verify'
+                ? 'border-success bg-success/15 text-success ring-success ring-2'
+                : 'border-line text-muted hover:border-ink hover:text-ink'
+            }`}
+          >
+            <CheckCircle2 className="size-4" aria-hidden="true" />
+            <span>Mark as Received</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('reject')}
+            className={`rounded-control text-small flex items-center justify-center gap-2 border p-2.5 font-semibold transition-colors ${
+              mode === 'reject'
+                ? 'border-danger bg-danger/15 text-danger ring-danger ring-2'
+                : 'border-line text-muted hover:border-ink hover:text-ink'
+            }`}
+          >
+            <XCircle className="size-4" aria-hidden="true" />
+            <span>Reject Proof</span>
+          </button>
+        </div>
+
+        {mode === 'verify' ? (
+          <div>
+            <label className="text-small text-ink block font-semibold">
+              Verified Amount Received (₦){' '}
+              <span className="text-danger">*</span>
+            </label>
+            <input
+              type="number"
+              step="any"
+              required
+              value={verifiedNaira}
+              onChange={(e) => setVerifiedNaira(e.target.value)}
+              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+            />
+            <p className="text-caption text-muted mt-1">
+              If the verified amount satisfies the deposit or stay total, the
+              booking will automatically move to confirmed.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <label className="text-small text-ink block font-semibold">
+              Rejection Reason <span className="text-danger">*</span>
+            </label>
+            <textarea
+              rows={3}
+              required
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="e.g. Funds not reflected in hotel bank account, blurred receipt, incorrect amount..."
+              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+            />
+            <p className="text-caption text-muted mt-1">
+              This message will be emailed to the guest. Their booking hold will
+              remain active until normal expiration.
+            </p>
+          </div>
+        )}
+
+        <div>
+          <label className="text-small text-ink block font-semibold">
+            Internal Note
+          </label>
+          <input
+            type="text"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Staff notes for audit log..."
+            className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+          />
+        </div>
+
+        <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onClose}
+            disabled={submitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant={mode === 'verify' ? 'primary' : 'danger'}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <>
+                <Loader2
+                  className="mr-2 size-4 animate-spin"
+                  aria-hidden="true"
+                />
+                Processing...
+              </>
+            ) : mode === 'verify' ? (
+              'Confirm receipt & verify'
+            ) : (
+              'Reject transfer'
+            )}
+          </Button>
+        </div>
+      </form>
+    </ActionModal>
+  );
+}

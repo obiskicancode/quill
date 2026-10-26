@@ -105,7 +105,7 @@ export function SessionsPanel() {
               type="button"
               onClick={() => void load()}
               disabled={loading}
-              className="inline-flex min-h-10 items-center gap-2 rounded-control px-2 text-small font-semibold hover:bg-ink/5 disabled:opacity-50"
+              className="rounded-control text-small hover:bg-ink/5 inline-flex min-h-10 items-center gap-2 px-2 font-semibold disabled:opacity-50"
             >
               <RefreshCw className="size-4" aria-hidden />
               Refresh
@@ -134,25 +134,25 @@ export function SessionsPanel() {
               Sign in again if you expected to see this device.
             </AdminEmpty>
           ) : (
-            <ul className="divide-y divide-line rounded-control border border-line">
+            <ul className="divide-line rounded-control border-line divide-y border">
               {sessions.map((session) => (
                 <li
                   key={session.id}
                   className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center"
                 >
-                  <span className="grid size-10 shrink-0 place-items-center rounded-control bg-paper">
+                  <span className="rounded-control bg-paper grid size-10 shrink-0 place-items-center">
                     <MonitorSmartphone className="size-5" aria-hidden />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="flex flex-wrap items-center gap-2 text-small font-semibold">
+                    <p className="text-small flex flex-wrap items-center gap-2 font-semibold">
                       {deviceLabel(session.userAgent)}
                       {session.current && (
-                        <span className="rounded-full bg-success/10 px-2 py-0.5 text-caption font-semibold text-success">
+                        <span className="bg-success/10 text-caption text-success rounded-full px-2 py-0.5 font-semibold">
                           This device
                         </span>
                       )}
                     </p>
-                    <p className="mt-0.5 text-caption text-muted">
+                    <p className="text-caption text-muted mt-0.5">
                       {session.ipAddress ?? 'Unknown IP'} · Last active{' '}
                       {formatDate(session.lastSeenAt)} · Expires{' '}
                       {formatDate(session.expiresAt)}
@@ -162,7 +162,7 @@ export function SessionsPanel() {
                     <button
                       type="button"
                       onClick={() => setDialog({ type: 'one', session })}
-                      className="min-h-9 self-start rounded-control border border-line px-3 text-small font-semibold text-danger hover:border-danger/40 hover:bg-danger/5 sm:self-auto"
+                      className="rounded-control border-line text-small text-danger hover:border-danger/40 hover:bg-danger/5 min-h-9 self-start border px-3 font-semibold sm:self-auto"
                     >
                       Sign out
                     </button>

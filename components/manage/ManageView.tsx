@@ -207,7 +207,7 @@ export function ManageView({
           )}
           {v.status === 'pending_payment' && hold.remainingMs !== null && (
             <p
-              className={`rounded-control p-3 text-small ${hold.expiring ? 'bg-danger/5 font-semibold text-danger' : 'bg-paper text-ink'}`}
+              className={`rounded-control text-small p-3 ${hold.expiring ? 'bg-danger/5 text-danger font-semibold' : 'bg-paper text-ink'}`}
             >
               {hold.expired ? (
                 'The hold on your room has ended.'
@@ -255,7 +255,7 @@ export function ManageView({
             <motion.section
               {...presence}
               aria-labelledby="pending-title"
-              className="space-y-3 rounded-card border-2 border-ink bg-surface p-5 md:p-6"
+              className="rounded-card border-ink bg-surface space-y-3 border-2 p-5 md:p-6"
             >
               <h2 id="pending-title" className="font-display text-h3">
                 A date change is waiting for payment

@@ -18,7 +18,7 @@ export async function FaqSection() {
           as="h2"
           id="faq-title"
           text="Common questions"
-          className="mb-8 font-display text-h2"
+          className="font-display text-h2 mb-8"
         />
         <Reveal delay={0.12}>
           <FaqAccordion faqs={faqs} />

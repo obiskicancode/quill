@@ -58,17 +58,17 @@ function FieldButton({
       aria-expanded={expanded}
       aria-controls={controls}
       onClick={onClick}
-      className={`relative flex min-h-[4.5rem] items-center gap-3 rounded-control px-5 text-left transition-colors hover:bg-paper active:bg-line/60 ${
+      className={`rounded-control hover:bg-paper active:bg-line/60 relative flex min-h-[4.5rem] items-center gap-3 px-5 text-left transition-colors ${
         expanded ? 'bg-paper' : ''
-      } ${invalid ? 'ring-2 ring-inset ring-danger' : ''} ${
+      } ${invalid ? 'ring-danger ring-2 ring-inset' : ''} ${
         separator
-          ? 'after:absolute after:right-0 after:top-1/4 after:h-1/2 after:w-px after:bg-line'
+          ? 'after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-px'
           : ''
       }`}
     >
       <span className="text-accent-ink">{icon}</span>
       <span className="min-w-0">
-        <span className="block text-caption font-semibold text-muted">
+        <span className="text-caption text-muted block font-semibold">
           {label}
         </span>
         <span
@@ -175,7 +175,7 @@ export function SearchBar() {
   }
 
   const guestPanel = (
-    <div className="divide-y divide-line">
+    <div className="divide-line divide-y">
       <GuestStepper
         label="Adults"
         hint="Age 13 and over"
@@ -206,7 +206,7 @@ export function SearchBar() {
           e.preventDefault();
           submit();
         }}
-        className="relative hidden rounded-card bg-surface p-2 shadow-float ring-1 ring-ink/10 md:block"
+        className="rounded-card bg-surface shadow-float ring-ink/10 relative hidden p-2 ring-1 md:block"
       >
         <div className="grid grid-cols-[1fr_1fr_1fr_auto] items-stretch">
           <FieldButton
@@ -241,13 +241,13 @@ export function SearchBar() {
             aria-expanded={panel === 'guests'}
             aria-controls={ids.guests}
             onClick={(e) => togglePanel('guests', e)}
-            className={`relative flex min-h-[4.5rem] items-center gap-3 rounded-control px-5 text-left transition-colors hover:bg-paper active:bg-line/60 ${panel === 'guests' ? 'bg-paper' : ''}`}
+            className={`rounded-control hover:bg-paper active:bg-line/60 relative flex min-h-[4.5rem] items-center gap-3 px-5 text-left transition-colors ${panel === 'guests' ? 'bg-paper' : ''}`}
           >
             <span className="text-accent-ink">
               <Users className="size-5" aria-hidden />
             </span>
             <span className="min-w-0">
-              <span className="block text-caption font-semibold text-muted">
+              <span className="text-caption text-muted block font-semibold">
                 Guests
               </span>
               <span className="block truncate font-semibold">
@@ -270,7 +270,7 @@ export function SearchBar() {
           <p
             id={ids.error}
             role="alert"
-            className="px-5 pb-2 pt-3 text-small font-medium text-danger"
+            className="text-small text-danger px-5 pt-3 pb-2 font-medium"
           >
             {error}
           </p>
@@ -281,14 +281,14 @@ export function SearchBar() {
             id={ids.dates}
             role="group"
             aria-label="Choose your dates"
-            className="absolute left-0 top-full z-30 mt-3 w-[44rem] max-w-full rounded-card bg-surface p-5 shadow-float ring-1 ring-ink/10"
+            className="rounded-card bg-surface shadow-float ring-ink/10 absolute top-full left-0 z-30 mt-3 w-[44rem] max-w-full p-5 ring-1"
           >
             <DatePicker
               value={{ checkIn, checkOut }}
               onChange={setDates}
               monthsShown={2}
             />
-            <div className="mt-4 flex justify-end border-t border-line pt-4">
+            <div className="border-line mt-4 flex justify-end border-t pt-4">
               <Button
                 variant="ghost"
                 size="sm"
@@ -306,7 +306,7 @@ export function SearchBar() {
             id={ids.guests}
             role="group"
             aria-label="Choose guests"
-            className="absolute right-0 top-full z-30 mt-3 w-full max-w-sm rounded-card bg-surface p-5 shadow-float ring-1 ring-ink/10"
+            className="rounded-card bg-surface shadow-float ring-ink/10 absolute top-full right-0 z-30 mt-3 w-full max-w-sm p-5 ring-1"
           >
             {guestPanel}
             <Button
@@ -327,14 +327,14 @@ export function SearchBar() {
           type="button"
           aria-haspopup="dialog"
           onClick={() => setSheetOpen(true)}
-          className="flex min-h-[4.5rem] w-full items-center gap-4 rounded-card bg-surface p-4 text-left shadow-float ring-1 ring-ink/10 transition-colors active:bg-paper"
+          className="rounded-card bg-surface shadow-float ring-ink/10 active:bg-paper flex min-h-[4.5rem] w-full items-center gap-4 p-4 text-left ring-1 transition-colors"
         >
-          <span className="grid size-12 shrink-0 place-items-center rounded-full bg-accent text-ink">
+          <span className="bg-accent text-ink grid size-12 shrink-0 place-items-center rounded-full">
             <Search className="size-6" aria-hidden />
           </span>
           <span className="min-w-0">
             <span className="block font-semibold">Check availability</span>
-            <span className="block truncate text-small text-muted">
+            <span className="text-small text-muted block truncate">
               {summary ?? 'Add dates and guests'}
             </span>
           </span>
@@ -344,11 +344,11 @@ export function SearchBar() {
           ref={dialogRef}
           aria-labelledby={ids.sheetTitle}
           onClose={() => setSheetOpen(false)}
-          className="m-0 h-dvh max-h-none w-screen max-w-none bg-paper p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col"
+          className="bg-paper text-ink backdrop:bg-ink/60 m-0 h-dvh max-h-none w-screen max-w-none p-0 open:flex open:flex-col"
         >
           {sheetOpen && (
             <>
-              <div className="flex items-center justify-between border-b border-line px-5 py-2">
+              <div className="border-line flex items-center justify-between border-b px-5 py-2">
                 <h2 id={ids.sheetTitle} className="font-display text-h3">
                   Check availability
                 </h2>
@@ -356,7 +356,7 @@ export function SearchBar() {
                   type="button"
                   aria-label="Close"
                   onClick={() => setSheetOpen(false)}
-                  className="grid size-11 place-items-center rounded-full hover:bg-ink/10"
+                  className="hover:bg-ink/10 grid size-11 place-items-center rounded-full"
                 >
                   <X className="size-6" aria-hidden />
                 </button>
@@ -368,14 +368,14 @@ export function SearchBar() {
                   onChange={setDates}
                   monthsShown={1}
                 />
-                <div className="mt-6 border-t border-line">{guestPanel}</div>
+                <div className="border-line mt-6 border-t">{guestPanel}</div>
               </div>
 
-              <div className="border-t border-line bg-surface px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
+              <div className="border-line bg-surface border-t px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 {error && (
                   <p
                     role="alert"
-                    className="mb-3 text-small font-medium text-danger"
+                    className="text-small text-danger mb-3 font-medium"
                   >
                     {error}
                   </p>

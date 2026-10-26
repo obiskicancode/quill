@@ -40,7 +40,7 @@ export function TrustStrip({ revealDelay = 0 }: { revealDelay?: number }) {
       as="ul"
       staggerChildren={0.06}
       delayChildren={revealDelay}
-      className="mt-6 grid grid-cols-1 gap-x-8 gap-y-1 text-small font-medium sm:grid-cols-2 md:flex md:flex-wrap md:justify-center"
+      className="text-small mt-6 grid grid-cols-1 gap-x-8 gap-y-1 font-medium sm:grid-cols-2 md:flex md:flex-wrap md:justify-center"
     >
       {items.map((item) => {
         const Icon = icons[item.id];
@@ -48,7 +48,7 @@ export function TrustStrip({ revealDelay = 0 }: { revealDelay?: number }) {
           item.id === 'reviews' ? reviewsLabel(site, item.label) : item.label;
         const inner = (
           <>
-            <Icon className="size-5 shrink-0 text-accent-ink" aria-hidden />
+            <Icon className="text-accent-ink size-5 shrink-0" aria-hidden />
             <span>{label}</span>
           </>
         );
@@ -59,7 +59,7 @@ export function TrustStrip({ revealDelay = 0 }: { revealDelay?: number }) {
                 href={site.googleReviewsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center gap-2 underline decoration-accent decoration-2 underline-offset-4"
+                className="decoration-accent inline-flex min-h-11 items-center gap-2 underline decoration-2 underline-offset-4"
               >
                 {inner}
                 <span className="sr-only">(opens in a new tab)</span>

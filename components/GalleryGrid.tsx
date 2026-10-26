@@ -67,7 +67,7 @@ export function GalleryGrid({ images }: { images: ImageAsset[] }) {
                       ? '(min-width: 768px) 50vw, 100vw'
                       : '(min-width: 768px) 25vw, 50vw'
                   }
-                  className={`w-full rounded-card transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.04] ${
+                  className={`rounded-card w-full transition-transform duration-700 ease-out motion-safe:group-hover:scale-[1.04] ${
                     asymmetric ? 'h-full' : 'aspect-[4/3]'
                   }`}
                 />

@@ -36,7 +36,7 @@ export function AvailabilityHint({
 
   if (!stay) {
     return (
-      <div className="min-h-[3.5rem] rounded-card border border-line bg-surface px-4 py-3 text-small text-muted">
+      <div className="rounded-card border-line bg-surface text-small text-muted min-h-[3.5rem] border px-4 py-3">
         Choose your dates to see live availability.
       </div>
     );
@@ -45,7 +45,7 @@ export function AvailabilityHint({
   if (status === 'loading' || status === 'idle') {
     return (
       <div
-        className="min-h-[3.5rem] rounded-card border border-line bg-surface px-4 py-3 text-small text-muted"
+        className="rounded-card border-line bg-surface text-small text-muted min-h-[3.5rem] border px-4 py-3"
         role="status"
         aria-live="polite"
       >
@@ -62,8 +62,8 @@ export function AvailabilityHint({
 
   if (status === 'error' || !data) {
     return (
-      <div className="min-h-[3.5rem] rounded-card border-2 border-danger bg-danger/5 px-4 py-3 text-small">
-        <p className="flex items-center gap-2 font-medium text-danger">
+      <div className="rounded-card border-danger bg-danger/5 text-small min-h-[3.5rem] border-2 px-4 py-3">
+        <p className="text-danger flex items-center gap-2 font-medium">
           <AlertTriangle className="size-4 shrink-0" aria-hidden />
           Live availability could not be loaded.
         </p>
@@ -122,12 +122,12 @@ export function AvailabilityHint({
 
   return (
     <div
-      className="rounded-card border border-line bg-surface px-4 py-3 text-small"
+      className="rounded-card border-line bg-surface text-small border px-4 py-3"
       role="status"
       aria-live="polite"
     >
       <p className="flex items-center gap-2 font-semibold">
-        <CheckCircle2 className="size-4 shrink-0 text-accent-ink" aria-hidden />
+        <CheckCircle2 className="text-accent-ink size-4 shrink-0" aria-hidden />
         Live availability
       </p>
       <ul className="mt-2 space-y-1.5">
@@ -151,9 +151,9 @@ export function AvailabilityHint({
       </ul>
       {notes.every((n) => n.tone === 'ok') &&
         results[0]?.result?.status === 'available' && (
-          <p className="mt-2 text-muted">
+          <p className="text-muted mt-2">
             From{' '}
-            <span className="font-semibold text-ink">
+            <span className="text-ink font-semibold">
               {formatNaira(results[0].result!.averageNgn)}
             </span>{' '}
             a night.

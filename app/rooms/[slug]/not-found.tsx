@@ -21,7 +21,7 @@ export default function RoomNotFound() {
       >
         We couldn&rsquo;t find that room
       </h1>
-      <p className="mt-3 max-w-lg text-body-lg text-ink/85">
+      <p className="text-body-lg text-ink/85 mt-3 max-w-lg">
         It may have been renamed or is no longer available. Browse our rooms and
         apartments to find one that suits your stay.
       </p>

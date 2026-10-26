@@ -1,35 +1,73 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
 
 /* ---------------------------------------------------------------
-   DESIGN TOKENS. Swap these to rebrand. Colours are "R G B" triplets.
+   DESIGN TOKENS: swap these to rebrand (shadcn convention).
    --------------------------------------------------------------- */
 :root {
-  --color-ink: 28 33 38; /* #1C2126 deep neutral base */
-  --color-ink-soft: 45 53 60; /* #2D353C */
-  --color-muted: 87 95 103; /* #575F67 secondary text */
-  --color-paper: 247 246 243; /* #F7F6F3 soft off-white page */
-  --color-surface: 255 255 255; /* cards, inputs */
-  --color-line: 221 218 211; /* #DDDAD3 hairlines */
-  --color-accent: 232 163 23; /* #E8A317 the one accent */
-  --color-accent-hover: 219 154 18; /* #DB9A12 */
-  --color-accent-pressed: 196 131 16; /* #C48310 */
-  --color-accent-ink: 122 77 0; /* #7A4D00 accent as text on light */
-  --color-whatsapp: 15 122 62; /* #0F7A3E */
-  --color-whatsapp-hover: 12 100 51;
-  --color-danger: 179 38 30; /* #B3261E */
-  --color-success: 27 122 70; /* #1B7A46 */
+  --radius: 0.75rem; /* controls: buttons, fields */
+  --radius-card-size: 1.25rem; /* cards, panels */
 
-  --focus: 28 33 38; /* focus ring colour on light surfaces */
+  --background: #f7f6f3; /* paper */
+  --foreground: #1c2126; /* ink */
 
-  --radius-control: 0.75rem; /* buttons, fields */
-  --radius-card: 1.25rem; /* cards, panels */
+  --card: #ffffff; /* surface */
+  --card-foreground: #1c2126;
+  --popover: #ffffff;
+  --popover-foreground: #1c2126;
 
-  --shadow-raised:
-    0 1px 2px rgb(28 33 38 / 0.06), 0 8px 24px -12px rgb(28 33 38 / 0.2);
-  --shadow-float:
-    0 2px 4px rgb(28 33 38 / 0.08), 0 20px 48px -16px rgb(28 33 38 / 0.35);
+  /* shadcn "primary" = your amber brand accent, ink text on top */
+  --primary: #e8a317;
+  --primary-foreground: #1c2126;
+
+  --secondary: #efede8;
+  --secondary-foreground: #2d353c; /* ink-soft */
+
+  --muted: #efede8;
+  --muted-foreground: #575f67;
+
+  /* shadcn "accent" = subtle hover/selected surface (NOT the brand amber) */
+  --accent: #efede8;
+  --accent-foreground: #1c2126;
+
+  --destructive: #b3261e;
+  --destructive-foreground: #ffffff;
+
+  --border: #dddad3; /* line */
+  --input: #ddd​ad3;
+  --ring: #1c2126; /* focus ring on light surfaces */
+
+  /* Brand extras (formerly accent / accent-hover / accent-pressed / accent-ink) */
+  --brand: #e8a317;
+  --brand-hover: #db9a12;
+  --brand-pressed: #c48310;
+  --brand-ink: #7a4d00; /* amber as text on light */
+
+  --ink: #1c2126;
+  --ink-soft: #2d353c;
+  --paper: #f7f6f3;
+  --line: #ddd​ad3;
+
+  --whatsapp: #0f7a3e;
+  --whatsapp-hover: #0c6433;
+  --success: #1b7a46;
+
+  --chart-1: #e8a317;
+  --chart-2: #1c2126;
+  --chart-3: #0f7a3e;
+  --chart-4: #575f67;
+  --chart-5: #b3261e;
+
+  --sidebar: #f7f6f3;
+  --sidebar-foreground: #1c2126;
+  --sidebar-primary: #e8a317;
+  --sidebar-primary-foreground: #1c2126;
+  --sidebar-accent: #efede8;
+  --sidebar-accent-foreground: #1c2126;
+  --sidebar-border: #ddd​ad3;
+  --sidebar-ring: #1c2126;
 
   --section-y: 4rem;
 }
@@ -45,23 +83,175 @@
   }
 }
 
-/* Dark sections switch the focus ring to the accent (7.5:1 on ink). */
-.on-dark {
-  --focus: 232 163 23;
+/* Optional dark mode (add class="dark" to <html>) */
+.dark {
+  --background: #14181c;
+  --foreground: #f7f6f3;
+  --card: #1c2126;
+  --card-foreground: #f7f6f3;
+  --popover: #1c2126;
+  --popover-foreground: #f7f6f3;
+  --primary: #e8a317;
+  --primary-foreground: #1c2126;
+  --secondary: #2d353c;
+  --secondary-foreground: #f7f6f3;
+  --muted: #2d353c;
+  --muted-foreground: #a3aab1;
+  --accent: #2d353c;
+  --accent-foreground: #f7f6f3;
+  --destructive: #e5534b;
+  --border: rgb(255 255 255 / 0.12);
+  --input: rgb(255 255 255 / 0.16);
+  --ring: #e8a317;
+  --brand-ink: #f5c25a;
+  --sidebar: #1c2126;
+  --sidebar-foreground: #f7f6f3;
+  --sidebar-accent: #2d353c;
+  --sidebar-accent-foreground: #f7f6f3;
+  --sidebar-border: rgb(255 255 255 / 0.12);
+  --sidebar-ring: #e8a317;
 }
 
+/* Dark sections switch the focus ring to the amber accent (7.5:1 on ink). */
+.on-dark {
+  --ring: #e8a317;
+}
+
+/* ---------------------------------------------------------------
+   Tailwind v4 theme mapping
+   --------------------------------------------------------------- */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-pressed: var(--brand-pressed);
+  --color-brand-ink: var(--brand-ink);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-paper: var(--paper);
+  --color-line: var(--line);
+  --color-whatsapp: var(--whatsapp);
+  --color-whatsapp-hover: var(--whatsapp-hover);
+  --color-success: var(--success);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-control: var(--radius);
+  --radius-card: var(--radius-card-size);
+
+  --font-display: var(--font-display), Georgia, serif;
+  --font-sans: var(--font-body), system-ui, sans-serif;
+}
+
+@theme {
+  /* Replace default breakpoints with yours */
+  --breakpoint-*: initial;
+  --breakpoint-sm: 390px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1440px;
+
+  --container-page: 80rem; /* max-w-page */
+
+  --text-display: clamp(2.5rem, 1.7rem + 3.6vw, 4.5rem);
+  --text-display--line-height: 1.04;
+  --text-display--letter-spacing: -0.015em;
+  --text-h2: clamp(1.875rem, 1.45rem + 1.8vw, 2.75rem);
+  --text-h2--line-height: 1.12;
+  --text-h2--letter-spacing: -0.01em;
+  --text-h3: 1.375rem;
+  --text-h3--line-height: 1.3;
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.65;
+  --text-body: 1rem;
+  --text-body--line-height: 1.6;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.5;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.4;
+
+  --shadow-raised:
+    0 1px 2px rgb(28 33 38 / 0.06), 0 8px 24px -12px rgb(28 33 38 / 0.2);
+  --shadow-float:
+    0 2px 4px rgb(28 33 38 / 0.08), 0 20px 48px -16px rgb(28 33 38 / 0.35);
+
+  /* Entrance for native <dialog> sheets and the photo viewer */
+  --animate-sheet-rise: sheet-rise 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-overlay-zoom: overlay-zoom 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes sheet-rise {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+  @keyframes overlay-zoom {
+    from {
+      opacity: 0;
+      transform: scale(1.02);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------
+   Base
+   --------------------------------------------------------------- */
 @layer base {
+  * {
+    @apply border-border;
+  }
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
   }
   body {
-    background-color: rgb(var(--color-paper));
-    color: rgb(var(--color-ink));
+    @apply bg-background text-foreground;
     text-rendering: optimizeLegibility;
   }
   :focus-visible {
-    outline: 3px solid rgb(var(--focus));
+    outline: 3px solid var(--ring);
     outline-offset: 3px;
   }
   [id] {
@@ -69,39 +259,11 @@
   }
 }
 
-@layer components {
-  .container-page {
-    @apply mx-auto w-full max-w-page px-5 md:px-8 xl:px-10;
-  }
-  .section-y {
-    padding-block: var(--section-y);
-  }
+@utility container-page {
+  @apply max-w-page mx-auto w-full px-5 md:px-8 xl:px-10;
 }
-
-/* Entrance for native <dialog> sheets and the photo viewer. */
-@keyframes sheet-rise {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-@keyframes overlay-zoom {
-  from {
-    opacity: 0;
-    transform: scale(1.02);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-.animate-sheet-rise {
-  animation: sheet-rise 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.animate-overlay-zoom {
-  animation: overlay-zoom 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+@utility section-y {
+  padding-block: var(--section-y);
 }
 
 @media (prefers-reduced-motion: reduce) {

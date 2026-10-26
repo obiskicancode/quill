@@ -39,11 +39,11 @@ export function ForgotPasswordForm() {
 
   return (
     <div>
-      <p className="text-caption font-semibold uppercase tracking-wide text-muted">
+      <p className="text-caption text-muted font-semibold tracking-wide uppercase">
         Account recovery
       </p>
-      <h1 className="mt-2 font-display text-h2">Forgot password</h1>
-      <p className="mt-2 text-small text-muted">
+      <h1 className="font-display text-h2 mt-2">Forgot password</h1>
+      <p className="text-small text-muted mt-2">
         Enter your staff email. If it belongs to an active account, a reset link
         is prepared.
       </p>
@@ -60,7 +60,7 @@ export function ForgotPasswordForm() {
           </p>
           <Link
             href="/admin/login"
-            className="inline-block text-small font-semibold underline decoration-line underline-offset-4 hover:decoration-ink"
+            className="text-small decoration-line hover:decoration-ink inline-block font-semibold underline underline-offset-4"
           >
             Back to sign in
           </Link>
@@ -102,7 +102,7 @@ export function ForgotPasswordForm() {
           </form>
           <Link
             href="/admin/login"
-            className="mt-4 inline-block text-small font-semibold underline decoration-line underline-offset-4 hover:decoration-ink"
+            className="text-small decoration-line hover:decoration-ink mt-4 inline-block font-semibold underline underline-offset-4"
           >
             Back to sign in
           </Link>

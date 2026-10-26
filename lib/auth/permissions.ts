@@ -4,21 +4,40 @@ export type AdminRole = (typeof ADMIN_ROLES)[number];
 
 export const PERMISSIONS = [
   'dashboard.view',
+  'revenue.view',
   'reservations.view',
   'reservations.manage',
+  'reservations.create',
+  'reservations.edit_details',
+  'reservations.reassign_room',
+  'reservations.resend',
+  'reservations.no_show',
+  'reservations.discount',
+  'reservations.change_dates',
+  'reservations.cancel',
+  'reservations.approve',
+  'guest.contact.view',
   'calendar.view',
   'calendar.block',
+  'blocks.restricted_reasons',
+  'blocks.backdate',
   'enquiries.view',
   'enquiries.manage',
   'rooms.view',
   'rooms.manage',
   'rates.manage',
+  'extras.manage',
+  'amenities.manage',
   'content.manage',
   'payments.view',
   'payments.manage',
+  'payments.record',
+  'payments.verify',
+  'payments.refund',
   'settings.hotel.manage',
   'settings.payments.manage',
   'staff.manage',
+  'audit.view',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -32,6 +51,12 @@ const receptionPermissions = [
   'dashboard.view',
   'reservations.view',
   'reservations.manage',
+  'reservations.create',
+  'reservations.edit_details',
+  'reservations.reassign_room',
+  'reservations.resend',
+  'reservations.no_show',
+  'guest.contact.view',
   'calendar.view',
   'calendar.block',
   'enquiries.view',
@@ -101,8 +126,23 @@ export const ADMIN_NAV: readonly AdminNavGroup[] = [
     items: [
       {
         href: '/admin/rooms',
-        label: 'Rooms and rates',
+        label: 'Room types',
         permission: 'rooms.view',
+      },
+      {
+        href: '/admin/rates',
+        label: 'Rate rules',
+        permission: 'rates.manage',
+      },
+      {
+        href: '/admin/extras',
+        label: 'Extras',
+        permission: 'extras.manage',
+      },
+      {
+        href: '/admin/amenities',
+        label: 'Amenities',
+        permission: 'amenities.manage',
       },
       {
         href: '/admin/content',
@@ -128,6 +168,11 @@ export const ADMIN_NAV: readonly AdminNavGroup[] = [
         href: '/admin/staff',
         label: 'Staff',
         permission: 'staff.manage',
+      },
+      {
+        href: '/admin/audit',
+        label: 'Audit Log',
+        permission: 'audit.view',
       },
     ],
   },
@@ -156,9 +201,24 @@ export const ADMIN_SECTIONS: Record<string, AdminSection> = {
     permission: 'enquiries.view',
   },
   rooms: {
-    title: 'Rooms and rates',
-    description: 'Manage room types, rooms and nightly pricing.',
+    title: 'Room types',
+    description: 'Manage room types, individual units and photos.',
     permission: 'rooms.view',
+  },
+  rates: {
+    title: 'Rate rules',
+    description: 'Configure seasonal pricing, weekend rates and discounts.',
+    permission: 'rates.manage',
+  },
+  extras: {
+    title: 'Extras',
+    description: 'Manage paid add-ons, pricing units and guest extras.',
+    permission: 'extras.manage',
+  },
+  amenities: {
+    title: 'Amenities',
+    description: 'Manage room amenities catalogue and icons.',
+    permission: 'amenities.manage',
   },
   content: {
     title: 'Content',
@@ -179,5 +239,10 @@ export const ADMIN_SECTIONS: Record<string, AdminSection> = {
     title: 'Staff',
     description: 'Invite staff and manage roles and access.',
     permission: 'staff.manage',
+  },
+  audit: {
+    title: 'Audit Log',
+    description: 'Review system events, compliance trails and staff actions.',
+    permission: 'audit.view',
   },
 };

@@ -24,10 +24,10 @@ export function Intro() {
             as="h2"
             id="intro-heading"
             text={heading}
-            className="max-w-xl text-balance font-display text-h2"
+            className="font-display text-h2 max-w-xl text-balance"
           />
           <StaggerGroup
-            className="mt-6 max-w-xl space-y-4 text-body-lg leading-[1.7] text-ink/85"
+            className="text-body-lg text-ink/85 mt-6 max-w-xl space-y-4 leading-[1.7]"
             staggerChildren={0.1}
           >
             {body.map((paragraph) => (
@@ -51,7 +51,7 @@ export function Intro() {
                 src={image.src}
                 alt={image.alt}
                 sizes="(min-width: 768px) 40vw, 100vw"
-                className="aspect-[4/5] w-full rounded-card"
+                className="rounded-card aspect-[4/5] w-full"
               />
             </Reveal>
           </Parallax>

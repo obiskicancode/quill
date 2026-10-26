@@ -22,7 +22,7 @@ export async function RoomAmenitiesSummary() {
               text="In every room"
               className="font-display text-h2"
             />
-            <p className="mt-3 text-body-lg text-ink/85">
+            <p className="text-body-lg text-ink/85 mt-3">
               What most of our rooms and apartments include.
             </p>
           </div>

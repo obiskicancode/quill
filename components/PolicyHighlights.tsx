@@ -40,12 +40,12 @@ export async function PolicyHighlights() {
         <ul className="grid gap-6 md:grid-cols-3">
           {items.map(({ icon: Icon, title, text }) => (
             <li key={title} className="flex gap-4">
-              <span className="grid size-12 shrink-0 place-items-center rounded-full bg-accent text-ink">
+              <span className="bg-accent text-ink grid size-12 shrink-0 place-items-center rounded-full">
                 <Icon className="size-6" aria-hidden />
               </span>
               <div>
                 <h3 className="font-semibold">{title}</h3>
-                <p className="mt-1 text-small text-muted">{text}</p>
+                <p className="text-small text-muted mt-1">{text}</p>
               </div>
             </li>
           ))}

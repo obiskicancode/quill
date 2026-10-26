@@ -28,7 +28,7 @@ export function SimilarRooms({
           id="similar-title"
           text="You may also like"
           staggerChildren={0.05}
-          className="mb-8 font-display text-h2"
+          className="font-display text-h2 mb-8"
         />
         <StaggerGroup
           as="ul"

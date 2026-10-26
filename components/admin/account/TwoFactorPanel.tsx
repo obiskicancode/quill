@@ -164,11 +164,11 @@ export function TwoFactorPanel({
           Two-factor authentication is active. Each recovery code can be used
           once if you lose your authenticator.
         </StatusBanner>
-        <ul className="mt-4 grid gap-2 font-mono text-small sm:grid-cols-2">
+        <ul className="text-small mt-4 grid gap-2 font-mono sm:grid-cols-2">
           {codes.map((code) => (
             <li
               key={code}
-              className="rounded-control border border-line bg-paper px-3 py-2 tracking-wider"
+              className="rounded-control border-line bg-paper border px-3 py-2 tracking-wider"
             >
               {code}
             </li>
@@ -268,15 +268,15 @@ export function TwoFactorPanel({
                 width={240}
                 height={240}
                 unoptimized
-                className="rounded-control border border-line bg-white p-2"
+                className="rounded-control border-line border bg-white p-2"
               />
             </div>
             <div>
-              <ol className="list-decimal space-y-2 pl-5 text-small text-muted">
+              <ol className="text-small text-muted list-decimal space-y-2 pl-5">
                 <li>Open your authenticator app and scan the QR code.</li>
                 <li>
                   If you cannot scan it, enter this key manually:
-                  <code className="mt-1 block select-all break-all rounded-control border border-line bg-paper px-3 py-2 font-mono text-small text-ink">
+                  <code className="rounded-control border-line bg-paper text-small text-ink mt-1 block border px-3 py-2 font-mono break-all select-all">
                     {setup.manualKey}
                   </code>
                 </li>
@@ -309,7 +309,7 @@ export function TwoFactorPanel({
                         autoComplete="one-time-code"
                         maxLength={6}
                         required
-                        className={`${inputClass()} text-center text-h3 tracking-[0.3em]`}
+                        className={`${inputClass()} text-h3 text-center tracking-[0.3em]`}
                       />
                     )}
                   </Field>
@@ -325,7 +325,7 @@ export function TwoFactorPanel({
                   setConfirmError(null);
                   setConfirmCode('');
                 }}
-                className="mt-3 text-small font-semibold underline decoration-line underline-offset-4 hover:decoration-ink"
+                className="text-small decoration-line hover:decoration-ink mt-3 font-semibold underline underline-offset-4"
               >
                 Cancel setup
               </button>
@@ -338,7 +338,7 @@ export function TwoFactorPanel({
             <StatusBanner tone="success">
               Two-factor authentication is enabled.
             </StatusBanner>
-            <p className="mt-3 text-small text-muted">
+            <p className="text-small text-muted mt-3">
               Recovery codes are the only backup if you lose your authenticator.
               Rotate them if you think they were exposed.
             </p>

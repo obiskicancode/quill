@@ -105,7 +105,7 @@ export function Carousel({
         ref={trackRef}
         onScroll={onScroll}
         aria-live={playing && !interacting ? 'off' : 'polite'}
-        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory [scrollbar-width:none] overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
       >
         {slides.map((slide, i) => (
           <div
@@ -127,7 +127,7 @@ export function Carousel({
             aria-label="Previous photo"
             disabled={prevDisabled}
             onClick={() => goTo(index - 1)}
-            className={`${arrow} absolute left-3 top-1/2 -translate-y-1/2`}
+            className={`${arrow} absolute top-1/2 left-3 -translate-y-1/2`}
           >
             <ChevronLeft className="size-5" aria-hidden />
           </button>
@@ -136,7 +136,7 @@ export function Carousel({
             aria-label="Next photo"
             disabled={nextDisabled}
             onClick={() => goTo(index + 1)}
-            className={`${arrow} absolute right-3 top-1/2 -translate-y-1/2`}
+            className={`${arrow} absolute top-1/2 right-3 -translate-y-1/2`}
           >
             <ChevronRight className="size-5" aria-hidden />
           </button>
@@ -161,7 +161,7 @@ export function Carousel({
             aria-label="Previous review"
             disabled={prevDisabled}
             onClick={() => goTo(index - 1)}
-            className={`${arrow} border border-line`}
+            className={`${arrow} border-line border`}
           >
             <ChevronLeft className="size-5" aria-hidden />
           </button>
@@ -174,7 +174,7 @@ export function Carousel({
                   : 'Pause automatic slide show'
               }
               onClick={() => setUserPaused((p) => !p)}
-              className={`${arrow} border border-line`}
+              className={`${arrow} border-line border`}
             >
               {userPaused ? (
                 <Play className="size-5" aria-hidden />
@@ -188,13 +188,13 @@ export function Carousel({
             aria-label="Next review"
             disabled={nextDisabled}
             onClick={() => goTo(index + 1)}
-            className={`${arrow} border border-line`}
+            className={`${arrow} border-line border`}
           >
             <ChevronRight className="size-5" aria-hidden />
           </button>
           <p
             aria-hidden
-            className="ml-2 min-w-12 text-small tabular-nums text-muted"
+            className="text-small text-muted ml-2 min-w-12 tabular-nums"
           >
             {index + 1} / {count}
           </p>

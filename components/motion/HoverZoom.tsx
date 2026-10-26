@@ -28,14 +28,14 @@ export function HoverZoom({
         {children}
       </div>
       {caption && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end bg-gradient-to-t from-ink/85 via-ink/35 to-transparent p-4 pt-12 opacity-0 transition-opacity duration-300 group-focus-within/media:opacity-100 group-hover/media:opacity-100">
-          <span className="line-clamp-2 text-small font-medium text-white">
+        <div className="from-ink/85 via-ink/35 pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end bg-gradient-to-t to-transparent p-4 pt-12 opacity-0 transition-opacity duration-300 group-focus-within/media:opacity-100 group-hover/media:opacity-100">
+          <span className="text-small line-clamp-2 font-medium text-white">
             {caption}
           </span>
         </div>
       )}
       {affordance && (
-        <div className="pointer-events-none absolute right-3 top-3 z-10 text-white opacity-0 transition-opacity duration-300 group-focus-within/media:opacity-100 group-hover/media:opacity-100">
+        <div className="pointer-events-none absolute top-3 right-3 z-10 text-white opacity-0 transition-opacity duration-300 group-focus-within/media:opacity-100 group-hover/media:opacity-100">
           {affordance}
         </div>
       )}

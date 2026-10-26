@@ -17,14 +17,14 @@ interface AmenityItemProps {
 export function AmenityItem({ amenity, tone = 'dark' }: AmenityItemProps) {
   return (
     <motion.li className="flex items-center gap-4" variants={fadeUp}>
-      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-accent text-ink">
+      <span className="bg-accent text-ink grid size-12 shrink-0 place-items-center rounded-full">
         <RoomAmenityIcon name={amenity.key} className="size-6" />
       </span>
       <div className="min-w-0">
         <p className="font-semibold">{amenity.label}</p>
         {amenity.description && (
           <p
-            className={`mt-1 text-small ${tone === 'dark' ? 'text-paper/80' : 'text-muted'}`}
+            className={`text-small mt-1 ${tone === 'dark' ? 'text-paper/80' : 'text-muted'}`}
           >
             {amenity.description}
           </p>

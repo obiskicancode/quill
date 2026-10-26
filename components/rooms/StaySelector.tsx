@@ -143,25 +143,25 @@ export function StaySelector({
   }
 
   return (
-    <div className="sticky top-16 z-30 border-b border-line bg-paper/95 py-3 backdrop-blur">
+    <div className="border-line bg-paper/95 sticky top-16 z-30 border-b py-3 backdrop-blur">
       <div className="container-page" ref={wrapRef}>
         {/* Desktop and tablet */}
         <div className="relative hidden md:block">
           <div
             role="group"
             aria-label="Your stay"
-            className="grid grid-cols-3 rounded-card bg-surface p-1.5 shadow-raised ring-1 ring-ink/10"
+            className="rounded-card bg-surface shadow-raised ring-ink/10 grid grid-cols-3 p-1.5 ring-1"
           >
             <button
               type="button"
               aria-expanded={panel === 'dates'}
               aria-controls={ids.dates}
               onClick={(e) => trigger('dates', e)}
-              className={`${field} after:absolute after:right-0 after:top-1/4 after:h-1/2 after:w-px after:bg-line ${panel === 'dates' ? 'bg-paper' : ''}`}
+              className={`${field} after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-px ${panel === 'dates' ? 'bg-paper' : ''}`}
             >
-              <CalendarDays className="size-5 text-accent-ink" aria-hidden />
+              <CalendarDays className="text-accent-ink size-5" aria-hidden />
               <span>
-                <span className="block text-caption font-semibold text-muted">
+                <span className="text-caption text-muted block font-semibold">
                   Check-in
                 </span>
                 <span
@@ -176,11 +176,11 @@ export function StaySelector({
               aria-expanded={panel === 'dates'}
               aria-controls={ids.dates}
               onClick={(e) => trigger('dates', e)}
-              className={`${field} after:absolute after:right-0 after:top-1/4 after:h-1/2 after:w-px after:bg-line ${panel === 'dates' ? 'bg-paper' : ''}`}
+              className={`${field} after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-px ${panel === 'dates' ? 'bg-paper' : ''}`}
             >
-              <CalendarDays className="size-5 text-accent-ink" aria-hidden />
+              <CalendarDays className="text-accent-ink size-5" aria-hidden />
               <span>
-                <span className="block text-caption font-semibold text-muted">
+                <span className="text-caption text-muted block font-semibold">
                   Check-out
                 </span>
                 <span
@@ -197,9 +197,9 @@ export function StaySelector({
               onClick={(e) => trigger('guests', e)}
               className={`${field} ${panel === 'guests' ? 'bg-paper' : ''}`}
             >
-              <Users className="size-5 text-accent-ink" aria-hidden />
+              <Users className="text-accent-ink size-5" aria-hidden />
               <span>
-                <span className="block text-caption font-semibold text-muted">
+                <span className="text-caption text-muted block font-semibold">
                   Guests
                 </span>
                 <span className="block font-semibold">
@@ -214,14 +214,14 @@ export function StaySelector({
               id={ids.dates}
               role="group"
               aria-label="Choose your dates"
-              className="absolute left-0 top-full z-30 mt-3 w-[44rem] max-w-full rounded-card bg-surface p-5 shadow-float ring-1 ring-ink/10"
+              className="rounded-card bg-surface shadow-float ring-ink/10 absolute top-full left-0 z-30 mt-3 w-[44rem] max-w-full p-5 ring-1"
             >
               <DatePicker
                 value={draft}
                 onChange={onDesktopDates}
                 monthsShown={2}
               />
-              <div className="mt-4 flex justify-end border-t border-line pt-4">
+              <div className="border-line mt-4 flex justify-end border-t pt-4">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -243,9 +243,9 @@ export function StaySelector({
               id={ids.guests}
               role="group"
               aria-label="Choose guests"
-              className="absolute right-0 top-full z-30 mt-3 w-full max-w-sm rounded-card bg-surface p-5 shadow-float ring-1 ring-ink/10"
+              className="rounded-card bg-surface shadow-float ring-ink/10 absolute top-full right-0 z-30 mt-3 w-full max-w-sm p-5 ring-1"
             >
-              <div className="divide-y divide-line">
+              <div className="divide-line divide-y">
                 <GuestStepper
                   label="Adults"
                   hint="Age 13 and over"
@@ -281,16 +281,16 @@ export function StaySelector({
             type="button"
             aria-haspopup="dialog"
             onClick={openSheet}
-            className="flex min-h-12 w-full items-center justify-between gap-3 rounded-full border border-ink/60 bg-surface px-5 text-left transition-colors active:bg-paper"
+            className="border-ink/60 bg-surface active:bg-paper flex min-h-12 w-full items-center justify-between gap-3 rounded-full border px-5 text-left transition-colors"
           >
             <span className="flex min-w-0 items-center gap-3">
               <CalendarDays
-                className="size-5 shrink-0 text-accent-ink"
+                className="text-accent-ink size-5 shrink-0"
                 aria-hidden
               />
               <span className="truncate font-semibold">{chip}</span>
             </span>
-            <span className="inline-flex items-center gap-1 text-small font-semibold">
+            <span className="text-small inline-flex items-center gap-1 font-semibold">
               <Pencil className="size-4" aria-hidden />
               Edit
             </span>
@@ -300,11 +300,11 @@ export function StaySelector({
             ref={dialogRef}
             aria-labelledby={ids.title}
             onClose={() => setSheetOpen(false)}
-            className="m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col"
+            className="text-ink backdrop:bg-ink/60 m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-0 open:flex open:flex-col"
           >
             {sheetOpen && (
-              <div className="animate-sheet-rise flex h-full w-full flex-col bg-paper">
-                <div className="flex items-center justify-between border-b border-line px-5 py-2">
+              <div className="animate-sheet-rise bg-paper flex h-full w-full flex-col">
+                <div className="border-line flex items-center justify-between border-b px-5 py-2">
                   <h2 id={ids.title} className="font-display text-h3">
                     Your stay
                   </h2>
@@ -312,7 +312,7 @@ export function StaySelector({
                     type="button"
                     aria-label="Close"
                     onClick={() => setSheetOpen(false)}
-                    className="grid size-11 place-items-center rounded-full hover:bg-ink/10"
+                    className="hover:bg-ink/10 grid size-11 place-items-center rounded-full"
                   >
                     <X className="size-6" aria-hidden />
                   </button>
@@ -326,7 +326,7 @@ export function StaySelector({
                     }}
                     monthsShown={1}
                   />
-                  <div className="mt-6 divide-y divide-line border-t border-line">
+                  <div className="divide-line border-line mt-6 divide-y border-t">
                     <GuestStepper
                       label="Adults"
                       hint="Age 13 and over"
@@ -345,11 +345,11 @@ export function StaySelector({
                     />
                   </div>
                 </div>
-                <div className="border-t border-line bg-surface px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
+                <div className="border-line bg-surface border-t px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                   {sheetError && (
                     <p
                       role="alert"
-                      className="mb-3 text-small font-medium text-danger"
+                      className="text-small text-danger mb-3 font-medium"
                     >
                       {sheetError}
                     </p>
@@ -376,7 +376,7 @@ export function StaySelector({
         </div>
 
         {problem && (
-          <p role="status" className="pt-2 text-small font-medium text-danger">
+          <p role="status" className="text-small text-danger pt-2 font-medium">
             {problem}
           </p>
         )}

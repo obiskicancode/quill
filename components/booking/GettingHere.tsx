@@ -42,7 +42,7 @@ function LazyMap({ hotel }: { hotel: HotelInfo }) {
   return (
     <div
       ref={ref}
-      className="relative aspect-[4/3] w-full overflow-hidden rounded-card bg-ink/10 md:aspect-[16/10]"
+      className="rounded-card bg-ink/10 relative aspect-[4/3] w-full overflow-hidden md:aspect-[16/10]"
     >
       <AnimatePresence initial={false}>
         {near && query ? (
@@ -61,8 +61,8 @@ function LazyMap({ hotel }: { hotel: HotelInfo }) {
             className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center"
             {...fade}
           >
-            <MapPin className="size-10 text-ink/50" aria-hidden />
-            <p className="max-w-xs text-small text-muted">
+            <MapPin className="text-ink/50 size-10" aria-hidden />
+            <p className="text-small text-muted max-w-xs">
               {query
                 ? 'Loading the map as you scroll.'
                 : 'The map appears here once the hotel address is added.'}
@@ -92,7 +92,7 @@ export function GettingHere({ hotel }: { hotel: HotelInfo }) {
   return (
     <section
       aria-labelledby="here-title"
-      className="grid gap-6 rounded-card border border-line bg-surface p-5 shadow-raised md:p-6 lg:grid-cols-2 lg:gap-8"
+      className="rounded-card border-line bg-surface shadow-raised grid gap-6 border p-5 md:p-6 lg:grid-cols-2 lg:gap-8"
     >
       <div>
         <h2 id="here-title" className="font-display text-h3">
@@ -100,7 +100,7 @@ export function GettingHere({ hotel }: { hotel: HotelInfo }) {
         </h2>
         <address className="mt-4 flex gap-3 not-italic">
           <MapPin
-            className="mt-1 size-5 shrink-0 text-accent-ink"
+            className="text-accent-ink mt-1 size-5 shrink-0"
             aria-hidden
           />
           <span>
@@ -111,9 +111,9 @@ export function GettingHere({ hotel }: { hotel: HotelInfo }) {
             ))}
           </span>
         </address>
-        <p className="mt-3 flex gap-3 text-small">
+        <p className="text-small mt-3 flex gap-3">
           <Clock
-            className="mt-0.5 size-5 shrink-0 text-accent-ink"
+            className="text-accent-ink mt-0.5 size-5 shrink-0"
             aria-hidden
           />
           <span>
@@ -121,10 +121,10 @@ export function GettingHere({ hotel }: { hotel: HotelInfo }) {
             {hotel.reception}
           </span>
         </p>
-        <p className="mt-3 text-small text-ink/85">{hotel.howToFindUs}</p>
+        <p className="text-small text-ink/85 mt-3">{hotel.howToFindUs}</p>
         <ul
           aria-label="Nearby landmarks"
-          className="mt-3 space-y-1 text-small text-muted"
+          className="text-small text-muted mt-3 space-y-1"
         >
           {hotel.landmarks.slice(0, 2).map((l) => (
             <li key={l.name}>

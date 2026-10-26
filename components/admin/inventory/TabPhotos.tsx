@@ -1,0 +1,479 @@
+'use client';
+
+import Image from 'next/image';
+import {
+  AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  Check,
+  Image as ImageIcon,
+  Loader2,
+  Star,
+  Trash2,
+  UploadCloud,
+} from 'lucide-react';
+import { useState } from 'react';
+
+import { adminService } from '@/app/api/services/admin.service';
+import { Button } from '@/components/ui/Button';
+import type { AdminRoomImage } from '@/types/inventory.types';
+
+interface TabPhotosProps {
+  roomTypeId: string;
+  initialPhotos: AdminRoomImage[];
+  onRefresh: () => Promise<void>;
+}
+
+export function TabPhotos({
+  roomTypeId,
+  initialPhotos,
+  onRefresh,
+}: TabPhotosProps) {
+  const [photos, setPhotos] = useState<AdminRoomImage[]>(initialPhotos);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Upload inputs
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingAltText, setPendingAltText] = useState('');
+  const [pendingCaption, setPendingCaption] = useState('');
+
+  // Editing alt text inline
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editAlt, setEditAlt] = useState('');
+  const [editCaption, setEditCaption] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const atMaxPhotos = photos.length >= 8;
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    setErrorMessage(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMessage('File size exceeds 10 MB limit.');
+      return;
+    }
+
+    setPendingFile(file);
+    // Suggest default alt text from filename
+    setPendingAltText(
+      file.name
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[-_]/g, ' ')
+        .trim(),
+    );
+  }
+
+  async function handleUpload() {
+    if (!pendingFile) return;
+    if (!pendingAltText.trim()) {
+      setErrorMessage('Alt text is required for accessibility and publishing.');
+      return;
+    }
+
+    setUploading(true);
+    setUploadProgress(20);
+    setErrorMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', pendingFile);
+      formData.append('altText', pendingAltText.trim());
+      formData.append('caption', pendingCaption.trim());
+      formData.append('isCover', photos.length === 0 ? 'true' : 'false');
+
+      setUploadProgress(60);
+      const res = await adminService.uploadRoomImage(roomTypeId, formData);
+      setUploadProgress(100);
+
+      if (res.data) {
+        setSuccessMessage('Photo uploaded successfully');
+        setPendingFile(null);
+        setPendingAltText('');
+        setPendingCaption('');
+        await onRefresh();
+      }
+    } catch (err) {
+      setErrorMessage(
+        err instanceof Error ? err.message : 'Failed to upload photo',
+      );
+    } finally {
+      setUploading(false);
+      setUploadProgress(null);
+    }
+  }
+
+  async function handleMove(index: number, direction: 'up' | 'down') {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= photos.length) return;
+
+    const updated = [...photos];
+    const [moved] = updated.splice(index, 1);
+    updated.splice(targetIndex, 0, moved);
+
+    const items = updated.map((p, idx) => ({
+      id: p.id,
+      sortOrder: idx + 1,
+    }));
+
+    setPhotos(updated);
+
+    try {
+      await adminService.reorderRoomImages(roomTypeId, items);
+    } catch {
+      setErrorMessage('Failed to reorder photos');
+      await onRefresh();
+    }
+  }
+
+  async function handleSetCover(photo: AdminRoomImage) {
+    try {
+      await adminService.updateImage(photo.id, {
+        altText: photo.altText,
+        caption: photo.caption,
+        isCover: true,
+      });
+      setSuccessMessage(`Set as cover photo`);
+      await onRefresh();
+    } catch {
+      setErrorMessage('Failed to set cover photo');
+    }
+  }
+
+  async function handleSaveEdit(photoId: string) {
+    if (!editAlt.trim()) {
+      setErrorMessage('Alt text cannot be empty');
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await adminService.updateImage(photoId, {
+        altText: editAlt.trim(),
+        caption: editCaption.trim() || null,
+      });
+      setEditingId(null);
+      await onRefresh();
+    } catch {
+      setErrorMessage('Failed to update photo details');
+    } finally {
+      setIsUpdating(false);
+    }
+  }
+
+  async function handleDelete(photoId: string) {
+    if (!confirm('Are you sure you want to delete this photo?')) return;
+    try {
+      await adminService.deleteImage(photoId);
+      await onRefresh();
+    } catch {
+      setErrorMessage('Failed to delete photo');
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {errorMessage && (
+        <div
+          role="alert"
+          className="rounded-card border-danger/40 bg-danger/10 text-small text-danger flex items-center gap-3 border p-4"
+        >
+          <AlertCircle className="size-5 shrink-0" />
+          <p>{errorMessage}</p>
+        </div>
+      )}
+
+      {successMessage && (
+        <div
+          role="status"
+          className="rounded-card border-success/40 bg-success/10 text-small text-success flex items-center justify-between border p-4"
+        >
+          <div className="flex items-center gap-2">
+            <Check className="size-5 shrink-0" />
+            <p>{successMessage}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSuccessMessage(null)}
+            className="text-xs hover:underline"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Upload Zone */}
+      {!atMaxPhotos ? (
+        <div className="rounded-card border-line bg-surface border-2 border-dashed p-6 text-center">
+          <UploadCloud className="text-muted mx-auto size-10" />
+          <p className="text-foreground text-small mt-2 font-medium">
+            Upload Room Photos (Up to 8 images, JPEG, PNG, or WebP)
+          </p>
+          <p className="text-muted mt-1 text-xs">
+            Max 10 MB per image. Processed automatically into responsive WebP
+            formats with EXIF stripped.
+          </p>
+
+          <input
+            type="file"
+            id="photoUploadInput"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
+          {!pendingFile ? (
+            <div className="mt-4">
+              <Button
+                type="button"
+                size="sm"
+                onClick={() =>
+                  document.getElementById('photoUploadInput')?.click()
+                }
+              >
+                Choose Photo
+              </Button>
+            </div>
+          ) : (
+            <div className="border-line bg-paper mx-auto mt-4 max-w-lg rounded border p-4 text-left">
+              <p className="text-foreground text-small font-semibold">
+                Selected: {pendingFile.name} (
+                {(pendingFile.size / 1024 / 1024).toFixed(2)} MB)
+              </p>
+
+              <div className="mt-3">
+                <label className="text-foreground block text-xs font-medium">
+                  Alt Text (Required for accessibility & active status){' '}
+                  <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={pendingAltText}
+                  onChange={(e) => setPendingAltText(e.target.value)}
+                  placeholder="e.g. Spacious king bedroom with ocean-facing balcony"
+                  className="bg-background text-foreground focus:border-brand border-line text-small mt-1 w-full rounded border px-3 py-1.5 focus:outline-none"
+                />
+              </div>
+
+              <div className="mt-3">
+                <label className="text-foreground block text-xs font-medium">
+                  Caption (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={pendingCaption}
+                  onChange={(e) => setPendingCaption(e.target.value)}
+                  placeholder="e.g. Balcony sunset view"
+                  className="bg-background text-foreground focus:border-brand border-line text-small mt-1 w-full rounded border px-3 py-1.5 focus:outline-none"
+                />
+              </div>
+
+              {uploadProgress !== null && (
+                <div className="mt-3">
+                  <div className="bg-line h-2 w-full overflow-hidden rounded">
+                    <div
+                      className="bg-brand h-full transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-muted mt-1 text-xs">
+                    Uploading and processing...
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-4 flex items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setPendingFile(null)}
+                  disabled={uploading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleUpload}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="mr-1.5 size-4 animate-spin" />{' '}
+                      Uploading...
+                    </>
+                  ) : (
+                    'Upload Photo'
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-card border-line bg-paper text-small text-muted border p-4 text-center">
+          Maximum of 8 photos reached. Delete an existing photo to upload a new
+          one.
+        </div>
+      )}
+
+      {/* Photos Grid / List */}
+      <div>
+        <div className="flex items-center justify-between">
+          <h3 className="text-foreground font-semibold">
+            Current Photos ({photos.length} of 8)
+          </h3>
+          <p className="text-muted text-xs">
+            First photo or photo marked with ★ is used as the cover on listings.
+          </p>
+        </div>
+
+        {photos.length === 0 ? (
+          <div className="rounded-card border-line bg-paper text-muted mt-4 border p-8 text-center">
+            <ImageIcon className="mx-auto size-8 opacity-40" />
+            <p className="text-small mt-2">
+              No photos uploaded for this room type yet.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {photos.map((p, idx) => (
+              <div
+                key={p.id}
+                className={`rounded-card relative flex flex-col overflow-hidden border ${
+                  p.isCover ? 'border-brand ring-brand ring-1' : 'border-line'
+                } bg-surface`}
+              >
+                {/* Image display */}
+                <div className="bg-paper relative aspect-[4/3] w-full">
+                  <Image
+                    src={p.thumbnailUrl || p.imageUrl}
+                    alt={p.altText}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 300px"
+                  />
+                  {p.isCover && (
+                    <span className="bg-brand absolute top-2 left-2 inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold text-white shadow">
+                      <Star className="size-3 fill-white" /> Cover
+                    </span>
+                  )}
+                </div>
+
+                {/* Details & controls */}
+                <div className="flex flex-1 flex-col justify-between p-3">
+                  {editingId === p.id ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={editAlt}
+                        onChange={(e) => setEditAlt(e.target.value)}
+                        placeholder="Alt text"
+                        className="border-line w-full rounded border px-2 py-1 text-xs"
+                      />
+                      <input
+                        type="text"
+                        value={editCaption}
+                        onChange={(e) => setEditCaption(e.target.value)}
+                        placeholder="Caption"
+                        className="border-line w-full rounded border px-2 py-1 text-xs"
+                      />
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => setEditingId(null)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled={isUpdating}
+                          onClick={() => handleSaveEdit(p.id)}
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-foreground line-clamp-2 text-xs font-medium">
+                        {p.altText}
+                      </p>
+                      {p.caption && (
+                        <p className="text-muted mt-0.5 line-clamp-1 text-xs italic">
+                          {p.caption}
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingId(p.id);
+                          setEditAlt(p.altText);
+                          setEditCaption(p.caption || '');
+                        }}
+                        className="text-brand mt-1 text-xs hover:underline"
+                      >
+                        Edit text
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="border-line mt-3 flex items-center justify-between border-t pt-2">
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleMove(idx, 'up')}
+                        disabled={idx === 0}
+                        aria-label="Move earlier"
+                        className="hover:text-foreground text-muted hover:bg-paper rounded p-1 disabled:opacity-30"
+                      >
+                        <ArrowUp className="size-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMove(idx, 'down')}
+                        disabled={idx === photos.length - 1}
+                        aria-label="Move later"
+                        className="hover:text-foreground text-muted hover:bg-paper rounded p-1 disabled:opacity-30"
+                      >
+                        <ArrowDown className="size-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      {!p.isCover && (
+                        <button
+                          type="button"
+                          onClick={() => handleSetCover(p)}
+                          className="hover:text-brand text-muted hover:bg-paper rounded p-1 text-xs"
+                          title="Set as cover"
+                        >
+                          <Star className="size-4" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(p.id)}
+                        className="text-danger hover:bg-danger/10 rounded p-1"
+                        title="Delete photo"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

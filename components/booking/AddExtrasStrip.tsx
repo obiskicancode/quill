@@ -45,12 +45,12 @@ export function AddExtrasStrip({
             key={e.id}
             as="li"
             scale
-            className="flex h-full flex-col justify-between gap-4 rounded-card border border-line bg-surface p-5"
+            className="rounded-card border-line bg-surface flex h-full flex-col justify-between gap-4 border p-5"
           >
             <div>
               <p className="font-semibold">{e.name}</p>
-              <p className="mt-1 text-small text-muted">{e.description}</p>
-              <p className="mt-2 text-small font-semibold tabular-nums">
+              <p className="text-small text-muted mt-1">{e.description}</p>
+              <p className="text-small mt-2 font-semibold tabular-nums">
                 {formatMinor(e.priceMinor)} {unitLabels[e.unit]}
               </p>
             </div>

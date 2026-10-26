@@ -64,11 +64,11 @@ export default async function PolicyPage({
   return (
     <div className="container-page section-y">
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-start lg:gap-12">
-        <article className="min-w-0 max-w-[70ch]">
+        <article className="max-w-[70ch] min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Link
               href="/policies"
-              className="inline-flex min-h-11 items-center gap-2 text-small font-semibold underline-offset-4 hover:underline"
+              className="text-small inline-flex min-h-11 items-center gap-2 font-semibold underline-offset-4 hover:underline"
             >
               <ArrowLeft className="size-4" aria-hidden />
               All policies
@@ -79,11 +79,11 @@ export default async function PolicyPage({
           <h1
             id="policy-title"
             tabIndex={-1}
-            className="mt-4 text-balance font-display text-h2"
+            className="font-display text-h2 mt-4 text-balance"
           >
             {page.title}
           </h1>
-          <p className="mt-2 text-small text-muted">
+          <p className="text-small text-muted mt-2">
             Last updated {formatDate(page.updatedAt)}
           </p>
 
@@ -112,11 +112,11 @@ export default async function PolicyPage({
             <RichText blocks={page.body} />
           </div>
 
-          <p className="mt-10 text-small text-muted">
+          <p className="text-small text-muted mt-10">
             Questions about this policy?{' '}
             <Link
               href="/contact"
-              className="font-semibold underline decoration-accent decoration-2 underline-offset-4"
+              className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
             >
               Contact us
             </Link>

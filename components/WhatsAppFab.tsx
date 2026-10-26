@@ -24,13 +24,13 @@ export function WhatsAppFab() {
       transition={{ ...spring, delay: 1.3 }}
       whileHover={reduced ? undefined : { scale: 1.07 }}
       whileTap={reduced ? undefined : { scale: 0.93 }}
-      className="fixed bottom-3 right-4 z-40 grid size-14 place-items-center rounded-full bg-whatsapp text-white shadow-float transition-[background-color] hover:bg-whatsapp-hover md:bottom-6 md:right-6"
+      className="bg-whatsapp shadow-float hover:bg-whatsapp-hover fixed right-4 bottom-3 z-40 grid size-14 place-items-center rounded-full text-white transition-[background-color] md:right-6 md:bottom-6"
       style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
     >
       {!reduced && (
         <motion.span
           aria-hidden
-          className="absolute inset-0 rounded-full bg-whatsapp"
+          className="bg-whatsapp absolute inset-0 rounded-full"
           initial={{ opacity: 0.35, scale: 1 }}
           animate={{ opacity: 0, scale: 1.6 }}
           transition={{

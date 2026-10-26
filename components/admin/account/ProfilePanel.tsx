@@ -118,19 +118,19 @@ export function ProfilePanel({ staff }: { staff: AdminStaff }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <p className="text-small font-semibold">Email address</p>
-            <p className="mt-1 rounded-control border border-line bg-paper px-3 py-2.5 text-small text-muted">
+            <p className="rounded-control border-line bg-paper text-small text-muted mt-1 border px-3 py-2.5">
               {staff.email}
             </p>
-            <p className="mt-1 text-caption text-muted">
+            <p className="text-caption text-muted mt-1">
               Ask an owner to change your sign-in email.
             </p>
           </div>
           <div>
             <p className="text-small font-semibold">Role</p>
-            <p className="mt-1 rounded-control border border-line bg-paper px-3 py-2.5 text-small capitalize text-muted">
+            <p className="rounded-control border-line bg-paper text-small text-muted mt-1 border px-3 py-2.5 capitalize">
               {staff.role}
             </p>
-            <p className="mt-1 text-caption text-muted">
+            <p className="text-caption text-muted mt-1">
               Roles are managed by an owner.
             </p>
           </div>

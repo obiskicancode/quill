@@ -31,7 +31,7 @@ export function StickyBookBar() {
 
   return (
     <div
-      className={`fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pr-[5.5rem] pt-3 backdrop-blur transition-[transform,visibility] duration-200 md:hidden ${
+      className={`border-line bg-paper/95 fixed inset-x-0 bottom-0 z-30 border-t px-4 pt-3 pr-[5.5rem] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur transition-[transform,visibility] duration-200 md:hidden ${
         visible ? 'translate-y-0' : 'invisible translate-y-full'
       }`}
     >

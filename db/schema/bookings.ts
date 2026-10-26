@@ -108,6 +108,9 @@ export const reservations = pgTable(
     index('idx_res_guest_email').on(table.guestEmail),
     index('idx_res_hold').on(table.holdExpiresAt),
     index('idx_res_created').on(table.createdAt),
+    index('idx_reservations_guest_phone').on(table.guestPhone),
+    index('idx_reservations_status_check_in').on(table.status, table.checkIn),
+    index('idx_reservations_status_check_out').on(table.status, table.checkOut),
     check('chk_res_dates', sql`${table.checkOut} > ${table.checkIn}`),
     check(
       'chk_res_guests',
@@ -227,6 +230,8 @@ export const payments = pgTable(
     index('idx_pay_status').on(table.status),
     index('idx_pay_provider').on(table.provider),
     index('idx_pay_created').on(table.createdAt),
+    index('idx_payments_status_provider').on(table.status, table.provider),
+    index('idx_payments_res_status').on(table.reservationId, table.status),
     check('chk_pay_amount', sql`${table.amountMinor} > 0`),
   ],
 );

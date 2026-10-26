@@ -10,10 +10,10 @@ import {
   formatLong,
   formatMonthYear,
   formatShort,
-  mondayIndex,
   nightsBetween,
   shiftMonth,
   startOfMonth,
+  sundayIndex,
   todayISO,
   type ISODate,
 } from '@/lib/dates';
@@ -99,9 +99,9 @@ export function DatePicker({
     };
     let next: ISODate;
     if (e.key in steps) next = addDays(focusIso, steps[e.key]);
-    else if (e.key === 'Home') next = addDays(focusIso, -mondayIndex(focusIso));
+    else if (e.key === 'Home') next = addDays(focusIso, -sundayIndex(focusIso));
     else if (e.key === 'End')
-      next = addDays(focusIso, 6 - mondayIndex(focusIso));
+      next = addDays(focusIso, 6 - sundayIndex(focusIso));
     else if (e.key === 'PageUp') next = shiftMonth(focusIso, -1);
     else if (e.key === 'PageDown') next = shiftMonth(focusIso, 1);
     else return;
@@ -124,7 +124,7 @@ export function DatePicker({
 
   return (
     <div ref={rootRef} onKeyDown={onKeyDown}>
-      <p aria-live="polite" className="mb-3 text-small font-medium">
+      <p aria-live="polite" className="text-small mb-3 font-medium">
         {guidance}
       </p>
 
@@ -151,7 +151,7 @@ export function DatePicker({
         <div className={monthsShown === 2 ? 'grid grid-cols-2 gap-8' : ''}>
           {months.map((month) => {
             const headingId = `${baseId}-${month}`;
-            const blanks = mondayIndex(month);
+            const blanks = sundayIndex(month);
             const cells: (ISODate | null)[] = [
               ...Array<null>(blanks).fill(null),
               ...Array.from({ length: daysInMonth(month) }, (_, i) =>
@@ -183,7 +183,7 @@ export function DatePicker({
                           key={short}
                           scope="col"
                           abbr={long}
-                          className="h-8 text-center text-caption font-semibold text-muted"
+                          className="text-caption text-muted h-8 text-center font-semibold"
                         >
                           {short}
                         </th>
@@ -231,7 +231,7 @@ export function DatePicker({
                                 aria-pressed={isStart || isEnd}
                                 aria-label={`${formatLong(iso)}${isStart ? ', check-in' : ''}${isEnd ? ', check-out' : ''}`}
                                 onClick={() => pick(iso)}
-                                className={`mx-auto grid size-11 place-items-center rounded-full text-small font-medium tabular-nums transition-colors ${state}`}
+                                className={`text-small mx-auto grid size-11 place-items-center rounded-full font-medium tabular-nums transition-colors ${state}`}
                               >
                                 {Number(iso.slice(8))}
                               </button>

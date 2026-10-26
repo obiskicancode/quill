@@ -67,7 +67,7 @@ export function Header() {
         } ${
           solid
             ? 'bg-paper/95 text-ink shadow-raised backdrop-blur'
-            : 'on-dark bg-gradient-to-b from-ink/70 to-transparent text-white'
+            : 'on-dark from-ink/70 bg-gradient-to-b to-transparent text-white'
         }`}
       >
         <div
@@ -82,7 +82,7 @@ export function Header() {
                   <Link
                     href={item.href}
                     aria-current={pathname === item.href ? 'page' : undefined}
-                    className="inline-flex min-h-11 items-center px-3 font-medium decoration-accent decoration-2 underline-offset-[10px] hover:underline aria-[current=page]:underline"
+                    className="decoration-accent inline-flex min-h-11 items-center px-3 font-medium decoration-2 underline-offset-[10px] hover:underline aria-[current=page]:underline"
                   >
                     {item.label}
                   </Link>
@@ -139,7 +139,7 @@ export function Header() {
             animate={reduced ? undefined : { opacity: 1, scale: 1, y: 0 }}
             exit={reduced ? undefined : { opacity: 0, scale: 0.985, y: 6 }}
             transition={{ duration: reduced ? 0 : 0.32, ease: EASE_OUT }}
-            className="fixed inset-0 z-[70] bg-paper/95 text-ink backdrop-blur supports-[backdrop-filter]:bg-paper/90 lg:hidden"
+            className="bg-paper/95 text-ink supports-[backdrop-filter]:bg-paper/90 fixed inset-0 z-[70] backdrop-blur lg:hidden"
           >
             <div className="flex h-full flex-col items-center justify-center px-6">
               <nav aria-label="Mobile" className="w-full">
@@ -161,7 +161,7 @@ export function Header() {
                           pathname === item.href ? 'page' : undefined
                         }
                         onClick={() => setOpen(false)}
-                        className="block py-4 text-center text-xl font-medium tracking-tight decoration-accent decoration-2 underline-offset-[10px] transition-colors hover:opacity-80 aria-[current=page]:text-accent-ink aria-[current=page]:underline sm:text-2xl"
+                        className="decoration-accent aria-[current=page]:text-accent-ink block py-4 text-center text-xl font-medium tracking-tight decoration-2 underline-offset-[10px] transition-colors hover:opacity-80 aria-[current=page]:underline sm:text-2xl"
                       >
                         {item.label}
                       </Link>

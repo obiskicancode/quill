@@ -84,7 +84,7 @@ export function MapCard({
           </h2>
           <address className="mt-6 flex gap-3 not-italic">
             <MapPin
-              className="mt-1 size-5 shrink-0 text-accent-ink"
+              className="text-accent-ink mt-1 size-5 shrink-0"
               aria-hidden
             />
             <span>
@@ -98,7 +98,7 @@ export function MapCard({
           {d.reception && (
             <p className="mt-4 flex gap-3">
               <Clock
-                className="mt-1 size-5 shrink-0 text-accent-ink"
+                className="text-accent-ink mt-1 size-5 shrink-0"
                 aria-hidden
               />
               <span>
@@ -108,10 +108,10 @@ export function MapCard({
             </p>
           )}
           {d.directionsText && (
-            <p className="mt-4 text-small text-ink/85">{d.directionsText}</p>
+            <p className="text-small text-ink/85 mt-4">{d.directionsText}</p>
           )}
           {d.airportNote && (
-            <p className="mt-2 text-small text-ink/85">
+            <p className="text-small text-ink/85 mt-2">
               <span className="font-semibold">Airport: </span>
               {d.airportNote}
             </p>
@@ -119,7 +119,7 @@ export function MapCard({
           {d.landmarks.length > 0 && (
             <ul
               aria-label="Nearby landmarks"
-              className="mt-4 space-y-1 text-small text-muted"
+              className="text-small text-muted mt-4 space-y-1"
             >
               {d.landmarks.slice(0, 4).map((l) => (
                 <li key={l.name}>
@@ -159,7 +159,7 @@ export function MapCard({
         <Reveal className="lg:col-span-7" variants={scaleIn} delay={0.12}>
           <div
             ref={frame}
-            className="relative aspect-[4/3] w-full overflow-hidden rounded-card bg-ink/10 md:aspect-[16/10]"
+            className="rounded-card bg-ink/10 relative aspect-[4/3] w-full overflow-hidden md:aspect-[16/10]"
           >
             {loaded && d.embedSrc ? (
               <iframe
@@ -194,7 +194,7 @@ export function MapCard({
                       </Button>
                     )
                   ) : (
-                    <p className="max-w-xs text-small">
+                    <p className="text-small max-w-xs">
                       The map appears here once the hotel address is added.
                     </p>
                   )}

@@ -31,7 +31,7 @@ export function ConsentBanner({ enabled, privacyHref }: ConsentBannerProps) {
           role="dialog"
           aria-labelledby="consent-title"
           aria-modal="false"
-          className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-surface p-4 shadow-raised md:p-5"
+          className="border-line bg-surface shadow-raised fixed inset-x-0 bottom-0 z-50 border-t p-4 md:p-5"
           initial={reduced ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={reduced ? undefined : { opacity: 0, y: 16 }}
@@ -46,12 +46,12 @@ export function ConsentBanner({ enabled, privacyHref }: ConsentBannerProps) {
                 <Cookie className="size-5" aria-hidden />
                 We use cookies to help us improve your experience
               </p>
-              <p className="mt-1 text-small text-ink/85">
+              <p className="text-small text-ink/85 mt-1">
                 We only use optional cookies when analytics or marketing is
                 configured. You can accept or reject them at any time. Read our{' '}
                 <Link
                   href={privacyHref}
-                  className="font-semibold underline decoration-accent decoration-2 underline-offset-4"
+                  className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
                 >
                   Privacy Policy
                 </Link>

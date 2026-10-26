@@ -124,7 +124,7 @@ export function VerifyForm({
       ) : (
         <h1 className="font-display text-h2">{copy[variant].title}</h1>
       )}
-      <p className="mt-3 text-body-lg text-ink/85">{copy[variant].text}</p>
+      <p className="text-body-lg text-ink/85 mt-3">{copy[variant].text}</p>
 
       <form noValidate onSubmit={submit} className="mt-8 space-y-5">
         <Field
@@ -198,12 +198,12 @@ export function VerifyForm({
         </Button>
       </form>
 
-      <p className="mt-6 text-small">
+      <p className="text-small mt-6">
         <a
           href={whatsappHref(site, 'Hello, I need help finding my booking.')}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-accent decoration-2 underline-offset-4"
+          className="decoration-accent inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-2 underline-offset-4"
         >
           <MessageCircle className="size-4" aria-hidden />
           Message the hotel on WhatsApp

@@ -707,7 +707,7 @@ export function CheckoutFlow({
           className="space-y-10"
         >
           {locked && !expired && (
-            <p className="flex flex-wrap items-center justify-between gap-3 rounded-control bg-paper p-4 text-small">
+            <p className="rounded-control bg-paper text-small flex flex-wrap items-center justify-between gap-3 p-4">
               <span>
                 Your details are locked while we hold your room. To change them,
                 start again.
@@ -723,7 +723,7 @@ export function CheckoutFlow({
             </p>
           )}
           {resumed && (
-            <p className="rounded-control bg-paper p-4 text-small">
+            <p className="rounded-control bg-paper text-small p-4">
               Your details are saved and your room is held. Choose how to pay
               below.
             </p>
@@ -835,10 +835,10 @@ export function CheckoutFlow({
       </div>
 
       {showBar && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pr-[5.5rem] pt-3 backdrop-blur lg:hidden">
+        <div className="border-line bg-paper/95 fixed inset-x-0 bottom-0 z-30 border-t px-4 pt-3 pr-[5.5rem] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
           <div className="flex items-center gap-3">
-            <p className="shrink-0 text-small">
-              <span className="block text-muted">
+            <p className="text-small shrink-0">
+              <span className="text-muted block">
                 {payment.mode === 'pay_at_hotel' ? 'Pay at hotel' : 'Due now'}
               </span>
               <span className="font-semibold tabular-nums">

@@ -37,7 +37,7 @@ export default function GlobalError({
             <h1 tabIndex={-1} id="gerr-title" className="font-display text-h2">
               Something went wrong
             </h1>
-            <p className="mt-3 text-body-lg text-ink/85">
+            <p className="text-body-lg text-ink/85 mt-3">
               We ran into a technical problem. Please try again in a few
               moments.
             </p>

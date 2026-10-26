@@ -33,18 +33,18 @@ export async function FacilitiesSection() {
         {facilities.length >= 4 && (
           <nav
             aria-label="Jump to a facility"
-            className="sticky top-16 z-20 -mx-5 mb-10 border-b border-line bg-paper/95 px-5 py-2 backdrop-blur md:-mx-8 md:px-8 xl:-mx-10 xl:px-10"
+            className="border-line bg-paper/95 sticky top-16 z-20 -mx-5 mb-10 border-b px-5 py-2 backdrop-blur md:-mx-8 md:px-8 xl:-mx-10 xl:px-10"
           >
             <StaggerGroup
               as="ul"
               staggerChildren={0.04}
-              className="flex gap-2 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex [scrollbar-width:none] gap-2 overflow-x-auto py-1 [&::-webkit-scrollbar]:hidden"
             >
               {facilities.map((f) => (
                 <StaggerItem key={f.id} as="li" scale className="shrink-0">
                   <a
                     href={`#facility-${f.slug}`}
-                    className="inline-flex min-h-11 items-center rounded-full border border-ink/50 bg-surface px-4 text-small font-semibold transition-colors hover:bg-ink hover:text-paper"
+                    className="border-ink/50 bg-surface text-small hover:bg-ink hover:text-paper inline-flex min-h-11 items-center rounded-full border px-4 font-semibold transition-colors"
                   >
                     {f.name}
                   </a>
@@ -78,18 +78,18 @@ export async function FacilitiesSection() {
                   </Badge>
                 </div>
                 {f.priceNote && (
-                  <p className="mt-1 text-small font-semibold text-accent-ink">
+                  <p className="text-small text-accent-ink mt-1 font-semibold">
                     {f.priceNote}
                   </p>
                 )}
-                <p className="mt-4 max-w-xl text-body-lg leading-[1.7] text-ink/90">
+                <p className="text-body-lg text-ink/90 mt-4 max-w-xl leading-[1.7]">
                   {f.description}
                 </p>
-                <ul className="mt-4 space-y-2 text-small">
+                <ul className="text-small mt-4 space-y-2">
                   {f.openingHours && (
                     <li className="flex items-center gap-2">
                       <Clock
-                        className="size-4 shrink-0 text-accent-ink"
+                        className="text-accent-ink size-4 shrink-0"
                         aria-hidden
                       />
                       <span>
@@ -101,7 +101,7 @@ export async function FacilitiesSection() {
                   {f.capacity && (
                     <li className="flex items-center gap-2">
                       <Users
-                        className="size-4 shrink-0 text-accent-ink"
+                        className="text-accent-ink size-4 shrink-0"
                         aria-hidden
                       />
                       <span>
@@ -124,7 +124,7 @@ export async function FacilitiesSection() {
               </Reveal>
               {f.image && (
                 <HoverZoom
-                  className={`aspect-[4/3] w-full rounded-card ${i % 2 === 1 ? 'md:order-1' : ''}`}
+                  className={`rounded-card aspect-[4/3] w-full ${i % 2 === 1 ? 'md:order-1' : ''}`}
                 >
                   <Photo
                     src={f.image.src}

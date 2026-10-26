@@ -21,7 +21,7 @@ export default function Error({
         <h1 tabIndex={-1} id="err-title" className="font-display text-h2">
           Something went wrong
         </h1>
-        <p className="mt-3 text-body-lg text-ink/85">
+        <p className="text-body-lg text-ink/85 mt-3">
           We could not load that page. Try again, or go back to a safe page.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">

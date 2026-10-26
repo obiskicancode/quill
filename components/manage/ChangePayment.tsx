@@ -140,7 +140,7 @@ export function ChangePayment({
       </h3>
       <p
         role="status"
-        className={`rounded-control p-3 text-small ${hold.expiring ? 'bg-danger/5 font-semibold text-danger' : 'bg-paper'}`}
+        className={`rounded-control text-small p-3 ${hold.expiring ? 'bg-danger/5 text-danger font-semibold' : 'bg-paper'}`}
       >
         {holdLine}
       </p>
@@ -180,7 +180,7 @@ export function ChangePayment({
               </p>
             </Banner>
           ) : change.status === 'awaiting_transfer' && change.bank ? (
-            <div className="space-y-4 rounded-card border border-line bg-paper p-4 text-small">
+            <div className="rounded-card border-line bg-paper text-small space-y-4 border p-4">
               <p className="font-semibold">Transfer to this account</p>
               <dl className="space-y-3">
                 {(
@@ -206,7 +206,7 @@ export function ChangePayment({
                   >
                     <div className="min-w-0">
                       <dt className="text-muted">{term}</dt>
-                      <dd className="break-words font-semibold tabular-nums">
+                      <dd className="font-semibold break-words tabular-nums">
                         {value}
                       </dd>
                     </div>
@@ -229,7 +229,7 @@ export function ChangePayment({
                       setFile(e.target.files?.[0] ?? null);
                       setFileError(null);
                     }}
-                    className="block min-h-12 w-full cursor-pointer rounded-control border border-ink/60 bg-surface text-small file:mr-4 file:min-h-12 file:cursor-pointer file:border-0 file:bg-ink file:px-4 file:font-semibold file:text-paper"
+                    className="rounded-control border-ink/60 bg-surface text-small file:bg-ink file:text-paper block min-h-12 w-full cursor-pointer border file:mr-4 file:min-h-12 file:cursor-pointer file:border-0 file:px-4 file:font-semibold"
                   />
                 )}
               </Field>
@@ -251,16 +251,16 @@ export function ChangePayment({
                 {change.acceptedMethods.map((m) => (
                   <label
                     key={m}
-                    className={`flex min-h-14 cursor-pointer items-start gap-3 rounded-card border p-4 ${method === m ? 'border-2 border-ink bg-paper' : 'border-ink/40 bg-surface'}`}
+                    className={`rounded-card flex min-h-14 cursor-pointer items-start gap-3 border p-4 ${method === m ? 'border-ink bg-paper border-2' : 'border-ink/40 bg-surface'}`}
                   >
                     <input
                       type="radio"
                       name="change-method"
                       checked={method === m}
                       onChange={() => setMethod(m)}
-                      className="mt-1 size-5 shrink-0 accent-ink"
+                      className="accent-ink mt-1 size-5 shrink-0"
                     />
-                    <span className="mt-0.5 text-accent-ink">
+                    <span className="text-accent-ink mt-0.5">
                       {m === 'online' ? (
                         <CreditCard className="size-5" aria-hidden />
                       ) : (
@@ -271,7 +271,7 @@ export function ChangePayment({
                       <span className="block font-semibold">
                         {m === 'online' ? 'Card or USSD' : 'Bank transfer'}
                       </span>
-                      <span className="block text-small text-muted">
+                      <span className="text-small text-muted block">
                         {m === 'online'
                           ? `Pay on ${change.providerName}'s secure page. We never see your card details.`
                           : 'Transfer to the hotel and upload your receipt.'}

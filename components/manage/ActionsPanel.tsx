@@ -67,7 +67,7 @@ export function ActionsPanel({
   return (
     <section
       aria-labelledby="actions-title"
-      className="rounded-card border border-line bg-surface p-5 shadow-raised md:p-6 print:hidden"
+      className="rounded-card border-line bg-surface shadow-raised border p-5 md:p-6 print:hidden"
     >
       <h2 id="actions-title" className="font-display text-h3">
         {finished ? 'About this booking' : 'What would you like to do?'}
@@ -125,9 +125,9 @@ export function ActionsPanel({
       </AnimatedList>
 
       {!canChangeDates.allowed && !finished && (
-        <div className="mt-5 rounded-control bg-paper p-4 text-small">
+        <div className="rounded-control bg-paper text-small mt-5 p-4">
           <p className="font-semibold">Dates can&rsquo;t be changed online</p>
-          <p className="mt-1 text-ink/85">{canChangeDates.reason}</p>
+          <p className="text-ink/85 mt-1">{canChangeDates.reason}</p>
           {contact(
             `I'd like to change the dates for ${dates}. The dates I would like are: `,
           )}
@@ -135,11 +135,11 @@ export function ActionsPanel({
       )}
 
       {!canCancel.allowed && (
-        <div className="mt-5 rounded-control bg-paper p-4 text-small">
+        <div className="rounded-control bg-paper text-small mt-5 p-4">
           <p className="font-semibold">
             This booking can&rsquo;t be cancelled online
           </p>
-          <p className="mt-1 text-ink/85">{canCancel.reason}</p>
+          <p className="text-ink/85 mt-1">{canCancel.reason}</p>
           {contact('I have a question about cancelling')}
         </div>
       )}

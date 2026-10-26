@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 
 import { ButtonLink } from '@/components/ui/Button';
@@ -11,14 +9,14 @@ export default function NotFound() {
       <div className="max-w-xl">
         <p
           aria-hidden
-          className="font-display text-display leading-none text-accent-ink"
+          className="font-display text-display text-accent-ink leading-none"
         >
           404
         </p>
-        <h1 tabIndex={-1} id="nf-title" className="mt-2 font-display text-h2">
+        <h1 tabIndex={-1} id="nf-title" className="font-display text-h2 mt-2">
           This page has checked out
         </h1>
-        <p className="mt-3 text-body-lg text-ink/85">
+        <p className="text-body-lg text-ink/85 mt-3">
           The page you were looking for may have moved or no longer exists.
           Let&rsquo;s get you back on track.
         </p>
@@ -28,11 +26,11 @@ export default function NotFound() {
             Browse rooms
           </ButtonLink>
         </div>
-        <p className="mt-6 text-small text-muted">
+        <p className="text-small text-muted mt-6">
           Looking for something specific?{' '}
           <Link
             href="/enquiry"
-            className="font-semibold underline decoration-accent decoration-2 underline-offset-4"
+            className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
           >
             Send us a booking enquiry
           </Link>

@@ -16,7 +16,7 @@ export async function ExtrasCards() {
           text="Paid extras"
           className="font-display text-h2"
         />
-        <p className="mt-3 max-w-2xl text-body-lg text-ink/85">
+        <p className="text-body-lg text-ink/85 mt-3 max-w-2xl">
           Add these while you book. Prices are shown before you pay.
         </p>
         <StaggerGroup
@@ -29,10 +29,10 @@ export async function ExtrasCards() {
               key={e.id}
               as="li"
               scale
-              className="flex flex-col rounded-card border border-line bg-surface p-6"
+              className="rounded-card border-line bg-surface flex flex-col border p-6"
             >
               <h3 className="font-display text-h3">{e.name}</h3>
-              <p className="mt-2 flex-1 text-small text-ink/85">
+              <p className="text-small text-ink/85 mt-2 flex-1">
                 {e.description}
               </p>
               <p className="mt-4">

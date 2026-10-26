@@ -81,21 +81,21 @@ export function StayFacts({
             src={room.image.src}
             alt={room.image.alt}
             sizes="96px"
-            className="size-20 shrink-0 rounded-control"
+            className="rounded-control size-20 shrink-0"
           />
         ) : (
           <div
             aria-hidden
-            className="size-20 shrink-0 rounded-control bg-ink/10"
+            className="rounded-control bg-ink/10 size-20 shrink-0"
           />
         )}
         <div className="min-w-0">
-          <h2 className="line-clamp-2 font-display text-h3">{room.name}</h2>
-          <p className="mt-1 text-small text-muted">{room.bedConfig}</p>
+          <h2 className="font-display text-h3 line-clamp-2">{room.name}</h2>
+          <p className="text-small text-muted mt-1">{room.bedConfig}</p>
         </div>
       </div>
 
-      <dl className="space-y-1.5 text-small">
+      <dl className="text-small space-y-1.5">
         <div className={row}>
           <dt className="text-muted">Dates</dt>
           <dd className="font-semibold">
@@ -144,7 +144,7 @@ export function SummaryCard({
   return (
     <section
       aria-label="Your stay"
-      className="space-y-5 rounded-card border border-line bg-surface p-5 shadow-float"
+      className="rounded-card border-line bg-surface shadow-float space-y-5 border p-5"
     >
       <StayFacts
         room={room}
@@ -153,7 +153,7 @@ export function SummaryCard({
         hotelTimes={hotelTimes}
       />
 
-      <div className="border-t border-line pt-5" aria-busy={!quote}>
+      <div className="border-line border-t pt-5" aria-busy={!quote}>
         {quote ? (
           <PriceBreakdown quote={{ ...quote.breakdown }} />
         ) : (
@@ -163,7 +163,7 @@ export function SummaryCard({
       </div>
 
       {quote && (
-        <div className="rounded-control bg-paper p-4 text-small">
+        <div className="rounded-control bg-paper text-small p-4">
           <p className="font-semibold">
             {quote.policy.nonRefundable
               ? 'Non-refundable'
@@ -172,7 +172,7 @@ export function SummaryCard({
                 : quote.policy.note}
           </p>
           {quote.policy.freeCancellationUntil && (
-            <p className="mt-1 text-muted">
+            <p className="text-muted mt-1">
               After that, cancellation charges apply. See the Cancellation
               Policy.
             </p>
@@ -181,7 +181,7 @@ export function SummaryCard({
       )}
 
       <div
-        className={`flex items-center gap-3 rounded-control border p-4 text-small ${
+        className={`rounded-control text-small flex items-center gap-3 border p-4 ${
           hold?.expired
             ? 'border-danger bg-danger/5'
             : hold?.expiring
@@ -199,9 +199,9 @@ export function SummaryCard({
             minutes once you continue.
           </p>
         ) : hold.expired ? (
-          <p className="font-semibold text-danger">Your hold has expired.</p>
+          <p className="text-danger font-semibold">Your hold has expired.</p>
         ) : (
-          <p className={hold.expiring ? 'font-semibold text-danger' : ''}>
+          <p className={hold.expiring ? 'text-danger font-semibold' : ''}>
             We&rsquo;re holding this room for you:{' '}
             <span
               className="font-display text-body-lg tabular-nums"
@@ -216,16 +216,16 @@ export function SummaryCard({
         )}
       </div>
 
-      <ul className="space-y-1.5 text-small">
+      <ul className="text-small space-y-1.5">
         <li className="flex items-center gap-2">
-          <Lock className="size-4 shrink-0 text-accent-ink" aria-hidden />
+          <Lock className="text-accent-ink size-4 shrink-0" aria-hidden />
           Secure payment
         </li>
         <li className="flex items-center gap-2">
           {confirmationMode === 'instant' ? (
             <>
               <BadgeCheck
-                className="size-4 shrink-0 text-accent-ink"
+                className="text-accent-ink size-4 shrink-0"
                 aria-hidden
               />
               Instant confirmation
@@ -233,7 +233,7 @@ export function SummaryCard({
           ) : (
             <>
               <ShieldCheck
-                className="size-4 shrink-0 text-accent-ink"
+                className="text-accent-ink size-4 shrink-0"
                 aria-hidden
               />
               Confirmed after hotel approval
@@ -248,7 +248,7 @@ export function SummaryCard({
             )}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-accent decoration-2 underline-offset-4"
+            className="decoration-accent inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-2 underline-offset-4"
           >
             <MessageCircle className="size-4" aria-hidden />
             Need help? Chat on WhatsApp
@@ -294,7 +294,7 @@ export function MobileSummary(props: SummaryProps) {
           setOpen(true);
           setVisible(true);
         }}
-        className="flex min-h-14 w-full items-center justify-between gap-3 rounded-card border border-line bg-surface px-5 text-left shadow-raised"
+        className="rounded-card border-line bg-surface shadow-raised flex min-h-14 w-full items-center justify-between gap-3 border px-5 text-left"
       >
         <span className="min-w-0">
           {props.quote ? (
@@ -304,15 +304,15 @@ export function MobileSummary(props: SummaryProps) {
           ) : (
             <span
               aria-hidden
-              className="block h-5 w-28 rounded bg-ink/10 motion-safe:animate-pulse"
+              className="bg-ink/10 block h-5 w-28 rounded motion-safe:animate-pulse"
             />
           )}
-          <span className="block truncate text-small text-muted">
+          <span className="text-small text-muted block truncate">
             {props.room.name},{' '}
             {formatRange(props.stay.checkIn, props.stay.checkOut)}
           </span>
         </span>
-        <span className="inline-flex shrink-0 items-center gap-1 text-small font-semibold underline decoration-accent decoration-2 underline-offset-4">
+        <span className="text-small decoration-accent inline-flex shrink-0 items-center gap-1 font-semibold underline decoration-2 underline-offset-4">
           View details <ChevronDown className="size-4" aria-hidden />
         </span>
       </button>
@@ -324,7 +324,7 @@ export function MobileSummary(props: SummaryProps) {
           setOpen(false);
           setVisible(false);
         }}
-        className="inset-x-0 bottom-0 top-auto m-0 max-h-[92dvh] w-full max-w-none rounded-t-card bg-paper p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col"
+        className="rounded-t-card bg-paper text-ink backdrop:bg-ink/60 inset-x-0 top-auto bottom-0 m-0 max-h-[92dvh] w-full max-w-none p-0 open:flex open:flex-col"
       >
         <AnimatePresence
           onExitComplete={() => {
@@ -341,7 +341,7 @@ export function MobileSummary(props: SummaryProps) {
               transition={{ duration: reduced ? 0 : 0.26, ease: EASE_OUT }}
               className="flex min-h-0 flex-1 flex-col"
             >
-              <div className="flex items-center justify-between border-b border-line px-5 py-2">
+              <div className="border-line flex items-center justify-between border-b px-5 py-2">
                 <h2 id="mobile-summary-title" className="font-display text-h3">
                   Your booking
                 </h2>
@@ -352,7 +352,7 @@ export function MobileSummary(props: SummaryProps) {
                     setOpen(false);
                     setVisible(false);
                   }}
-                  className="grid size-11 place-items-center rounded-full hover:bg-ink/10"
+                  className="hover:bg-ink/10 grid size-11 place-items-center rounded-full"
                 >
                   <X className="size-6" aria-hidden />
                 </button>

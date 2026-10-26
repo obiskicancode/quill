@@ -38,7 +38,7 @@ export function Banner({
     <div role={role} className={`rounded-card border-2 p-5 ${tones[tone]}`}>
       <p className="font-semibold">{title}</p>
       {children && (
-        <div className="mt-1 text-small text-ink/85">{children}</div>
+        <div className="text-small text-ink/85 mt-1">{children}</div>
       )}
       {actions && <div className="mt-4 flex flex-wrap gap-3">{actions}</div>}
     </div>
@@ -203,7 +203,7 @@ export function UnavailableState({
               <button
                 type="button"
                 onClick={() => router.push(hrefFor(s))}
-                className="flex min-h-14 w-full flex-col items-start justify-center rounded-card border border-ink/60 bg-surface px-4 text-left transition-colors hover:bg-ink hover:text-paper"
+                className="rounded-card border-ink/60 bg-surface hover:bg-ink hover:text-paper flex min-h-14 w-full flex-col items-start justify-center border px-4 text-left transition-colors"
               >
                 <span className="font-semibold">
                   {formatRange(s.checkIn, s.checkOut)}
@@ -235,7 +235,7 @@ export function UnavailableState({
               exit={reduced ? undefined : { opacity: 0, height: 0 }}
               transition={{ duration: reduced ? 0 : 0.3, ease: EASE_OUT }}
               style={{ overflow: 'hidden' }}
-              className="mt-4 max-w-sm rounded-card border border-line bg-surface p-4"
+              className="rounded-card border-line bg-surface mt-4 max-w-sm border p-4"
             >
               <DatePicker
                 value={range}
@@ -278,7 +278,7 @@ export function ConfirmingScreen({
   return (
     <section
       aria-labelledby="confirming-title"
-      className="rounded-card border border-line bg-surface p-8 text-center shadow-raised"
+      className="rounded-card border-line bg-surface shadow-raised border p-8 text-center"
     >
       <AnimatePresence mode="wait" initial={false}>
         {!timedOut ? (
@@ -291,13 +291,13 @@ export function ConfirmingScreen({
             transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
           >
             <Loader2
-              className="mx-auto size-10 animate-spin text-accent-ink motion-reduce:animate-none"
+              className="text-accent-ink mx-auto size-10 animate-spin motion-reduce:animate-none"
               aria-hidden
             />
             <h1 id="confirming-title" className="font-display text-h2">
               Confirming your payment
             </h1>
-            <p role="status" className="mx-auto max-w-md text-ink/85">
+            <p role="status" className="text-ink/85 mx-auto max-w-md">
               Please keep this page open. We are waiting for your payment
               provider to confirm. This usually takes a few seconds.
             </p>
@@ -311,11 +311,11 @@ export function ConfirmingScreen({
             exit={reduced ? undefined : { opacity: 0 }}
             transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
           >
-            <Clock className="mx-auto size-10 text-accent-ink" aria-hidden />
+            <Clock className="text-accent-ink mx-auto size-10" aria-hidden />
             <h1 id="confirming-title" className="font-display text-h2">
               We are still waiting for confirmation
             </h1>
-            <p role="status" className="mx-auto max-w-md text-ink/85">
+            <p role="status" className="text-ink/85 mx-auto max-w-md">
               Your payment may still be going through. You do not need to pay
               again. We will email you as soon as it is confirmed. If you do not
               hear from us soon, contact the hotel on{' '}
@@ -410,13 +410,13 @@ export function TransferSubmittedScreen({
   return (
     <section
       aria-labelledby="transfer-title"
-      className="space-y-5 rounded-card border border-line bg-surface p-8 shadow-raised"
+      className="rounded-card border-line bg-surface shadow-raised space-y-5 border p-8"
     >
-      <CheckCircle2 className="size-10 text-accent-ink" aria-hidden />
+      <CheckCircle2 className="text-accent-ink size-10" aria-hidden />
       <h1 id="transfer-title" className="font-display text-h2">
         Reservation received, awaiting verification
       </h1>
-      <p className="max-w-xl text-ink/85">
+      <p className="text-ink/85 max-w-xl">
         We have your transfer receipt. Your reservation is confirmed once the
         hotel verifies the transfer, and we will email you. Your booking
         reference is <span className="font-semibold">{reference}</span>.
@@ -436,13 +436,13 @@ export function RequestReceivedScreen({
   return (
     <section
       aria-labelledby="request-title"
-      className="space-y-5 rounded-card border border-line bg-surface p-8 shadow-raised"
+      className="rounded-card border-line bg-surface shadow-raised space-y-5 border p-8"
     >
-      <CheckCircle2 className="size-10 text-accent-ink" aria-hidden />
+      <CheckCircle2 className="text-accent-ink size-10" aria-hidden />
       <h1 id="request-title" className="font-display text-h2">
         Request received
       </h1>
-      <p className="max-w-xl text-ink/85">
+      <p className="text-ink/85 max-w-xl">
         {reason === 'pay_at_hotel'
           ? 'We have reserved your room. You pay at the hotel when you arrive. The hotel will email you to confirm.'
           : 'The hotel reviews every booking and will email you once it is approved.'}{' '}

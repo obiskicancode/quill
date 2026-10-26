@@ -16,24 +16,24 @@ export function TitleBlock({ room }: { room: RoomDetail }) {
         text={room.name}
         onScroll={false}
         staggerChildren={0.05}
-        className="text-balance font-display text-h2 md:text-display"
+        className="font-display text-h2 md:text-display text-balance"
       />
       <StaggerGroup
         as="ul"
-        className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-body text-ink/85"
+        className="text-body text-ink/85 mt-4 flex flex-wrap gap-x-6 gap-y-2"
         staggerChildren={0.08}
         delayChildren={0.15}
       >
         <StaggerItem as="li" className="inline-flex items-center gap-2">
-          <BedDouble className="size-5 text-accent-ink" aria-hidden />
+          <BedDouble className="text-accent-ink size-5" aria-hidden />
           {room.bedConfig}
         </StaggerItem>
         <StaggerItem as="li" className="inline-flex items-center gap-2">
-          <Ruler className="size-5 text-accent-ink" aria-hidden />
+          <Ruler className="text-accent-ink size-5" aria-hidden />
           {room.sizeSqm} sqm
         </StaggerItem>
         <StaggerItem as="li" className="inline-flex items-center gap-2">
-          <Users className="size-5 text-accent-ink" aria-hidden />
+          <Users className="text-accent-ink size-5" aria-hidden />
           Up to {room.maxAdults} {room.maxAdults === 1 ? 'adult' : 'adults'} and{' '}
           {room.maxChildren} {room.maxChildren === 1 ? 'child' : 'children'}
         </StaggerItem>

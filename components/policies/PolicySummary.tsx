@@ -48,19 +48,19 @@ export function CancellationSummary({
   return (
     <section
       aria-labelledby="cancel-summary-title"
-      className="rounded-card border border-line bg-surface p-5 shadow-raised md:p-6"
+      className="rounded-card border-line bg-surface shadow-raised border p-5 md:p-6"
     >
       <h2 id="cancel-summary-title" className="font-display text-h3">
         The short version
       </h2>
-      <p className="mt-3 rounded-control bg-paper p-4 font-semibold">
+      <p className="rounded-control bg-paper mt-3 p-4 font-semibold">
         {policyTypeLabels[policy.policyType]}
       </p>
-      <p className="mt-2 text-small text-ink/85">
+      <p className="text-small text-ink/85 mt-2">
         The cancellation terms shown on your booking when you booked always
         apply to that booking.
       </p>
-      <dl className="mt-5 space-y-3 text-small">
+      <dl className="text-small mt-5 space-y-3">
         {rows
           .filter((r): r is { term: string; detail: string } =>
             Boolean(r.detail),
@@ -116,7 +116,7 @@ export function HouseRulesList({
   ];
 
   return (
-    <dl className="mt-5 divide-y divide-line border-y border-line">
+    <dl className="divide-line border-line mt-5 divide-y border-y">
       {rows
         .filter((r): r is { term: string; detail: string } => Boolean(r.detail))
         .map((r) => (

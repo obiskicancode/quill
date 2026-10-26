@@ -57,7 +57,7 @@ export function FlowDialog({
       onCancel={(e) => {
         if (!dismissible) e.preventDefault();
       }}
-      className="m-auto max-h-[90dvh] w-[min(42rem,calc(100vw-2rem))] rounded-card bg-paper p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col max-md:m-0 max-md:h-dvh max-md:max-h-none max-md:w-screen max-md:max-w-none max-md:rounded-none"
+      className="rounded-card bg-paper text-ink backdrop:bg-ink/60 m-auto max-h-[90dvh] w-[min(42rem,calc(100vw-2rem))] p-0 open:flex open:flex-col max-md:m-0 max-md:h-dvh max-md:max-h-none max-md:w-screen max-md:max-w-none max-md:rounded-none"
     >
       <AnimatePresence
         onExitComplete={() => {
@@ -74,7 +74,7 @@ export function FlowDialog({
             transition={{ duration: reduced ? 0 : 0.26, ease: EASE_OUT }}
             className="flex min-h-0 flex-1 flex-col"
           >
-            <div className="flex items-center justify-between border-b border-line px-5 py-3 md:px-6">
+            <div className="border-line flex items-center justify-between border-b px-5 py-3 md:px-6">
               <h2 id={titleId} className="font-display text-h3">
                 {title}
               </h2>
@@ -83,7 +83,7 @@ export function FlowDialog({
                 aria-label="Close"
                 disabled={!dismissible}
                 onClick={onClose}
-                className="grid size-11 place-items-center rounded-full hover:bg-ink/10 disabled:opacity-40"
+                className="hover:bg-ink/10 grid size-11 place-items-center rounded-full disabled:opacity-40"
               >
                 <X className="size-6" aria-hidden />
               </button>

@@ -37,7 +37,7 @@ export function CopyButton({ value, label }: { value: string; label: string }) {
             window.setTimeout(() => setCopied(false), 2000);
           });
         }}
-        className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-control border border-ink/60 px-3 text-small font-semibold transition-colors hover:bg-ink hover:text-paper"
+        className="rounded-control border-ink/60 text-small hover:bg-ink hover:text-paper inline-flex min-h-11 shrink-0 items-center gap-1.5 border px-3 font-semibold transition-colors"
       >
         {copied ? (
           <Check className="size-4" aria-hidden />
@@ -106,7 +106,7 @@ export function PaymentStep({
   ) => (
     <label
       key={value}
-      className={`flex min-h-14 cursor-pointer items-start gap-3 rounded-card border p-4 transition-colors ${method === value ? 'border-2 border-ink bg-paper' : 'border-ink/40 bg-surface hover:bg-paper'} ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
+      className={`rounded-card flex min-h-14 cursor-pointer items-start gap-3 border p-4 transition-colors ${method === value ? 'border-ink bg-paper border-2' : 'border-ink/40 bg-surface hover:bg-paper'} ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
     >
       <input
         type="radio"
@@ -115,12 +115,12 @@ export function PaymentStep({
         checked={method === value}
         disabled={disabled}
         onChange={() => onMethod(value)}
-        className="mt-1 size-5 shrink-0 accent-ink"
+        className="accent-ink mt-1 size-5 shrink-0"
       />
-      <span className="mt-0.5 text-accent-ink">{icon}</span>
+      <span className="text-accent-ink mt-0.5">{icon}</span>
       <span>
         <span className="block font-semibold">{title}</span>
-        <span className="block text-small text-muted">{text}</span>
+        <span className="text-small text-muted block">{text}</span>
       </span>
     </label>
   );
@@ -135,13 +135,13 @@ export function PaymentStep({
         Payment
       </h2>
 
-      <div className="rounded-card border border-line bg-surface p-5">
+      <div className="rounded-card border-line bg-surface border p-5">
         {atHotel ? (
           <>
             <p className="font-display text-xl">
               Reserve now, pay at the hotel
             </p>
-            <p className="mt-1 text-small text-muted">
+            <p className="text-small text-muted mt-1">
               Nothing to pay today. You pay {formatMinor(payment.totalMinor)}{' '}
               when you arrive.
             </p>
@@ -154,13 +154,13 @@ export function PaymentStep({
                 {formatMinor(payment.dueNowMinor)}
               </dd>
             </div>
-            <div className="flex items-baseline justify-between gap-4 text-small">
+            <div className="text-small flex items-baseline justify-between gap-4">
               <dt className="text-muted">Balance, due at the hotel</dt>
               <dd className="tabular-nums">
                 {formatMinor(payment.balanceAtHotelMinor)}
               </dd>
             </div>
-            <div className="flex items-baseline justify-between gap-4 border-t border-line pt-2 text-small">
+            <div className="border-line text-small flex items-baseline justify-between gap-4 border-t pt-2">
               <dt className="text-muted">Stay total</dt>
               <dd className="tabular-nums">
                 {formatMinor(payment.totalMinor)}
@@ -204,12 +204,12 @@ export function PaymentStep({
           {bank ? (
             <motion.div
               key="bank"
-              className="space-y-4 rounded-card border border-ink/40 bg-paper p-5"
+              className="rounded-card border-ink/40 bg-paper space-y-4 border p-5"
               {...bankMotion}
               transition={bankTransition}
             >
               <h3 className="font-semibold">Transfer to this account</h3>
-              <dl className="space-y-3 text-small">
+              <dl className="text-small space-y-3">
                 {[
                   ['Bank', bank.details.bankName, null],
                   ['Account name', bank.details.accountName, null],
@@ -231,7 +231,7 @@ export function PaymentStep({
                   >
                     <div className="min-w-0">
                       <dt className="text-muted">{term}</dt>
-                      <dd className="break-words font-semibold tabular-nums">
+                      <dd className="font-semibold break-words tabular-nums">
                         {value}
                       </dd>
                     </div>
@@ -258,12 +258,12 @@ export function PaymentStep({
                     accept="image/jpeg,image/png,image/webp,application/pdf"
                     disabled={disabled}
                     onChange={(e) => proof.onFile(e.target.files?.[0] ?? null)}
-                    className="block min-h-12 w-full cursor-pointer rounded-control border border-ink/60 bg-surface text-small file:mr-4 file:min-h-12 file:cursor-pointer file:border-0 file:bg-ink file:px-4 file:font-semibold file:text-paper"
+                    className="rounded-control border-ink/60 bg-surface text-small file:bg-ink file:text-paper block min-h-12 w-full cursor-pointer border file:mr-4 file:min-h-12 file:cursor-pointer file:border-0 file:px-4 file:font-semibold"
                   />
                 )}
               </Field>
               {proof.file && (
-                <p className="flex items-center gap-2 text-small">
+                <p className="text-small flex items-center gap-2">
                   <Upload className="size-4" aria-hidden />
                   {proof.file.name}
                 </p>
@@ -277,7 +277,7 @@ export function PaymentStep({
           ) : (
             <motion.p
               key="note"
-              className="rounded-card border border-line p-4 text-small text-ink/85"
+              className="rounded-card border-line text-small text-ink/85 border p-4"
               {...bankMotion}
               transition={bankTransition}
             >
@@ -298,7 +298,7 @@ export function PaymentStep({
             aria-invalid={termsError ? true : undefined}
             aria-describedby={termsError ? 'field-terms-error' : undefined}
             onChange={(e) => onTerms(e.target.checked)}
-            className="mt-0.5 size-6 shrink-0 accent-ink"
+            className="accent-ink mt-0.5 size-6 shrink-0"
           />
           <span className="text-small">
             I agree to the{' '}
@@ -306,7 +306,7 @@ export function PaymentStep({
               href="/policies/terms"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold underline decoration-accent decoration-2 underline-offset-4"
+              className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
             >
               Terms<span className="sr-only"> (opens in a new tab)</span>
             </Link>
@@ -315,7 +315,7 @@ export function PaymentStep({
               href="/policies/privacy"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold underline decoration-accent decoration-2 underline-offset-4"
+              className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
             >
               Privacy Policy
               <span className="sr-only"> (opens in a new tab)</span>
@@ -325,7 +325,7 @@ export function PaymentStep({
               href="/policies/cancellation-policy"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold underline decoration-accent decoration-2 underline-offset-4"
+              className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
             >
               Cancellation Policy
               <span className="sr-only"> (opens in a new tab)</span>
@@ -336,7 +336,7 @@ export function PaymentStep({
         {termsError && (
           <p
             id="field-terms-error"
-            className="mt-1.5 text-small font-medium text-danger"
+            className="text-small text-danger mt-1.5 font-medium"
           >
             {termsError}
           </p>

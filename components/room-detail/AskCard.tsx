@@ -24,13 +24,13 @@ export async function AskCard({
   return (
     <section
       aria-labelledby="ask-title"
-      className="rounded-card bg-surface p-6 shadow-raised md:p-8"
+      className="rounded-card bg-surface shadow-raised p-6 md:p-8"
     >
       <Reveal>
         <h2 id="ask-title" className="font-display text-h3">
           Ask about this room
         </h2>
-        <p className="mt-2 max-w-prose text-ink/85">
+        <p className="text-ink/85 mt-2 max-w-prose">
           Questions about the bed, the view or a special request? We reply
           quickly on WhatsApp.
         </p>

@@ -36,10 +36,10 @@ export function Field({
       .join(' ') || undefined;
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-small font-semibold">
+      <label htmlFor={id} className="text-small mb-1.5 block font-semibold">
         {label}
         {optional && (
-          <span className="font-normal text-muted"> (optional)</span>
+          <span className="text-muted font-normal"> (optional)</span>
         )}
       </label>
       {children({
@@ -48,14 +48,14 @@ export function Field({
         'aria-invalid': error ? true : undefined,
       })}
       {hint && (
-        <p id={`${id}-hint`} className="mt-1.5 text-caption text-muted">
+        <p id={`${id}-hint`} className="text-caption text-muted mt-1.5">
           {hint}
         </p>
       )}
       {error && (
         <p
           id={`${id}-error`}
-          className="mt-1.5 flex items-start gap-1.5 text-small font-medium text-danger"
+          className="text-small text-danger mt-1.5 flex items-start gap-1.5 font-medium"
         >
           <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
           {error}

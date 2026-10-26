@@ -24,12 +24,12 @@ export function ProgressSteps({ steps }: { steps: StepInfo[] }) {
               className="flex min-h-11 min-w-0 items-center gap-2"
             >
               <span
-                className={`grid size-8 shrink-0 place-items-center overflow-hidden rounded-full text-small font-semibold transition-colors duration-300 motion-reduce:transition-none ${
+                className={`text-small grid size-8 shrink-0 place-items-center overflow-hidden rounded-full font-semibold transition-colors duration-300 motion-reduce:transition-none ${
                   s.state === 'complete'
                     ? 'bg-ink text-paper'
                     : s.state === 'current'
                       ? 'bg-accent text-ink'
-                      : 'border border-ink/50 text-muted'
+                      : 'border-ink/50 text-muted border'
                 }`}
               >
                 {reduced ? (
@@ -65,7 +65,7 @@ export function ProgressSteps({ steps }: { steps: StepInfo[] }) {
                 )}
               </span>
               <span
-                className={`truncate text-small ${s.state === 'upcoming' ? 'text-muted' : 'font-semibold'}`}
+                className={`text-small truncate ${s.state === 'upcoming' ? 'text-muted' : 'font-semibold'}`}
               >
                 {s.label}
                 {s.state === 'complete' && (

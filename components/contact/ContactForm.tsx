@@ -193,9 +193,9 @@ export function ContactForm({
   const successPanel = (
     <div
       role="status"
-      className="space-y-5 rounded-card border border-line bg-surface p-8 shadow-raised"
+      className="rounded-card border-line bg-surface shadow-raised space-y-5 border p-8"
     >
-      <CheckCircle2 className="size-10 text-accent-ink" aria-hidden />
+      <CheckCircle2 className="text-accent-ink size-10" aria-hidden />
       <h2 id="form-title" className="font-display text-h2">
         Thanks, we&rsquo;ll reply within {responseHours}{' '}
         {responseHours === 1 ? 'hour' : 'hours'}
@@ -245,7 +245,7 @@ export function ContactForm({
               <h2 id="form-title" className="font-display text-h2">
                 Send us a message
               </h2>
-              <p className="mt-3 text-body-lg text-ink/85">
+              <p className="text-body-lg text-ink/85 mt-3">
                 We reply within {responseHours}{' '}
                 {responseHours === 1 ? 'hour' : 'hours'}.
               </p>
@@ -371,7 +371,7 @@ export function ContactForm({
                 </Field>
 
                 {showStay && (
-                  <fieldset className="space-y-5 rounded-card border border-line bg-surface p-5">
+                  <fieldset className="rounded-card border-line bg-surface space-y-5 border p-5">
                     <legend className="px-2 font-semibold">
                       Your stay (optional)
                     </legend>
@@ -498,7 +498,7 @@ export function ContactForm({
                         errors.consent ? 'contact-consent-error' : undefined
                       }
                       onChange={(e) => set('consent', e.target.checked)}
-                      className="mt-0.5 size-6 shrink-0 accent-ink"
+                      className="accent-ink mt-0.5 size-6 shrink-0"
                     />
                     <span className="text-small">
                       I agree to the{' '}
@@ -506,7 +506,7 @@ export function ContactForm({
                         href="/policies/privacy"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-semibold underline decoration-accent decoration-2 underline-offset-4"
+                        className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
                       >
                         Privacy Policy
                         <span className="sr-only"> (opens in a new tab)</span>
@@ -517,7 +517,7 @@ export function ContactForm({
                   {errors.consent && (
                     <p
                       id="contact-consent-error"
-                      className="mt-1.5 text-small font-medium text-danger"
+                      className="text-small text-danger mt-1.5 font-medium"
                     >
                       {errors.consent}
                     </p>

@@ -1,0 +1,335 @@
+'use client';
+
+import { AlertCircle, Check, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+
+import { adminService } from '@/app/api/services/admin.service';
+import { Button } from '@/components/ui/Button';
+import { formatNaira } from '@/lib/format';
+import type { ReservationDetail } from '@/types/reservation.types';
+
+import { ActionModal } from './ActionModal';
+
+interface ChangeDatesModalProps {
+  open: boolean;
+  onClose: () => void;
+  reservation: ReservationDetail;
+  onSuccess: (updated: ReservationDetail) => void;
+  onRefresh: () => void;
+}
+
+export function ChangeDatesModal({
+  open,
+  onClose,
+  reservation,
+  onSuccess,
+  onRefresh,
+}: ChangeDatesModalProps) {
+  const [checkIn, setCheckIn] = useState(reservation.checkIn);
+  const [checkOut, setCheckOut] = useState(reservation.checkOut);
+  const [selectedRoomId, setSelectedRoomId] = useState<string>(
+    reservation.roomId,
+  );
+  const [overrideRules, setOverrideRules] = useState(false);
+  const [overrideReason, setOverrideReason] = useState('');
+
+  const [quoteData, setQuoteData] = useState<{
+    currentRoomAvailable: boolean;
+    candidateRooms: { id: string; roomNumber: string; floor: number | null }[];
+    comparison: {
+      currentTotalMinor: number;
+      newTotalMinor: number;
+      diffMinor: number;
+      guestOwesMinor: number;
+      refundDueMinor: number;
+      noDifference: boolean;
+    };
+  } | null>(null);
+
+  const [quoting, setQuoting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFetchQuote = async () => {
+    if (checkOut <= checkIn) {
+      setError('Check-out date must be after check-in date.');
+      return;
+    }
+
+    setError(null);
+    setQuoting(true);
+
+    try {
+      const res = await adminService.quoteChangeDates(reservation.id, {
+        checkIn,
+        checkOut,
+      });
+
+      setQuoteData(res.data);
+      if (
+        !res.data.currentRoomAvailable &&
+        res.data.candidateRooms.length > 0
+      ) {
+        setSelectedRoomId(res.data.candidateRooms[0].id);
+      } else {
+        setSelectedRoomId(reservation.roomId);
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to quote stay dates',
+      );
+    } finally {
+      setQuoting(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quoteData) {
+      setError('Please check price and availability first.');
+      return;
+    }
+
+    if (
+      overrideRules &&
+      (!overrideReason || overrideReason.trim().length < 3)
+    ) {
+      setError('An override reason is required when bypassing hotel rules.');
+      return;
+    }
+
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      const updated = await adminService.changeDates(reservation.id, {
+        checkIn,
+        checkOut,
+        roomId: selectedRoomId,
+        overrideRules,
+        overrideReason: overrideReason.trim() || undefined,
+        version: reservation.updatedAt,
+        idempotencyKey: crypto.randomUUID(),
+      });
+
+      onSuccess(updated.data);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to change dates');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <ActionModal
+      open={open}
+      onClose={onClose}
+      title="Change Stay Dates"
+      description={`Modify arrival and departure dates for ${reservation.reference}.`}
+      error={error}
+      maxWidth="xl"
+      onRefresh={onRefresh}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Date Inputs */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="text-small text-ink block font-semibold">
+              Check-in Date <span className="text-danger">*</span>
+            </label>
+            <input
+              type="date"
+              required
+              value={checkIn}
+              onChange={(e) => {
+                setCheckIn(e.target.value);
+                setQuoteData(null);
+              }}
+              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+            />
+          </div>
+
+          <div>
+            <label className="text-small text-ink block font-semibold">
+              Check-out Date <span className="text-danger">*</span>
+            </label>
+            <input
+              type="date"
+              required
+              value={checkOut}
+              onChange={(e) => {
+                setCheckOut(e.target.value);
+                setQuoteData(null);
+              }}
+              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+            />
+          </div>
+        </div>
+
+        <div>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleFetchQuote}
+            disabled={quoting || checkOut <= checkIn}
+          >
+            {quoting ? (
+              <>
+                <Loader2
+                  className="mr-2 size-4 animate-spin"
+                  aria-hidden="true"
+                />
+                Checking availability & prices...
+              </>
+            ) : (
+              'Check availability & calculate price'
+            )}
+          </Button>
+        </div>
+
+        {/* Quote Comparison Results */}
+        {quoteData && (
+          <div className="bg-canvas rounded-control border-line text-small space-y-3 border p-4">
+            <h3 className="text-ink font-semibold">Stay Comparison</h3>
+
+            {/* Price Difference Indicator */}
+            <div className="border-line flex items-center justify-between border-b pb-2">
+              <span className="text-muted">Previous Total:</span>
+              <span className="text-ink font-medium">
+                {formatNaira(quoteData.comparison.currentTotalMinor / 100)}
+              </span>
+            </div>
+            <div className="border-line flex items-center justify-between border-b pb-2">
+              <span className="text-muted">New Total:</span>
+              <span className="text-ink font-bold">
+                {formatNaira(quoteData.comparison.newTotalMinor / 100)}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-ink font-semibold">Outcome:</span>
+              <span
+                className={`font-bold ${
+                  quoteData.comparison.guestOwesMinor > 0
+                    ? 'text-accent-ink'
+                    : quoteData.comparison.refundDueMinor > 0
+                      ? 'text-success'
+                      : 'text-muted'
+                }`}
+              >
+                {quoteData.comparison.guestOwesMinor > 0
+                  ? `Guest owes ${formatNaira(quoteData.comparison.guestOwesMinor / 100)}`
+                  : quoteData.comparison.refundDueMinor > 0
+                    ? `Refund due: ${formatNaira(quoteData.comparison.refundDueMinor / 100)}`
+                    : 'No price difference'}
+              </span>
+            </div>
+
+            {/* Room Availability Status */}
+            <div className="border-line border-t pt-2">
+              {!quoteData.currentRoomAvailable ? (
+                <div className="space-y-2">
+                  <div className="text-caption text-danger flex items-start gap-2">
+                    <AlertCircle
+                      className="mt-0.5 size-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <span>
+                      Room {reservation.roomNumber} is unavailable for these new
+                      dates. Select an available room of the same type:
+                    </span>
+                  </div>
+
+                  {quoteData.candidateRooms.length === 0 ? (
+                    <p className="text-caption text-danger font-semibold">
+                      No rooms of this type are available for the new dates.
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {quoteData.candidateRooms.map((r) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => setSelectedRoomId(r.id)}
+                          className={`rounded-control text-caption border p-2 text-center font-semibold transition-colors ${
+                            selectedRoomId === r.id
+                              ? 'border-accent bg-accent/15 text-accent-ink'
+                              : 'border-line text-ink hover:border-ink'
+                          }`}
+                        >
+                          Room {r.roomNumber}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-caption text-success flex items-center gap-2">
+                  <Check className="size-4" aria-hidden="true" />
+                  <span>
+                    Current room {reservation.roomNumber} is available for the
+                    new dates.
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Manager Override Controls */}
+        <div className="border-line space-y-2 border-t pt-3">
+          <label className="text-small text-ink flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={overrideRules}
+              onChange={(e) => setOverrideRules(e.target.checked)}
+              className="border-line text-accent focus:ring-accent size-4 rounded-sm"
+            />
+            <span>Override hotel policies (min notice, same-day cut-off)</span>
+          </label>
+
+          {overrideRules && (
+            <div>
+              <label className="text-small text-ink block font-semibold">
+                Override Reason <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={overrideReason}
+                onChange={(e) => setOverrideReason(e.target.value)}
+                placeholder="e.g. VIP guest request approved by General Manager..."
+                className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onClose}
+            disabled={submitting}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={submitting || !quoteData}>
+            {submitting ? (
+              <>
+                <Loader2
+                  className="mr-2 size-4 animate-spin"
+                  aria-hidden="true"
+                />
+                Applying date change...
+              </>
+            ) : (
+              'Confirm date change'
+            )}
+          </Button>
+        </div>
+      </form>
+    </ActionModal>
+  );
+}

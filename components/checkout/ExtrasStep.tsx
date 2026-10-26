@@ -47,12 +47,12 @@ export function ExtrasStep({
       </h2>
 
       {extraBed.needed && extraBed.available && (
-        <div className="flex items-start justify-between gap-4 rounded-card border border-line bg-surface p-5">
+        <div className="rounded-card border-line bg-surface flex items-start justify-between gap-4 border p-5">
           <div>
             <p id="extra-bed-label" className="font-semibold">
               Extra bed
             </p>
-            <p className="mt-1 text-small text-muted">
+            <p className="text-small text-muted mt-1">
               {guests} guests need one.{' '}
               {extraBed.priceMinor
                 ? `${formatMinor(extraBed.priceMinor)} per night.`
@@ -69,7 +69,7 @@ export function ExtrasStep({
             className={`relative mt-1 inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors disabled:opacity-50 ${extraBed.selected ? 'border-ink bg-ink' : 'border-ink/60 bg-surface'}`}
           >
             <span
-              className={`inline-block size-5 rounded-full transition-transform ${extraBed.selected ? 'translate-x-6 bg-paper' : 'translate-x-1 bg-ink'}`}
+              className={`inline-block size-5 rounded-full transition-transform ${extraBed.selected ? 'bg-paper translate-x-6' : 'bg-ink translate-x-1'}`}
             />
           </button>
         </div>
@@ -81,7 +81,7 @@ export function ExtrasStep({
           return (
             <li
               key={item.id}
-              className="rounded-card border border-line bg-surface px-5"
+              className="rounded-card border-line bg-surface border px-5"
             >
               <GuestStepper
                 label={item.name}
@@ -100,7 +100,7 @@ export function ExtrasStep({
                     exit={reduced ? undefined : { opacity: 0, height: 0 }}
                     transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
                     style={{ overflow: 'hidden' }}
-                    className="-mt-2 pb-4 text-small font-semibold"
+                    className="text-small -mt-2 pb-4 font-semibold"
                   >
                     Adds {formatMinor(lineTotals[item.id])} to your stay
                   </motion.p>

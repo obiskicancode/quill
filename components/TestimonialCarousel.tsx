@@ -37,7 +37,7 @@ function Quote({ t }: { t: Testimonial }) {
   const inner = (
     <>
       {t.rating ? <Stars rating={t.rating} /> : null}
-      <blockquote className="mt-5 text-balance font-display text-[clamp(1.375rem,1.1rem+1vw,2rem)] leading-snug">
+      <blockquote className="font-display mt-5 text-[clamp(1.375rem,1.1rem+1vw,2rem)] leading-snug text-balance">
         &ldquo;{t.quote}&rdquo;
       </blockquote>
       <figcaption className="mt-6 flex items-center gap-3 text-left">
@@ -51,7 +51,7 @@ function Quote({ t }: { t: Testimonial }) {
         )}
         <span>
           <span className="block font-semibold">{t.guestName}</span>
-          <span className="block text-small text-muted">{t.stayType}</span>
+          <span className="text-small text-muted block">{t.stayType}</span>
         </span>
       </figcaption>
     </>
@@ -79,7 +79,7 @@ function Quote({ t }: { t: Testimonial }) {
       ) : null}
       <motion.blockquote
         variants={fadeUp}
-        className="mt-5 text-balance font-display text-[clamp(1.375rem,1.1rem+1vw,2rem)] leading-snug"
+        className="font-display mt-5 text-[clamp(1.375rem,1.1rem+1vw,2rem)] leading-snug text-balance"
       >
         &ldquo;{t.quote}&rdquo;
       </motion.blockquote>
@@ -97,7 +97,7 @@ function Quote({ t }: { t: Testimonial }) {
         )}
         <span>
           <span className="block font-semibold">{t.guestName}</span>
-          <span className="block text-small text-muted">{t.stayType}</span>
+          <span className="text-small text-muted block">{t.stayType}</span>
         </span>
       </motion.figcaption>
     </motion.figure>
@@ -120,7 +120,7 @@ export function TestimonialCarousel({
           as="h2"
           id="reviews-heading"
           text="What guests say"
-          className="mb-10 text-center font-display text-h2 md:mb-14"
+          className="font-display text-h2 mb-10 text-center md:mb-14"
           staggerChildren={0.08}
         />
         <Carousel

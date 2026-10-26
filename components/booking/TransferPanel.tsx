@@ -58,14 +58,14 @@ export function TransferPanel({
   }
 
   return (
-    <div className="space-y-4 rounded-card border border-line bg-paper p-5 text-ink">
+    <div className="rounded-card border-line bg-paper text-ink space-y-4 border p-5">
       <h2 className="font-semibold">Transfer to this account</h2>
-      <dl className="space-y-3 text-small">
+      <dl className="text-small space-y-3">
         {rows.map(([term, value, copy]) => (
           <div key={term} className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <dt className="text-muted">{term}</dt>
-              <dd className="break-words font-semibold tabular-nums">
+              <dd className="font-semibold break-words tabular-nums">
                 {value}
               </dd>
             </div>
@@ -110,7 +110,7 @@ export function TransferPanel({
                     setFile(e.target.files?.[0] ?? null);
                     setError(null);
                   }}
-                  className="block min-h-12 w-full cursor-pointer rounded-control border border-ink/60 bg-surface text-small file:mr-4 file:min-h-12 file:cursor-pointer file:border-0 file:bg-ink file:px-4 file:font-semibold file:text-paper"
+                  className="rounded-control border-ink/60 bg-surface text-small file:bg-ink file:text-paper block min-h-12 w-full cursor-pointer border file:mr-4 file:min-h-12 file:cursor-pointer file:border-0 file:px-4 file:font-semibold"
                 />
               )}
             </Field>

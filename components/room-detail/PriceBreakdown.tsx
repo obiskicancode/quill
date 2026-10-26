@@ -22,7 +22,7 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
 
   return (
     <div className="min-h-[13rem]">
-      <dl className="space-y-3 text-small">
+      <dl className="text-small space-y-3">
         <div>
           <div className={row}>
             <dt>
@@ -36,10 +36,10 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
           </div>
           {varies && (
             <details className="mt-1">
-              <summary className="inline-flex min-h-11 cursor-pointer items-center font-semibold underline decoration-accent decoration-2 underline-offset-4">
+              <summary className="decoration-accent inline-flex min-h-11 cursor-pointer items-center font-semibold underline decoration-2 underline-offset-4">
                 See the rate for each night
               </summary>
-              <ul className="mb-1 space-y-1 border-l-2 border-line pl-3">
+              <ul className="border-line mb-1 space-y-1 border-l-2 pl-3">
                 {lines.map((l) => (
                   <li key={l.date} className={row}>
                     <span>
@@ -117,7 +117,7 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
         </div>
 
         <div
-          className={`${row} border-t border-line pt-3 text-body font-semibold`}
+          className={`${row} border-line text-body border-t pt-3 font-semibold`}
         >
           <dt>Total</dt>
           <dd className="font-display text-xl tabular-nums">
@@ -125,7 +125,7 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
           </dd>
         </div>
       </dl>
-      <p className="mt-2 text-caption text-muted">
+      <p className="text-caption text-muted mt-2">
         {quote.taxIncluded
           ? 'The total includes tax. Nothing else is added at checkout.'
           : 'Tax is added to the total above. Nothing else is added at checkout.'}
@@ -144,7 +144,7 @@ export function BreakdownSkeleton() {
           <div className={`${bar} h-4 w-1/5`} />
         </div>
       ))}
-      <div className="flex justify-between gap-4 border-t border-line pt-4">
+      <div className="border-line flex justify-between gap-4 border-t pt-4">
         <div className={`${bar} h-6 w-1/4`} />
         <div className={`${bar} h-6 w-1/3`} />
       </div>

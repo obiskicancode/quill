@@ -95,7 +95,7 @@ export function Lightbox({
         if (e.key === 'ArrowLeft') goTo(index - 1);
         if (e.key === 'ArrowRight') goTo(index + 1);
       }}
-      className="on-dark m-0 h-dvh max-h-none w-screen max-w-none bg-ink p-0 text-white backdrop:bg-ink open:flex open:flex-col"
+      className="on-dark bg-ink backdrop:bg-ink m-0 h-dvh max-h-none w-screen max-w-none p-0 text-white open:flex open:flex-col"
     >
       {open && (
         <div className="animate-overlay-zoom flex h-full flex-col">
@@ -125,7 +125,7 @@ export function Lightbox({
                 const t = trackRef.current;
                 if (t) setIndex(Math.round(t.scrollLeft / t.clientWidth));
               }}
-              className="flex h-full snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex h-full snap-x snap-mandatory [scrollbar-width:none] overflow-x-auto [&::-webkit-scrollbar]:hidden"
             >
               {images.map((img, i) => (
                 <figure
@@ -148,7 +148,7 @@ export function Lightbox({
                       />
                     )}
                   </div>
-                  <figcaption className="min-h-14 px-5 py-3 text-center text-small text-white/90">
+                  <figcaption className="text-small min-h-14 px-5 py-3 text-center text-white/90">
                     {img.caption}
                   </figcaption>
                 </figure>
@@ -161,7 +161,7 @@ export function Lightbox({
                   aria-label="Previous photo"
                   disabled={index === 0}
                   onClick={() => goTo(index - 1)}
-                  className="absolute left-3 top-1/2 hidden size-12 -translate-y-1/2 place-items-center rounded-full bg-ink/70 hover:bg-ink disabled:opacity-30 md:grid"
+                  className="bg-ink/70 hover:bg-ink absolute top-1/2 left-3 hidden size-12 -translate-y-1/2 place-items-center rounded-full disabled:opacity-30 md:grid"
                 >
                   <ChevronLeft className="size-6" aria-hidden />
                 </button>
@@ -170,7 +170,7 @@ export function Lightbox({
                   aria-label="Next photo"
                   disabled={index === count - 1}
                   onClick={() => goTo(index + 1)}
-                  className="absolute right-3 top-1/2 hidden size-12 -translate-y-1/2 place-items-center rounded-full bg-ink/70 hover:bg-ink disabled:opacity-30 md:grid"
+                  className="bg-ink/70 hover:bg-ink absolute top-1/2 right-3 hidden size-12 -translate-y-1/2 place-items-center rounded-full disabled:opacity-30 md:grid"
                 >
                   <ChevronRight className="size-6" aria-hidden />
                 </button>

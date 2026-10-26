@@ -30,7 +30,7 @@ export function SessionBar({
   }, [expiresAt]);
 
   return (
-    <Reveal className="flex flex-wrap items-center justify-between gap-3 rounded-control bg-paper p-3 text-small print:hidden">
+    <Reveal className="rounded-control bg-paper text-small flex flex-wrap items-center justify-between gap-3 p-3 print:hidden">
       <p>
         {minutes > 0
           ? `Session expires in ${minutes} ${minutes === 1 ? 'min' : 'min'}`

@@ -15,19 +15,19 @@ export function AdminCard({
 }) {
   return (
     <section
-      className={`rounded-card border border-line bg-surface shadow-raised ${className}`}
+      className={`rounded-card border-line bg-surface shadow-raised border ${className}`}
     >
       {(title || description) && (
-        <div className="border-b border-line px-4 py-4 sm:px-5">
+        <div className="border-line border-b px-4 py-4 sm:px-5">
           {title && <h2 className="font-display text-h3">{title}</h2>}
           {description && (
-            <p className="mt-1 text-small text-muted">{description}</p>
+            <p className="text-small text-muted mt-1">{description}</p>
           )}
         </div>
       )}
       <div className="px-4 py-4 sm:px-5 sm:py-5">{children}</div>
       {footer && (
-        <div className="border-t border-line px-4 py-3 sm:px-5">{footer}</div>
+        <div className="border-line border-t px-4 py-3 sm:px-5">{footer}</div>
       )}
     </section>
   );

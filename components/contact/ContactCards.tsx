@@ -21,14 +21,14 @@ function Card({
     <StaggerItem
       as="li"
       scale
-      className="flex flex-col justify-between gap-4 rounded-card border border-line bg-surface p-5 shadow-raised"
+      className="rounded-card border-line bg-surface shadow-raised flex flex-col justify-between gap-4 border p-5"
     >
       <div>
-        <p className="flex items-center gap-2 text-small font-semibold text-muted">
+        <p className="text-small text-muted flex items-center gap-2 font-semibold">
           <span className="text-accent-ink">{icon}</span>
           {title}
         </p>
-        <div className="mt-2 break-words font-semibold">{children}</div>
+        <div className="mt-2 font-semibold break-words">{children}</div>
       </div>
       {copy && (
         <div>

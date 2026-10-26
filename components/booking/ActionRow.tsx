@@ -142,7 +142,7 @@ export function ActionRow({
         )}
       </AnimatedList>
       {!ready && (
-        <p className="mt-3 text-small text-muted">
+        <p className="text-small text-muted mt-3">
           Calendar and print are unavailable until your check-in date is
           confirmed.
         </p>

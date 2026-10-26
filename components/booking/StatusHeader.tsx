@@ -167,7 +167,7 @@ export function StatusHeader({
   return (
     <section
       aria-labelledby="status-title"
-      className={`rounded-card p-6 md:p-8 ${success ? 'on-dark bg-ink text-paper' : 'border border-line bg-surface text-ink shadow-raised'}`}
+      className={`rounded-card p-6 md:p-8 ${success ? 'on-dark bg-ink text-paper' : 'border-line bg-surface text-ink shadow-raised border'}`}
     >
       <AnimatePresence mode="wait">
         <motion.div
@@ -184,11 +184,11 @@ export function StatusHeader({
             {icon}
           </span>
           <div className="min-w-0">
-            <h1 id="status-title" className="text-balance font-display text-h2">
+            <h1 id="status-title" className="font-display text-h2 text-balance">
               {title}
             </h1>
             <p
-              className={`mt-2 max-w-2xl text-body-lg ${success ? 'text-paper/90' : 'text-ink/85'}`}
+              className={`text-body-lg mt-2 max-w-2xl ${success ? 'text-paper/90' : 'text-ink/85'}`}
             >
               {text}
             </p>

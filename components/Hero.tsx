@@ -21,7 +21,7 @@ export function Hero() {
   return (
     <section
       aria-labelledby="hero-heading"
-      className="on-dark relative isolate flex min-h-[34rem] items-end overflow-hidden bg-ink text-white md:min-h-[40rem] xl:min-h-[44rem]"
+      className="on-dark bg-ink relative isolate flex min-h-[34rem] items-end overflow-hidden text-white md:min-h-[40rem] xl:min-h-[44rem]"
     >
       <motion.div
         className="absolute inset-0 z-0"
@@ -40,14 +40,14 @@ export function Hero() {
       {video && <HeroVideo src={video.src} type={video.type} />}
       <motion.div
         aria-hidden
-        className="absolute inset-0 z-[2] bg-gradient-to-t from-ink/90 via-ink/60 to-ink/50"
+        className="from-ink/90 via-ink/60 to-ink/50 absolute inset-0 z-[2] bg-gradient-to-t"
         initial={reduced ? false : { opacity: 0 }}
         animate={reduced ? undefined : { opacity: 1 }}
         transition={{ duration: 1.2, ease: EASE_OUT }}
       />
 
       <motion.div
-        className="container-page relative z-10 pb-24 pt-32 md:pb-32"
+        className="container-page relative z-10 pt-32 pb-24 md:pb-32"
         variants={stagger(0.14, 0.9)}
         initial={reduced ? false : 'hidden'}
         animate={reduced ? undefined : 'visible'}
@@ -59,11 +59,11 @@ export function Hero() {
           onScroll={false}
           delayChildren={0.15}
           staggerChildren={0.06}
-          className="max-w-3xl text-balance font-display text-display"
+          className="font-display text-display max-w-3xl text-balance"
         />
         <motion.p
           variants={fadeUp}
-          className="mt-5 max-w-xl text-body-lg text-white/90"
+          className="text-body-lg mt-5 max-w-xl text-white/90"
         >
           {subheadline}
         </motion.p>

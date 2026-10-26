@@ -24,6 +24,7 @@ import type { NewSitePage } from '@/db/types';
 
 import fixtures from './fixtures.json';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRecord = Record<string, any>;
 const f = fixtures as AnyRecord;
 const now = new Date();
@@ -423,9 +424,7 @@ async function seedContent(roomMap: Map<string, string>): Promise<void> {
     };
   }
 
-  let order = 0;
   for (const page of Object.values(pages) as AnyRecord[]) {
-    order += 1;
     const appNotice = {
       ...page,
       content: page.content ?? {},

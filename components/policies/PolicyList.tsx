@@ -15,11 +15,11 @@ export async function PolicyList() {
   const pages = await getPolicyPages();
   if (pages.length === 0) {
     return (
-      <p className="max-w-prose text-ink/85">
+      <p className="text-ink/85 max-w-prose">
         Our policies are being updated. Please{' '}
         <Link
           href="/contact"
-          className="font-semibold underline decoration-accent decoration-2 underline-offset-4"
+          className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
         >
           contact us
         </Link>{' '}
@@ -34,19 +34,19 @@ export async function PolicyList() {
         <li key={p.slug}>
           <Link
             href={`/policies/${p.slug}`}
-            className="group flex h-full flex-col rounded-card border border-line bg-surface p-6 shadow-raised transition-colors hover:bg-paper"
+            className="group rounded-card border-line bg-surface shadow-raised hover:bg-paper flex h-full flex-col border p-6 transition-colors"
           >
-            <span className="inline-flex items-center gap-2 text-accent-ink">
+            <span className="text-accent-ink inline-flex items-center gap-2">
               <FileText className="size-5" aria-hidden />
-              <span className="text-small font-semibold uppercase tracking-wide">
+              <span className="text-small font-semibold tracking-wide uppercase">
                 Policy
               </span>
             </span>
-            <h2 className="mt-3 font-display text-h3 text-ink">{p.title}</h2>
-            <p className="mt-2 flex-1 text-ink/85">{p.summary}</p>
-            <span className="mt-4 flex items-center justify-between gap-3 text-small text-muted">
+            <h2 className="font-display text-h3 text-ink mt-3">{p.title}</h2>
+            <p className="text-ink/85 mt-2 flex-1">{p.summary}</p>
+            <span className="text-small text-muted mt-4 flex items-center justify-between gap-3">
               <span>Last updated {formatDate(p.updatedAt)}</span>
-              <span className="inline-flex items-center gap-1 font-semibold text-ink transition-transform group-hover:translate-x-0.5">
+              <span className="text-ink inline-flex items-center gap-1 font-semibold transition-transform group-hover:translate-x-0.5">
                 Read
                 <ArrowRight className="size-4" aria-hidden />
               </span>

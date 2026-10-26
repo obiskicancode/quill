@@ -61,7 +61,7 @@ export function RoomGallery({
     <button
       type="button"
       onClick={(e) => openAt(0, e.currentTarget)}
-      className="inline-flex min-h-11 items-center gap-2 rounded-control bg-surface px-4 text-small font-semibold shadow-raised transition-colors hover:bg-paper"
+      className="rounded-control bg-surface text-small shadow-raised hover:bg-paper inline-flex min-h-11 items-center gap-2 px-4 font-semibold transition-colors"
     >
       <Images className="size-4" aria-hidden />
       View all {count} {count === 1 ? 'photo' : 'photos'}
@@ -73,7 +73,7 @@ export function RoomGallery({
       {/* Desktop: 1 large + up to 4 small */}
       <div className="relative hidden md:block">
         <div
-          className={`grid gap-2 overflow-hidden rounded-card ${layout.grid}`}
+          className={`rounded-card grid gap-2 overflow-hidden ${layout.grid}`}
         >
           {tiles.map((img, i) => (
             <motion.div
@@ -103,7 +103,7 @@ export function RoomGallery({
           ))}
         </div>
         {count > 1 && (
-          <div className="absolute bottom-4 right-4">
+          <div className="absolute right-4 bottom-4">
             <Magnetic>{viewAll}</Magnetic>
           </div>
         )}
@@ -111,7 +111,7 @@ export function RoomGallery({
 
       {/* Mobile: swipeable carousel */}
       <div className="relative md:hidden">
-        <div className="overflow-hidden rounded-card">
+        <div className="rounded-card overflow-hidden">
           <Carousel
             label={`${roomName} photos`}
             slides={images.map((img, i) => (
@@ -138,7 +138,7 @@ export function RoomGallery({
           />
         </div>
         {count > 1 && (
-          <div className="absolute right-3 top-3 z-10">{viewAll}</div>
+          <div className="absolute top-3 right-3 z-10">{viewAll}</div>
         )}
       </div>
 

@@ -15,13 +15,13 @@ export function EnquirySection({ whatsappHref, refCode }: EnquirySectionProps) {
     <section aria-labelledby="enquiry-intro-title" className="section-y">
       <div className="container-page max-w-3xl">
         <div>
-          <p className="text-small font-semibold uppercase tracking-wide text-accent-ink">
+          <p className="text-small text-accent-ink font-semibold tracking-wide uppercase">
             Booking enquiries
           </p>
-          <h2 id="enquiry-intro-title" className="mt-2 font-display text-h2">
+          <h2 id="enquiry-intro-title" className="font-display text-h2 mt-2">
             Need help with a booking?
           </h2>
-          <p className="mt-3 max-w-3xl text-body-lg text-ink/85">
+          <p className="text-body-lg text-ink/85 mt-3 max-w-3xl">
             Ask us about dates, rooms, a group booking or anything else before
             you pay. If you already have a booking, tell us its reference
             {refCode ? (
@@ -48,11 +48,11 @@ export function EnquirySection({ whatsappHref, refCode }: EnquirySectionProps) {
               Check room availability
             </ButtonLink>
           </div>
-          <p className="mt-3 text-small text-muted">
+          <p className="text-small text-muted mt-3">
             Want to send a general question instead?{' '}
             <Link
               href="/contact"
-              className="font-semibold underline decoration-accent decoration-2 underline-offset-4"
+              className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
             >
               Go to the contact page
             </Link>

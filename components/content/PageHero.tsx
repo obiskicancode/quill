@@ -25,7 +25,7 @@ export function PageHero({ crumbs, title, intro, image }: PageHeroProps) {
   return (
     <section
       aria-labelledby="page-title"
-      className="on-dark relative isolate flex min-h-[15rem] items-end overflow-hidden bg-ink text-white md:min-h-[19rem]"
+      className="on-dark bg-ink relative isolate flex min-h-[15rem] items-end overflow-hidden text-white md:min-h-[19rem]"
     >
       <motion.div
         className="absolute inset-0 z-0"
@@ -43,7 +43,7 @@ export function PageHero({ crumbs, title, intro, image }: PageHeroProps) {
       </motion.div>
       <motion.div
         aria-hidden
-        className="absolute inset-0 z-[1] bg-gradient-to-t from-ink/90 via-ink/65 to-ink/55"
+        className="from-ink/90 via-ink/65 to-ink/55 absolute inset-0 z-[1] bg-gradient-to-t"
         initial={reduced ? false : { opacity: 0 }}
         animate={reduced ? undefined : { opacity: 1 }}
         transition={{ duration: 1.1, ease: EASE_OUT }}
@@ -64,11 +64,11 @@ export function PageHero({ crumbs, title, intro, image }: PageHeroProps) {
           onScroll={false}
           staggerChildren={0.05}
           delayChildren={0.1}
-          className="mt-2 max-w-3xl text-balance font-display text-h2 md:text-display"
+          className="font-display text-h2 md:text-display mt-2 max-w-3xl text-balance"
         />
         <motion.p
           variants={fadeUp}
-          className="mt-3 max-w-xl text-body-lg text-white/90"
+          className="text-body-lg mt-3 max-w-xl text-white/90"
         >
           {intro}
         </motion.p>

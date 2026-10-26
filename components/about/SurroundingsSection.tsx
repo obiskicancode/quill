@@ -16,7 +16,7 @@ export async function SurroundingsSection() {
             Location and surroundings
           </h2>
           {text && (
-            <p className="mt-4 text-body-lg leading-[1.7] text-ink/90">
+            <p className="text-body-lg text-ink/90 mt-4 leading-[1.7]">
               {text}
             </p>
           )}
@@ -34,15 +34,15 @@ export async function SurroundingsSection() {
               <StaggerItem
                 key={a.id}
                 as="li"
-                className="rounded-card border border-line bg-paper p-5"
+                className="rounded-card border-line bg-paper border p-5"
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4">
                   <h3 className="font-semibold">{a.name}</h3>
-                  <p className="text-small font-semibold text-accent-ink">
+                  <p className="text-small text-accent-ink font-semibold">
                     {a.distanceNote}
                   </p>
                 </div>
-                <p className="mt-1 text-small text-ink/85">{a.description}</p>
+                <p className="text-small text-ink/85 mt-1">{a.description}</p>
               </StaggerItem>
             ))}
           </StaggerGroup>

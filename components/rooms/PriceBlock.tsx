@@ -19,7 +19,7 @@ export function PriceBlock({
     return (
       <div className="min-h-[5.5rem]">
         <p className="font-display text-xl">Contact us for price</p>
-        <p className="mt-1 text-small text-muted">
+        <p className="text-small text-muted mt-1">
           We will reply with rates for your dates.
         </p>
       </div>
@@ -37,7 +37,7 @@ export function PriceBlock({
             for {nights} {nights === 1 ? 'night' : 'nights'}
           </span>
         </p>
-        <p className="mt-1 text-small text-muted">
+        <p className="text-small text-muted mt-1">
           {formatNaira(averageNgn)} / night on average
         </p>
         <p className="text-small text-muted">
@@ -58,11 +58,11 @@ export function PriceBlock({
         <span className="text-small text-muted"> / night</span>
       </p>
       {liveFailed ? (
-        <p className="mt-1 text-small text-muted">
+        <p className="text-small text-muted mt-1">
           Starting rate. Live price for your dates is unavailable.
         </p>
       ) : (
-        <p className="mt-1 text-small text-muted">
+        <p className="text-small text-muted mt-1">
           {room.taxesIncluded ? 'Taxes included' : '+ taxes and fees'}
         </p>
       )}

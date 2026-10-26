@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CreditCard,
   FileText,
+  History,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -35,6 +36,7 @@ const icons = {
   '/admin/payments': CreditCard,
   '/admin/settings': Settings,
   '/admin/staff': Users,
+  '/admin/audit': History,
 };
 
 interface ShellUser {
@@ -101,18 +103,18 @@ export function AdminShell({
     `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
 
   return (
-    <div className="min-h-dvh bg-paper md:grid md:grid-cols-[16rem_minmax(0,1fr)]">
+    <div className="bg-paper min-h-dvh md:grid md:grid-cols-[16rem_minmax(0,1fr)]">
       {open && (
         <button
           type="button"
           aria-label="Close navigation"
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-40 bg-ink/50 md:hidden"
+          className="bg-ink/50 fixed inset-0 z-40 md:hidden"
         />
       )}
 
       <aside
-        className={`on-dark fixed inset-y-0 left-0 z-50 flex w-[min(18rem,85vw)] flex-col bg-ink text-paper transition-transform duration-200 motion-reduce:transition-none md:static md:w-auto md:translate-x-0 ${
+        className={`on-dark bg-ink text-paper fixed inset-y-0 left-0 z-50 flex w-[min(18rem,85vw)] flex-col transition-transform duration-200 motion-reduce:transition-none md:static md:w-auto md:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -128,7 +130,7 @@ export function AdminShell({
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Close navigation"
-            className="grid size-11 place-items-center rounded-control hover:bg-white/10 md:hidden"
+            className="rounded-control grid size-11 place-items-center hover:bg-white/10 md:hidden"
           >
             <X className="size-5" aria-hidden />
           </button>
@@ -139,17 +141,17 @@ export function AdminShell({
             <Link
               href="/admin/account?setup=required"
               onClick={() => setOpen(false)}
-              className="mb-3 block rounded-control border border-accent/40 bg-accent/10 p-3 text-small text-paper hover:bg-accent/20"
+              className="rounded-control border-accent/40 bg-accent/10 text-small text-paper hover:bg-accent/20 mb-3 block border p-3"
             >
               <span className="font-semibold">Finish two-factor setup</span>
-              <span className="mt-1 block text-caption text-white/70">
+              <span className="text-caption mt-1 block text-white/70">
                 Required before the admin opens.
               </span>
             </Link>
           )}
           {groups.map((group) => (
             <div key={group.label} className="mb-5">
-              <p className="mb-1.5 px-2 text-caption font-semibold uppercase tracking-wide text-white/50">
+              <p className="text-caption mb-1.5 px-2 font-semibold tracking-wide text-white/50 uppercase">
                 {group.label}
               </p>
               <ul className="space-y-0.5">
@@ -166,7 +168,7 @@ export function AdminShell({
                         href={item.href}
                         onClick={() => setOpen(false)}
                         aria-current={active ? 'page' : undefined}
-                        className={`flex min-h-10 items-center gap-2.5 rounded-control px-2.5 text-small font-medium ${
+                        className={`rounded-control text-small flex min-h-10 items-center gap-2.5 px-2.5 font-medium ${
                           active
                             ? 'bg-accent text-ink'
                             : 'text-white/80 hover:bg-white/10 hover:text-white'
@@ -187,16 +189,16 @@ export function AdminShell({
           <Link
             href="/admin/account"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 rounded-control px-2 py-2 hover:bg-white/10"
+            className="rounded-control flex items-center gap-2.5 px-2 py-2 hover:bg-white/10"
           >
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-small font-bold text-ink">
+            <span className="bg-accent text-small text-ink grid size-9 shrink-0 place-items-center rounded-full font-bold">
               {initials || 'A'}
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-small font-semibold">
+              <span className="text-small block truncate font-semibold">
                 {user.firstName} {user.lastName}
               </span>
-              <span className="block truncate text-caption text-white/60">
+              <span className="text-caption block truncate text-white/60">
                 {ROLE_LABELS[role]}
               </span>
             </span>
@@ -205,26 +207,26 @@ export function AdminShell({
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-surface/95 px-4 backdrop-blur md:px-6">
+        <header className="border-line bg-surface/95 sticky top-0 z-30 flex h-16 items-center gap-3 border-b px-4 backdrop-blur md:px-6">
           <button
             type="button"
             onClick={() => setOpen(true)}
             aria-label="Open navigation"
             aria-expanded={open}
-            className="grid size-11 place-items-center rounded-control border border-line md:hidden"
+            className="rounded-control border-line grid size-11 place-items-center border md:hidden"
           >
             <Menu className="size-5" aria-hidden />
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-small font-semibold">{user.email}</p>
+            <p className="text-small truncate font-semibold">{user.email}</p>
             <p className="text-caption text-muted">{ROLE_LABELS[role]}</p>
           </div>
 
           <Link
             href="/admin/account"
             onClick={() => setOpen(false)}
-            className="hidden rounded-control px-3 py-2 text-small font-semibold hover:bg-ink/5 sm:block"
+            className="rounded-control text-small hover:bg-ink/5 hidden px-3 py-2 font-semibold sm:block"
           >
             Account
           </Link>
@@ -232,7 +234,7 @@ export function AdminShell({
             type="button"
             onClick={signOut}
             disabled={signingOut}
-            className="flex min-h-10 items-center gap-2 rounded-control px-3 text-small font-semibold hover:bg-ink/5 disabled:opacity-50"
+            className="rounded-control text-small hover:bg-ink/5 flex min-h-10 items-center gap-2 px-3 font-semibold disabled:opacity-50"
           >
             <LogOut className="size-4" aria-hidden />
             <span className="hidden sm:inline">

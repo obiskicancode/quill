@@ -38,7 +38,7 @@ export default async function RoomsPage() {
     <>
       <section
         aria-labelledby="rooms-title"
-        className="container-page pb-8 pt-4 md:pb-10 md:pt-6"
+        className="container-page pt-4 pb-8 md:pt-6 md:pb-10"
       >
         <Reveal>
           <Breadcrumb
@@ -51,10 +51,10 @@ export default async function RoomsPage() {
           text="Rooms & Accommodation"
           onScroll={false}
           staggerChildren={0.05}
-          className="mt-3 font-display text-h2 md:text-display"
+          className="font-display text-h2 md:text-display mt-3"
         />
         <Reveal delay={0.15}>
-          <p className="mt-4 max-w-2xl text-body-lg text-ink/85">
+          <p className="text-body-lg text-ink/85 mt-4 max-w-2xl">
             Compare our rooms and apartments side by side. Add your dates to see
             the total for your stay, with taxes and fees shown up front.
           </p>

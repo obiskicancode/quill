@@ -12,7 +12,7 @@ export default function MaintenancePage() {
   return (
     <section aria-labelledby="maint-title" className="container-page section-y">
       <div className="max-w-xl space-y-5">
-        <Wrench className="size-10 text-accent-ink" aria-hidden />
+        <Wrench className="text-accent-ink size-10" aria-hidden />
         <h1 id="maint-title" className="font-display text-h2">
           We are making a few updates
         </h1>

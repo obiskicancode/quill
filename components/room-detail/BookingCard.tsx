@@ -197,7 +197,7 @@ export function BookingCard({
   }
 
   const guestsControls = (
-    <div className="divide-y divide-line border-y border-line">
+    <div className="divide-line border-line divide-y border-y">
       <GuestStepper
         label="Adults"
         hint={`Up to ${room.maxAdults}`}
@@ -218,7 +218,7 @@ export function BookingCard({
   );
 
   const extraBedControl = needsExtra ? (
-    <div className="flex items-start justify-between gap-4 rounded-control bg-paper p-4">
+    <div className="rounded-control bg-paper flex items-start justify-between gap-4 p-4">
       <div>
         <p id="extra-bed-label" className="font-semibold">
           Extra bed
@@ -239,7 +239,7 @@ export function BookingCard({
         className={`relative mt-1 inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors ${stay.extraBed ? 'border-ink bg-ink' : 'border-ink/60 bg-surface'}`}
       >
         <span
-          className={`inline-block size-5 rounded-full transition-transform ${stay.extraBed ? 'translate-x-6 bg-paper' : 'translate-x-1 bg-ink'}`}
+          className={`inline-block size-5 rounded-full transition-transform ${stay.extraBed ? 'bg-paper translate-x-6' : 'bg-ink translate-x-1'}`}
         />
       </button>
     </div>
@@ -263,10 +263,10 @@ export function BookingCard({
       return (
         <div
           role="alert"
-          className="rounded-control border border-danger/40 p-4"
+          className="rounded-control border-danger/40 border p-4"
         >
           <p className="font-semibold">We couldn&rsquo;t check availability</p>
-          <p className="mt-1 text-small text-muted">
+          <p className="text-small text-muted mt-1">
             Your dates and guests are saved. Please try again.
           </p>
         </div>
@@ -279,7 +279,7 @@ export function BookingCard({
           <p className="font-semibold">Not available for these dates</p>
           {soldOut.suggestions.length > 0 ? (
             <>
-              <p className="mt-1 text-small text-muted">
+              <p className="text-small text-muted mt-1">
                 Nearby dates that are free:
               </p>
               <ul className="mt-3 space-y-2">
@@ -290,7 +290,7 @@ export function BookingCard({
                       onClick={() =>
                         patch({ checkIn: s.checkIn, checkOut: s.checkOut })
                       }
-                      className="flex min-h-11 w-full items-center justify-between gap-3 rounded-control border border-ink/60 px-4 text-small font-semibold transition-colors hover:bg-ink hover:text-paper"
+                      className="rounded-control border-ink/60 text-small hover:bg-ink hover:text-paper flex min-h-11 w-full items-center justify-between gap-3 border px-4 font-semibold transition-colors"
                     >
                       <span>{formatRange(s.checkIn, s.checkOut)}</span>
                       <span className="tabular-nums">
@@ -302,15 +302,15 @@ export function BookingCard({
               </ul>
             </>
           ) : (
-            <p className="mt-1 text-small text-muted">
+            <p className="text-small text-muted mt-1">
               No nearby dates are free. Message us and we will look for options.
             </p>
           )}
-          <p className="mt-3 text-small">
+          <p className="text-small mt-3">
             <a
               href="#similar-rooms"
               onClick={() => setSheetOpen(false)}
-              className="inline-flex min-h-11 items-center font-semibold underline decoration-accent decoration-2 underline-offset-4"
+              className="decoration-accent inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
             >
               See similar rooms
             </a>
@@ -324,9 +324,9 @@ export function BookingCard({
           {invalid.violations.map((v) => (
             <li
               key={v.code}
-              className="rounded-control border border-danger/40 p-4"
+              className="rounded-control border-danger/40 border p-4"
             >
-              <p className="text-small font-medium text-danger">{v.message}</p>
+              <p className="text-small text-danger font-medium">{v.message}</p>
               {v.fix && (
                 <Button
                   variant="secondary"
@@ -356,7 +356,7 @@ export function BookingCard({
               </span>
               <span className="text-small text-muted"> / night on average</span>
             </p>
-            <p className="mt-1 text-small text-muted">
+            <p className="text-small text-muted mt-1">
               for {nights} {nights === 1 ? 'night' : 'nights'}
             </p>
             <div className="mt-2">
@@ -380,14 +380,14 @@ export function BookingCard({
           type="button"
           aria-expanded={datesOpen}
           onClick={() => setDatesOpen((o) => !o)}
-          className="flex min-h-14 w-full items-center gap-3 rounded-control border border-ink/60 bg-surface px-4 text-left transition-colors hover:bg-paper"
+          className="rounded-control border-ink/60 bg-surface hover:bg-paper flex min-h-14 w-full items-center gap-3 border px-4 text-left transition-colors"
         >
           <CalendarDays
-            className="size-5 shrink-0 text-accent-ink"
+            className="text-accent-ink size-5 shrink-0"
             aria-hidden
           />
           <span className="min-w-0">
-            <span className="block text-caption font-semibold text-muted">
+            <span className="text-caption text-muted block font-semibold">
               Dates
             </span>
             <span
@@ -402,7 +402,7 @@ export function BookingCard({
           </span>
         </button>
         {datesOpen && (
-          <div className="mt-3 rounded-control border border-line p-3">
+          <div className="rounded-control border-line mt-3 border p-3">
             <DatePicker
               value={{ checkIn: stay.checkIn, checkOut: stay.checkOut }}
               onChange={(next) => {
@@ -436,15 +436,15 @@ export function BookingCard({
         </ButtonLink>
       </div>
 
-      <ul className="space-y-1 text-small">
+      <ul className="text-small space-y-1">
         <li className="flex items-center gap-2">
-          <Lock className="size-4 shrink-0 text-accent-ink" aria-hidden />
+          <Lock className="text-accent-ink size-4 shrink-0" aria-hidden />
           Pay securely online
         </li>
         {available?.quote.freeCancellationUntil && (
           <li className="flex items-center gap-2">
             <BadgeCheck
-              className="size-4 shrink-0 text-accent-ink"
+              className="text-accent-ink size-4 shrink-0"
               aria-hidden
             />
             Free cancellation until{' '}
@@ -454,7 +454,7 @@ export function BookingCard({
         {bestPriceDirect && (
           <li className="flex items-center gap-2">
             <ShieldCheck
-              className="size-4 shrink-0 text-accent-ink"
+              className="text-accent-ink size-4 shrink-0"
               aria-hidden
             />
             Best price when you book direct
@@ -489,20 +489,20 @@ export function BookingCard({
   return (
     <>
       {/* Desktop */}
-      <div className="hidden rounded-card border border-line bg-surface p-6 shadow-float lg:sticky lg:top-24 lg:block lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto">
+      <div className="rounded-card border-line bg-surface shadow-float hidden border p-6 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto">
         <Reveal>{panel}</Reveal>
       </div>
 
       {/* Mobile and tablet bar. It carries the id the global Book Now bar watches, so the two never stack. */}
       <div
         id="availability-search"
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pr-[5.5rem] pt-3 backdrop-blur lg:hidden"
+        className="border-line bg-paper/95 fixed inset-x-0 bottom-0 z-30 border-t px-4 pt-3 pr-[5.5rem] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden"
       >
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate font-semibold">{barPrice}</p>
             {dateText && (
-              <p className="truncate text-small text-muted">
+              <p className="text-small text-muted truncate">
                 {dateText}, {guests} {guests === 1 ? 'guest' : 'guests'}
               </p>
             )}
@@ -524,11 +524,11 @@ export function BookingCard({
         ref={dialogRef}
         aria-labelledby="booking-sheet-title"
         onClose={() => setSheetOpen(false)}
-        className="inset-x-0 bottom-0 top-auto m-0 max-h-[92dvh] w-full max-w-none bg-transparent p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col lg:hidden"
+        className="text-ink backdrop:bg-ink/60 inset-x-0 top-auto bottom-0 m-0 max-h-[92dvh] w-full max-w-none bg-transparent p-0 open:flex open:flex-col lg:hidden"
       >
         {sheetOpen && (
-          <div className="animate-sheet-rise flex max-h-[92dvh] min-h-0 w-full flex-col overflow-hidden rounded-t-card bg-paper">
-            <div className="flex items-center justify-between border-b border-line px-5 py-2">
+          <div className="animate-sheet-rise rounded-t-card bg-paper flex max-h-[92dvh] min-h-0 w-full flex-col overflow-hidden">
+            <div className="border-line flex items-center justify-between border-b px-5 py-2">
               <h2 id="booking-sheet-title" className="font-display text-h3">
                 Your stay
               </h2>
@@ -536,7 +536,7 @@ export function BookingCard({
                 type="button"
                 aria-label="Close"
                 onClick={() => setSheetOpen(false)}
-                className="grid size-11 place-items-center rounded-full hover:bg-ink/10"
+                className="hover:bg-ink/10 grid size-11 place-items-center rounded-full"
               >
                 <X className="size-6" aria-hidden />
               </button>

@@ -194,7 +194,7 @@ export default async function RoomPage({ params, searchParams }: PageProps) {
         dangerouslySetInnerHTML={{ __html: jsonLd }}
       />
 
-      <div className="container-page pb-6 pt-4 md:pt-6">
+      <div className="container-page pt-4 pb-6 md:pt-6">
         <Breadcrumb
           items={[
             { label: 'Home', href: '/' },
@@ -207,7 +207,7 @@ export default async function RoomPage({ params, searchParams }: PageProps) {
         </div>
       </div>
 
-      <div className="container-page pb-4 pt-6">
+      <div className="container-page pt-6 pb-4">
         <TitleBlock room={room} />
       </div>
 
@@ -215,7 +215,7 @@ export default async function RoomPage({ params, searchParams }: PageProps) {
         <div className="space-y-12">
           <section aria-labelledby="about-title">
             <Reveal>
-              <h2 id="about-title" className="mb-3 font-display text-h3">
+              <h2 id="about-title" className="font-display text-h3 mb-3">
                 About this room
               </h2>
               <ReadMore text={room.description} />

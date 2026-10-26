@@ -244,12 +244,12 @@ export function ChangeDatesFlow({
       <div className="space-y-5">
         <div role="status" className="flex items-start gap-4">
           <CheckCircle2
-            className="size-8 shrink-0 text-accent-ink"
+            className="text-accent-ink size-8 shrink-0"
             aria-hidden
           />
           <div>
             <p className="font-display text-h3">Your dates are changed</p>
-            <p className="mt-2 text-ink/85">
+            <p className="text-ink/85 mt-2">
               You are now booked for{' '}
               <span className="font-semibold">
                 {v.stay.checkIn && v.stay.checkOut
@@ -259,11 +259,11 @@ export function ChangeDatesFlow({
               .
             </p>
             {refund && (
-              <p className="mt-2 text-small">
+              <p className="text-small mt-2">
                 {refund.title}. {refund.detail}
               </p>
             )}
-            <p className="mt-2 text-small text-muted">
+            <p className="text-small text-muted mt-2">
               We emailed your updated booking to {v.guest.email}.
             </p>
           </div>
@@ -292,7 +292,7 @@ export function ChangeDatesFlow({
           {v.manage?.allowed.changesRemaining ?? 0} more{' '}
           {v.manage?.allowed.changesRemaining === 1 ? 'time' : 'times'}.
         </p>
-        <div className="max-w-sm rounded-card border border-line bg-surface p-3">
+        <div className="rounded-card border-line bg-surface max-w-sm border p-3">
           <DatePicker
             value={range}
             onChange={(r) => {
@@ -319,7 +319,7 @@ export function ChangeDatesFlow({
                     {[0, 1, 2].map((i) => (
                       <div
                         key={i}
-                        className="h-8 rounded bg-ink/10 motion-safe:animate-pulse"
+                        className="bg-ink/10 h-8 rounded motion-safe:animate-pulse"
                       />
                     ))}
                   </div>
@@ -349,19 +349,19 @@ export function ChangeDatesFlow({
 
               {!quoting && quote?.status === 'ok' && (
                 <div className="space-y-4">
-                  <div className="rounded-card border-2 border-ink p-4">
+                  <div className="rounded-card border-ink border-2 p-4">
                     <p className="text-small text-muted">New dates</p>
                     <p className="font-semibold">
                       {formatRange(quote.checkIn, quote.checkOut)} (
                       {quote.nights} {quote.nights === 1 ? 'night' : 'nights'})
                     </p>
-                    <p className="mt-3 font-display text-h3">
+                    <p className="font-display text-h3 mt-3">
                       {describe(quote.difference).title}
                     </p>
-                    <p className="mt-1 text-small text-ink/85">
+                    <p className="text-small text-ink/85 mt-1">
                       {describe(quote.difference).detail}
                     </p>
-                    <p className="mt-3 text-small text-muted">
+                    <p className="text-small text-muted mt-3">
                       New total {formatMinor(quote.newTotalMinor)}, was{' '}
                       {formatMinor(quote.oldTotalMinor)}.
                     </p>
@@ -374,14 +374,14 @@ export function ChangeDatesFlow({
                       </p>
                     </Banner>
                   )}
-                  <p className="rounded-control bg-paper p-3 text-small font-semibold">
+                  <p className="rounded-control bg-paper text-small p-3 font-semibold">
                     {quote.newPolicy.nonRefundable
                       ? 'Non-refundable'
                       : quote.newPolicy.freeCancellationUntil
                         ? `Free cancellation until ${formatDeadline(quote.newPolicy.freeCancellationUntil)}`
                         : 'The free cancellation window has ended for these dates.'}
                   </p>
-                  <details className="rounded-control border border-line p-3">
+                  <details className="rounded-control border-line border p-3">
                     <summary className="min-h-11 cursor-pointer py-2 font-semibold">
                       See the new price breakdown
                     </summary>
@@ -460,7 +460,7 @@ export function ChangeDatesFlow({
                                 checkOut: s.checkOut,
                               })
                             }
-                            className="flex min-h-14 w-full flex-col items-start justify-center rounded-card border border-ink/60 bg-surface px-4 text-left hover:bg-ink hover:text-paper"
+                            className="rounded-card border-ink/60 bg-surface hover:bg-ink hover:text-paper flex min-h-14 w-full flex-col items-start justify-center border px-4 text-left"
                           >
                             <span className="font-semibold">
                               {formatRange(s.checkIn, s.checkOut)}

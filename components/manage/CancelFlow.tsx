@@ -52,7 +52,7 @@ function RefundSummary({ p }: { p: CancellationPreview }) {
   const row = 'flex items-baseline justify-between gap-4 py-2';
   return (
     <div className="space-y-4">
-      <dl className="divide-y divide-line rounded-card border border-line bg-surface px-4">
+      <dl className="divide-line rounded-card border-line bg-surface divide-y border px-4">
         <div className={row}>
           <dt className="text-muted">You paid</dt>
           <dd className="tabular-nums">{formatMinor(p.paidMinor)}</dd>
@@ -84,9 +84,9 @@ function RefundSummary({ p }: { p: CancellationPreview }) {
           </>
         )}
       </dl>
-      <div className="rounded-control bg-paper p-4 text-small">
+      <div className="rounded-control bg-paper text-small p-4">
         <p className="font-semibold">Why: {p.rule}</p>
-        <p className="mt-1 text-ink/85">{kindNote[p.kind](p)}</p>
+        <p className="text-ink/85 mt-1">{kindNote[p.kind](p)}</p>
       </div>
     </div>
   );
@@ -241,14 +241,14 @@ export function CancelFlow({
             <div className="space-y-5">
               <div role="status" className="flex items-start gap-4">
                 <CheckCircle2
-                  className="size-8 shrink-0 text-accent-ink"
+                  className="text-accent-ink size-8 shrink-0"
                   aria-hidden
                 />
                 <div>
                   <p className="font-display text-h3">
                     Your booking is cancelled
                   </p>
-                  <p className="mt-2 text-ink/85">
+                  <p className="text-ink/85 mt-2">
                     {c?.refundStatus === 'initiated' &&
                       `We've started a refund of ${formatMinor(c.refundMinor)} to your original payment method. Expect it within ${c.timeline}.`}
                     {c?.refundStatus === 'pending_manual' &&
@@ -256,7 +256,7 @@ export function CancelFlow({
                     {c?.refundStatus === 'none' &&
                       'No refund is due under the cancellation policy.'}
                   </p>
-                  <p className="mt-2 text-small text-muted">
+                  <p className="text-small text-muted mt-2">
                     We emailed a confirmation to {result.guest.email}.
                   </p>
                 </div>
@@ -284,7 +284,7 @@ export function CancelFlow({
                 {[0, 1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="h-10 rounded bg-ink/10 motion-safe:animate-pulse"
+                    className="bg-ink/10 h-10 rounded motion-safe:animate-pulse"
                   />
                 ))}
               </div>
@@ -347,7 +347,7 @@ export function CancelFlow({
               }}
               className="space-y-5"
             >
-              <p className="rounded-control bg-paper p-4 text-small">
+              <p className="rounded-control bg-paper text-small p-4">
                 You will get back{' '}
                 <span className="font-semibold">
                   {formatMinor(preview.refundMinor)}
@@ -361,16 +361,16 @@ export function CancelFlow({
               <div>
                 <label
                   htmlFor="cancel-reason"
-                  className="mb-1.5 block text-small font-semibold"
+                  className="text-small mb-1.5 block font-semibold"
                 >
                   Reason{' '}
-                  <span className="font-normal text-muted">(optional)</span>
+                  <span className="text-muted font-normal">(optional)</span>
                 </label>
                 <select
                   id="cancel-reason"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  className="min-h-12 w-full rounded-control border border-ink/60 bg-surface px-4"
+                  className="rounded-control border-ink/60 bg-surface min-h-12 w-full border px-4"
                 >
                   <option value="">Choose a reason</option>
                   {CANCEL_REASONS.map((r) => (
@@ -383,10 +383,10 @@ export function CancelFlow({
               <div>
                 <label
                   htmlFor="cancel-note"
-                  className="mb-1.5 block text-small font-semibold"
+                  className="text-small mb-1.5 block font-semibold"
                 >
                   Anything you would like to add{' '}
-                  <span className="font-normal text-muted">(optional)</span>
+                  <span className="text-muted font-normal">(optional)</span>
                 </label>
                 <textarea
                   id="cancel-note"
@@ -395,11 +395,11 @@ export function CancelFlow({
                   maxLength={300}
                   rows={3}
                   aria-describedby="cancel-note-count"
-                  className="w-full rounded-control border border-ink/60 bg-surface px-4 py-3"
+                  className="rounded-control border-ink/60 bg-surface w-full border px-4 py-3"
                 />
                 <p
                   id="cancel-note-count"
-                  className="mt-1 text-caption text-muted"
+                  className="text-caption text-muted mt-1"
                 >
                   {note.length} / 300 characters
                 </p>
@@ -416,7 +416,7 @@ export function CancelFlow({
                     }}
                     aria-invalid={ackError || undefined}
                     aria-describedby={ackError ? 'cancel-ack-error' : undefined}
-                    className="mt-0.5 size-6 shrink-0 accent-ink"
+                    className="accent-ink mt-0.5 size-6 shrink-0"
                   />
                   <span className="text-small">
                     I understand this cannot be undone.
@@ -425,7 +425,7 @@ export function CancelFlow({
                 {ackError && (
                   <p
                     id="cancel-ack-error"
-                    className="mt-1.5 text-small font-medium text-danger"
+                    className="text-small text-danger mt-1.5 font-medium"
                   >
                     Please confirm that you understand this cannot be undone.
                   </p>

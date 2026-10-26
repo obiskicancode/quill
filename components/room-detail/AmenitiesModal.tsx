@@ -43,11 +43,11 @@ export function AmenitiesModal({
         ref={ref}
         aria-labelledby="amenities-modal-title"
         onClose={() => setOpen(false)}
-        className="m-auto max-h-[85dvh] w-[min(36rem,calc(100vw-2rem))] rounded-card bg-paper p-0 text-ink backdrop:bg-ink/60 open:flex open:flex-col"
+        className="rounded-card bg-paper text-ink backdrop:bg-ink/60 m-auto max-h-[85dvh] w-[min(36rem,calc(100vw-2rem))] p-0 open:flex open:flex-col"
       >
         {open && (
           <>
-            <div className="flex items-center justify-between border-b border-line px-6 py-3">
+            <div className="border-line flex items-center justify-between border-b px-6 py-3">
               <h2 id="amenities-modal-title" className="font-display text-h3">
                 Amenities
               </h2>
@@ -55,7 +55,7 @@ export function AmenitiesModal({
                 type="button"
                 aria-label="Close amenities"
                 onClick={() => setOpen(false)}
-                className="grid size-11 place-items-center rounded-full hover:bg-ink/10"
+                className="hover:bg-ink/10 grid size-11 place-items-center rounded-full"
               >
                 <X className="size-6" aria-hidden />
               </button>
@@ -68,11 +68,11 @@ export function AmenitiesModal({
                     {g.keys.map((k) => (
                       <li
                         key={k}
-                        className="flex items-center gap-3 text-small"
+                        className="text-small flex items-center gap-3"
                       >
                         <RoomAmenityIcon
                           name={k}
-                          className="size-5 text-accent-ink"
+                          className="text-accent-ink size-5"
                         />
                         {roomAmenityLabels[k]}
                       </li>

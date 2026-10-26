@@ -12,7 +12,7 @@ export function CookieSettingsButton({ className }: { className?: string }) {
       onClick={reset}
       className={
         className ??
-        'inline-flex min-h-11 items-center gap-2 text-small font-semibold underline-offset-4 hover:underline'
+        'text-small inline-flex min-h-11 items-center gap-2 font-semibold underline-offset-4 hover:underline'
       }
     >
       Cookie settings

@@ -73,7 +73,7 @@ export function AccountView({
       <div
         role="tablist"
         aria-label="Account settings"
-        className="flex gap-1 overflow-x-auto rounded-control border border-line bg-surface p-1"
+        className="rounded-control border-line bg-surface flex gap-1 overflow-x-auto border p-1"
       >
         {visibleTabs.map((item) => {
           const Icon = item.icon;
@@ -87,7 +87,7 @@ export function AccountView({
               aria-selected={active}
               aria-controls={`account-panel-${item.id}`}
               onClick={() => setTab(item.id)}
-              className={`flex min-h-10 shrink-0 items-center gap-2 rounded-control px-3 text-small font-semibold ${
+              className={`rounded-control text-small flex min-h-10 shrink-0 items-center gap-2 px-3 font-semibold ${
                 active
                   ? 'bg-ink text-paper'
                   : 'text-muted hover:bg-ink/5 hover:text-ink'

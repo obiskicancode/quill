@@ -37,7 +37,7 @@ export function GoodToKnow({
         </h2>
         <StaggerGroup
           as="dl"
-          className="mt-5 divide-y divide-line border-y border-line"
+          className="divide-line border-line mt-5 divide-y border-y"
           staggerChildren={0.05}
         >
           {rows.map(([term, detail]) => (
@@ -58,7 +58,7 @@ export function GoodToKnow({
           <h2 id="cancel-title" className="font-display text-h3">
             Cancellation
           </h2>
-          <p className="mt-3 max-w-prose text-ink/85">
+          <p className="text-ink/85 mt-3 max-w-prose">
             {hotel.cancellationSummary}
           </p>
           <div className="mt-1">

@@ -119,14 +119,14 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
         <div className="container-page pt-6">
           <p
             role="status"
-            className="rounded-card border border-accent bg-accent/15 p-4 text-small font-medium"
+            className="rounded-card border-accent bg-accent/15 text-small border p-4 font-medium"
           >
             {notice}
           </p>
         </div>
       )}
 
-      <div className="container-page pb-4 pt-8 md:pt-10">
+      <div className="container-page pt-8 pb-4 md:pt-10">
         <div className="lg:grid lg:grid-cols-[17rem_minmax(0,1fr)] lg:gap-10 xl:gap-12">
           <aside aria-label="Filters" className="hidden lg:block">
             <div className="sticky top-40 max-h-[calc(100dvh-11rem)] overflow-y-auto pr-1">
@@ -136,7 +136,7 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="inline-flex min-h-11 items-center text-small font-semibold underline decoration-accent decoration-2 underline-offset-4"
+                    className="text-small decoration-accent inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
                   >
                     Clear all
                   </button>
@@ -157,7 +157,7 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
                 <p className="font-semibold">
                   {visible.length} {visible.length === 1 ? 'room' : 'rooms'}
                   {stay && (
-                    <span className="font-normal text-muted">
+                    <span className="text-muted font-normal">
                       {' '}
                       for {formatRange(stay.checkIn, stay.checkOut)}
                     </span>
@@ -197,7 +197,7 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
             {status === 'error' && (
               <div
                 role="alert"
-                className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-card border border-danger/40 bg-surface p-4"
+                className="rounded-card border-danger/40 bg-surface mt-6 flex flex-wrap items-center justify-between gap-4 border p-4"
               >
                 <p className="text-small">
                   <span className="font-semibold">

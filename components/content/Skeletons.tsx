@@ -24,13 +24,13 @@ export function SectionSkeleton({
                 <div key={i} className={`${bar} h-4 w-full`} />
               ))}
             </div>
-            <div className={`${bar} aspect-[4/3] rounded-card`} />
+            <div className={`${bar} rounded-card aspect-[4/3]`} />
           </div>
         )}
         {variant === 'cards' && (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className={`${bar} h-40 rounded-card`} />
+              <div key={i} className={`${bar} rounded-card h-40`} />
             ))}
           </div>
         )}
@@ -39,7 +39,7 @@ export function SectionSkeleton({
             {[1.5, 1, 0.7, 1.2, 1, 1.4, 0.8, 1.1].map((r, i) => (
               <div
                 key={i}
-                className={`${bar} mb-3 w-full rounded-card`}
+                className={`${bar} rounded-card mb-3 w-full`}
                 style={{ aspectRatio: String(1 / r) }}
               />
             ))}
@@ -48,15 +48,15 @@ export function SectionSkeleton({
         {variant === 'list' && (
           <div className="space-y-4">
             {[0, 1, 2].map((i) => (
-              <div key={i} className={`${bar} h-16 w-full rounded-card`} />
+              <div key={i} className={`${bar} rounded-card h-16 w-full`} />
             ))}
           </div>
         )}
         {variant === 'form' && (
-          <div className={`${bar} h-96 w-full rounded-card`} />
+          <div className={`${bar} rounded-card h-96 w-full`} />
         )}
         {variant === 'strip' && (
-          <div className={`${bar} h-24 w-full rounded-card`} />
+          <div className={`${bar} rounded-card h-24 w-full`} />
         )}
       </div>
     </section>

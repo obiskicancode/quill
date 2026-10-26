@@ -22,21 +22,21 @@ export function PolicySection({
   return (
     <section
       aria-labelledby="policy-title"
-      className="rounded-card border border-line bg-surface p-5 shadow-raised md:p-6"
+      className="rounded-card border-line bg-surface shadow-raised border p-5 md:p-6"
     >
       <h2 id="policy-title" className="font-display text-h3">
         Policies
       </h2>
-      <p className="mt-4 rounded-control bg-paper p-4 font-semibold">
+      <p className="rounded-control bg-paper mt-4 p-4 font-semibold">
         {headline}
       </p>
       {c.freeCancellationUntil && (
-        <p className="mt-2 text-small text-muted">
+        <p className="text-small text-muted mt-2">
           After that, cancellation charges apply.
         </p>
       )}
       {refundNow && (
-        <div className="mt-4 rounded-control border border-line p-4 text-small">
+        <div className="rounded-control border-line text-small mt-4 border p-4">
           <p className="font-semibold">If you cancelled right now</p>
           <dl className="mt-2 space-y-1">
             <div className="flex justify-between gap-4">
@@ -52,10 +52,10 @@ export function PolicySection({
               </dd>
             </div>
           </dl>
-          <p className="mt-2 text-ink/85">{refundNow.rule}</p>
+          <p className="text-ink/85 mt-2">{refundNow.rule}</p>
         </div>
       )}
-      <dl className="mt-5 space-y-3 text-small">
+      <dl className="text-small mt-5 space-y-3">
         <div>
           <dt className="font-semibold">Check-in</dt>
           <dd className="text-ink/85">{v.policy.checkInRules}</dd>
@@ -67,7 +67,7 @@ export function PolicySection({
         <div>
           <dt className="font-semibold">House rules</dt>
           <dd>
-            <ul className="mt-1 list-disc space-y-1 pl-5 text-ink/85">
+            <ul className="text-ink/85 mt-1 list-disc space-y-1 pl-5">
               {v.policy.houseRules.map((r) => (
                 <li key={r}>{r}</li>
               ))}

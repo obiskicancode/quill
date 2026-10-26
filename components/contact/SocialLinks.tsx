@@ -47,7 +47,7 @@ export async function SocialLinks() {
                   href={l.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink/50 bg-surface px-4 font-semibold transition-colors hover:bg-ink hover:text-paper"
+                  className="border-ink/50 bg-surface hover:bg-ink hover:text-paper inline-flex min-h-11 items-center gap-2 rounded-full border px-4 font-semibold transition-colors"
                 >
                   <Icon className="size-5" aria-hidden />
                   {l.label}

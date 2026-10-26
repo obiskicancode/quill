@@ -42,7 +42,7 @@ export function StayDetailsCard({
   return (
     <section
       aria-labelledby="stay-title"
-      className="space-y-5 rounded-card border border-line bg-surface p-5 shadow-raised md:p-6"
+      className="rounded-card border-line bg-surface shadow-raised space-y-5 border p-5 md:p-6"
     >
       <h2 id="stay-title" className="sr-only">
         Your stay
@@ -55,13 +55,13 @@ export function StayDetailsCard({
       />
 
       {extras.length > 0 && (
-        <div className="border-t border-line pt-4">
+        <div className="border-line border-t pt-4">
           <h3 className="text-small font-semibold">Extras</h3>
-          <ul className="mt-2 space-y-1 text-small">
+          <ul className="text-small mt-2 space-y-1">
             {extras.map((e) => (
               <li key={e.id} className="flex justify-between gap-4">
                 <span>{e.name}</span>
-                <span className="tabular-nums text-muted">{e.detail}</span>
+                <span className="text-muted tabular-nums">{e.detail}</span>
               </li>
             ))}
           </ul>
@@ -69,17 +69,17 @@ export function StayDetailsCard({
       )}
 
       {v.guest.specialRequests && (
-        <div className="border-t border-line pt-4">
+        <div className="border-line border-t pt-4">
           <h3 className="text-small font-semibold">Special requests</h3>
-          <p className="mt-1 whitespace-pre-line text-small text-ink/85">
+          <p className="text-small text-ink/85 mt-1 whitespace-pre-line">
             {v.guest.specialRequests}
           </p>
         </div>
       )}
 
-      <div className="border-t border-line pt-4">
+      <div className="border-line border-t pt-4">
         <h3 className="text-small font-semibold">Guest</h3>
-        <dl className="mt-2 space-y-1 text-small">
+        <dl className="text-small mt-2 space-y-1">
           <div className="flex justify-between gap-4">
             <dt className="text-muted">Name</dt>
             <dd className="font-semibold">{v.guest.fullName}</dd>
@@ -98,7 +98,7 @@ export function StayDetailsCard({
             type="button"
             aria-pressed={revealed}
             onClick={() => setRevealed((r) => !r)}
-            className="mt-2 inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-accent decoration-2 underline-offset-4 print:hidden"
+            className="decoration-accent mt-2 inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-2 underline-offset-4 print:hidden"
           >
             {revealed ? (
               <EyeOff className="size-4" aria-hidden />
@@ -109,7 +109,7 @@ export function StayDetailsCard({
           </button>
         )}
         {!v.verified && !contact && (
-          <p className="mt-2 text-caption text-muted">
+          <p className="text-caption text-muted mt-2">
             Contact details are partly hidden for your privacy. Verify your
             booking to see them in full.
           </p>

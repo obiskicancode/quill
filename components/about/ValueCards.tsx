@@ -31,7 +31,7 @@ export async function ValueCards() {
   return (
     <section aria-labelledby="values-title" className="section-y bg-surface">
       <div className="container-page">
-        <h2 id="values-title" className="mb-10 font-display text-h2">
+        <h2 id="values-title" className="font-display text-h2 mb-10">
           What to expect
         </h2>
         <StaggerGroup
@@ -45,13 +45,13 @@ export async function ValueCards() {
                 key={c.title}
                 as="li"
                 scale
-                className="rounded-card border border-line bg-paper p-6"
+                className="rounded-card border-line bg-paper border p-6"
               >
-                <span className="grid size-12 place-items-center rounded-full bg-accent text-ink">
+                <span className="bg-accent text-ink grid size-12 place-items-center rounded-full">
                   <Icon className="size-6" aria-hidden />
                 </span>
-                <h3 className="mt-4 font-display text-h3">{c.title}</h3>
-                <p className="mt-2 text-small text-ink/85">{c.text}</p>
+                <h3 className="font-display text-h3 mt-4">{c.title}</h3>
+                <p className="text-small text-ink/85 mt-2">{c.text}</p>
               </StaggerItem>
             );
           })}

@@ -15,26 +15,26 @@ export function ActivityTimeline({ entries }: { entries: TimelineEntry[] }) {
   return (
     <section
       aria-labelledby="activity-title"
-      className="rounded-card border border-line bg-surface p-5 shadow-raised md:p-6 print:hidden"
+      className="rounded-card border-line bg-surface shadow-raised border p-5 md:p-6 print:hidden"
     >
       <h2 id="activity-title" className="font-display text-h3">
         Activity
       </h2>
       {entries.length === 0 ? (
-        <p className="mt-3 text-small text-muted">
+        <p className="text-small text-muted mt-3">
           Nothing has happened on this booking yet.
         </p>
       ) : (
         <StaggerGroup
           as="ol"
           staggerChildren={0.06}
-          className="mt-5 space-y-5 border-l-2 border-line pl-5"
+          className="border-line mt-5 space-y-5 border-l-2 pl-5"
         >
           {entries.map((e) => (
             <StaggerItem key={e.id} as="li" className="relative">
               <span
                 aria-hidden
-                className="absolute -left-[1.6rem] top-1.5 size-3 rounded-full border-2 border-ink bg-surface"
+                className="border-ink bg-surface absolute top-1.5 -left-[1.6rem] size-3 rounded-full border-2"
               />
               <p className="font-semibold">{e.label}</p>
               {e.detail && <p className="text-small text-ink/85">{e.detail}</p>}

@@ -17,7 +17,7 @@ export async function HighlightsStrip() {
   return (
     <section
       aria-label="Highlights"
-      className="on-dark bg-ink py-10 text-paper"
+      className="on-dark bg-ink text-paper py-10"
     >
       <StaggerGroup
         as="dl"

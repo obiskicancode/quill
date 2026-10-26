@@ -26,7 +26,7 @@ export function StatusBanner({
   return (
     <div
       role={tone === 'error' ? 'alert' : 'status'}
-      className={`flex items-start gap-2.5 rounded-control border px-3.5 py-3 text-small ${tones[tone]}`}
+      className={`rounded-control text-small flex items-start gap-2.5 border px-3.5 py-3 ${tones[tone]}`}
     >
       <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
       <div>{children}</div>

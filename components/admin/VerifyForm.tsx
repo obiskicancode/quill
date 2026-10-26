@@ -45,11 +45,11 @@ export function VerifyForm({ next }: { next?: string }) {
 
   return (
     <div>
-      <p className="text-caption font-semibold uppercase tracking-wide text-muted">
+      <p className="text-caption text-muted font-semibold tracking-wide uppercase">
         Two-factor authentication
       </p>
-      <h1 className="mt-2 font-display text-h2">Enter your code</h1>
-      <p className="mt-2 text-small text-muted">
+      <h1 className="font-display text-h2 mt-2">Enter your code</h1>
+      <p className="text-small text-muted mt-2">
         {mode === 'totp'
           ? 'Open your authenticator app and enter the current six-digit code.'
           : 'Enter one of the recovery codes you saved when you set up two-factor authentication.'}
@@ -58,7 +58,7 @@ export function VerifyForm({ next }: { next?: string }) {
       <div
         role="tablist"
         aria-label="Verification method"
-        className="mt-5 grid grid-cols-2 rounded-control border border-line bg-paper p-1"
+        className="rounded-control border-line bg-paper mt-5 grid grid-cols-2 border p-1"
       >
         <button
           type="button"
@@ -69,7 +69,7 @@ export function VerifyForm({ next }: { next?: string }) {
             setCode('');
             setError(null);
           }}
-          className={`flex min-h-10 items-center justify-center gap-2 rounded-control text-small font-semibold ${
+          className={`rounded-control text-small flex min-h-10 items-center justify-center gap-2 font-semibold ${
             mode === 'totp' ? 'bg-surface shadow-raised' : 'text-muted'
           }`}
         >
@@ -85,7 +85,7 @@ export function VerifyForm({ next }: { next?: string }) {
             setCode('');
             setError(null);
           }}
-          className={`flex min-h-10 items-center justify-center gap-2 rounded-control text-small font-semibold ${
+          className={`rounded-control text-small flex min-h-10 items-center justify-center gap-2 font-semibold ${
             mode === 'recovery' ? 'bg-surface shadow-raised' : 'text-muted'
           }`}
         >
@@ -129,8 +129,8 @@ export function VerifyForm({ next }: { next?: string }) {
               required
               className={`${inputClass()} ${
                 mode === 'totp'
-                  ? 'text-center text-h3 tracking-[0.35em]'
-                  : 'uppercase tracking-wider'
+                  ? 'text-h3 text-center tracking-[0.35em]'
+                  : 'tracking-wider uppercase'
               }`}
             />
           )}
@@ -141,10 +141,10 @@ export function VerifyForm({ next }: { next?: string }) {
         </Button>
       </form>
 
-      <div className="mt-4 flex items-center justify-between text-small">
+      <div className="text-small mt-4 flex items-center justify-between">
         <Link
           href="/admin/login"
-          className="font-semibold underline decoration-line underline-offset-4 hover:decoration-ink"
+          className="decoration-line hover:decoration-ink font-semibold underline underline-offset-4"
         >
           Back to sign in
         </Link>

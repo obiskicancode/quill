@@ -147,13 +147,13 @@ export function RoomCardListing({
   return (
     <article
       aria-labelledby={nameId}
-      className={`flex h-full flex-col overflow-hidden rounded-card border shadow-raised transition-shadow duration-200 focus-within:shadow-float hover:shadow-float ${
+      className={`rounded-card shadow-raised focus-within:shadow-float hover:shadow-float flex h-full flex-col overflow-hidden border transition-shadow duration-200 ${
         soldOut ? 'border-line bg-paper' : 'border-line bg-surface'
       }`}
     >
       <div className={`relative ${soldOut ? 'grayscale' : ''}`}>
         <Carousel label={`${room.name} photos`} slides={slides} />
-        <div className="pointer-events-none absolute left-3 top-3 z-10">
+        <div className="pointer-events-none absolute top-3 left-3 z-10">
           <Badge
             tone="overlay"
             icon={<Camera className="size-3.5" aria-hidden />}
@@ -162,7 +162,7 @@ export function RoomCardListing({
           </Badge>
         </div>
         {live && (
-          <div className="pointer-events-none absolute right-3 top-3 z-10">
+          <div className="pointer-events-none absolute top-3 right-3 z-10">
             <AvailabilityBadge
               soldOut={soldOut}
               remaining={
@@ -176,7 +176,7 @@ export function RoomCardListing({
       <div className="flex flex-1 flex-col gap-4 p-5">
         <h3
           id={nameId}
-          className="line-clamp-2 min-h-[2.6em] font-display text-h3"
+          className="font-display text-h3 line-clamp-2 min-h-[2.6em]"
         >
           {room.name}
         </h3>
@@ -187,30 +187,30 @@ export function RoomCardListing({
           {room.extraBed.available && <Badge>Extra bed available</Badge>}
         </div>
 
-        <p className="line-clamp-2 min-h-12 text-small text-ink/85">
+        <p className="text-small text-ink/85 line-clamp-2 min-h-12">
           {room.description}
         </p>
 
-        <ul className="space-y-2 text-small">
+        <ul className="text-small space-y-2">
           <li className="flex items-center gap-2">
-            <Ruler className="size-4 shrink-0 text-accent-ink" aria-hidden />
+            <Ruler className="text-accent-ink size-4 shrink-0" aria-hidden />
             {room.sizeSqm} sqm
           </li>
           <li className="flex items-center gap-2">
             <BedDouble
-              className="size-4 shrink-0 text-accent-ink"
+              className="text-accent-ink size-4 shrink-0"
               aria-hidden
             />
             {room.bedConfig}
           </li>
           <li className="flex items-center gap-2">
-            <Users className="size-4 shrink-0 text-accent-ink" aria-hidden />
+            <Users className="text-accent-ink size-4 shrink-0" aria-hidden />
             Up to {room.maxAdults} {room.maxAdults === 1 ? 'adult' : 'adults'},{' '}
             {room.maxChildren} {room.maxChildren === 1 ? 'child' : 'children'}
           </li>
           <li className="flex items-center gap-2">
             <BedSingle
-              className="size-4 shrink-0 text-accent-ink"
+              className="text-accent-ink size-4 shrink-0"
               aria-hidden
             />
             {room.extraBed.available
@@ -223,11 +223,11 @@ export function RoomCardListing({
 
         <ul
           aria-label="Amenities"
-          className="flex min-h-[3.25rem] flex-wrap content-start gap-x-4 gap-y-2 text-small"
+          className="text-small flex min-h-[3.25rem] flex-wrap content-start gap-x-4 gap-y-2"
         >
           {shown.map((key) => (
             <li key={key} className="inline-flex items-center gap-1.5">
-              <RoomAmenityIcon name={key} className="size-4 text-accent-ink" />
+              <RoomAmenityIcon name={key} className="text-accent-ink size-4" />
               {roomAmenityLabels[key]}
             </li>
           ))}
@@ -247,7 +247,7 @@ export function RoomCardListing({
               <p className="font-semibold">Not available for these dates</p>
               {live.status === 'sold-out' && live.suggestions.length > 0 ? (
                 <>
-                  <p className="mt-1 text-small text-muted">
+                  <p className="text-small text-muted mt-1">
                     Nearby dates that are free:
                   </p>
                   <ul className="mt-3 flex flex-wrap gap-2">
@@ -270,7 +270,7 @@ export function RoomCardListing({
                   </ul>
                 </>
               ) : (
-                <p className="mt-1 text-small text-muted">
+                <p className="text-small text-muted mt-1">
                   No nearby dates are free. Message us and we will look for
                   options.
                 </p>
@@ -279,7 +279,7 @@ export function RoomCardListing({
           ) : overCapacity && live.status === 'over-capacity' ? (
             <div className="min-h-[5.5rem]">
               <p className="font-semibold">Too small for your group</p>
-              <p className="mt-1 text-small text-muted">
+              <p className="text-small text-muted mt-1">
                 This room sleeps up to {live.maxAdults} adults and{' '}
                 {live.maxChildren} children. Ask us about two rooms or a larger
                 apartment.
@@ -290,7 +290,7 @@ export function RoomCardListing({
               <p className="font-semibold">
                 Minimum stay: {live.minNights} nights
               </p>
-              <p className="mt-1 text-small text-muted">
+              <p className="text-small text-muted mt-1">
                 Move your check-out to {formatShort(live.suggestedCheckOut)} to
                 book this room.
               </p>

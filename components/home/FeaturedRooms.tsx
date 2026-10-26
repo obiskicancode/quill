@@ -38,9 +38,9 @@ export async function FeaturedRooms({ rooms }: { rooms: Room[] }) {
             ))}
           </StaggerGroup>
         ) : (
-          <div className="rounded-card border border-dashed border-ink/30 p-10 text-center">
+          <div className="rounded-card border-ink/30 border border-dashed p-10 text-center">
             <p className="font-display text-h3">Our rooms are being updated.</p>
-            <p className="mx-auto mt-2 max-w-md text-muted">
+            <p className="text-muted mx-auto mt-2 max-w-md">
               Message us on WhatsApp and we will tell you what is available for
               your dates.
             </p>

@@ -50,7 +50,7 @@ export function FaqAccordion({
   }
 
   return (
-    <div className="divide-y divide-line border-y border-line">
+    <div className="divide-line border-line divide-y border-y">
       {faqs.map((f, i) => {
         const expanded = open.has(f.id);
         return (
@@ -88,7 +88,7 @@ export function FaqAccordion({
                   transition={{ duration: reduced ? 0 : 0.3, ease: EASE_OUT }}
                   style={{ overflow: 'hidden' }}
                 >
-                  <p className="pb-5 pr-9 text-ink/85">{f.answer}</p>
+                  <p className="text-ink/85 pr-9 pb-5">{f.answer}</p>
                 </motion.div>
               )}
             </AnimatePresence>

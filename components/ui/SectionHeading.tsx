@@ -24,12 +24,12 @@ export function SectionHeading({
           as="h2"
           id={id}
           text={title}
-          className="text-balance font-display text-h2"
+          className="font-display text-h2 text-balance"
           staggerChildren={0.035}
         />
         {intro && (
           <Reveal delay={0.12}>
-            <p className="mt-3 text-body-lg opacity-80">{intro}</p>
+            <p className="text-body-lg mt-3 opacity-80">{intro}</p>
           </Reveal>
         )}
       </div>

@@ -10,7 +10,7 @@ export async function TeamSection() {
   return (
     <section aria-labelledby="team-title" className="section-y">
       <div className="container-page">
-        <h2 id="team-title" className="mb-10 font-display text-h2">
+        <h2 id="team-title" className="font-display text-h2 mb-10">
           The people who look after you
         </h2>
         <StaggerGroup
@@ -20,7 +20,7 @@ export async function TeamSection() {
           {team.map((m) => (
             <StaggerItem key={m.id} as="li" scale className="group/media">
               {m.photo ? (
-                <HoverZoom className="aspect-[4/5] w-full rounded-card">
+                <HoverZoom className="rounded-card aspect-[4/5] w-full">
                   <Photo
                     src={m.photo.src}
                     alt={m.photo.alt}
@@ -31,16 +31,16 @@ export async function TeamSection() {
               ) : (
                 <div
                   aria-hidden
-                  className="grid aspect-[4/5] w-full place-items-center rounded-card bg-ink/10 font-display text-display text-ink/40"
+                  className="rounded-card bg-ink/10 font-display text-display text-ink/40 grid aspect-[4/5] w-full place-items-center"
                 >
                   {m.name.replace(/[^A-Za-z]/g, '').slice(0, 1) || '·'}
                 </div>
               )}
-              <h3 className="mt-4 font-display text-h3">{m.name}</h3>
-              <p className="text-small font-semibold text-accent-ink">
+              <h3 className="font-display text-h3 mt-4">{m.name}</h3>
+              <p className="text-small text-accent-ink font-semibold">
                 {m.role}
               </p>
-              <p className="mt-2 text-small text-ink/85">{m.bio}</p>
+              <p className="text-small text-ink/85 mt-2">{m.bio}</p>
             </StaggerItem>
           ))}
         </StaggerGroup>

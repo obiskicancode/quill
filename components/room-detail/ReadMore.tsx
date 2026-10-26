@@ -25,7 +25,7 @@ export function ReadMore({ text }: { text: string }) {
       <p
         id={id}
         ref={ref}
-        className={`max-w-prose text-body-lg leading-[1.7] text-ink/90 ${expanded ? '' : 'line-clamp-6'}`}
+        className={`text-body-lg text-ink/90 max-w-prose leading-[1.7] ${expanded ? '' : 'line-clamp-6'}`}
       >
         {text}
       </p>
@@ -35,7 +35,7 @@ export function ReadMore({ text }: { text: string }) {
           aria-expanded={expanded}
           aria-controls={id}
           onClick={() => setExpanded((e) => !e)}
-          className="mt-1 inline-flex min-h-11 items-center font-semibold underline decoration-accent decoration-2 underline-offset-[6px]"
+          className="decoration-accent mt-1 inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-[6px]"
         >
           {expanded ? 'Show less' : 'Read more'}
         </button>

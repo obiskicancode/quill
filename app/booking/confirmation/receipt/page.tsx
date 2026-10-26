@@ -40,10 +40,10 @@ export default async function ReceiptPage({
     <CheckoutShell label="Receipt" backToHome>
       <div className="receipt-page container-page max-w-2xl py-8 md:py-12">
         <article
-          className="receipt-doc space-y-6 rounded-card border border-line bg-surface p-6 md:p-8"
+          className="receipt-doc rounded-card border-line bg-surface space-y-6 border p-6 md:p-8"
           aria-label="Receipt"
         >
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b-2 border-ink pb-4">
+          <div className="border-ink flex flex-wrap items-start justify-between gap-4 border-b-2 pb-4">
             <div>
               <h1 className="font-display text-h2">Receipt</h1>
               <p className="mt-1 font-semibold">{v.hotel.name}</p>
@@ -51,10 +51,10 @@ export default async function ReceiptPage({
                 {v.hotel.addressLines.join(', ')}
               </p>
             </div>
-            <div className="text-right text-small">
+            <div className="text-small text-right">
               <p className="text-muted">Booking reference</p>
               <p className="font-display text-h3">{v.reference}</p>
-              <p className="mt-1 text-muted">
+              <p className="text-muted mt-1">
                 Issued{' '}
                 {new Date().toLocaleDateString('en-NG', {
                   day: 'numeric',
