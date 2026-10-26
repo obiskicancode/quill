@@ -11,7 +11,7 @@ export function ConfirmationSkeleton() {
         Loading your booking
       </p>
       <div aria-hidden className="space-y-6">
-        <div className="rounded-card border-line bg-surface space-y-4 border p-8">
+        <div className="rounded-card border-line bg-card space-y-4 border p-8">
           <div className="flex gap-4">
             <div className={`${bar} size-14 rounded-full`} />
             <div className="flex-1 space-y-3">

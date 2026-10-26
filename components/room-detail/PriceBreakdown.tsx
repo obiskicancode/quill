@@ -36,7 +36,7 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
           </div>
           {varies && (
             <details className="mt-1">
-              <summary className="decoration-accent inline-flex min-h-11 cursor-pointer items-center font-semibold underline decoration-2 underline-offset-4">
+              <summary className="decoration-brand inline-flex min-h-11 cursor-pointer items-center font-semibold underline decoration-2 underline-offset-4">
                 See the rate for each night
               </summary>
               <ul className="border-line mb-1 space-y-1 border-l-2 pl-3">
@@ -44,7 +44,11 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
                   <li key={l.date} className={row}>
                     <span>
                       {formatShort(l.date)}
-                      {l.note && <span className="text-muted">, {l.note}</span>}
+                      {l.note && (
+                        <span className="text-muted-foreground">
+                          , {l.note}
+                        </span>
+                      )}
                     </span>
                     <span className="tabular-nums">
                       {formatMinor(l.rateMinor)}
@@ -74,7 +78,7 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
             <dt>
               {e.name}
               {e.quantity > 1 ? ` × ${e.quantity}` : ''}{' '}
-              <span className="text-muted">({e.unitLabel})</span>
+              <span className="text-muted-foreground">({e.unitLabel})</span>
             </dt>
             <dd className="tabular-nums">{formatMinor(e.totalMinor)}</dd>
           </div>
@@ -125,7 +129,7 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
           </dd>
         </div>
       </dl>
-      <p className="text-caption text-muted mt-2">
+      <p className="text-caption text-muted-foreground mt-2">
         {quote.taxIncluded
           ? 'The total includes tax. Nothing else is added at checkout.'
           : 'Tax is added to the total above. Nothing else is added at checkout.'}

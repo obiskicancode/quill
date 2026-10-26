@@ -3,7 +3,11 @@
 import { AlertCircle, Info, Lock, Unlock } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { minorToNaira, nairaToMinor } from '@/lib/rate-resolution';
 import type {
   AdminRoomTypeDetail,
@@ -164,7 +168,7 @@ export function TabDetails({
       {validationError && (
         <div
           role="alert"
-          className="rounded-card border-danger/40 bg-danger/10 text-small text-danger flex items-center gap-3 border p-4"
+          className="rounded-card border-destructive/40 bg-destructive/10 text-small text-destructive flex items-center gap-3 border p-4"
         >
           <AlertCircle className="size-5 shrink-0" />
           <p>{validationError}</p>
@@ -183,7 +187,7 @@ export function TabDetails({
               <p className="text-warning-contrast font-semibold">
                 Unusually High Price Confirmation
               </p>
-              <p className="text-muted mt-1">
+              <p className="text-muted-foreground mt-1">
                 You entered a base price of <strong>₦{basePriceNaira}</strong>.
                 This is higher than the typical sanity threshold (₦2,000,000).
                 Please confirm if this rate is intentional.
@@ -192,7 +196,6 @@ export function TabDetails({
                 <Button
                   type="button"
                   size="sm"
-                  variant="primary"
                   onClick={(e) => handleSubmit(e)}
                 >
                   Yes, confirm this price
@@ -200,7 +203,7 @@ export function TabDetails({
                 <Button
                   type="button"
                   size="sm"
-                  variant="secondary"
+                  variant="outline"
                   onClick={() => setSanityConfirmPending(false)}
                 >
                   Cancel and edit
@@ -212,39 +215,41 @@ export function TabDetails({
       )}
 
       {/* Basic Info */}
-      <section className="rounded-card border-line bg-surface border p-6 shadow-sm">
+      <section className="rounded-card border-line bg-card border p-6 shadow-sm">
         <h2 className="text-foreground text-h3 font-semibold">
           Room Type Identity
         </h2>
-        <p className="text-small text-muted mt-1">
+        <p className="text-small text-muted-foreground mt-1">
           Names, public URL slug, and layout specifications.
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
           {/* Name */}
-          <div className="sm:col-span-1">
-            <label className="text-foreground text-small block font-medium">
-              Room Type Name <span className="text-danger">*</span>
-            </label>
-            <input
+          <div className="space-y-1.5 sm:col-span-1">
+            <Label htmlFor="room-name">
+              Room Type Name <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="room-name"
               type="text"
               required
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               placeholder="e.g. Deluxe King Suite"
-              className="bg-background text-foreground focus:border-brand border-line mt-1.5 w-full rounded border px-3 py-2 focus:outline-none"
             />
           </div>
 
           {/* Slug */}
-          <div className="sm:col-span-1">
+          <div className="space-y-1.5 sm:col-span-1">
             <div className="flex items-center justify-between">
-              <label className="text-foreground text-small block font-medium">
-                URL Slug <span className="text-danger">*</span>
-              </label>
+              <Label htmlFor="room-slug">
+                URL Slug <span className="text-destructive">*</span>
+              </Label>
               {isExisting && slugLocked && (
-                <button
+                <Button
                   type="button"
+                  variant="link"
+                  size="sm"
                   onClick={() => {
                     if (isOwner) {
                       setSlugLocked(false);
@@ -255,20 +260,21 @@ export function TabDetails({
                       );
                     }
                   }}
-                  className="text-brand flex items-center gap-1 text-xs hover:underline"
+                  className="text-primary inline-flex h-auto cursor-pointer items-center gap-1 p-0 text-xs hover:underline"
                 >
                   <Lock className="size-3" /> Locked
-                </button>
+                </Button>
               )}
             </div>
-            <div className="relative mt-1.5">
-              <input
+            <div className="relative">
+              <Input
+                id="room-slug"
                 type="text"
                 required
                 disabled={isExisting && slugLocked}
                 value={slug}
                 onChange={(e) => setSlug(slugify(e.target.value))}
-                className="bg-background text-foreground focus:border-brand border-line disabled:bg-paper disabled:text-muted w-full rounded border px-3 py-2 focus:outline-none"
+                className="disabled:bg-paper disabled:text-muted-foreground"
               />
               {isExisting && !slugLocked && (
                 <span className="text-warning absolute top-2.5 right-3 text-xs">
@@ -285,85 +291,76 @@ export function TabDetails({
           </div>
 
           {/* Short Description */}
-          <div className="sm:col-span-2">
-            <label className="text-foreground text-small block font-medium">
-              Short Summary
-            </label>
-            <input
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="room-short-description">Short Summary</Label>
+            <Input
+              id="room-short-description"
               type="text"
               maxLength={255}
               value={shortDescription}
               onChange={(e) => setShortDescription(e.target.value)}
               placeholder="Brief summary for search cards and listings"
-              className="bg-background text-foreground focus:border-brand border-line mt-1.5 w-full rounded border px-3 py-2 focus:outline-none"
             />
           </div>
 
           {/* Full Description */}
-          <div className="sm:col-span-2">
-            <label className="text-foreground text-small block font-medium">
-              Detailed Description
-            </label>
-            <textarea
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="room-description">Detailed Description</Label>
+            <Textarea
+              id="room-description"
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Detailed description of features, ambiance, and comfort..."
-              className="bg-background text-foreground focus:border-brand border-line mt-1.5 w-full rounded border px-3 py-2 focus:outline-none"
             />
           </div>
 
           {/* Bed Config */}
-          <div>
-            <label className="text-foreground text-small block font-medium">
-              Bed Configuration
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="room-bed-config">Bed Configuration</Label>
+            <Input
+              id="room-bed-config"
               type="text"
               value={bedConfig}
               onChange={(e) => setBedConfig(e.target.value)}
               placeholder="e.g. 1 King Bed or 2 Twin Beds"
-              className="bg-background text-foreground focus:border-brand border-line mt-1.5 w-full rounded border px-3 py-2 focus:outline-none"
             />
           </div>
 
           {/* Size (sqm) */}
-          <div>
-            <label className="text-foreground text-small block font-medium">
-              Room Size (sqm)
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="room-size-sqm">Room Size (sqm)</Label>
+            <Input
+              id="room-size-sqm"
               type="number"
               step="0.1"
               min="0"
               value={sizeSqm}
               onChange={(e) => setSizeSqm(e.target.value)}
               placeholder="e.g. 42"
-              className="bg-background text-foreground focus:border-brand border-line mt-1.5 w-full rounded border px-3 py-2 focus:outline-none"
             />
           </div>
 
           {/* Occupancy */}
-          <div>
-            <label className="text-foreground text-small block font-medium">
-              Max Adults <span className="text-danger">*</span>
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="room-max-adults">
+              Max Adults <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="room-max-adults"
               type="number"
               min="1"
               max="20"
               required
               value={maxAdults}
               onChange={(e) => setMaxAdults(parseInt(e.target.value, 10) || 1)}
-              className="bg-background text-foreground focus:border-brand border-line mt-1.5 w-full rounded border px-3 py-2 focus:outline-none"
             />
           </div>
 
-          <div>
-            <label className="text-foreground text-small block font-medium">
-              Max Children
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="room-max-children">Max Children</Label>
+            <Input
+              id="room-max-children"
               type="number"
               min="0"
               max="10"
@@ -371,39 +368,39 @@ export function TabDetails({
               onChange={(e) =>
                 setMaxChildren(parseInt(e.target.value, 10) || 0)
               }
-              className="bg-background text-foreground focus:border-brand border-line mt-1.5 w-full rounded border px-3 py-2 focus:outline-none"
             />
           </div>
 
           {/* Extra Bed */}
-          <div className="border-line bg-paper/50 rounded border p-4 sm:col-span-2">
-            <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
+          <div className="border-line bg-paper/50 rounded-card border p-4 sm:col-span-2">
+            <div className="flex items-center gap-2.5">
+              <Checkbox
                 id="extraBedAvailable"
                 checked={extraBedAvailable}
-                onChange={(e) => setExtraBedAvailable(e.target.checked)}
-                className="text-brand focus:ring-brand size-4 rounded"
+                onCheckedChange={(checked) => setExtraBedAvailable(!!checked)}
               />
-              <label
-                htmlFor="extraBedAvailable"
-                className="text-foreground font-medium"
-              >
+              <Label htmlFor="extraBedAvailable" className="cursor-pointer">
                 Extra Bed Allowed for this Room Type
-              </label>
+              </Label>
             </div>
             {extraBedAvailable && (
-              <div className="mt-3 max-w-xs">
-                <label className="text-muted block text-xs font-medium">
+              <div className="mt-3 max-w-xs space-y-1.5">
+                <Label
+                  htmlFor="room-extra-bed-price"
+                  className="text-muted-foreground text-xs"
+                >
                   Extra Bed Price per Night (₦) — 0 means free
-                </label>
-                <div className="relative mt-1">
-                  <span className="text-muted absolute top-2 left-3">₦</span>
-                  <input
+                </Label>
+                <div className="relative">
+                  <span className="text-muted-foreground absolute top-2 left-3 text-xs">
+                    ₦
+                  </span>
+                  <Input
+                    id="room-extra-bed-price"
                     type="text"
                     value={extraBedPriceNaira}
                     onChange={(e) => setExtraBedPriceNaira(e.target.value)}
-                    className="bg-background text-foreground focus:border-brand border-line text-small w-full rounded border py-1.5 pr-3 pl-8 focus:outline-none"
+                    className="pl-7"
                   />
                 </div>
               </div>
@@ -413,58 +410,64 @@ export function TabDetails({
       </section>
 
       {/* Pricing & Visibility */}
-      <section className="rounded-card border-line bg-surface border p-6 shadow-sm">
+      <section className="rounded-card border-line bg-card border p-6 shadow-sm">
         <h2 className="text-foreground text-h3 font-semibold">
           Pricing & Publishing
         </h2>
-        <p className="text-small text-muted mt-1">
+        <p className="text-small text-muted-foreground mt-1">
           Base rates, weekend adjustments, and guest presentation settings.
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
           {/* Base Price */}
-          <div>
-            <label className="text-foreground text-small block font-medium">
-              Base Nightly Price (₦) <span className="text-danger">*</span>
-            </label>
-            <div className="relative mt-1.5">
-              <span className="text-muted absolute top-2 left-3">₦</span>
-              <input
+          <div className="space-y-1.5">
+            <Label htmlFor="room-base-price">
+              Base Nightly Price (₦) <span className="text-destructive">*</span>
+            </Label>
+            <div className="relative">
+              <span className="text-muted-foreground absolute top-2 left-3 text-xs">
+                ₦
+              </span>
+              <Input
+                id="room-base-price"
                 type="text"
                 required
                 value={basePriceNaira}
                 onChange={(e) => setBasePriceNaira(e.target.value)}
                 placeholder="75,000"
-                className="bg-background text-foreground focus:border-brand border-line w-full rounded border py-2 pr-3 pl-8 focus:outline-none"
+                className="pl-7"
               />
             </div>
-            <p className="text-muted mt-1 text-xs">
+            <p className="text-muted-foreground text-xs">
               Applies to Sunday through Thursday nights unless overridden by
               rate rules.
             </p>
           </div>
 
           {/* Weekend Price */}
-          <div>
-            <label className="text-foreground text-small block font-medium">
+          <div className="space-y-1.5">
+            <Label htmlFor="room-weekend-price">
               Weekend Price per Night (₦) — Optional
-            </label>
-            <div className="relative mt-1.5">
-              <span className="text-muted absolute top-2 left-3">₦</span>
-              <input
+            </Label>
+            <div className="relative">
+              <span className="text-muted-foreground absolute top-2 left-3 text-xs">
+                ₦
+              </span>
+              <Input
+                id="room-weekend-price"
                 type="text"
                 value={weekendPriceNaira}
                 onChange={(e) => setWeekendPriceNaira(e.target.value)}
                 placeholder="Leave blank to use base price"
-                className="bg-background text-foreground focus:border-brand border-line w-full rounded border py-2 pr-3 pl-8 focus:outline-none"
+                className="pl-7"
               />
             </div>
-            <p className="text-muted mt-1 text-xs">
+            <p className="text-muted-foreground text-xs">
               Applies to Friday and Saturday nights.
             </p>
           </div>
 
-          <div className="border-line/60 bg-paper/30 text-muted rounded border p-3 text-xs sm:col-span-2">
+          <div className="border-line/60 bg-paper/30 text-muted-foreground rounded border p-3 text-xs sm:col-span-2">
             <span className="text-foreground font-semibold">
               Snapshot Guarantee:
             </span>{' '}
@@ -473,90 +476,75 @@ export function TabDetails({
           </div>
 
           {/* Toggles */}
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-2.5">
+            <Checkbox
               id="showPrice"
               checked={showPrice}
-              onChange={(e) => setShowPrice(e.target.checked)}
-              className="text-brand focus:ring-brand size-4 rounded"
+              onCheckedChange={(checked) => setShowPrice(!!checked)}
             />
-            <label
-              htmlFor="showPrice"
-              className="text-foreground text-small font-medium"
-            >
+            <Label htmlFor="showPrice" className="cursor-pointer">
               Show price publicly on website
-            </label>
+            </Label>
           </div>
 
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-2.5">
+            <Checkbox
               id="breakfastIncluded"
               checked={breakfastIncluded}
-              onChange={(e) => setBreakfastIncluded(e.target.checked)}
-              className="text-brand focus:ring-brand size-4 rounded"
+              onCheckedChange={(checked) => setBreakfastIncluded(!!checked)}
             />
-            <label
-              htmlFor="breakfastIncluded"
-              className="text-foreground text-small font-medium"
-            >
+            <Label htmlFor="breakfastIncluded" className="cursor-pointer">
               Complimentary Breakfast Included
-            </label>
+            </Label>
           </div>
 
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-2.5">
+            <Checkbox
               id="isActive"
               checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
-              className="text-brand focus:ring-brand size-4 rounded"
+              onCheckedChange={(checked) => setIsActive(!!checked)}
             />
-            <label
-              htmlFor="isActive"
-              className="text-foreground text-small font-medium"
-            >
+            <Label htmlFor="isActive" className="cursor-pointer">
               Active / Published (visible for bookings)
-            </label>
+            </Label>
           </div>
 
-          <div className="sm:col-span-2">
-            <label className="text-foreground text-small block font-medium">
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="room-view-notes">
               View & Floor Notes (Internal / Guest info)
-            </label>
-            <input
+            </Label>
+            <Input
+              id="room-view-notes"
               type="text"
               value={viewNotes}
               onChange={(e) => setViewNotes(e.target.value)}
               placeholder="e.g. Ocean view, floors 2 to 4, quiet garden wing"
-              className="bg-background text-foreground focus:border-brand border-line mt-1.5 w-full rounded border px-3 py-2 focus:outline-none"
             />
           </div>
         </div>
       </section>
 
       {/* SEO & Search Preview */}
-      <section className="rounded-card border-line bg-surface border p-6 shadow-sm">
+      <section className="rounded-card border-line bg-card border p-6 shadow-sm">
         <h2 className="text-foreground text-h3 font-semibold">
           SEO & Search Snippet
         </h2>
-        <p className="text-small text-muted mt-1">
+        <p className="text-small text-muted-foreground mt-1">
           Customize how this room type appears in Google and Bing search
           results.
         </p>
 
         <div className="mt-6 space-y-4">
-          <div>
-            <div className="text-small flex justify-between font-medium">
-              <label htmlFor="metaTitle">SEO Title</label>
+          <div className="space-y-1.5">
+            <div className="flex justify-between">
+              <Label htmlFor="metaTitle">SEO Title</Label>
               <span
-                className={`text-xs ${metaTitle.length > 60 ? 'text-warning' : 'text-muted'}`}
+                className={`text-xs ${metaTitle.length > 60 ? 'text-warning' : 'text-muted-foreground'}`}
               >
                 {metaTitle.length} / 160 chars
               </span>
             </div>
-            <input
+            <Input
               id="metaTitle"
               type="text"
               maxLength={160}
@@ -567,43 +555,41 @@ export function TabDetails({
                   ? `${name} | Dela Boutique Hotel`
                   : 'Page title for search engines'
               }
-              className="bg-background text-foreground focus:border-brand border-line mt-1.5 w-full rounded border px-3 py-2 focus:outline-none"
             />
           </div>
 
-          <div>
-            <div className="text-small flex justify-between font-medium">
-              <label htmlFor="metaDescription">Meta Description</label>
+          <div className="space-y-1.5">
+            <div className="flex justify-between">
+              <Label htmlFor="metaDescription">Meta Description</Label>
               <span
-                className={`text-xs ${metaDescription.length > 160 ? 'text-warning' : 'text-muted'}`}
+                className={`text-xs ${metaDescription.length > 160 ? 'text-warning' : 'text-muted-foreground'}`}
               >
                 {metaDescription.length} / 320 chars
               </span>
             </div>
-            <textarea
+            <Textarea
               id="metaDescription"
               rows={2}
               maxLength={320}
               value={metaDescription}
               onChange={(e) => setMetaDescription(e.target.value)}
               placeholder="A brief, inviting description that appears beneath the search title"
-              className="bg-background text-foreground focus:border-brand border-line mt-1.5 w-full rounded border px-3 py-2 focus:outline-none"
             />
           </div>
 
           {/* Live Google Search Preview */}
-          <div className="border-line bg-paper mt-4 rounded border p-4">
-            <span className="text-muted text-xs font-semibold tracking-wider uppercase">
+          <div className="border-line bg-paper rounded-card mt-4 border p-4">
+            <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
               Live Google Search Preview
             </span>
             <div className="mt-2 space-y-1">
-              <p className="text-muted text-xs">
+              <p className="text-muted-foreground text-xs">
                 https://hotel.example.com/rooms/{slug || 'room-slug'}
               </p>
-              <p className="text-brand truncate text-base font-medium hover:underline">
+              <p className="text-primary truncate text-base font-medium hover:underline">
                 {metaTitle || name || 'Room Type Name'} | Dela Hotel
               </p>
-              <p className="text-muted line-clamp-2 text-xs">
+              <p className="text-muted-foreground line-clamp-2 text-xs">
                 {metaDescription ||
                   shortDescription ||
                   description ||
@@ -616,7 +602,7 @@ export function TabDetails({
 
       {/* Save Button */}
       <div className="flex justify-end gap-3">
-        <Button type="submit" disabled={isSaving} className="min-w-32">
+        <Button type="submit" size="sm" loading={isSaving} className="min-w-32">
           {isSaving
             ? 'Saving...'
             : isExisting

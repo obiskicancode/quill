@@ -11,7 +11,8 @@ import { AdminCard } from '@/components/admin/AdminCard';
 import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Field, inputClass } from '@/components/checkout/Field';
 import { FlowDialog } from '@/components/manage/FlowDialog';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import type { AdminRole } from '@/lib/auth/permissions';
 import type { AdminMfaSetupResponse } from '@/types/admin.types';
 
@@ -244,7 +245,7 @@ export function TwoFactorPanel({
 
         {!isEnabled && !setup && (
           <div className="max-w-xl">
-            <p className="text-small text-muted">
+            <p className="text-small text-muted-foreground">
               Two-factor authentication adds a one-time code after your
               password. It protects the account even if the password is reused.
             </p>
@@ -272,7 +273,7 @@ export function TwoFactorPanel({
               />
             </div>
             <div>
-              <ol className="text-small text-muted list-decimal space-y-2 pl-5">
+              <ol className="text-small text-muted-foreground list-decimal space-y-2 pl-5">
                 <li>Open your authenticator app and scan the QR code.</li>
                 <li>
                   If you cannot scan it, enter this key manually:
@@ -297,7 +298,7 @@ export function TwoFactorPanel({
                 <div className="w-40">
                   <Field id="admin-setup-code" label="Six-digit code">
                     {(a11y) => (
-                      <input
+                      <Input
                         {...a11y}
                         value={confirmCode}
                         onChange={(event) =>
@@ -318,17 +319,19 @@ export function TwoFactorPanel({
                   Confirm and enable
                 </Button>
               </form>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setSetup(null);
                   setConfirmError(null);
                   setConfirmCode('');
                 }}
-                className="text-small decoration-line hover:decoration-ink mt-3 font-semibold underline underline-offset-4"
+                className="mt-3 font-semibold"
               >
                 Cancel setup
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -338,7 +341,7 @@ export function TwoFactorPanel({
             <StatusBanner tone="success">
               Two-factor authentication is enabled.
             </StatusBanner>
-            <p className="text-small text-muted mt-3">
+            <p className="text-small text-muted-foreground mt-3">
               Recovery codes are the only backup if you lose your authenticator.
               Rotate them if you think they were exposed.
             </p>
@@ -360,7 +363,7 @@ export function TwoFactorPanel({
                   Disable two-factor
                 </Button>
               ) : (
-                <p className="text-caption text-muted">
+                <p className="text-caption text-muted-foreground">
                   Owners cannot disable two-factor authentication.
                 </p>
               )}
@@ -381,7 +384,7 @@ export function TwoFactorPanel({
         }
         dismissible={!dialogBusy}
       >
-        <p className="text-small text-muted">
+        <p className="text-small text-muted-foreground">
           {dialogAction === 'disable'
             ? 'Enter your current password to turn off two-factor authentication.'
             : 'Enter your current password. Every old recovery code will stop working.'}
@@ -394,7 +397,7 @@ export function TwoFactorPanel({
         <form onSubmit={completeDialog} className="mt-4 space-y-4">
           <Field id="admin-2fa-password" label="Current password">
             {(a11y) => (
-              <input
+              <Input
                 {...a11y}
                 type="password"
                 value={password}

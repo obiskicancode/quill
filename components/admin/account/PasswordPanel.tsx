@@ -8,7 +8,8 @@ import { ServiceError } from '@/app/api/services/base.service';
 import { AdminCard } from '@/components/admin/AdminCard';
 import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Field, inputClass } from '@/components/checkout/Field';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export function PasswordPanel() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -72,7 +73,7 @@ export function PasswordPanel() {
           error={fieldErrors.currentPassword}
         >
           {(a11y) => (
-            <input
+            <Input
               {...a11y}
               type="password"
               value={currentPassword}
@@ -92,7 +93,7 @@ export function PasswordPanel() {
         >
           {(a11y) => (
             <div className="relative">
-              <input
+              <Input
                 {...a11y}
                 type={showNew ? 'text' : 'password'}
                 value={newPassword}
@@ -101,18 +102,20 @@ export function PasswordPanel() {
                 required
                 className={`${inputClass(fieldErrors.newPassword)} pr-12`}
               />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => setShowNew((value) => !value)}
                 aria-label={showNew ? 'Hide new password' : 'Show new password'}
-                className="text-muted hover:text-ink absolute inset-y-0 right-0 grid w-12 place-items-center"
+                className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 h-full w-12"
               >
                 {showNew ? (
                   <EyeOff className="size-5" aria-hidden />
                 ) : (
                   <Eye className="size-5" aria-hidden />
                 )}
-              </button>
+              </Button>
             </div>
           )}
         </Field>
@@ -123,7 +126,7 @@ export function PasswordPanel() {
           error={fieldErrors.confirmPassword}
         >
           {(a11y) => (
-            <input
+            <Input
               {...a11y}
               type={showNew ? 'text' : 'password'}
               value={confirmPassword}

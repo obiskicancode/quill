@@ -4,7 +4,7 @@ import type { RichBlock, RichLink } from '@/types/content.types';
 function InlineLink({ link }: { link: RichLink }) {
   const safe = safeHref(link.href);
   const cls =
-    'font-semibold underline decoration-accent decoration-2 underline-offset-4';
+    'font-semibold underline decoration-brand decoration-2 underline-offset-4';
   if (!safe) return <span>{link.label}</span>;
   if (link.href.startsWith('/') && !link.href.startsWith('//')) {
     return (

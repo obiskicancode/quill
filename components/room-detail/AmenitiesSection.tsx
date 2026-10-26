@@ -31,7 +31,7 @@ export function AmenitiesSection({ room }: { room: RoomDetail }) {
             key={key}
             className="flex items-center gap-3"
           >
-            <span className="bg-accent/25 text-accent-ink grid size-10 shrink-0 place-items-center rounded-full">
+            <span className="bg-primary/25 text-brand-ink grid size-10 shrink-0 place-items-center rounded-full">
               <RoomAmenityIcon name={key} className="size-5" />
             </span>
             <span className="text-small font-medium">

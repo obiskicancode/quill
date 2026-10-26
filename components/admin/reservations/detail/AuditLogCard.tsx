@@ -26,7 +26,7 @@ export function AuditLogCard({
                 <span className="text-ink font-semibold capitalize">
                   {a.action.replace('_', ' ')}
                 </span>
-                <span className="text-caption text-muted">
+                <span className="text-caption text-muted-foreground">
                   {new Intl.DateTimeFormat('en-NG', {
                     dateStyle: 'medium',
                     timeStyle: 'short',
@@ -34,13 +34,13 @@ export function AuditLogCard({
                 </span>
               </div>
 
-              <p className="text-caption text-muted mt-0.5">
+              <p className="text-caption text-muted-foreground mt-0.5">
                 Actor: <strong className="text-ink">{a.actorName}</strong>
                 {a.actorRole && ` (${a.actorRole})`}
               </p>
 
               {a.reason && (
-                <p className="text-caption text-muted/90 mt-1 italic">
+                <p className="text-caption text-muted-foreground/90 mt-1 italic">
                   &ldquo;{a.reason}&rdquo;
                 </p>
               )}

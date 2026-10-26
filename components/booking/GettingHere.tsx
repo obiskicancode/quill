@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { HotelInfo } from '@/types/booking.types';
 
 import { EASE_OUT } from '../motion/variants';
-import { ButtonLink } from '../ui/Button';
+import { ButtonLink } from '../ui/button';
 
 /** The map loads only when it scrolls into view. Until then (or with no address) a static card and a plain address link show. */
 function LazyMap({ hotel }: { hotel: HotelInfo }) {
@@ -62,7 +62,7 @@ function LazyMap({ hotel }: { hotel: HotelInfo }) {
             {...fade}
           >
             <MapPin className="text-ink/50 size-10" aria-hidden />
-            <p className="text-small text-muted max-w-xs">
+            <p className="text-small text-muted-foreground max-w-xs">
               {query
                 ? 'Loading the map as you scroll.'
                 : 'The map appears here once the hotel address is added.'}
@@ -92,17 +92,14 @@ export function GettingHere({ hotel }: { hotel: HotelInfo }) {
   return (
     <section
       aria-labelledby="here-title"
-      className="rounded-card border-line bg-surface shadow-raised grid gap-6 border p-5 md:p-6 lg:grid-cols-2 lg:gap-8"
+      className="rounded-card border-line bg-card shadow-raised grid gap-6 border p-5 md:p-6 lg:grid-cols-2 lg:gap-8"
     >
       <div>
         <h2 id="here-title" className="font-display text-h3">
           Getting here
         </h2>
         <address className="mt-4 flex gap-3 not-italic">
-          <MapPin
-            className="text-accent-ink mt-1 size-5 shrink-0"
-            aria-hidden
-          />
+          <MapPin className="text-brand-ink mt-1 size-5 shrink-0" aria-hidden />
           <span>
             {hotel.addressLines.map((l) => (
               <span key={l} className="block">
@@ -113,7 +110,7 @@ export function GettingHere({ hotel }: { hotel: HotelInfo }) {
         </address>
         <p className="text-small mt-3 flex gap-3">
           <Clock
-            className="text-accent-ink mt-0.5 size-5 shrink-0"
+            className="text-brand-ink mt-0.5 size-5 shrink-0"
             aria-hidden
           />
           <span>
@@ -124,7 +121,7 @@ export function GettingHere({ hotel }: { hotel: HotelInfo }) {
         <p className="text-small text-ink/85 mt-3">{hotel.howToFindUs}</p>
         <ul
           aria-label="Nearby landmarks"
-          className="text-small text-muted mt-3 space-y-1"
+          className="text-small text-muted-foreground mt-3 space-y-1"
         >
           {hotel.landmarks.slice(0, 2).map((l) => (
             <li key={l.name}>

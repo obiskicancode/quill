@@ -7,7 +7,7 @@ import { formatNaira } from '@/lib/format';
 import type { RoomType, StayParams } from '@/lib/rooms';
 
 import { useAvailability } from '../rooms/useAvailability';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
 
 interface AvailabilityHintProps {
   rooms: RoomType[];
@@ -36,7 +36,7 @@ export function AvailabilityHint({
 
   if (!stay) {
     return (
-      <div className="rounded-card border-line bg-surface text-small text-muted min-h-[3.5rem] border px-4 py-3">
+      <div className="rounded-card border-line bg-card text-small text-muted-foreground min-h-[3.5rem] border px-4 py-3">
         Choose your dates to see live availability.
       </div>
     );
@@ -45,7 +45,7 @@ export function AvailabilityHint({
   if (status === 'loading' || status === 'idle') {
     return (
       <div
-        className="rounded-card border-line bg-surface text-small text-muted min-h-[3.5rem] border px-4 py-3"
+        className="rounded-card border-line bg-card text-small text-muted-foreground min-h-[3.5rem] border px-4 py-3"
         role="status"
         aria-live="polite"
       >
@@ -62,8 +62,8 @@ export function AvailabilityHint({
 
   if (status === 'error' || !data) {
     return (
-      <div className="rounded-card border-danger bg-danger/5 text-small min-h-[3.5rem] border-2 px-4 py-3">
-        <p className="text-danger flex items-center gap-2 font-medium">
+      <div className="rounded-card border-destructive bg-destructive/5 text-small min-h-[3.5rem] border-2 px-4 py-3">
+        <p className="text-destructive flex items-center gap-2 font-medium">
           <AlertTriangle className="size-4 shrink-0" aria-hidden />
           Live availability could not be loaded.
         </p>
@@ -122,12 +122,12 @@ export function AvailabilityHint({
 
   return (
     <div
-      className="rounded-card border-line bg-surface text-small border px-4 py-3"
+      className="rounded-card border-line bg-card text-small border px-4 py-3"
       role="status"
       aria-live="polite"
     >
       <p className="flex items-center gap-2 font-semibold">
-        <CheckCircle2 className="text-accent-ink size-4 shrink-0" aria-hidden />
+        <CheckCircle2 className="text-brand-ink size-4 shrink-0" aria-hidden />
         Live availability
       </p>
       <ul className="mt-2 space-y-1.5">
@@ -136,7 +136,7 @@ export function AvailabilityHint({
             key={room.id}
             className={
               tone === 'bad'
-                ? 'text-danger'
+                ? 'text-destructive'
                 : tone === 'warn'
                   ? 'text-ink/85'
                   : 'text-ink/85'
@@ -151,7 +151,7 @@ export function AvailabilityHint({
       </ul>
       {notes.every((n) => n.tone === 'ok') &&
         results[0]?.result?.status === 'available' && (
-          <p className="text-muted mt-2">
+          <p className="text-muted-foreground mt-2">
             From{' '}
             <span className="text-ink font-semibold">
               {formatNaira(results[0].result!.averageNgn)}

@@ -8,7 +8,8 @@ import { adminService } from '@/app/api/services/admin.service';
 import { ServiceError } from '@/app/api/services/base.service';
 import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Field, inputClass } from '@/components/checkout/Field';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
@@ -39,11 +40,11 @@ export function ForgotPasswordForm() {
 
   return (
     <div>
-      <p className="text-caption text-muted font-semibold tracking-wide uppercase">
+      <p className="text-caption text-muted-foreground font-semibold tracking-wide uppercase">
         Account recovery
       </p>
       <h1 className="font-display text-h2 mt-2">Forgot password</h1>
-      <p className="text-small text-muted mt-2">
+      <p className="text-small text-muted-foreground mt-2">
         Enter your staff email. If it belongs to an active account, a reset link
         is prepared.
       </p>
@@ -54,7 +55,7 @@ export function ForgotPasswordForm() {
             If that email belongs to a staff account, a reset link has been
             sent. It expires in 60 minutes.
           </StatusBanner>
-          <p className="text-small text-muted">
+          <p className="text-small text-muted-foreground">
             Reset email delivery is not connected in this environment. Ask the
             owner or manager to check the server log for the link.
           </p>
@@ -79,7 +80,7 @@ export function ForgotPasswordForm() {
               error={fieldError}
             >
               {(a11y) => (
-                <input
+                <Input
                   {...a11y}
                   type="email"
                   value={email}

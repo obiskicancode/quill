@@ -15,7 +15,17 @@ import { formatMinor } from '@/types/stay.types';
 import { VerifyForm } from '../booking/VerifyForm';
 import { Banner } from '../checkout/CheckoutStates';
 import { EASE_OUT } from '../motion/variants';
-import { Button, ButtonLink } from '../ui/Button';
+import { Button, ButtonLink } from '../ui/button';
+import { Checkbox } from '../ui/checkbox';
+import { Label } from '../ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import { Textarea } from '../ui/textarea';
 import { FlowDialog } from './FlowDialog';
 
 interface CancelFlowProps {
@@ -52,9 +62,9 @@ function RefundSummary({ p }: { p: CancellationPreview }) {
   const row = 'flex items-baseline justify-between gap-4 py-2';
   return (
     <div className="space-y-4">
-      <dl className="divide-line rounded-card border-line bg-surface divide-y border px-4">
+      <dl className="divide-line rounded-card border-line bg-card divide-y border px-4">
         <div className={row}>
-          <dt className="text-muted">You paid</dt>
+          <dt className="text-muted-foreground">You paid</dt>
           <dd className="tabular-nums">{formatMinor(p.paidMinor)}</dd>
         </div>
         <div className={row}>
@@ -64,13 +74,13 @@ function RefundSummary({ p }: { p: CancellationPreview }) {
           </dd>
         </div>
         <div className={row}>
-          <dt className="text-muted">The hotel would keep</dt>
+          <dt className="text-muted-foreground">The hotel would keep</dt>
           <dd className="tabular-nums">{formatMinor(p.retainedMinor)}</dd>
         </div>
         {p.refundMinor > 0 && (
           <>
             <div className={row}>
-              <dt className="text-muted">Refund method</dt>
+              <dt className="text-muted-foreground">Refund method</dt>
               <dd>
                 {p.refundMethod === 'manual_bank'
                   ? 'Bank transfer by the hotel'
@@ -78,7 +88,7 @@ function RefundSummary({ p }: { p: CancellationPreview }) {
               </dd>
             </div>
             <div className={row}>
-              <dt className="text-muted">Expected within</dt>
+              <dt className="text-muted-foreground">Expected within</dt>
               <dd>{p.timeline}</dd>
             </div>
           </>
@@ -241,7 +251,7 @@ export function CancelFlow({
             <div className="space-y-5">
               <div role="status" className="flex items-start gap-4">
                 <CheckCircle2
-                  className="text-accent-ink size-8 shrink-0"
+                  className="text-brand-ink size-8 shrink-0"
                   aria-hidden
                 />
                 <div>
@@ -256,7 +266,7 @@ export function CancelFlow({
                     {c?.refundStatus === 'none' &&
                       'No refund is due under the cancellation policy.'}
                   </p>
-                  <p className="text-small text-muted mt-2">
+                  <p className="text-small text-muted-foreground mt-2">
                     We emailed a confirmation to {result.guest.email}.
                   </p>
                 </div>
@@ -358,74 +368,92 @@ export function CancelFlow({
                 </span>
                 .
               </p>
-              <div>
-                <label
+              <div className="space-y-1.5">
+                <Label
                   htmlFor="cancel-reason"
-                  className="text-small mb-1.5 block font-semibold"
+                  className="text-small font-semibold"
                 >
                   Reason{' '}
-                  <span className="text-muted font-normal">(optional)</span>
-                </label>
-                <select
-                  id="cancel-reason"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  className="rounded-control border-ink/60 bg-surface min-h-12 w-full border px-4"
+                  <span className="text-muted-foreground font-normal">
+                    (optional)
+                  </span>
+                </Label>
+                <Select
+                  items={[
+                    { value: 'none', label: 'Choose a reason' },
+                    ...CANCEL_REASONS.map((r) => ({ value: r, label: r })),
+                  ]}
+                  value={reason || 'none'}
+                  onValueChange={(val) =>
+                    setReason(val === 'none' || !val ? '' : val)
+                  }
                 >
-                  <option value="">Choose a reason</option>
-                  {CANCEL_REASONS.map((r) => (
-                    <option key={r} value={r}>
-                      {r}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger
+                    id="cancel-reason"
+                    className="bg-card min-h-12 w-full"
+                  >
+                    <SelectValue placeholder="Choose a reason" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Choose a reason</SelectItem>
+                    {CANCEL_REASONS.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div>
-                <label
+              <div className="space-y-1.5">
+                <Label
                   htmlFor="cancel-note"
-                  className="text-small mb-1.5 block font-semibold"
+                  className="text-small font-semibold"
                 >
                   Anything you would like to add{' '}
-                  <span className="text-muted font-normal">(optional)</span>
-                </label>
-                <textarea
+                  <span className="text-muted-foreground font-normal">
+                    (optional)
+                  </span>
+                </Label>
+                <Textarea
                   id="cancel-note"
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   maxLength={300}
                   rows={3}
                   aria-describedby="cancel-note-count"
-                  className="rounded-control border-ink/60 bg-surface w-full border px-4 py-3"
+                  className="bg-card w-full"
                 />
                 <p
                   id="cancel-note-count"
-                  className="text-caption text-muted mt-1"
+                  className="text-caption text-muted-foreground mt-1"
                 >
                   {note.length} / 300 characters
                 </p>
               </div>
               <div>
-                <label className="flex cursor-pointer items-start gap-3 py-1">
-                  <input
+                <Label
+                  htmlFor="cancel-ack"
+                  className="flex cursor-pointer items-start gap-3 py-1 font-normal"
+                >
+                  <Checkbox
                     id="cancel-ack"
-                    type="checkbox"
                     checked={ack}
-                    onChange={(e) => {
-                      setAck(e.target.checked);
-                      if (e.target.checked) setAckError(false);
+                    onCheckedChange={(checked) => {
+                      setAck(!!checked);
+                      if (checked) setAckError(false);
                     }}
                     aria-invalid={ackError || undefined}
                     aria-describedby={ackError ? 'cancel-ack-error' : undefined}
-                    className="accent-ink mt-0.5 size-6 shrink-0"
+                    className="mt-0.5"
                   />
                   <span className="text-small">
                     I understand this cannot be undone.
                   </span>
-                </label>
+                </Label>
                 {ackError && (
                   <p
                     id="cancel-ack-error"
-                    className="text-small text-danger mt-1.5 font-medium"
+                    className="text-small text-destructive mt-1.5 font-medium"
                   >
                     Please confirm that you understand this cannot be undone.
                   </p>

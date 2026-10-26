@@ -9,7 +9,8 @@ import { ServiceError } from '@/app/api/services/base.service';
 import { AdminCard } from '@/components/admin/AdminCard';
 import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Field, inputClass } from '@/components/checkout/Field';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import type { AdminStaff } from '@/types/admin.types';
 
 export function ProfilePanel({ staff }: { staff: AdminStaff }) {
@@ -69,7 +70,7 @@ export function ProfilePanel({ staff }: { staff: AdminStaff }) {
             error={fieldErrors.firstName}
           >
             {(a11y) => (
-              <input
+              <Input
                 {...a11y}
                 value={firstName}
                 onChange={(event) => setFirstName(event.target.value)}
@@ -85,7 +86,7 @@ export function ProfilePanel({ staff }: { staff: AdminStaff }) {
             error={fieldErrors.lastName}
           >
             {(a11y) => (
-              <input
+              <Input
                 {...a11y}
                 value={lastName}
                 onChange={(event) => setLastName(event.target.value)}
@@ -104,7 +105,7 @@ export function ProfilePanel({ staff }: { staff: AdminStaff }) {
           error={fieldErrors.phone}
         >
           {(a11y) => (
-            <input
+            <Input
               {...a11y}
               type="tel"
               value={phone}
@@ -118,19 +119,19 @@ export function ProfilePanel({ staff }: { staff: AdminStaff }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <p className="text-small font-semibold">Email address</p>
-            <p className="rounded-control border-line bg-paper text-small text-muted mt-1 border px-3 py-2.5">
+            <p className="rounded-control border-line bg-paper text-small text-muted-foreground mt-1 border px-3 py-2.5">
               {staff.email}
             </p>
-            <p className="text-caption text-muted mt-1">
+            <p className="text-caption text-muted-foreground mt-1">
               Ask an owner to change your sign-in email.
             </p>
           </div>
           <div>
             <p className="text-small font-semibold">Role</p>
-            <p className="rounded-control border-line bg-paper text-small text-muted mt-1 border px-3 py-2.5 capitalize">
+            <p className="rounded-control border-line bg-paper text-small text-muted-foreground mt-1 border px-3 py-2.5 capitalize">
               {staff.role}
             </p>
-            <p className="text-caption text-muted mt-1">
+            <p className="text-caption text-muted-foreground mt-1">
               Roles are managed by an owner.
             </p>
           </div>

@@ -39,29 +39,50 @@ function PaginationItem({ ...props }: React.ComponentProps<'li'>) {
 
 type PaginationLinkProps = {
   isActive?: boolean;
+  disabled?: boolean;
 } & Pick<React.ComponentProps<typeof Button>, 'size'> &
-  React.ComponentProps<'a'>;
+  React.ComponentProps<'a'> &
+  React.ComponentProps<'button'>;
 
 function PaginationLink({
   className,
   isActive,
   size = 'icon',
+  disabled,
+  href,
   ...props
 }: PaginationLinkProps) {
+  if (href) {
+    return (
+      <Button
+        variant={isActive ? 'outline' : 'ghost'}
+        size={size}
+        className={cn(className)}
+        nativeButton={false}
+        disabled={disabled}
+        render={
+          <a
+            href={href}
+            aria-current={isActive ? 'page' : undefined}
+            data-slot="pagination-link"
+            data-active={isActive}
+            {...(props as React.ComponentProps<'a'>)}
+          />
+        }
+      />
+    );
+  }
+
   return (
     <Button
       variant={isActive ? 'outline' : 'ghost'}
       size={size}
       className={cn(className)}
-      nativeButton={false}
-      render={
-        <a
-          aria-current={isActive ? 'page' : undefined}
-          data-slot="pagination-link"
-          data-active={isActive}
-          {...props}
-        />
-      }
+      disabled={disabled}
+      aria-current={isActive ? 'page' : undefined}
+      data-slot="pagination-link"
+      data-active={isActive}
+      {...(props as React.ComponentProps<typeof Button>)}
     />
   );
 }
@@ -69,12 +90,15 @@ function PaginationLink({
 function PaginationPrevious({
   className,
   text = 'Previous',
+  size = 'default',
+  disabled,
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
       aria-label="Go to previous page"
-      size="default"
+      size={size}
+      disabled={disabled}
       className={cn('pl-1.5!', className)}
       {...props}
     >
@@ -87,12 +111,15 @@ function PaginationPrevious({
 function PaginationNext({
   className,
   text = 'Next',
+  size = 'default',
+  disabled,
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
       aria-label="Go to next page"
-      size="default"
+      size={size}
+      disabled={disabled}
       className={cn('pr-1.5!', className)}
       {...props}
     >

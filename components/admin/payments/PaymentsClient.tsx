@@ -9,6 +9,15 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
+import { Button } from '@/components/ui/button';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type {
   ManualRefundItem,
   ManualRefundPayoutInput,
@@ -338,57 +347,47 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
 
       {/* Tabs Navigation */}
       <div className="border-line flex flex-wrap items-center justify-between gap-3 border-b pb-2">
-        <div className="text-small flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => setActiveTab('payments')}
-            className={`border-b-2 pb-2 font-semibold transition-colors ${
-              activeTab === 'payments'
-                ? 'border-primary text-primary'
-                : 'text-muted hover:text-ink border-transparent'
-            }`}
-          >
-            Payments Register ({totalPayments})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('refunds')}
-            className={`flex items-center gap-1.5 border-b-2 pb-2 font-semibold transition-colors ${
-              activeTab === 'refunds'
-                ? 'border-primary text-primary'
-                : 'text-muted hover:text-ink border-transparent'
-            }`}
-          >
-            Manual Refunds Due
-            {manualRefunds.length > 0 && (
-              <span className="text-caption rounded-full bg-amber-500/10 px-2 py-0.5 font-bold text-amber-600">
-                {manualRefunds.length}
-              </span>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('webhooks')}
-            className={`flex items-center gap-1.5 border-b-2 pb-2 font-semibold transition-colors ${
-              activeTab === 'webhooks'
-                ? 'border-primary text-primary'
-                : 'text-muted hover:text-ink border-transparent'
-            }`}
-          >
-            Webhook Events
-            {webhooks.some((w) => w.isOverdue) && (
-              <span className="bg-danger/10 text-caption text-danger rounded-full px-2 py-0.5 font-bold">
-                !
-              </span>
-            )}
-          </button>
-        </div>
+        <Tabs
+          value={activeTab}
+          onValueChange={(val) =>
+            setActiveTab(val as 'payments' | 'refunds' | 'webhooks')
+          }
+        >
+          <TabsList variant="line" className="h-auto gap-2 p-0">
+            <TabsTrigger value="payments" className="pb-2 font-semibold">
+              Payments Register ({totalPayments})
+            </TabsTrigger>
+            <TabsTrigger
+              value="refunds"
+              className="flex items-center gap-1.5 pb-2 font-semibold"
+            >
+              Manual Refunds Due
+              {manualRefunds.length > 0 && (
+                <span className="text-caption bg-primary/15 text-brand-ink rounded-full px-2 py-0.5 font-bold">
+                  {manualRefunds.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="webhooks"
+              className="flex items-center gap-1.5 pb-2 font-semibold"
+            >
+              Webhook Events
+              {webhooks.some((w) => w.isOverdue) && (
+                <span className="bg-destructive/10 text-caption text-destructive rounded-full px-2 py-0.5 font-bold">
+                  !
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {/* Global Toolbar Actions */}
         <div className="flex items-center gap-2">
           {activeTab === 'payments' && selectedPaymentIds.length > 0 && (
-            <button
+            <Button
               type="button"
+              size="sm"
               onClick={() => {
                 setReconcileModalState({
                   isOpen: true,
@@ -396,34 +395,36 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
                   paymentIds: selectedPaymentIds,
                 });
               }}
-              className="bg-primary text-caption text-primary-ink rounded-md px-3 py-1.5 font-semibold shadow-sm hover:opacity-95"
             >
               Mark {selectedPaymentIds.length} Selected as Reconciled
-            </button>
+            </Button>
           )}
 
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={handleExportCsv}
-            className="border-line bg-surface text-caption text-ink hover:bg-paper inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 font-medium"
             title="Download CSV of current filtered view (max 10,000 rows)"
           >
             <Download className="size-3.5" />
             Export CSV
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => {
               loadSummary();
               loadPayments();
               loadRefundsAndWebhooks();
             }}
-            className="border-line bg-surface text-muted hover:text-ink rounded-md border p-1.5"
             title="Refresh payments data"
+            className="px-2"
           >
             <RefreshCw className="size-3.5" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -455,9 +456,9 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
             <AdminError
               message={error}
               action={
-                <button onClick={loadPayments} className="btn-secondary">
+                <Button variant="outline" size="sm" onClick={loadPayments}>
                   Retry
-                </button>
+                </Button>
               }
             />
           ) : payments.length === 0 ? (
@@ -465,13 +466,58 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
               Try adjusting your date range or clearing selected filter chips.
             </AdminEmpty>
           ) : (
-            <PaymentsTable
-              items={payments}
-              selectedIds={selectedPaymentIds}
-              onToggleSelect={handleToggleSelect}
-              onSelectAll={handleSelectAll}
-              onRowClick={handleOpenDetail}
-            />
+            <div className="space-y-3">
+              <PaymentsTable
+                items={payments}
+                selectedIds={selectedPaymentIds}
+                onToggleSelect={handleToggleSelect}
+                onSelectAll={handleSelectAll}
+                onRowClick={handleOpenDetail}
+              />
+              <div className="bg-muted/30 border-line text-caption text-muted-foreground flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3">
+                <span>
+                  Showing {payments.length} of {totalPayments} payment record(s)
+                </span>
+                <Pagination className="mx-0 w-auto justify-end">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            page: Math.max(1, (prev.page ?? 1) - 1),
+                          }))
+                        }
+                        disabled={(filters.page ?? 1) <= 1}
+                      />
+                    </PaginationItem>
+                    <PaginationItem>
+                      <span className="text-caption text-muted-foreground px-2 font-medium">
+                        Page {filters.page ?? 1} of{' '}
+                        {Math.max(
+                          1,
+                          Math.ceil(totalPayments / (filters.pageSize ?? 25)),
+                        )}
+                      </span>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            page: (prev.page ?? 1) + 1,
+                          }))
+                        }
+                        disabled={
+                          (filters.page ?? 1) >=
+                          Math.ceil(totalPayments / (filters.pageSize ?? 25))
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            </div>
           )}
         </div>
       )}

@@ -4,6 +4,36 @@ import Link from 'next/link';
 import { CheckCircle2, ExternalLink, RefreshCw, X } from 'lucide-react';
 import { useState } from 'react';
 
+import { Alert } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import type {
   ManualRefundItem,
   ManualRefundPayoutInput,
@@ -121,7 +151,7 @@ export function ManualRefundsTab({
 
   if (loading) {
     return (
-      <div className="rounded-card border-line bg-surface text-muted border p-8 text-center">
+      <div className="rounded-card border-line bg-card text-muted-foreground border p-8 text-center">
         Loading pending refunds...
       </div>
     );
@@ -132,7 +162,7 @@ export function ManualRefundsTab({
       <div className="rounded-card border-line bg-paper border border-dashed p-8 text-center">
         <CheckCircle2 className="text-success mx-auto mb-2 size-8" />
         <h3 className="text-ink font-semibold">All Refunds Up to Date</h3>
-        <p className="text-small text-muted mt-1">
+        <p className="text-small text-muted-foreground mt-1">
           There are no pending manual or provider refunds awaiting action.
         </p>
       </div>
@@ -144,123 +174,134 @@ export function ManualRefundsTab({
       {recheckFeedback && (
         <div className="border-line bg-paper text-caption text-ink flex items-center justify-between rounded-md border p-3">
           <span>{recheckFeedback}</span>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => setRecheckFeedback(null)}
-            className="text-muted hover:text-ink"
+            className="text-muted-foreground hover:text-foreground size-6 p-0 hover:bg-transparent"
+            aria-label="Dismiss notice"
           >
             <X className="size-4" />
-          </button>
+          </Button>
         </div>
       )}
 
-      <div className="rounded-card border-line bg-surface overflow-x-auto border">
-        <table className="text-small w-full text-left">
-          <thead className="border-line bg-paper text-caption text-muted border-b font-semibold uppercase">
-            <tr>
-              <th className="px-4 py-3">Booking Ref</th>
-              <th className="px-4 py-3">Guest Name</th>
-              <th className="px-4 py-3">Refund Due (₦)</th>
-              <th className="px-4 py-3">Provider / Channel</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-line divide-y">
+      <div className="rounded-card border-line bg-card overflow-x-auto border">
+        <Table className="text-small w-full text-left">
+          <TableHeader className="border-line bg-paper text-caption text-muted-foreground border-b font-semibold uppercase">
+            <TableRow className="border-line hover:bg-transparent">
+              <TableHead className="px-4 py-3">Booking Ref</TableHead>
+              <TableHead className="px-4 py-3">Guest Name</TableHead>
+              <TableHead className="px-4 py-3">Refund Due (₦)</TableHead>
+              <TableHead className="px-4 py-3">Provider / Channel</TableHead>
+              <TableHead className="px-4 py-3">Status</TableHead>
+              <TableHead className="px-4 py-3 text-right">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-line divide-y">
             {refunds.map((refund) => {
               const isManual =
                 refund.provider === 'bank_transfer' ||
                 refund.provider === 'cash';
 
               return (
-                <tr key={refund.id} className="hover:bg-paper/50">
-                  <td className="text-ink px-4 py-3 font-mono font-medium">
+                <TableRow
+                  key={refund.id}
+                  className="hover:bg-paper/50 border-line"
+                >
+                  <TableCell className="text-ink px-4 py-3 font-mono font-medium">
                     <Link
                       href={`/admin/reservations/${refund.reservationId}`}
                       className="hover:text-primary inline-flex items-center gap-1 hover:underline"
                     >
                       {refund.reservationRef}{' '}
-                      <ExternalLink className="text-muted size-3" />
+                      <ExternalLink className="text-muted-foreground size-3" />
                     </Link>
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
                     <div className="text-ink font-medium">
                       {refund.guestName}
                     </div>
-                    <div className="text-caption text-muted">
+                    <div className="text-caption text-muted-foreground">
                       {refund.guestEmail}
                     </div>
-                  </td>
-                  <td className="text-danger px-4 py-3 font-mono font-bold">
+                  </TableCell>
+                  <TableCell className="text-destructive px-4 py-3 font-mono font-bold">
                     {formatNaira(refund.refundDueMinor)}
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
                     <span className="text-ink font-medium capitalize">
                       {refund.provider}
                     </span>
-                    <span className="text-caption text-muted block capitalize">
+                    <span className="text-caption text-muted-foreground block capitalize">
                       {refund.method.replace('_', ' ')}
                     </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-caption inline-flex items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 font-medium text-amber-600">
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Badge
+                      variant="outline"
+                      className="text-caption border-primary/30 bg-primary/15 text-brand-ink font-medium"
+                    >
                       {isManual
                         ? 'Manual Payout Due'
                         : refund.providerState || 'Processing at Gateway'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="px-4 py-3 text-right">
                     {isManual ? (
-                      <button
+                      <Button
                         type="button"
+                        size="sm"
                         onClick={() => handleOpenPayout(refund)}
-                        className="bg-primary text-caption text-primary-ink rounded-md px-3 py-1.5 font-semibold hover:opacity-95"
                       >
                         Mark as Paid Out
-                      </button>
+                      </Button>
                     ) : (
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleRecheck(refund.id)}
                         disabled={recheckingId === refund.id}
-                        className="border-line bg-paper text-caption text-ink hover:bg-surface inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 font-medium"
+                        className="gap-1.5"
                       >
                         <RefreshCw
                           className={`size-3.5 ${recheckingId === refund.id ? 'animate-spin' : ''}`}
                         />
                         Re-check Status
-                      </button>
+                      </Button>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
-      {/* Payout Modal */}
       {selectedRefund && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="rounded-card border-line bg-surface w-full max-w-lg space-y-4 border p-6 shadow-xl">
-            <div className="border-line flex items-center justify-between border-b pb-3">
-              <h3 className="font-display text-h3 text-ink font-semibold">
+        <Dialog
+          open
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen && !submitting) setSelectedRefund(null);
+          }}
+        >
+          <DialogContent className="rounded-card border-line bg-card max-w-lg gap-0 border p-0 shadow-xl sm:max-w-lg">
+            <DialogHeader className="border-line border-b p-6 pr-14 pb-3">
+              <DialogTitle className="font-display text-h3 text-ink font-semibold">
                 Record Manual Refund Payout
-              </h3>
-              <button
-                type="button"
-                onClick={() => setSelectedRefund(null)}
-                className="text-muted hover:text-ink rounded p-1"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
+              </DialogTitle>
+              <DialogDescription className="text-caption text-muted-foreground">
+                Record the offline payout details for this refund.
+              </DialogDescription>
+            </DialogHeader>
 
             <form
               onSubmit={handleSubmitPayout}
-              className="text-small space-y-4"
+              className="text-small space-y-4 p-6"
             >
-              <div className="bg-paper border-line text-caption text-muted space-y-1 rounded-lg border p-3">
+              <div className="bg-paper border-line text-caption text-muted-foreground space-y-1 rounded-lg border p-3">
                 <div>
                   Booking:{' '}
                   <strong className="text-ink font-mono">
@@ -276,18 +317,19 @@ export function ManualRefundsTab({
                 </div>
                 <div>
                   Total refund due:{' '}
-                  <strong className="text-danger font-mono font-bold">
+                  <strong className="text-destructive font-mono font-bold">
                     {formatNaira(selectedRefund.refundDueMinor)}
                   </strong>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-caption text-ink mb-1 block font-semibold">
+                <div className="space-y-1.5">
+                  <Label htmlFor="payout-amount" className="text-caption">
                     Amount Paid Out (₦)
-                  </label>
-                  <input
+                  </Label>
+                  <Input
+                    id="payout-amount"
                     type="number"
                     step="any"
                     required
@@ -298,36 +340,49 @@ export function ManualRefundsTab({
                         amountNaira: e.target.value,
                       })
                     }
-                    className="border-line bg-paper text-ink focus:border-primary w-full rounded-md border p-2 font-mono focus:outline-none"
+                    className="border-line bg-paper font-mono"
                   />
                 </div>
 
-                <div>
-                  <label className="text-caption text-ink mb-1 block font-semibold">
+                <div className="space-y-1.5">
+                  <Label htmlFor="payout-method" className="text-caption">
                     Payout Method
-                  </label>
-                  <select
+                  </Label>
+                  <Select
+                    items={[
+                      { value: 'bank_transfer', label: 'Bank Transfer' },
+                      { value: 'cash', label: 'Cash' },
+                    ]}
                     value={payoutForm.method}
-                    onChange={(e) =>
-                      setPayoutForm({
-                        ...payoutForm,
-                        method: e.target.value as 'bank_transfer' | 'cash',
-                      })
-                    }
-                    className="border-line bg-paper text-ink focus:border-primary w-full rounded-md border p-2 focus:outline-none"
+                    onValueChange={(val) => {
+                      if (val) {
+                        setPayoutForm({
+                          ...payoutForm,
+                          method: val as 'bank_transfer' | 'cash',
+                        });
+                      }
+                    }}
                   >
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="cash">Cash</option>
-                  </select>
+                    <SelectTrigger id="payout-method" className="w-full">
+                      <SelectValue placeholder="Select payout method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bank_transfer">
+                        Bank Transfer
+                      </SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-caption text-ink mb-1 block font-semibold">
+                <div className="space-y-1.5">
+                  <Label htmlFor="payout-reference" className="text-caption">
                     Payout Reference / Narration
-                  </label>
-                  <input
+                  </Label>
+                  <Input
+                    id="payout-reference"
                     type="text"
                     required
                     value={payoutForm.reference}
@@ -337,88 +392,87 @@ export function ManualRefundsTab({
                         reference: e.target.value,
                       })
                     }
-                    className="border-line bg-paper text-ink focus:border-primary w-full rounded-md border p-2 focus:outline-none"
+                    className="border-line bg-paper"
                   />
                 </div>
 
-                <div>
-                  <label className="text-caption text-ink mb-1 block font-semibold">
+                <div className="space-y-1.5">
+                  <Label htmlFor="payout-date" className="text-caption">
                     Date Paid
-                  </label>
-                  <input
+                  </Label>
+                  <Input
+                    id="payout-date"
                     type="date"
                     required
                     value={payoutForm.paidDate}
                     onChange={(e) =>
                       setPayoutForm({ ...payoutForm, paidDate: e.target.value })
                     }
-                    className="border-line bg-paper text-ink focus:border-primary w-full rounded-md border p-2 focus:outline-none"
+                    className="border-line bg-paper"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="text-caption text-ink mb-1 block font-semibold">
+              <div className="space-y-1.5">
+                <Label htmlFor="payout-note" className="text-caption">
                   Internal Note
-                </label>
-                <textarea
+                </Label>
+                <Textarea
+                  id="payout-note"
                   rows={2}
                   value={payoutForm.note}
                   onChange={(e) =>
                     setPayoutForm({ ...payoutForm, note: e.target.value })
                   }
-                  className="border-line bg-paper text-ink focus:border-primary w-full rounded-md border p-2 focus:outline-none"
+                  className="border-line bg-paper"
                 />
               </div>
 
               <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
+                <Checkbox
                   id="doNotEmailGuest"
                   checked={payoutForm.doNotEmailGuest}
-                  onChange={(e) =>
+                  onCheckedChange={(checked) =>
                     setPayoutForm({
                       ...payoutForm,
-                      doNotEmailGuest: e.target.checked,
+                      doNotEmailGuest: !!checked,
                     })
                   }
-                  className="border-line text-primary focus:ring-primary size-4 rounded"
                 />
-                <label
+                <Label
                   htmlFor="doNotEmailGuest"
-                  className="text-caption text-ink cursor-pointer"
+                  className="cursor-pointer font-normal"
                 >
                   Do not email the guest about this refund (internal / offline
                   handled)
-                </label>
+                </Label>
               </div>
 
               {formError && (
-                <div className="border-danger/30 bg-danger/5 text-caption text-danger rounded border p-2">
+                <Alert
+                  variant="destructive"
+                  className="border-destructive/30 bg-destructive/5 text-caption text-destructive"
+                >
                   {formError}
-                </div>
+                </Alert>
               )}
 
-              <div className="border-line flex items-center justify-end gap-2 border-t pt-2">
-                <button
+              <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setSelectedRefund(null)}
                   disabled={submitting}
-                  className="border-line text-small text-ink hover:bg-paper rounded-md border px-4 py-2 font-medium"
                 >
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="bg-primary text-small text-primary-ink rounded-md px-4 py-2 font-semibold hover:opacity-95"
-                >
-                  {submitting ? 'Recording...' : 'Confirm Paid Out'}
-                </button>
-              </div>
+                </Button>
+                <Button type="submit" loading={submitting}>
+                  Confirm Paid Out
+                </Button>
+              </DialogFooter>
             </form>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

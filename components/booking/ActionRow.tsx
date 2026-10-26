@@ -14,7 +14,7 @@ import type { GuestReservation } from '@/types/booking.types';
 
 import { AnimatedList } from '../motion';
 import { EASE_OUT } from '../motion/variants';
-import { Button, ButtonLink } from '../ui/Button';
+import { Button, ButtonLink } from '../ui/button';
 
 /** Calendar (.ics and Google), print or save as PDF, WhatsApp share, and Manage booking. */
 export function ActionRow({
@@ -142,7 +142,7 @@ export function ActionRow({
         )}
       </AnimatedList>
       {!ready && (
-        <p className="text-small text-muted mt-3">
+        <p className="text-small text-muted-foreground mt-3">
           Calendar and print are unavailable until your check-in date is
           confirmed.
         </p>

@@ -1,6 +1,6 @@
 import { getPublicSite } from '@/lib/content/data';
 
-import { ButtonLink } from './ui/Button';
+import { ButtonLink } from './ui/button';
 
 export async function GroupEventStrip() {
   const site = await getPublicSite();

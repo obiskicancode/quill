@@ -9,7 +9,8 @@ import { adminService } from '@/app/api/services/admin.service';
 import { ServiceError } from '@/app/api/services/base.service';
 import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Field, inputClass } from '@/components/checkout/Field';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
@@ -49,11 +50,11 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
   return (
     <div>
-      <p className="text-caption text-muted font-semibold tracking-wide uppercase">
+      <p className="text-caption text-muted-foreground font-semibold tracking-wide uppercase">
         Account recovery
       </p>
       <h1 className="font-display text-h2 mt-2">Choose a new password</h1>
-      <p className="text-small text-muted mt-2">
+      <p className="text-small text-muted-foreground mt-2">
         Use at least 10 characters. All other sessions will be signed out.
       </p>
 
@@ -82,7 +83,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         >
           {(a11y) => (
             <div className="relative">
-              <input
+              <Input
                 {...a11y}
                 type={showPassword ? 'text' : 'password'}
                 value={password}
@@ -92,18 +93,20 @@ export function ResetPasswordForm({ token }: { token: string }) {
                 required
                 className={`${inputClass(fieldErrors.password)} pr-12`}
               />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => setShowPassword((value) => !value)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="text-muted hover:text-ink absolute inset-y-0 right-0 grid w-12 place-items-center"
+                className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 h-full w-12"
               >
                 {showPassword ? (
                   <EyeOff className="size-5" aria-hidden />
                 ) : (
                   <Eye className="size-5" aria-hidden />
                 )}
-              </button>
+              </Button>
             </div>
           )}
         </Field>
@@ -114,7 +117,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           error={fieldErrors.confirmPassword}
         >
           {(a11y) => (
-            <input
+            <Input
               {...a11y}
               type={showPassword ? 'text' : 'password'}
               value={confirmPassword}

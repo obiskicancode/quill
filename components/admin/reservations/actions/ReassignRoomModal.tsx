@@ -4,7 +4,9 @@ import { Home, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
@@ -97,12 +99,12 @@ export function ReassignRoomModal({
       onRefresh={onRefresh}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="text-small text-ink block font-semibold">
+        <div className="space-y-1.5">
+          <Label className="text-small text-ink font-semibold">
             Current Room
-          </label>
-          <div className="bg-canvas rounded-control border-line text-small text-ink mt-1 flex items-center gap-2 border p-3">
-            <Home className="text-muted size-4" aria-hidden="true" />
+          </Label>
+          <div className="bg-muted rounded-control border-line text-small text-ink flex items-center gap-2 border p-3">
+            <Home className="text-muted-foreground size-4" aria-hidden="true" />
             <span>
               Room <strong>{reservation.roomNumber}</strong> (
               {reservation.roomTypeName})
@@ -110,13 +112,13 @@ export function ReassignRoomModal({
           </div>
         </div>
 
-        <div>
-          <label className="text-small text-ink block font-semibold">
+        <div className="space-y-1.5">
+          <Label className="text-small text-ink font-semibold">
             Available Rooms ({reservation.roomTypeName})
-          </label>
+          </Label>
 
           {loadingRooms ? (
-            <div className="text-small text-muted flex items-center justify-center p-6">
+            <div className="text-small text-muted-foreground flex items-center justify-center p-6">
               <Loader2
                 className="mr-2 size-4 animate-spin"
                 aria-hidden="true"
@@ -124,7 +126,7 @@ export function ReassignRoomModal({
               Checking availability...
             </div>
           ) : rooms.length === 0 ? (
-            <div className="rounded-control border-accent/40 bg-accent/10 text-small text-ink mt-1 border p-3">
+            <div className="rounded-control border-primary/40 bg-primary/10 text-small text-ink mt-1 border p-3">
               No other rooms of this type are currently available for the full
               stay dates ({reservation.checkIn} to {reservation.checkOut}).
             </div>
@@ -133,46 +135,43 @@ export function ReassignRoomModal({
               {rooms.map((r) => {
                 const selected = selectedRoomId === r.id;
                 return (
-                  <button
+                  <Button
                     key={r.id}
                     type="button"
+                    variant={selected ? 'default' : 'outline'}
+                    size="md"
                     onClick={() => setSelectedRoomId(r.id)}
-                    className={`rounded-control flex flex-col items-center justify-center border p-3 text-center transition-colors ${
-                      selected
-                        ? 'border-accent bg-accent/15 text-accent-ink ring-accent font-semibold ring-2'
-                        : 'border-line bg-paper text-ink hover:border-ink'
-                    }`}
+                    className="h-auto flex-col py-3"
                   >
                     <span className="font-mono text-base font-bold">
                       {r.roomNumber}
                     </span>
-                    <span className="text-caption text-muted">
+                    <span className="text-caption opacity-80">
                       {r.floor !== null ? `Floor ${r.floor}` : 'Main Floor'}
                     </span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
           )}
         </div>
 
-        <div>
-          <label className="text-small text-ink block font-semibold">
-            Reason / Reassignment Note
-          </label>
-          <textarea
+        <div className="space-y-1.5">
+          <Label htmlFor="reassign-note">Reason / Reassignment Note</Label>
+          <Textarea
+            id="reassign-note"
             rows={2}
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="e.g. Guest requested quiet room away from elevator..."
-            className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
           />
         </div>
 
         <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
+            size="sm"
             onClick={onClose}
             disabled={submitting}
           >
@@ -180,19 +179,11 @@ export function ReassignRoomModal({
           </Button>
           <Button
             type="submit"
+            size="sm"
             disabled={submitting || rooms.length === 0 || !selectedRoomId}
+            loading={submitting}
           >
-            {submitting ? (
-              <>
-                <Loader2
-                  className="mr-2 size-4 animate-spin"
-                  aria-hidden="true"
-                />
-                Reassigning...
-              </>
-            ) : (
-              'Confirm reassignment'
-            )}
+            Confirm reassignment
           </Button>
         </div>
       </form>

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { useSite } from '@/providers/site.provider';
 
-import { ButtonLink } from './ui/Button';
+import { ButtonLink } from './ui/button';
 
 /**
  * Mobile-only Book Now bar. Hidden while the availability search is on screen (it would duplicate the main action).
@@ -31,7 +31,7 @@ export function StickyBookBar() {
 
   return (
     <div
-      className={`border-line bg-paper/95 fixed inset-x-0 bottom-0 z-30 border-t px-4 pt-3 pr-[5.5rem] pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur transition-[transform,visibility] duration-200 md:hidden ${
+      className={`border-line bg-paper/95 fixed inset-x-0 bottom-0 z-30 border-t px-4 pt-3 pr-22 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur transition-[transform,visibility] duration-200 md:hidden ${
         visible ? 'translate-y-0' : 'invisible translate-y-full'
       }`}
     >

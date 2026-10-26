@@ -4,7 +4,17 @@ import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { formatNaira } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
@@ -123,7 +133,7 @@ export function CancelModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Warning Alert */}
-        <div className="rounded-control border-danger/30 bg-danger/10 text-small text-danger flex items-start gap-2.5 border p-3">
+        <div className="rounded-control border-destructive/30 bg-destructive/10 text-small text-destructive flex items-start gap-2.5 border p-3">
           <AlertTriangle
             className="mt-0.5 size-4 shrink-0"
             aria-hidden="true"
@@ -136,24 +146,26 @@ export function CancelModal({
 
         {/* Policy Refund Preview */}
         {loadingPreview ? (
-          <div className="text-small text-muted flex items-center justify-center p-6">
+          <div className="text-small text-muted-foreground flex items-center justify-center p-6">
             <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
             Calculating policy refund...
           </div>
         ) : preview ? (
-          <div className="bg-canvas rounded-control border-line text-small space-y-2 border p-4">
+          <div className="bg-muted rounded-control border-line text-small space-y-2 border p-4">
             <h3 className="text-ink font-semibold">
               Cancellation Policy Evaluation
             </h3>
-            <p className="text-caption text-muted">{preview.rule}</p>
+            <p className="text-caption text-muted-foreground">{preview.rule}</p>
             <div className="border-line flex items-center justify-between border-t pt-2">
-              <span className="text-muted">Calculated Policy Refund:</span>
+              <span className="text-muted-foreground">
+                Calculated Policy Refund:
+              </span>
               <span className="text-success font-bold">
                 {formatNaira(preview.calculatedRefundMinor / 100)}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-muted">Amount Retained:</span>
+              <span className="text-muted-foreground">Amount Retained:</span>
               <span className="text-ink font-medium">
                 {formatNaira(preview.retainedMinor / 100)}
               </span>
@@ -162,49 +174,50 @@ export function CancelModal({
         ) : null}
 
         {/* Override Refund Option */}
-        <div className="border-line space-y-2 border-t pt-3">
-          <label className="text-small text-ink flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
+        <div className="border-line space-y-3 border-t pt-3">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="cancel-override-refund"
               checked={overrideRefund}
-              onChange={(e) => setOverrideRefund(e.target.checked)}
-              className="border-line text-accent focus:ring-accent size-4 rounded-sm"
+              onCheckedChange={(checked) => setOverrideRefund(!!checked)}
             />
-            <span>Override policy refund amount (Manager / Owner)</span>
-          </label>
+            <Label htmlFor="cancel-override-refund" className="cursor-pointer">
+              Override policy refund amount (Manager / Owner)
+            </Label>
+          </div>
 
           {overrideRefund && (
             <div className="space-y-3 pl-6">
-              <div>
-                <label className="text-small text-ink block font-semibold">
+              <div className="space-y-1.5">
+                <Label htmlFor="cancel-refund-amount">
                   Custom Refund Amount (₦)
-                </label>
-                <input
+                </Label>
+                <Input
+                  id="cancel-refund-amount"
                   type="number"
                   step="any"
                   min="0"
                   max={(preview?.maxRefundMinor ?? 0) / 100}
                   value={refundNaira}
                   onChange={(e) => setRefundNaira(e.target.value)}
-                  className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
                 />
-                <p className="text-caption text-muted mt-1">
+                <p className="text-caption text-muted-foreground">
                   Maximum refundable:{' '}
                   {formatNaira((preview?.maxRefundMinor ?? 0) / 100)}
                 </p>
               </div>
 
-              <div>
-                <label className="text-small text-ink block font-semibold">
-                  Override Reason <span className="text-danger">*</span>
-                </label>
-                <input
+              <div className="space-y-1.5">
+                <Label htmlFor="cancel-override-reason">
+                  Override Reason <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="cancel-override-reason"
                   type="text"
                   required
                   value={overrideReason}
                   onChange={(e) => setOverrideReason(e.target.value)}
                   placeholder="e.g. Management courtesy due to flight disruption..."
-                  className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
                 />
               </div>
             </div>
@@ -212,73 +225,107 @@ export function CancelModal({
         </div>
 
         {/* Cancellation Reason Selection */}
-        <div>
-          <label className="text-small text-ink block font-semibold">
-            Reason for Cancellation <span className="text-danger">*</span>
-          </label>
-          <select
+        <div className="space-y-1.5">
+          <Label htmlFor="cancel-reason">
+            Reason for Cancellation <span className="text-destructive">*</span>
+          </Label>
+          <Select
+            items={[
+              {
+                value: 'guest_requested',
+                label: 'Guest requested cancellation',
+              },
+              {
+                value: 'emergency_change',
+                label: 'Medical or personal emergency',
+              },
+              {
+                value: 'duplicate_booking',
+                label: 'Duplicate booking',
+              },
+              {
+                value: 'hotel_maintenance',
+                label: 'Hotel maintenance or room issue',
+              },
+              {
+                value: 'unpaid_expired',
+                label: 'Payment not completed in time',
+              },
+              { value: 'other', label: 'Other reason' },
+            ]}
             value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+            onValueChange={(val) => {
+              if (val) setReason(val);
+            }}
           >
-            <option value="guest_requested">
-              Guest requested cancellation
-            </option>
-            <option value="emergency_change">
-              Medical or personal emergency
-            </option>
-            <option value="duplicate_booking">Duplicate booking</option>
-            <option value="hotel_maintenance">
-              Hotel maintenance or room issue
-            </option>
-            <option value="unpaid_expired">
-              Payment not completed in time
-            </option>
-            <option value="other">Other reason</option>
-          </select>
+            <SelectTrigger id="cancel-reason" className="w-full">
+              <SelectValue placeholder="Select cancellation reason" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="guest_requested">
+                Guest requested cancellation
+              </SelectItem>
+              <SelectItem value="emergency_change">
+                Medical or personal emergency
+              </SelectItem>
+              <SelectItem value="duplicate_booking">
+                Duplicate booking
+              </SelectItem>
+              <SelectItem value="hotel_maintenance">
+                Hotel maintenance or room issue
+              </SelectItem>
+              <SelectItem value="unpaid_expired">
+                Payment not completed in time
+              </SelectItem>
+              <SelectItem value="other">Other reason</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <div>
-          <label className="text-small text-ink block font-semibold">
-            Staff Note
-          </label>
-          <input
+        <div className="space-y-1.5">
+          <Label htmlFor="cancel-staff-note">Staff Note</Label>
+          <Input
+            id="cancel-staff-note"
             type="text"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Additional notes for hotel records..."
-            className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
           />
         </div>
 
         {/* Options */}
         <div className="border-line space-y-2 border-t pt-3">
-          <label className="text-small text-ink flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="cancel-no-email"
               checked={doNotEmailGuest}
-              onChange={(e) => setDoNotEmailGuest(e.target.checked)}
-              className="border-line text-accent focus:ring-accent size-4 rounded-sm"
+              onCheckedChange={(checked) => setDoNotEmailGuest(!!checked)}
             />
-            <span>Do not email cancellation notice to guest</span>
-          </label>
+            <Label htmlFor="cancel-no-email" className="cursor-pointer">
+              Do not email cancellation notice to guest
+            </Label>
+          </div>
 
-          <label className="text-small text-danger flex cursor-pointer items-center gap-2 font-semibold">
-            <input
-              type="checkbox"
-              required
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="cancel-acknowledged"
               checked={acknowledged}
-              onChange={(e) => setAcknowledged(e.target.checked)}
-              className="border-danger text-danger focus:ring-danger size-4 rounded-sm"
+              onCheckedChange={(checked) => setAcknowledged(!!checked)}
             />
-            <span>I understand that this cancellation cannot be undone</span>
-          </label>
+            <Label
+              htmlFor="cancel-acknowledged"
+              className="text-destructive cursor-pointer font-semibold"
+            >
+              I understand that this cancellation cannot be undone
+            </Label>
+          </div>
         </div>
 
         <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
+            size="sm"
             onClick={onClose}
             disabled={submitting}
           >
@@ -286,20 +333,12 @@ export function CancelModal({
           </Button>
           <Button
             type="submit"
-            variant="danger"
+            variant="destructive"
+            size="sm"
             disabled={submitting || !acknowledged}
+            loading={submitting}
           >
-            {submitting ? (
-              <>
-                <Loader2
-                  className="mr-2 size-4 animate-spin"
-                  aria-hidden="true"
-                />
-                Cancelling...
-              </>
-            ) : (
-              'Confirm cancellation'
-            )}
+            Confirm cancellation
           </Button>
         </div>
       </form>

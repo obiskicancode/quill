@@ -5,6 +5,7 @@ import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 
 import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
+import { Button } from '@/components/ui/button';
 import { formatNaira } from '@/lib/format';
 import type { ReservationListItem } from '@/types/reservation.types';
 
@@ -42,24 +43,25 @@ export function ReservationsMobileList({
               router.push(`/admin/reservations/${row.id}`);
             }
           }}
-          className="rounded-card border-line bg-surface shadow-raised cursor-pointer border p-4 transition-all focus:outline-none active:scale-[0.99]"
+          className="rounded-card border-line bg-card shadow-raised cursor-pointer border p-4 transition-all focus:outline-none active:scale-[0.99]"
         >
           {/* Header row: Reference & Copy & Badges */}
           <div className="flex items-center justify-between gap-2">
             <div className="text-ink flex items-center gap-1.5 font-semibold">
               <span>{row.reference}</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 onClick={(e) => handleCopy(e, row.reference)}
                 aria-label={`Copy reference ${row.reference}`}
-                className="rounded-control text-muted hover:bg-paper hover:text-ink p-1 focus:outline-none"
               >
                 {copiedRef === row.reference ? (
                   <Check className="text-success size-3" aria-hidden="true" />
                 ) : (
                   <Copy className="size-3" aria-hidden="true" />
                 )}
-              </button>
+              </Button>
             </div>
 
             <div className="flex items-center gap-1.5">
@@ -72,9 +74,11 @@ export function ReservationsMobileList({
           <div className="mt-2.5">
             <p className="text-ink font-semibold">{row.guestName}</p>
             {row.guestPhone && (
-              <p className="text-caption text-muted">{row.guestPhone}</p>
+              <p className="text-caption text-muted-foreground">
+                {row.guestPhone}
+              </p>
             )}
-            <p className="text-caption text-muted mt-1">
+            <p className="text-caption text-muted-foreground mt-1">
               {row.roomTypeName} • Room #{row.roomNumber}
             </p>
           </div>
@@ -85,14 +89,18 @@ export function ReservationsMobileList({
               <span className="text-ink font-medium">
                 {row.checkIn} → {row.checkOut}
               </span>
-              <span className="text-muted ml-1">({row.nights}n)</span>
+              <span className="text-muted-foreground ml-1">
+                ({row.nights}n)
+              </span>
             </div>
 
             <div>
-              <span className="text-muted mr-1.5">Balance:</span>
+              <span className="text-muted-foreground mr-1.5">Balance:</span>
               <span
                 className={
-                  row.balanceMinor > 0 ? 'text-danger font-bold' : 'text-ink'
+                  row.balanceMinor > 0
+                    ? 'text-destructive font-bold'
+                    : 'text-ink'
                 }
               >
                 {formatNaira(row.balanceMinor / 100)}

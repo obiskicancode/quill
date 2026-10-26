@@ -13,7 +13,8 @@ import type { GuestReservation } from '@/types/booking.types';
 
 import { Banner } from '../checkout/CheckoutStates';
 import { Field, inputClass } from '../checkout/Field';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 
 export type VerifyVariant = 'verify' | 'missing' | 'notfound';
 
@@ -134,7 +135,7 @@ export function VerifyForm({
           hint="For example DEA-AB12CD"
         >
           {(a) => (
-            <input
+            <Input
               {...a}
               value={ref}
               onChange={(e) => setRef(e.target.value)}
@@ -153,7 +154,7 @@ export function VerifyForm({
           error={errors.email}
         >
           {(a) => (
-            <input
+            <Input
               {...a}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -203,7 +204,7 @@ export function VerifyForm({
           href={whatsappHref(site, 'Hello, I need help finding my booking.')}
           target="_blank"
           rel="noopener noreferrer"
-          className="decoration-accent inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-2 underline-offset-4"
+          className="decoration-brand inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-2 underline-offset-4"
         >
           <MessageCircle className="size-4" aria-hidden />
           Message the hotel on WhatsApp

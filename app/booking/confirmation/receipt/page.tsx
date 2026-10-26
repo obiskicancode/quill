@@ -40,21 +40,21 @@ export default async function ReceiptPage({
     <CheckoutShell label="Receipt" backToHome>
       <div className="receipt-page container-page max-w-2xl py-8 md:py-12">
         <article
-          className="receipt-doc rounded-card border-line bg-surface space-y-6 border p-6 md:p-8"
+          className="receipt-doc rounded-card border-line bg-card space-y-6 border p-6 md:p-8"
           aria-label="Receipt"
         >
           <div className="border-ink flex flex-wrap items-start justify-between gap-4 border-b-2 pb-4">
             <div>
               <h1 className="font-display text-h2">Receipt</h1>
               <p className="mt-1 font-semibold">{v.hotel.name}</p>
-              <p className="text-small text-muted">
+              <p className="text-small text-muted-foreground">
                 {v.hotel.addressLines.join(', ')}
               </p>
             </div>
             <div className="text-small text-right">
-              <p className="text-muted">Booking reference</p>
+              <p className="text-muted-foreground">Booking reference</p>
               <p className="font-display text-h3">{v.reference}</p>
-              <p className="text-muted mt-1">
+              <p className="text-muted-foreground mt-1">
                 Issued{' '}
                 {new Date().toLocaleDateString('en-NG', {
                   day: 'numeric',

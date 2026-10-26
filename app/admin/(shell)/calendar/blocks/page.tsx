@@ -62,7 +62,7 @@ export default async function AdminCalendarBlocksPage() {
   return (
     <Suspense
       fallback={
-        <div className="text-muted flex h-96 items-center justify-center">
+        <div className="text-muted-foreground flex h-96 items-center justify-center">
           Loading room blocks...
         </div>
       }

@@ -21,14 +21,14 @@ function Card({
     <StaggerItem
       as="li"
       scale
-      className="rounded-card border-line bg-surface shadow-raised flex flex-col justify-between gap-4 border p-5"
+      className="rounded-card border-line bg-card shadow-raised flex flex-col justify-between gap-4 border p-5"
     >
       <div>
-        <p className="text-small text-muted flex items-center gap-2 font-semibold">
-          <span className="text-accent-ink">{icon}</span>
+        <p className="text-small text-muted-foreground flex items-center gap-2 font-semibold">
+          <span className="text-brand-ink">{icon}</span>
           {title}
         </p>
-        <div className="mt-2 font-semibold break-words">{children}</div>
+        <div className="mt-2 font-semibold wrap-break-word">{children}</div>
       </div>
       {copy && (
         <div>
@@ -40,7 +40,7 @@ function Card({
 }
 
 const link =
-  'inline-flex min-h-11 items-center underline decoration-accent decoration-2 underline-offset-4';
+  'inline-flex min-h-11 items-center underline decoration-brand decoration-2 underline-offset-4';
 
 /** Call (every public number), WhatsApp, email and reception hours. Each card has a copy action. Cards with no data are left out. */
 export async function ContactCards() {

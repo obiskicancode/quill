@@ -9,6 +9,15 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import type {
   AuditDetailResponse,
   AuditListItem,
@@ -147,25 +156,22 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
             .map((preset) => {
               const active = filters.preset === preset.key;
               return (
-                <button
+                <Button
                   key={preset.key}
-                  type="button"
+                  variant={active ? 'default' : 'outline'}
+                  size="xs"
+                  className="rounded-full"
                   onClick={() =>
                     setFilters({ ...filters, preset: preset.key, page: 1 })
                   }
-                  className={`text-caption rounded-full px-3 py-1 font-semibold transition-colors ${
-                    active
-                      ? 'bg-primary text-primary-ink shadow-sm'
-                      : 'bg-paper text-muted hover:text-ink hover:bg-surface border-line border'
-                  }`}
                 >
                   {preset.label}
-                </button>
+                </Button>
               );
             })}
         </div>
         {total > 0 && (
-          <span className="text-caption text-muted font-medium">
+          <span className="text-caption text-muted-foreground font-medium">
             {total} recorded entries
           </span>
         )}
@@ -174,8 +180,8 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
       {/* Search Bar & Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="relative max-w-md min-w-[240px] flex-1">
-          <Search className="text-muted absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <input
+          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+          <Input
             type="search"
             placeholder={
               isOwner
@@ -186,31 +192,34 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
             onChange={(e) =>
               setFilters({ ...filters, q: e.target.value, page: 1 })
             }
-            className="border-line bg-surface text-small text-ink placeholder:text-muted focus:border-primary focus:ring-primary w-full rounded-md border py-1.5 pr-3 pl-9 focus:ring-1 focus:outline-none"
+            className="pl-9"
           />
         </div>
 
         <div className="flex items-center gap-2">
           {isOwner && (
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={handleExportCsv}
-              className="border-line bg-surface text-caption text-ink hover:bg-paper inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 font-semibold"
               title="Export filtered audit logs to CSV (owner only, capped at 10k rows)"
             >
               <Download className="size-3.5" />
               Export CSV
-            </button>
+            </Button>
           )}
 
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={loadLogs}
-            className="border-line bg-surface text-muted hover:text-ink rounded-md border p-1.5"
             title="Refresh audit logs"
+            className="px-2"
           >
             <RefreshCw className="size-3.5" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -221,9 +230,9 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
         <AdminError
           message={error}
           action={
-            <button onClick={loadLogs} className="btn-secondary">
+            <Button variant="outline" size="sm" onClick={loadLogs}>
               Retry
-            </button>
+            </Button>
           }
         />
       ) : logs.length === 0 ? (
@@ -231,11 +240,53 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
           Try selecting another preset filter or clearing your search query.
         </AdminEmpty>
       ) : (
-        <AuditTable
-          items={logs}
-          isOwner={isOwner}
-          onRowClick={handleRowClick}
-        />
+        <div className="space-y-3">
+          <AuditTable
+            items={logs}
+            isOwner={isOwner}
+            onRowClick={handleRowClick}
+          />
+          <div className="bg-muted/30 border-line text-caption text-muted-foreground flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3">
+            <span>
+              Showing {logs.length} of {total} audit log record(s)
+            </span>
+            <Pagination className="mx-0 w-auto justify-end">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        page: Math.max(1, (prev.page ?? 1) - 1),
+                      }))
+                    }
+                    disabled={(filters.page ?? 1) <= 1}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <span className="text-caption text-muted-foreground px-2 font-medium">
+                    Page {filters.page ?? 1} of{' '}
+                    {Math.max(1, Math.ceil(total / (filters.pageSize ?? 25)))}
+                  </span>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        page: (prev.page ?? 1) + 1,
+                      }))
+                    }
+                    disabled={
+                      (filters.page ?? 1) >=
+                      Math.ceil(total / (filters.pageSize ?? 25))
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </div>
       )}
 
       {/* Detail Drawer */}

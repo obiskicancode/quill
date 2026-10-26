@@ -37,7 +37,7 @@ export async function TeamSection() {
                 </div>
               )}
               <h3 className="font-display text-h3 mt-4">{m.name}</h3>
-              <p className="text-small text-accent-ink font-semibold">
+              <p className="text-small text-brand-ink font-semibold">
                 {m.role}
               </p>
               <p className="text-small text-ink/85 mt-2">{m.bio}</p>

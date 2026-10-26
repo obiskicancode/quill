@@ -1,4 +1,4 @@
-const bar = 'rounded bg-ink/10 motion-safe:animate-pulse';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Variant = 'text-image' | 'cards' | 'grid' | 'list' | 'form' | 'strip';
 
@@ -16,30 +16,30 @@ export function SectionSkeleton({
         {label}
       </p>
       <div aria-hidden className="container-page">
-        <div className={`${bar} mb-8 h-9 w-64`} />
+        <Skeleton className="rounded-control mb-8 h-9 w-64" />
         {variant === 'text-image' && (
           <div className="grid gap-10 md:grid-cols-2">
             <div className="space-y-3">
               {[0, 1, 2, 3, 4].map((i) => (
-                <div key={i} className={`${bar} h-4 w-full`} />
+                <Skeleton key={i} className="h-4 w-full rounded" />
               ))}
             </div>
-            <div className={`${bar} rounded-card aspect-[4/3]`} />
+            <Skeleton className="rounded-card aspect-[4/3]" />
           </div>
         )}
         {variant === 'cards' && (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className={`${bar} rounded-card h-40`} />
+              <Skeleton key={i} className="rounded-card h-40" />
             ))}
           </div>
         )}
         {variant === 'grid' && (
           <div className="columns-2 gap-3 md:columns-3 lg:columns-4">
             {[1.5, 1, 0.7, 1.2, 1, 1.4, 0.8, 1.1].map((r, i) => (
-              <div
+              <Skeleton
                 key={i}
-                className={`${bar} rounded-card mb-3 w-full`}
+                className="rounded-card mb-3 w-full"
                 style={{ aspectRatio: String(1 / r) }}
               />
             ))}
@@ -48,15 +48,15 @@ export function SectionSkeleton({
         {variant === 'list' && (
           <div className="space-y-4">
             {[0, 1, 2].map((i) => (
-              <div key={i} className={`${bar} rounded-card h-16 w-full`} />
+              <Skeleton key={i} className="rounded-card h-16 w-full" />
             ))}
           </div>
         )}
         {variant === 'form' && (
-          <div className={`${bar} rounded-card h-96 w-full`} />
+          <Skeleton className="rounded-card h-96 w-full" />
         )}
         {variant === 'strip' && (
-          <div className={`${bar} rounded-card h-24 w-full`} />
+          <Skeleton className="rounded-card h-24 w-full" />
         )}
       </div>
     </section>

@@ -19,7 +19,7 @@ export function PriceBlock({
     return (
       <div className="min-h-[5.5rem]">
         <p className="font-display text-xl">Contact us for price</p>
-        <p className="text-small text-muted mt-1">
+        <p className="text-small text-muted-foreground mt-1">
           We will reply with rates for your dates.
         </p>
       </div>
@@ -32,15 +32,15 @@ export function PriceBlock({
       <div className="min-h-[5.5rem]">
         <p>
           <span className="font-display text-2xl">{formatNaira(totalNgn)}</span>
-          <span className="text-small text-muted">
+          <span className="text-small text-muted-foreground">
             {' '}
             for {nights} {nights === 1 ? 'night' : 'nights'}
           </span>
         </p>
-        <p className="text-small text-muted mt-1">
+        <p className="text-small text-muted-foreground mt-1">
           {formatNaira(averageNgn)} / night on average
         </p>
-        <p className="text-small text-muted">
+        <p className="text-small text-muted-foreground">
           {room.taxesIncluded ? 'Taxes included' : '+ taxes and fees'}
           {weekendNights > 0 && '. Includes weekend rates.'}
         </p>
@@ -51,18 +51,18 @@ export function PriceBlock({
   return (
     <div className="min-h-[5.5rem]">
       <p>
-        <span className="text-small text-muted">From </span>
+        <span className="text-small text-muted-foreground">From </span>
         <span className="font-display text-2xl">
           {formatNaira(room.basePriceNgn)}
         </span>
-        <span className="text-small text-muted"> / night</span>
+        <span className="text-small text-muted-foreground"> / night</span>
       </p>
       {liveFailed ? (
-        <p className="text-small text-muted mt-1">
+        <p className="text-small text-muted-foreground mt-1">
           Starting rate. Live price for your dates is unavailable.
         </p>
       ) : (
-        <p className="text-small text-muted mt-1">
+        <p className="text-small text-muted-foreground mt-1">
           {room.taxesIncluded ? 'Taxes included' : '+ taxes and fees'}
         </p>
       )}

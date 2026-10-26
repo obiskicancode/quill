@@ -9,6 +9,7 @@ import {
   X,
 } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import type { ReservationAlertFlags } from '@/types/reservation.types';
 
 interface ReservationAlertsProps {
@@ -47,7 +48,7 @@ export function ReservationAlerts({
       {status === 'cancelled' && (
         <div
           role="alert"
-          className="rounded-control border-danger/30 bg-danger/5 text-small text-danger flex items-start gap-2.5 border p-3.5"
+          className="rounded-control border-destructive/30 bg-destructive/5 text-small text-destructive flex items-start gap-2.5 border p-3.5"
         >
           <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <div>
@@ -64,7 +65,7 @@ export function ReservationAlerts({
       {status === 'expired' && (
         <div
           role="alert"
-          className="rounded-control border-line bg-paper text-small text-muted flex items-start gap-2.5 border p-3.5"
+          className="rounded-control border-line bg-paper text-small text-muted-foreground flex items-start gap-2.5 border p-3.5"
         >
           <Clock className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <div>
@@ -80,18 +81,18 @@ export function ReservationAlerts({
       {alerts.bankTransferPendingVerification && (
         <div
           role="status"
-          className="rounded-control border-accent/40 bg-accent/10 text-small text-ink flex flex-col gap-3 border p-3.5 sm:flex-row sm:items-center sm:justify-between"
+          className="rounded-control border-primary/40 bg-primary/10 text-small text-ink flex flex-col gap-3 border p-3.5 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="flex items-start gap-2.5">
             <CreditCard
-              className="text-accent-ink mt-0.5 size-4 shrink-0"
+              className="text-brand-ink mt-0.5 size-4 shrink-0"
               aria-hidden="true"
             />
             <div>
-              <span className="text-accent-ink font-semibold">
+              <span className="text-brand-ink font-semibold">
                 Bank transfer payment awaiting verification.
               </span>
-              <p className="text-caption text-muted">
+              <p className="text-caption text-muted-foreground">
                 A guest has submitted bank transfer proof. Please inspect the
                 receipt in the Payments panel.
               </p>
@@ -99,13 +100,14 @@ export function ReservationAlerts({
           </div>
 
           {onVerifyTransfer && (
-            <button
+            <Button
               type="button"
+              size="sm"
               onClick={onVerifyTransfer}
-              className="rounded-control border-accent bg-paper text-caption text-accent-ink hover:bg-accent/15 inline-flex shrink-0 items-center self-start border px-3 py-1.5 font-semibold transition-colors sm:self-auto"
+              className="shrink-0 self-start sm:self-auto"
             >
               Verify transfer receipt
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -114,18 +116,18 @@ export function ReservationAlerts({
       {alerts.awaitingHotelApproval && (
         <div
           role="status"
-          className="rounded-control border-accent/40 bg-accent/10 text-small text-ink flex flex-col gap-3 border p-3.5 sm:flex-row sm:items-center sm:justify-between"
+          className="rounded-control border-primary/40 bg-primary/10 text-small text-ink flex flex-col gap-3 border p-3.5 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="flex items-start gap-2.5">
             <AlertTriangle
-              className="text-accent-ink mt-0.5 size-4 shrink-0"
+              className="text-brand-ink mt-0.5 size-4 shrink-0"
               aria-hidden="true"
             />
             <div>
-              <span className="text-accent-ink font-semibold">
+              <span className="text-brand-ink font-semibold">
                 Reservation awaiting hotel approval.
               </span>
-              <p className="text-caption text-muted">
+              <p className="text-caption text-muted-foreground">
                 This reservation was submitted under manual confirmation mode.
               </p>
             </div>
@@ -134,24 +136,21 @@ export function ReservationAlerts({
           {(onApprove || onDecline) && (
             <div className="flex items-center gap-2 self-start sm:self-auto">
               {onApprove && (
-                <button
-                  type="button"
-                  onClick={onApprove}
-                  className="rounded-control bg-accent text-caption text-paper hover:bg-accent/90 inline-flex items-center gap-1 px-2.5 py-1 font-semibold transition-colors"
-                >
+                <Button type="button" size="sm" onClick={onApprove}>
                   <Check className="size-3.5" aria-hidden="true" />
                   <span>Approve</span>
-                </button>
+                </Button>
               )}
               {onDecline && (
-                <button
+                <Button
                   type="button"
+                  variant="destructive"
+                  size="sm"
                   onClick={onDecline}
-                  className="rounded-control border-danger/40 bg-paper text-caption text-danger hover:bg-danger/10 inline-flex items-center gap-1 border px-2.5 py-1 font-semibold transition-colors"
                 >
                   <X className="size-3.5" aria-hidden="true" />
                   <span>Decline</span>
-                </button>
+                </Button>
               )}
             </div>
           )}
@@ -162,7 +161,7 @@ export function ReservationAlerts({
       {alerts.holdExpiringSoon && (
         <div
           role="alert"
-          className="rounded-control border-danger/30 bg-danger/5 text-small text-danger flex items-start gap-2.5 border p-3.5"
+          className="rounded-control border-destructive/30 bg-destructive/5 text-small text-destructive flex items-start gap-2.5 border p-3.5"
         >
           <Clock className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <span className="font-semibold">
@@ -175,7 +174,7 @@ export function ReservationAlerts({
       {alerts.balanceDueArrivingSoon && (
         <div
           role="status"
-          className="rounded-control border-danger/30 bg-danger/5 text-small text-danger flex items-start gap-2.5 border p-3.5"
+          className="rounded-control border-destructive/30 bg-destructive/5 text-small text-destructive flex items-start gap-2.5 border p-3.5"
         >
           <CreditCard className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <div>
@@ -193,7 +192,7 @@ export function ReservationAlerts({
       {alerts.roomBlockedOrMaintenance && (
         <div
           role="alert"
-          className="rounded-control border-danger/30 bg-danger/5 text-small text-danger flex items-start gap-2.5 border p-3.5"
+          className="rounded-control border-destructive/30 bg-destructive/5 text-small text-destructive flex items-start gap-2.5 border p-3.5"
         >
           <Wrench className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <div>
@@ -213,7 +212,7 @@ export function ReservationAlerts({
       {alerts.failedNotification && (
         <div
           role="alert"
-          className="rounded-control border-danger/30 bg-danger/5 text-small text-danger flex items-start gap-2.5 border p-3.5"
+          className="rounded-control border-destructive/30 bg-destructive/5 text-small text-destructive flex items-start gap-2.5 border p-3.5"
         >
           <MailWarning className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <div>

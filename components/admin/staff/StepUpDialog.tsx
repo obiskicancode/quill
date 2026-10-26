@@ -1,9 +1,21 @@
 'use client';
 
-import { ShieldAlert, X } from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export function StepUpDialog({
   isOpen,
@@ -54,81 +66,82 @@ export function StepUpDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="rounded-card border-line bg-surface w-full max-w-md border p-6 shadow-2xl">
-        <div className="border-line flex items-center justify-between border-b pb-3">
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !submitting) onClose();
+      }}
+    >
+      <DialogContent className="rounded-card border-line bg-card max-w-md gap-0 border p-0 shadow-2xl sm:max-w-md">
+        <DialogHeader className="border-line border-b p-6 pr-14 pb-3">
           <div className="flex items-center gap-2">
-            <ShieldAlert className="size-5 text-amber-500" />
-            <h3 className="font-display text-h3 text-ink font-semibold">
+            <ShieldAlert className="text-primary size-5" aria-hidden />
+            <DialogTitle className="font-display text-h3 text-ink font-semibold">
               {title}
-            </h3>
+            </DialogTitle>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-muted hover:text-ink rounded p-1"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="text-small mt-4 space-y-4">
-          <p className="text-muted text-caption">{description}</p>
+        <form onSubmit={handleSubmit} className="text-small space-y-4 p-6">
+          <DialogDescription className="text-caption text-muted-foreground">
+            {description}
+          </DialogDescription>
 
-          <div>
-            <label className="text-caption text-ink mb-1 block font-semibold">
-              Admin Password
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="stepup-password">Admin Password</Label>
+            <Input
+              id="stepup-password"
               type="password"
               placeholder="Enter your current password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="border-line bg-paper text-ink placeholder:text-muted focus:border-primary w-full rounded-md border p-2.5 focus:outline-none"
             />
           </div>
 
-          <div className="text-caption text-muted text-center">— OR —</div>
+          <div className="text-caption text-muted-foreground text-center">
+            — OR —
+          </div>
 
-          <div>
-            <label className="text-caption text-ink mb-1 block font-semibold">
+          <div className="space-y-1.5">
+            <Label htmlFor="stepup-totp">
               6-digit Authenticator Code (2FA)
-            </label>
-            <input
+            </Label>
+            <Input
+              id="stepup-totp"
               type="text"
               maxLength={6}
               placeholder="123456"
               value={totpCode}
               onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ''))}
-              className="border-line bg-paper text-ink placeholder:text-muted focus:border-primary w-full rounded-md border p-2.5 text-center font-mono tracking-widest focus:outline-none"
+              className="text-center font-mono tracking-widest"
             />
           </div>
 
           {error && (
-            <div className="border-danger/30 bg-danger/5 text-caption text-danger rounded border p-2.5">
+            <Alert
+              variant="destructive"
+              className="border-destructive/30 bg-destructive/5 text-caption text-destructive"
+            >
               {error}
-            </div>
+            </Alert>
           )}
 
-          <div className="border-line flex items-center justify-end gap-2 border-t pt-2">
-            <button
+          <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={onClose}
               disabled={submitting}
-              className="border-line text-small text-ink hover:bg-paper rounded-md border px-4 py-2 font-medium"
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="bg-primary text-small text-primary-ink rounded-md px-4 py-2 font-semibold hover:opacity-95"
-            >
-              {submitting ? 'Verifying...' : 'Verify & Continue'}
-            </button>
-          </div>
+            </Button>
+            <Button type="submit" size="sm" loading={submitting}>
+              Verify & Continue
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

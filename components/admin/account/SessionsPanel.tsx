@@ -9,7 +9,8 @@ import { AdminCard } from '@/components/admin/AdminCard';
 import { AdminEmpty, AdminLoading } from '@/components/admin/AdminStates';
 import { StatusBanner } from '@/components/admin/StatusBanner';
 import { FlowDialog } from '@/components/manage/FlowDialog';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/dates';
 import type { AdminSession } from '@/types/admin.types';
 
@@ -101,18 +102,19 @@ export function SessionsPanel() {
         description="Sessions last seven days. Sign out any device you do not recognise."
         footer={
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => void load()}
-              disabled={loading}
-              className="rounded-control text-small hover:bg-ink/5 inline-flex min-h-10 items-center gap-2 px-2 font-semibold disabled:opacity-50"
+              loading={loading}
             >
               <RefreshCw className="size-4" aria-hidden />
               Refresh
-            </button>
+            </Button>
             {hasOthers && (
               <Button
-                variant="danger"
+                variant="destructive"
                 size="sm"
                 onClick={() => setDialog({ type: 'all' })}
                 icon={<LogOut className="size-4" aria-hidden />}
@@ -147,25 +149,30 @@ export function SessionsPanel() {
                     <p className="text-small flex flex-wrap items-center gap-2 font-semibold">
                       {deviceLabel(session.userAgent)}
                       {session.current && (
-                        <span className="bg-success/10 text-caption text-success rounded-full px-2 py-0.5 font-semibold">
+                        <Badge
+                          variant="outline"
+                          className="border-success/30 bg-success/10 text-caption text-success rounded-full px-2 py-0.5 font-semibold"
+                        >
                           This device
-                        </span>
+                        </Badge>
                       )}
                     </p>
-                    <p className="text-caption text-muted mt-0.5">
+                    <p className="text-caption text-muted-foreground mt-0.5">
                       {session.ipAddress ?? 'Unknown IP'} · Last active{' '}
                       {formatDate(session.lastSeenAt)} · Expires{' '}
                       {formatDate(session.expiresAt)}
                     </p>
                   </div>
                   {!session.current && (
-                    <button
+                    <Button
                       type="button"
+                      variant="destructive"
+                      size="sm"
                       onClick={() => setDialog({ type: 'one', session })}
-                      className="rounded-control border-line text-small text-danger hover:border-danger/40 hover:bg-danger/5 min-h-9 self-start border px-3 font-semibold sm:self-auto"
+                      className="self-start sm:self-auto"
                     >
                       Sign out
-                    </button>
+                    </Button>
                   )}
                 </li>
               ))}
@@ -186,7 +193,7 @@ export function SessionsPanel() {
         }
         dismissible={!busy}
       >
-        <p className="text-small text-muted">
+        <p className="text-small text-muted-foreground">
           {dialog?.type === 'all'
             ? 'Every other admin session will end immediately. Your current session stays active.'
             : 'That device will need to sign in again.'}

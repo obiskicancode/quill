@@ -22,7 +22,7 @@ import { Banner } from '../checkout/CheckoutStates';
 import { useHoldCountdown } from '../checkout/useHoldCountdown';
 import { HelpBlock } from '../HelpBlock';
 import { EASE_OUT } from '../motion/variants';
-import { Button, ButtonLink } from '../ui/Button';
+import { Button, ButtonLink } from '../ui/button';
 import { ActionsPanel } from './ActionsPanel';
 import { ActivityTimeline } from './ActivityTimeline';
 import { CancelFlow } from './CancelFlow';
@@ -207,7 +207,7 @@ export function ManageView({
           )}
           {v.status === 'pending_payment' && hold.remainingMs !== null && (
             <p
-              className={`rounded-control text-small p-3 ${hold.expiring ? 'bg-danger/5 text-danger font-semibold' : 'bg-paper text-ink'}`}
+              className={`rounded-control text-small p-3 ${hold.expiring ? 'bg-destructive/5 text-destructive font-semibold' : 'bg-paper text-ink'}`}
             >
               {hold.expired ? (
                 'The hold on your room has ended.'
@@ -255,7 +255,7 @@ export function ManageView({
             <motion.section
               {...presence}
               aria-labelledby="pending-title"
-              className="rounded-card border-ink bg-surface space-y-3 border-2 p-5 md:p-6"
+              className="rounded-card border-ink bg-card space-y-3 border-2 p-5 md:p-6"
             >
               <h2 id="pending-title" className="font-display text-h3">
                 A date change is waiting for payment

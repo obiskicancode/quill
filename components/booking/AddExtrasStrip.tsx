@@ -7,7 +7,7 @@ import type { GuestReservation } from '@/types/booking.types';
 import { formatMinor } from '@/types/stay.types';
 
 import { StaggerGroup, StaggerItem } from '../motion';
-import { ButtonLink } from '../ui/Button';
+import { ButtonLink } from '../ui/button';
 
 /** Extras the guest can still add. Omitted entirely unless the hotel supports adding extras after booking. */
 export function AddExtrasStrip({
@@ -45,11 +45,13 @@ export function AddExtrasStrip({
             key={e.id}
             as="li"
             scale
-            className="rounded-card border-line bg-surface flex h-full flex-col justify-between gap-4 border p-5"
+            className="rounded-card border-line bg-card flex h-full flex-col justify-between gap-4 border p-5"
           >
             <div>
               <p className="font-semibold">{e.name}</p>
-              <p className="text-small text-muted mt-1">{e.description}</p>
+              <p className="text-small text-muted-foreground mt-1">
+                {e.description}
+              </p>
               <p className="text-small mt-2 font-semibold tabular-nums">
                 {formatMinor(e.priceMinor)} {unitLabels[e.unit]}
               </p>

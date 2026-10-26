@@ -16,9 +16,9 @@ export function PaymentsBreakdown({
   if (loading || !breakdown) {
     return (
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-card border-line bg-surface h-44 animate-pulse border p-4"></div>
-        <div className="rounded-card border-line bg-surface h-44 animate-pulse border p-4"></div>
-        <div className="rounded-card border-line bg-surface h-44 animate-pulse border p-4"></div>
+        <div className="rounded-card border-line bg-card h-44 animate-pulse border p-4"></div>
+        <div className="rounded-card border-line bg-card h-44 animate-pulse border p-4"></div>
+        <div className="rounded-card border-line bg-card h-44 animate-pulse border p-4"></div>
       </div>
     );
   }
@@ -32,11 +32,11 @@ export function PaymentsBreakdown({
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* 1. By Method */}
-      <div className="rounded-card border-line bg-surface border p-4 shadow-sm">
+      <div className="rounded-card border-line bg-card border p-4 shadow-sm">
         <h3 className="text-small text-ink font-semibold">
           Volume by Payment Method
         </h3>
-        <p className="text-caption text-muted mb-3">
+        <p className="text-caption text-muted-foreground mb-3">
           Card, bank transfer, cash, and USSD
         </p>
         <div className="space-y-2.5">
@@ -44,7 +44,7 @@ export function PaymentsBreakdown({
             <div key={item.key} className="space-y-1">
               <div className="text-caption flex justify-between">
                 <span className="text-ink font-medium">{item.label}</span>
-                <span className="text-muted">
+                <span className="text-muted-foreground">
                   {formatNaira(item.amountMinor)} ({item.percent}%)
                 </span>
               </div>
@@ -60,11 +60,11 @@ export function PaymentsBreakdown({
       </div>
 
       {/* 2. By Provider */}
-      <div className="rounded-card border-line bg-surface border p-4 shadow-sm">
+      <div className="rounded-card border-line bg-card border p-4 shadow-sm">
         <h3 className="text-small text-ink font-semibold">
           Volume by Provider
         </h3>
-        <p className="text-caption text-muted mb-3">
+        <p className="text-caption text-muted-foreground mb-3">
           Paystack vs manual ledger entries
         </p>
         <div className="space-y-2.5">
@@ -72,13 +72,13 @@ export function PaymentsBreakdown({
             <div key={item.key} className="space-y-1">
               <div className="text-caption flex justify-between">
                 <span className="text-ink font-medium">{item.label}</span>
-                <span className="text-muted">
+                <span className="text-muted-foreground">
                   {formatNaira(item.amountMinor)} ({item.percent}%)
                 </span>
               </div>
               <div className="bg-paper h-2 w-full overflow-hidden rounded-full">
                 <div
-                  className="bg-accent h-full rounded-full transition-all duration-300"
+                  className="bg-primary h-full rounded-full transition-all duration-300"
                   style={{ width: `${item.percent}%` }}
                 />
               </div>
@@ -88,11 +88,11 @@ export function PaymentsBreakdown({
       </div>
 
       {/* 3. Daily Strip */}
-      <div className="rounded-card border-line bg-surface border p-4 shadow-sm">
+      <div className="rounded-card border-line bg-card border p-4 shadow-sm">
         <h3 className="text-small text-ink font-semibold">
           Recent Daily Collections
         </h3>
-        <p className="text-caption text-muted mb-3">
+        <p className="text-caption text-muted-foreground mb-3">
           Daily net inflows for selected period
         </p>
         <div className="flex h-24 items-end justify-between gap-1.5 pt-2">
@@ -116,7 +116,7 @@ export function PaymentsBreakdown({
                     style={{ height: `${heightPercent}%` }}
                   />
                 </div>
-                <span className="text-muted truncate text-[10px]">
+                <span className="text-muted-foreground truncate text-[10px]">
                   {day.label.slice(0, 3)}
                 </span>
               </div>

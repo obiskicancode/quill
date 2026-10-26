@@ -14,7 +14,7 @@ export function PaymentSummary({ v }: { v: GuestReservation }) {
   return (
     <section
       aria-labelledby="payment-title"
-      className="rounded-card border-line bg-surface shadow-raised space-y-5 border p-5 md:p-6"
+      className="rounded-card border-line bg-card shadow-raised space-y-5 border p-5 md:p-6"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="payment-title" className="font-display text-h3">
@@ -25,14 +25,14 @@ export function PaymentSummary({ v }: { v: GuestReservation }) {
       <PriceBreakdown quote={v.breakdown} />
       <dl className="border-line text-small space-y-2 border-t pt-4">
         <div className={row}>
-          <dt className="text-muted">Amount paid</dt>
+          <dt className="text-muted-foreground">Amount paid</dt>
           <dd className="font-semibold tabular-nums">
             {formatMinor(amounts.paidMinor)}
           </dd>
         </div>
         {amounts.balanceMinor > 0 && (
           <div className={row}>
-            <dt className="text-muted">
+            <dt className="text-muted-foreground">
               {v.status === 'confirmed' ||
               v.status === 'reserved_pay_at_hotel' ||
               v.status === 'pending_approval'
@@ -45,12 +45,12 @@ export function PaymentSummary({ v }: { v: GuestReservation }) {
           </div>
         )}
         <div className={row}>
-          <dt className="text-muted">Payment method</dt>
+          <dt className="text-muted-foreground">Payment method</dt>
           <dd>{payment.methodLabel}</dd>
         </div>
         {payment.reference && (
           <div className={row}>
-            <dt className="text-muted">Payment reference</dt>
+            <dt className="text-muted-foreground">Payment reference</dt>
             <dd className="break-all tabular-nums">{payment.reference}</dd>
           </div>
         )}
@@ -59,7 +59,7 @@ export function PaymentSummary({ v }: { v: GuestReservation }) {
         <Link
           href={`/booking/confirmation/receipt?ref=${encodeURIComponent(v.reference)}`}
           target="_blank"
-          className="decoration-accent inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
+          className="decoration-brand inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
         >
           Download receipt
           <span className="sr-only">

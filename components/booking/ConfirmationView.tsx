@@ -12,7 +12,7 @@ import { Banner } from '../checkout/CheckoutStates';
 import { HelpBlock } from '../HelpBlock';
 import { Reveal } from '../motion';
 import { EASE_OUT } from '../motion/variants';
-import { Button, ButtonLink } from '../ui/Button';
+import { Button, ButtonLink } from '../ui/button';
 import { ActionRow } from './ActionRow';
 import { AddExtrasStrip } from './AddExtrasStrip';
 import { GettingHere } from './GettingHere';

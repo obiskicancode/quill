@@ -30,7 +30,16 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import type { AdminAmenity } from '@/types/inventory.types';
 
 import { AmenityDialog } from './AmenityDialog';
@@ -107,7 +116,8 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
   }
 
   function renderIcon(iconName: string | null) {
-    if (!iconName) return <HelpCircle className="text-muted size-4" />;
+    if (!iconName)
+      return <HelpCircle className="text-muted-foreground size-4" />;
     const Component = ICON_MAP[iconName] || HelpCircle;
     return <Component className="text-brand size-4" />;
   }
@@ -134,19 +144,21 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
             <Check className="size-5 shrink-0" />
             <p>{successMessage}</p>
           </div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setSuccessMessage(null)}
-            className="text-xs hover:underline"
+            className="text-success hover:text-success hover:bg-success/15 h-7 text-xs"
           >
             Dismiss
-          </button>
+          </Button>
         </div>
       )}
 
       {/* Action Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-small text-muted">
+        <p className="text-small text-muted-foreground">
           Catalogue of {amenities.length} amenities available for room type
           configuration.
         </p>
@@ -182,67 +194,75 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
           balconies.
         </AdminEmpty>
       ) : (
-        <div className="rounded-card border-line bg-surface overflow-x-auto border">
-          <table className="text-small w-full text-left">
-            <thead className="border-line bg-paper text-muted border-b">
-              <tr>
-                <th className="py-3 pr-2 pl-4 font-medium">Icon</th>
-                <th className="px-4 py-3 font-medium">Amenity</th>
-                <th className="px-4 py-3 font-medium">Unique Key</th>
-                <th className="px-4 py-3 font-medium">Room Types Using</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="py-3 pr-4 pl-3 text-right font-medium">
+        <div className="rounded-card border-line bg-card overflow-hidden border">
+          <Table className="text-small w-full text-left">
+            <TableHeader className="border-line bg-paper text-muted-foreground border-b">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="py-3 pr-2 pl-4 font-medium">
+                  Icon
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">Amenity</TableHead>
+                <TableHead className="px-4 py-3 font-medium">
+                  Unique Key
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">
+                  Room Types Using
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">Status</TableHead>
+                <TableHead className="py-3 pr-4 pl-3 text-right font-medium">
                   Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-line divide-y">
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-line divide-y">
               {amenities.map((item) => (
-                <tr
+                <TableRow
                   key={item.id}
                   className="hover:bg-paper/40 transition-colors"
                 >
-                  <td className="py-3 pr-2 pl-4">
+                  <TableCell className="py-3 pr-2 pl-4">
                     <div className="border-line bg-paper flex size-8 items-center justify-center rounded border">
                       {renderIcon(item.icon)}
                     </div>
-                  </td>
+                  </TableCell>
 
-                  <td className="px-4 py-3">
+                  <TableCell className="px-4 py-3">
                     <div>
                       <span className="text-foreground font-semibold">
                         {item.label}
                       </span>
                       {item.description && (
-                        <p className="text-muted line-clamp-1 text-xs">
+                        <p className="text-muted-foreground line-clamp-1 text-xs">
                           {item.description}
                         </p>
                       )}
                     </div>
-                  </td>
+                  </TableCell>
 
-                  <td className="text-muted px-4 py-3 font-mono text-xs">
+                  <TableCell className="text-muted-foreground px-4 py-3 font-mono text-xs">
                     {item.key}
-                  </td>
+                  </TableCell>
 
-                  <td className="px-4 py-3">
-                    <span
+                  <TableCell className="px-4 py-3">
+                    <Badge
+                      variant="outline"
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
                         item.usageCount && item.usageCount > 0
-                          ? 'bg-brand/15 text-brand'
-                          : 'bg-muted/15 text-muted'
+                          ? 'border-brand/30 bg-brand/15 text-brand'
+                          : 'border-muted/30 bg-muted/15 text-muted-foreground'
                       }`}
                     >
                       {item.usageCount || 0} room type(s)
-                    </span>
-                  </td>
+                    </Badge>
+                  </TableCell>
 
-                  <td className="px-4 py-3">
-                    <span
+                  <TableCell className="px-4 py-3">
+                    <Badge
+                      variant="outline"
                       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                         item.isActive
-                          ? 'bg-success/15 text-success'
-                          : 'bg-muted/20 text-muted'
+                          ? 'border-success/30 bg-success/15 text-success'
+                          : 'border-muted/30 bg-muted/20 text-muted-foreground'
                       }`}
                     >
                       <span
@@ -251,13 +271,13 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
                         }`}
                       />
                       {item.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
+                    </Badge>
+                  </TableCell>
 
-                  <td className="py-3 pr-4 pl-3 text-right">
+                  <TableCell className="py-3 pr-4 pl-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button
-                        size="sm"
+                        size="icon-xs"
                         variant="ghost"
                         onClick={() => {
                           setEditingAmenity(item);
@@ -268,20 +288,20 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
                         <Edit2 className="size-3.5" />
                       </Button>
                       <Button
-                        size="sm"
+                        size="icon-xs"
                         variant="ghost"
                         onClick={() => handleDelete(item)}
-                        className="text-danger hover:bg-danger/10 hover:text-danger"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                         aria-label={`Delete ${item.label}`}
                       >
                         <Trash2 className="size-3.5" />
                       </Button>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 

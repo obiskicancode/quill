@@ -1,8 +1,9 @@
 'use client';
 
+import { cn } from 'cn';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Upload } from 'lucide-react';
-import { useState } from 'react';
+import { FileCheck, Upload, X } from 'lucide-react';
+import { useRef, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { checkoutService } from '@/app/api/services/checkout.service';
@@ -10,10 +11,20 @@ import { checkProofFile, MAX_PROOF_BYTES } from '@/schemas/checkout.schema';
 import type { GuestReservation } from '@/types/booking.types';
 import { formatMinor } from '@/types/stay.types';
 
-import { Field } from '../checkout/Field';
 import { CopyButton } from '../checkout/PaymentStep';
 import { EASE_OUT } from '../motion/variants';
-import { Button } from '../ui/Button';
+import {
+  Attachment,
+  AttachmentAction,
+  AttachmentActions,
+  AttachmentContent,
+  AttachmentDescription,
+  AttachmentMedia,
+  AttachmentTitle,
+} from '../ui/attachment';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 
 /** Bank details, exact amount and reference, plus the receipt upload when no proof has been sent yet. */
 export function TransferPanel({
@@ -23,6 +34,7 @@ export function TransferPanel({
   v: GuestReservation;
   onUploaded: () => void;
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -64,8 +76,8 @@ export function TransferPanel({
         {rows.map(([term, value, copy]) => (
           <div key={term} className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <dt className="text-muted">{term}</dt>
-              <dd className="font-semibold break-words tabular-nums">
+              <dt className="text-muted-foreground">{term}</dt>
+              <dd className="font-semibold wrap-break-word tabular-nums">
                 {value}
               </dd>
             </div>
@@ -95,25 +107,95 @@ export function TransferPanel({
             exit={reduced ? undefined : { opacity: 0, y: -6 }}
             transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
           >
-            <Field
-              id="field-proof"
-              label="Upload your receipt"
-              error={error ?? undefined}
-              hint={`JPG, PNG, WebP or PDF, up to ${MAX_PROOF_BYTES / 1024 / 1024} MB.`}
-            >
-              {(a) => (
-                <input
-                  {...a}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,application/pdf"
-                  onChange={(e) => {
-                    setFile(e.target.files?.[0] ?? null);
-                    setError(null);
-                  }}
-                  className="rounded-control border-ink/60 bg-surface text-small file:bg-ink file:text-paper block min-h-12 w-full cursor-pointer border file:mr-4 file:min-h-12 file:cursor-pointer file:border-0 file:px-4 file:font-semibold"
-                />
+            <div className="space-y-2">
+              <Label htmlFor="field-proof" className="font-semibold">
+                Upload your receipt
+              </Label>
+              <Input
+                ref={fileInputRef}
+                id="field-proof"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                aria-invalid={error ? true : undefined}
+                aria-describedby={
+                  error ? 'field-proof-error' : 'field-proof-hint'
+                }
+                onChange={(e) => {
+                  setFile(e.target.files?.[0] ?? null);
+                  setError(null);
+                }}
+                className="sr-only"
+              />
+              {file ? (
+                <Attachment state="done" className="bg-card w-full p-3">
+                  <AttachmentMedia
+                    variant="icon"
+                    className="bg-primary/10 text-brand-ink"
+                  >
+                    <FileCheck className="size-5" aria-hidden />
+                  </AttachmentMedia>
+                  <AttachmentContent>
+                    <AttachmentTitle className="text-small font-semibold">
+                      {file.name}
+                    </AttachmentTitle>
+                    <AttachmentDescription>
+                      {(file.size / (1024 * 1024)).toFixed(2)} MB &bull; Ready
+                      to submit
+                    </AttachmentDescription>
+                  </AttachmentContent>
+                  <AttachmentActions>
+                    <AttachmentAction
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label="Remove receipt"
+                      disabled={busy}
+                      onClick={() => {
+                        setFile(null);
+                        if (fileInputRef.current)
+                          fileInputRef.current.value = '';
+                      }}
+                    >
+                      <X className="size-3.5" aria-hidden />
+                    </AttachmentAction>
+                  </AttachmentActions>
+                </Attachment>
+              ) : (
+                <label
+                  htmlFor="field-proof"
+                  className={cn(
+                    'rounded-control border-line bg-card/60 hover:bg-card focus-within:ring-ring block w-full cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-offset-2',
+                    busy && 'pointer-events-none opacity-60',
+                  )}
+                >
+                  <Attachment state="idle" className="w-full border-dashed p-4">
+                    <AttachmentMedia
+                      variant="icon"
+                      className="bg-primary/10 text-brand-ink"
+                    >
+                      <Upload className="size-5" aria-hidden />
+                    </AttachmentMedia>
+                    <AttachmentContent>
+                      <AttachmentTitle className="text-small font-semibold">
+                        Choose receipt file
+                      </AttachmentTitle>
+                      <AttachmentDescription id="field-proof-hint">
+                        JPG, PNG, WebP or PDF, up to{' '}
+                        {MAX_PROOF_BYTES / 1024 / 1024} MB
+                      </AttachmentDescription>
+                    </AttachmentContent>
+                  </Attachment>
+                </label>
               )}
-            </Field>
+              {error && (
+                <p
+                  id="field-proof-error"
+                  className="text-small text-destructive font-medium"
+                >
+                  {error}
+                </p>
+              )}
+            </div>
             <Button
               loading={busy}
               icon={<Upload className="size-4" aria-hidden />}

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/button';
 
 /** Global 404. Rendered inside the root layout, so the header and footer stay in place. */
 export default function NotFound() {
@@ -9,7 +9,7 @@ export default function NotFound() {
       <div className="max-w-xl">
         <p
           aria-hidden
-          className="font-display text-display text-accent-ink leading-none"
+          className="font-display text-display text-brand-ink leading-none"
         >
           404
         </p>
@@ -26,11 +26,11 @@ export default function NotFound() {
             Browse rooms
           </ButtonLink>
         </div>
-        <p className="text-small text-muted mt-6">
+        <p className="text-small text-muted-foreground mt-6">
           Looking for something specific?{' '}
           <Link
             href="/enquiry"
-            className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
+            className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
           >
             Send us a booking enquiry
           </Link>

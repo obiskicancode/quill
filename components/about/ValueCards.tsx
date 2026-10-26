@@ -29,7 +29,7 @@ export async function ValueCards() {
   const cards = await getValueCards();
   if (cards.length === 0) return null;
   return (
-    <section aria-labelledby="values-title" className="section-y bg-surface">
+    <section aria-labelledby="values-title" className="section-y bg-card">
       <div className="container-page">
         <h2 id="values-title" className="font-display text-h2 mb-10">
           What to expect
@@ -47,7 +47,7 @@ export async function ValueCards() {
                 scale
                 className="rounded-card border-line bg-paper border p-6"
               >
-                <span className="bg-accent text-ink grid size-12 place-items-center rounded-full">
+                <span className="bg-primary text-ink grid size-12 place-items-center rounded-full">
                   <Icon className="size-6" aria-hidden />
                 </span>
                 <h3 className="font-display text-h3 mt-4">{c.title}</h3>

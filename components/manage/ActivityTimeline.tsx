@@ -15,13 +15,13 @@ export function ActivityTimeline({ entries }: { entries: TimelineEntry[] }) {
   return (
     <section
       aria-labelledby="activity-title"
-      className="rounded-card border-line bg-surface shadow-raised border p-5 md:p-6 print:hidden"
+      className="rounded-card border-line bg-card shadow-raised border p-5 md:p-6 print:hidden"
     >
       <h2 id="activity-title" className="font-display text-h3">
         Activity
       </h2>
       {entries.length === 0 ? (
-        <p className="text-small text-muted mt-3">
+        <p className="text-small text-muted-foreground mt-3">
           Nothing has happened on this booking yet.
         </p>
       ) : (
@@ -34,11 +34,11 @@ export function ActivityTimeline({ entries }: { entries: TimelineEntry[] }) {
             <StaggerItem key={e.id} as="li" className="relative">
               <span
                 aria-hidden
-                className="border-ink bg-surface absolute top-1.5 -left-[1.6rem] size-3 rounded-full border-2"
+                className="border-ink bg-card absolute top-1.5 -left-[1.6rem] size-3 rounded-full border-2"
               />
               <p className="font-semibold">{e.label}</p>
               {e.detail && <p className="text-small text-ink/85">{e.detail}</p>}
-              <p className="text-caption text-muted">
+              <p className="text-caption text-muted-foreground">
                 <time dateTime={e.at}>{when.format(new Date(e.at))}</time>
               </p>
             </StaggerItem>

@@ -9,7 +9,14 @@ import { adminService } from '@/app/api/services/admin.service';
 import { ServiceError } from '@/app/api/services/base.service';
 import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Field, inputClass } from '@/components/checkout/Field';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from '@/components/ui/input-otp';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type Mode = 'totp' | 'recovery';
 
@@ -45,54 +52,36 @@ export function VerifyForm({ next }: { next?: string }) {
 
   return (
     <div>
-      <p className="text-caption text-muted font-semibold tracking-wide uppercase">
+      <p className="text-caption text-muted-foreground font-semibold tracking-wide uppercase">
         Two-factor authentication
       </p>
       <h1 className="font-display text-h2 mt-2">Enter your code</h1>
-      <p className="text-small text-muted mt-2">
+      <p className="text-small text-muted-foreground mt-2">
         {mode === 'totp'
           ? 'Open your authenticator app and enter the current six-digit code.'
           : 'Enter one of the recovery codes you saved when you set up two-factor authentication.'}
       </p>
 
-      <div
-        role="tablist"
-        aria-label="Verification method"
-        className="rounded-control border-line bg-paper mt-5 grid grid-cols-2 border p-1"
+      <Tabs
+        value={mode}
+        onValueChange={(val) => {
+          setMode(val as Mode);
+          setCode('');
+          setError(null);
+        }}
+        className="mt-5 w-full"
       >
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mode === 'totp'}
-          onClick={() => {
-            setMode('totp');
-            setCode('');
-            setError(null);
-          }}
-          className={`rounded-control text-small flex min-h-10 items-center justify-center gap-2 font-semibold ${
-            mode === 'totp' ? 'bg-surface shadow-raised' : 'text-muted'
-          }`}
-        >
-          <ShieldCheck className="size-4" aria-hidden />
-          Authenticator
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={mode === 'recovery'}
-          onClick={() => {
-            setMode('recovery');
-            setCode('');
-            setError(null);
-          }}
-          className={`rounded-control text-small flex min-h-10 items-center justify-center gap-2 font-semibold ${
-            mode === 'recovery' ? 'bg-surface shadow-raised' : 'text-muted'
-          }`}
-        >
-          <KeyRound className="size-4" aria-hidden />
-          Recovery code
-        </button>
-      </div>
+        <TabsList className="grid h-11 w-full grid-cols-2 p-1">
+          <TabsTrigger value="totp" className="gap-2">
+            <ShieldCheck className="size-4" aria-hidden />
+            Authenticator
+          </TabsTrigger>
+          <TabsTrigger value="recovery" className="gap-2">
+            <KeyRound className="size-4" aria-hidden />
+            Recovery code
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {error && (
         <div className="mt-4">
@@ -110,30 +99,58 @@ export function VerifyForm({ next }: { next?: string }) {
               : 'Recovery codes can only be used once.'
           }
         >
-          {(a11y) => (
-            <input
-              {...a11y}
-              type="text"
-              value={code}
-              onChange={(event) =>
-                setCode(
-                  mode === 'totp'
-                    ? event.target.value.replace(/\D/g, '').slice(0, 6)
-                    : event.target.value.toUpperCase(),
-                )
-              }
-              inputMode={mode === 'totp' ? 'numeric' : 'text'}
-              autoComplete="one-time-code"
-              autoFocus
-              maxLength={mode === 'totp' ? 6 : 11}
-              required
-              className={`${inputClass()} ${
-                mode === 'totp'
-                  ? 'text-h3 text-center tracking-[0.35em]'
-                  : 'tracking-wider uppercase'
-              }`}
-            />
-          )}
+          {(a11y) =>
+            mode === 'totp' ? (
+              <div className="flex justify-center py-2">
+                <InputOTP
+                  maxLength={6}
+                  value={code}
+                  onChange={(val) => setCode(val.replace(/\D/g, ''))}
+                  autoFocus
+                >
+                  <InputOTPGroup className="gap-2">
+                    <InputOTPSlot
+                      index={0}
+                      className="rounded-control text-h3 size-12"
+                    />
+                    <InputOTPSlot
+                      index={1}
+                      className="rounded-control text-h3 size-12"
+                    />
+                    <InputOTPSlot
+                      index={2}
+                      className="rounded-control text-h3 size-12"
+                    />
+                    <InputOTPSlot
+                      index={3}
+                      className="rounded-control text-h3 size-12"
+                    />
+                    <InputOTPSlot
+                      index={4}
+                      className="rounded-control text-h3 size-12"
+                    />
+                    <InputOTPSlot
+                      index={5}
+                      className="rounded-control text-h3 size-12"
+                    />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+            ) : (
+              <Input
+                {...a11y}
+                type="text"
+                value={code}
+                onChange={(event) => setCode(event.target.value.toUpperCase())}
+                inputMode="text"
+                autoComplete="one-time-code"
+                autoFocus
+                maxLength={11}
+                required
+                className={`${inputClass()} tracking-wider uppercase`}
+              />
+            )
+          }
         </Field>
 
         <Button type="submit" loading={busy} className="w-full">

@@ -20,7 +20,7 @@ export function PolicySnapshotCard({
       <div className="text-small space-y-3.5">
         <div className="flex items-start gap-2.5">
           <ShieldCheck
-            className="text-muted mt-0.5 size-4 shrink-0"
+            className="text-muted-foreground mt-0.5 size-4 shrink-0"
             aria-hidden="true"
           />
           <div>
@@ -28,19 +28,19 @@ export function PolicySnapshotCard({
               {policy.cancellationPolicyType} policy
             </p>
             {formattedDeadline ? (
-              <p className="text-caption text-muted">
+              <p className="text-caption text-muted-foreground">
                 Free cancellation allowed until{' '}
                 <strong className="text-ink">{formattedDeadline}</strong>.
               </p>
             ) : (
-              <p className="text-caption text-muted">
+              <p className="text-caption text-muted-foreground">
                 Non-refundable cancellation terms apply.
               </p>
             )}
           </div>
         </div>
 
-        <div className="rounded-control bg-paper/60 text-caption text-muted p-3">
+        <div className="rounded-control bg-paper/60 text-caption text-muted-foreground p-3">
           <p className="text-ink font-semibold">
             Check-in / Check-out schedule
           </p>
@@ -52,10 +52,10 @@ export function PolicySnapshotCard({
 
         {policy.houseRules && policy.houseRules.length > 0 && (
           <div className="border-line text-caption border-t pt-2">
-            <span className="text-muted font-semibold uppercase">
+            <span className="text-muted-foreground font-semibold uppercase">
               Property house rules
             </span>
-            <ul className="text-muted mt-1.5 list-inside list-disc space-y-1">
+            <ul className="text-muted-foreground mt-1.5 list-inside list-disc space-y-1">
               {policy.houseRules.map((rule, idx) => (
                 <li key={idx}>{rule}</li>
               ))}

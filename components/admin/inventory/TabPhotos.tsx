@@ -15,7 +15,9 @@ import {
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import type { AdminRoomImage } from '@/types/inventory.types';
 
 interface TabPhotosProps {
@@ -180,7 +182,7 @@ export function TabPhotos({
       {errorMessage && (
         <div
           role="alert"
-          className="rounded-card border-danger/40 bg-danger/10 text-small text-danger flex items-center gap-3 border p-4"
+          className="rounded-card border-destructive/40 bg-destructive/10 text-small text-destructive flex items-center gap-3 border p-4"
         >
           <AlertCircle className="size-5 shrink-0" />
           <p>{errorMessage}</p>
@@ -196,29 +198,31 @@ export function TabPhotos({
             <Check className="size-5 shrink-0" />
             <p>{successMessage}</p>
           </div>
-          <button
+          <Button
             type="button"
+            variant="link"
+            size="xs"
             onClick={() => setSuccessMessage(null)}
-            className="text-xs hover:underline"
+            className="text-success h-auto p-0 text-xs underline"
           >
             Dismiss
-          </button>
+          </Button>
         </div>
       )}
 
       {/* Upload Zone */}
       {!atMaxPhotos ? (
-        <div className="rounded-card border-line bg-surface border-2 border-dashed p-6 text-center">
-          <UploadCloud className="text-muted mx-auto size-10" />
+        <div className="rounded-card border-line bg-card border-2 border-dashed p-6 text-center">
+          <UploadCloud className="text-muted-foreground mx-auto size-10" />
           <p className="text-foreground text-small mt-2 font-medium">
             Upload Room Photos (Up to 8 images, JPEG, PNG, or WebP)
           </p>
-          <p className="text-muted mt-1 text-xs">
+          <p className="text-muted-foreground mt-1 text-xs">
             Max 10 MB per image. Processed automatically into responsive WebP
             formats with EXIF stripped.
           </p>
 
-          <input
+          <Input
             type="file"
             id="photoUploadInput"
             accept="image/jpeg,image/png,image/webp"
@@ -245,31 +249,37 @@ export function TabPhotos({
                 {(pendingFile.size / 1024 / 1024).toFixed(2)} MB)
               </p>
 
-              <div className="mt-3">
-                <label className="text-foreground block text-xs font-medium">
+              <div className="mt-3 space-y-1.5">
+                <Label
+                  htmlFor="upload-alt-text"
+                  className="text-foreground text-xs font-medium"
+                >
                   Alt Text (Required for accessibility & active status){' '}
-                  <span className="text-danger">*</span>
-                </label>
-                <input
+                  <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="upload-alt-text"
                   type="text"
                   required
                   value={pendingAltText}
                   onChange={(e) => setPendingAltText(e.target.value)}
                   placeholder="e.g. Spacious king bedroom with ocean-facing balcony"
-                  className="bg-background text-foreground focus:border-brand border-line text-small mt-1 w-full rounded border px-3 py-1.5 focus:outline-none"
                 />
               </div>
 
-              <div className="mt-3">
-                <label className="text-foreground block text-xs font-medium">
+              <div className="mt-3 space-y-1.5">
+                <Label
+                  htmlFor="upload-caption"
+                  className="text-foreground text-xs font-medium"
+                >
                   Caption (Optional)
-                </label>
-                <input
+                </Label>
+                <Input
+                  id="upload-caption"
                   type="text"
                   value={pendingCaption}
                   onChange={(e) => setPendingCaption(e.target.value)}
                   placeholder="e.g. Balcony sunset view"
-                  className="bg-background text-foreground focus:border-brand border-line text-small mt-1 w-full rounded border px-3 py-1.5 focus:outline-none"
                 />
               </div>
 
@@ -281,7 +291,7 @@ export function TabPhotos({
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
-                  <p className="text-muted mt-1 text-xs">
+                  <p className="text-muted-foreground mt-1 text-xs">
                     Uploading and processing...
                   </p>
                 </div>
@@ -317,7 +327,7 @@ export function TabPhotos({
           )}
         </div>
       ) : (
-        <div className="rounded-card border-line bg-paper text-small text-muted border p-4 text-center">
+        <div className="rounded-card border-line bg-paper text-small text-muted-foreground border p-4 text-center">
           Maximum of 8 photos reached. Delete an existing photo to upload a new
           one.
         </div>
@@ -329,13 +339,13 @@ export function TabPhotos({
           <h3 className="text-foreground font-semibold">
             Current Photos ({photos.length} of 8)
           </h3>
-          <p className="text-muted text-xs">
+          <p className="text-muted-foreground text-xs">
             First photo or photo marked with ★ is used as the cover on listings.
           </p>
         </div>
 
         {photos.length === 0 ? (
-          <div className="rounded-card border-line bg-paper text-muted mt-4 border p-8 text-center">
+          <div className="rounded-card border-line bg-paper text-muted-foreground mt-4 border p-8 text-center">
             <ImageIcon className="mx-auto size-8 opacity-40" />
             <p className="text-small mt-2">
               No photos uploaded for this room type yet.
@@ -348,7 +358,7 @@ export function TabPhotos({
                 key={p.id}
                 className={`rounded-card relative flex flex-col overflow-hidden border ${
                   p.isCover ? 'border-brand ring-brand ring-1' : 'border-line'
-                } bg-surface`}
+                } bg-card`}
               >
                 {/* Image display */}
                 <div className="bg-paper relative aspect-[4/3] w-full">
@@ -370,19 +380,19 @@ export function TabPhotos({
                 <div className="flex flex-1 flex-col justify-between p-3">
                   {editingId === p.id ? (
                     <div className="space-y-2">
-                      <input
+                      <Input
                         type="text"
                         value={editAlt}
                         onChange={(e) => setEditAlt(e.target.value)}
                         placeholder="Alt text"
-                        className="border-line w-full rounded border px-2 py-1 text-xs"
+                        className="h-7 text-xs"
                       />
-                      <input
+                      <Input
                         type="text"
                         value={editCaption}
                         onChange={(e) => setEditCaption(e.target.value)}
                         placeholder="Caption"
-                        className="border-line w-full rounded border px-2 py-1 text-xs"
+                        className="h-7 text-xs"
                       />
                       <div className="flex justify-end gap-1">
                         <Button
@@ -407,65 +417,74 @@ export function TabPhotos({
                         {p.altText}
                       </p>
                       {p.caption && (
-                        <p className="text-muted mt-0.5 line-clamp-1 text-xs italic">
+                        <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs italic">
                           {p.caption}
                         </p>
                       )}
-                      <button
+                      <Button
                         type="button"
+                        variant="link"
+                        size="xs"
                         onClick={() => {
                           setEditingId(p.id);
                           setEditAlt(p.altText);
                           setEditCaption(p.caption || '');
                         }}
-                        className="text-brand mt-1 text-xs hover:underline"
+                        className="h-auto p-0 text-xs"
                       >
                         Edit text
-                      </button>
+                      </Button>
                     </div>
                   )}
 
                   <div className="border-line mt-3 flex items-center justify-between border-t pt-2">
                     <div className="flex items-center gap-1">
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon-xs"
                         onClick={() => handleMove(idx, 'up')}
                         disabled={idx === 0}
                         aria-label="Move earlier"
-                        className="hover:text-foreground text-muted hover:bg-paper rounded p-1 disabled:opacity-30"
                       >
                         <ArrowUp className="size-3.5" />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon-xs"
                         onClick={() => handleMove(idx, 'down')}
                         disabled={idx === photos.length - 1}
                         aria-label="Move later"
-                        className="hover:text-foreground text-muted hover:bg-paper rounded p-1 disabled:opacity-30"
                       >
                         <ArrowDown className="size-3.5" />
-                      </button>
+                      </Button>
                     </div>
 
                     <div className="flex items-center gap-1">
                       {!p.isCover && (
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="icon-xs"
                           onClick={() => handleSetCover(p)}
-                          className="hover:text-brand text-muted hover:bg-paper rounded p-1 text-xs"
+                          aria-label="Set as cover"
                           title="Set as cover"
                         >
-                          <Star className="size-4" />
-                        </button>
+                          <Star className="size-3.5" />
+                        </Button>
                       )}
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon-xs"
                         onClick={() => handleDelete(p.id)}
-                        className="text-danger hover:bg-danger/10 rounded p-1"
+                        aria-label="Delete photo"
                         title="Delete photo"
+                        className="text-destructive hover:bg-destructive/10"
                       >
-                        <Trash2 className="size-4" />
-                      </button>
+                        <Trash2 className="size-3.5" />
+                      </Button>
                     </div>
                   </div>
                 </div>

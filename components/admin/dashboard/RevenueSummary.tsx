@@ -5,7 +5,7 @@ import { TrendingDown, TrendingUp } from 'lucide-react';
 import { AdminCard } from '@/components/admin/AdminCard';
 import { AdminError, AdminLoading } from '@/components/admin/AdminStates';
 import { Reveal } from '@/components/motion/Reveal';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { formatNaira } from '@/lib/format';
 import type { RevenueData, RevenueRange } from '@/types/dashboard.types';
 
@@ -40,25 +40,24 @@ function ChangeIndicator({
 
   if (isZero) {
     return (
-      <span className="text-caption text-muted inline-flex items-center gap-1 font-semibold">
+      <span className="text-caption text-muted-foreground bg-muted/30 border-line/60 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-semibold">
         <span>0%</span>
-        <span>no change vs previous</span>
+        <span>vs prior</span>
       </span>
     );
   }
 
   const Icon = isUp ? TrendingUp : TrendingDown;
-  const directionText = isUp ? 'increase' : 'decrease';
-  const colorClass = isPositive ? 'text-success' : 'text-danger';
+  const colorClass = isPositive
+    ? 'border-success/20 bg-success/10 text-success'
+    : 'border-destructive/20 bg-destructive/10 text-destructive';
 
   return (
     <span
-      className={`text-caption inline-flex items-center gap-1 font-semibold ${colorClass}`}
+      className={`text-caption inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-semibold ${colorClass}`}
     >
       <Icon className="size-3.5" aria-hidden="true" />
-      <span>
-        {isUp ? `+${percent}%` : `${percent}%`} {directionText} vs previous
-      </span>
+      <span>{isUp ? `+${percent}%` : `${percent}%`} vs prior</span>
     </span>
   );
 }
@@ -77,7 +76,7 @@ export function RevenueSummary({
         title="Revenue summary"
         description="Gross payments minus refunds, bookings and rate metrics for property management."
         footer={
-          <div className="text-caption text-muted flex flex-wrap items-center justify-between gap-3">
+          <div className="text-caption text-muted-foreground flex flex-wrap items-center justify-between gap-3">
             <span>All amounts in Nigerian Naira (₦).</span>
             <span>Based on hotel timezone (Africa/Lagos).</span>
           </div>
@@ -85,31 +84,31 @@ export function RevenueSummary({
       >
         {/* Range Selector Controls */}
         <div className="border-line mb-6 flex flex-wrap items-center gap-2 border-b pb-4">
-          <span className="text-caption text-muted mr-2 font-semibold tracking-wider uppercase">
+          <span className="text-caption text-muted-foreground mr-2 font-semibold tracking-wider uppercase">
             Period:
           </span>
           <div
             role="tablist"
             aria-label="Revenue time periods"
-            className="rounded-control bg-paper inline-flex p-1"
+            className="rounded-control border-line bg-paper inline-flex border p-0.5"
           >
             {ranges.map((r) => {
               const active = selectedRange === r.id;
               return (
-                <button
+                <Button
                   key={r.id}
                   type="button"
                   role="tab"
+                  variant={active ? 'secondary' : 'ghost'}
+                  size="xs"
                   aria-selected={active}
                   onClick={() => onRangeChange(r.id)}
-                  className={`rounded-control text-caption min-h-9 px-3 font-semibold transition-all ${
-                    active
-                      ? 'bg-surface text-ink shadow-raised'
-                      : 'text-muted hover:text-ink'
+                  className={`text-caption h-7 px-2.5 font-semibold ${
+                    active ? 'shadow-xs' : 'text-muted-foreground'
                   }`}
                 >
                   {r.label}
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -130,7 +129,7 @@ export function RevenueSummary({
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* 1. Payments Received */}
             <div className="rounded-control border-line bg-paper/50 border p-4">
-              <span className="text-small text-muted font-medium">
+              <span className="text-small text-muted-foreground font-medium">
                 Payments received
               </span>
               <p className="font-display text-h3 text-ink mt-1 font-semibold">
@@ -143,7 +142,7 @@ export function RevenueSummary({
 
             {/* 2. New Bookings */}
             <div className="rounded-control border-line bg-paper/50 border p-4">
-              <span className="text-small text-muted font-medium">
+              <span className="text-small text-muted-foreground font-medium">
                 New bookings
               </span>
               <p className="font-display text-h3 text-ink mt-1 font-semibold">
@@ -156,7 +155,7 @@ export function RevenueSummary({
 
             {/* 3. Average Nightly Rate */}
             <div className="rounded-control border-line bg-paper/50 border p-4">
-              <span className="text-small text-muted font-medium">
+              <span className="text-small text-muted-foreground font-medium">
                 Average nightly rate
               </span>
               <p className="font-display text-h3 text-ink mt-1 font-semibold">
@@ -169,7 +168,7 @@ export function RevenueSummary({
 
             {/* 4. Cancellations */}
             <div className="rounded-control border-line bg-paper/50 border p-4">
-              <span className="text-small text-muted font-medium">
+              <span className="text-small text-muted-foreground font-medium">
                 Cancellations
               </span>
               <p className="font-display text-h3 text-ink mt-1 font-semibold">

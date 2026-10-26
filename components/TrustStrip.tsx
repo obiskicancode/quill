@@ -48,7 +48,7 @@ export function TrustStrip({ revealDelay = 0 }: { revealDelay?: number }) {
           item.id === 'reviews' ? reviewsLabel(site, item.label) : item.label;
         const inner = (
           <>
-            <Icon className="text-accent-ink size-5 shrink-0" aria-hidden />
+            <Icon className="text-brand-ink size-5 shrink-0" aria-hidden />
             <span>{label}</span>
           </>
         );
@@ -59,7 +59,7 @@ export function TrustStrip({ revealDelay = 0 }: { revealDelay?: number }) {
                 href={site.googleReviewsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="decoration-accent inline-flex min-h-11 items-center gap-2 underline decoration-2 underline-offset-4"
+                className="decoration-brand inline-flex min-h-11 items-center gap-2 underline decoration-2 underline-offset-4"
               >
                 {inner}
                 <span className="sr-only">(opens in a new tab)</span>

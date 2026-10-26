@@ -56,20 +56,20 @@ export function RecentActivity({ events }: { events: ActivityEvent[] }) {
                     className="group rounded-control hover:bg-paper flex items-center justify-between gap-3 px-2 py-1.5 transition-colors"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="rounded-control bg-paper text-muted group-hover:bg-accent group-hover:text-ink grid size-8 shrink-0 place-items-center">
+                      <span className="rounded-control bg-paper text-muted-foreground group-hover:bg-primary group-hover:text-ink grid size-8 shrink-0 place-items-center">
                         <Icon className="size-4" aria-hidden="true" />
                       </span>
                       <div className="min-w-0">
-                        <p className="text-small text-ink group-hover:text-accent-ink truncate font-medium">
+                        <p className="text-small text-ink group-hover:text-brand-ink truncate font-medium">
                           {event.label}
                         </p>
-                        <p className="text-caption text-muted">
+                        <p className="text-caption text-muted-foreground">
                           {event.relativeTime}
                         </p>
                       </div>
                     </div>
                     <ArrowRight
-                      className="text-muted group-hover:text-ink size-4 shrink-0 transition-transform group-hover:translate-x-1"
+                      className="text-muted-foreground group-hover:text-ink size-4 shrink-0 transition-transform group-hover:translate-x-1"
                       aria-hidden="true"
                     />
                   </Link>

@@ -1,6 +1,6 @@
 import { Wrench } from 'lucide-react';
 
-import { ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/button';
 
 export const metadata = {
   title: 'Maintenance',
@@ -12,7 +12,7 @@ export default function MaintenancePage() {
   return (
     <section aria-labelledby="maint-title" className="container-page section-y">
       <div className="max-w-xl space-y-5">
-        <Wrench className="text-accent-ink size-10" aria-hidden />
+        <Wrench className="text-brand-ink size-10" aria-hidden />
         <h1 id="maint-title" className="font-display text-h2">
           We are making a few updates
         </h1>
@@ -20,7 +20,7 @@ export default function MaintenancePage() {
           Our website is down for scheduled maintenance. We will be back online
           soon. Thanks for your patience.
         </p>
-        <p className="text-small text-muted">
+        <p className="text-small text-muted-foreground">
           Want to make a booking now? Message us on WhatsApp and we can help you
           straight away.
         </p>

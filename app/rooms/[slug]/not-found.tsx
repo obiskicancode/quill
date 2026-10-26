@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 
-import { ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/button';
 
 export default function RoomNotFound() {
   const heading = useRef<HTMLHeadingElement>(null);

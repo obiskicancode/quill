@@ -8,7 +8,7 @@ import { useSite } from '@/providers/site.provider';
 import { Magnetic } from './motion/Magnetic';
 import { Reveal } from './motion/Reveal';
 import { TextReveal } from './motion/TextReveal';
-import { ButtonLink } from './ui/Button';
+import { ButtonLink } from './ui/button';
 
 export function CtaBand() {
   const site = useSite();
@@ -16,7 +16,7 @@ export function CtaBand() {
   return (
     <section
       aria-labelledby="cta-heading"
-      className="bg-accent text-ink py-14 md:py-20"
+      className="bg-primary text-ink py-14 md:py-20"
     >
       <div className="container-page flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
         <div className="max-w-xl">
@@ -47,7 +47,7 @@ export function CtaBand() {
               </ButtonLink>
               <span
                 aria-hidden
-                className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[500%] motion-reduce:hidden"
+                className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-linear-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-[500%] motion-reduce:hidden"
               />
             </span>
           </Magnetic>

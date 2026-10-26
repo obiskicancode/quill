@@ -1,32 +1,42 @@
+import { cn } from 'cn';
 import type { ReactNode } from 'react';
+
+import { Badge as ShadcnBadge } from '@/components/ui/badge';
 
 type Tone = 'neutral' | 'accent' | 'warning' | 'muted' | 'overlay';
 
 const tones: Record<Tone, string> = {
-  neutral: 'bg-ink/8 text-ink',
-  accent: 'bg-accent text-ink',
-  warning: 'bg-surface text-danger ring-1 ring-danger/40',
-  muted: 'bg-ink text-white',
-  overlay: 'bg-ink/80 text-white',
+  neutral: 'border-transparent bg-ink/8 text-ink',
+  accent: 'border-transparent bg-primary text-primary-foreground',
+  warning:
+    'border-destructive/40 bg-card text-destructive ring-1 ring-destructive/40',
+  muted: 'border-transparent bg-ink text-paper',
+  overlay: 'border-transparent bg-ink/80 text-paper',
 };
 
-/** Small label. All pairings are 4.5:1 or better. */
+/** Small label composed from shadcn Badge. All pairings are 4.5:1 or better. */
 export function Badge({
   tone = 'neutral',
   icon,
   children,
+  className,
 }: {
   tone?: Tone;
   icon?: ReactNode;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <span
-      className={`text-caption inline-flex min-h-7 items-center gap-1.5 rounded-full px-3 font-semibold ${tones[tone]}`}
+    <ShadcnBadge
+      className={cn(
+        'text-caption inline-flex min-h-7 items-center gap-1.5 rounded-full px-3 font-semibold',
+        tones[tone],
+        className,
+      )}
     >
       {icon}
       {children}
-    </span>
+    </ShadcnBadge>
   );
 }
 

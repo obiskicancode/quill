@@ -1,3 +1,6 @@
+import { cn } from 'cn';
+
+import { Badge } from '@/components/ui/badge';
 import type { ReservationStatus } from '@/types/dashboard.types';
 
 const statusConfig: Record<
@@ -6,45 +9,49 @@ const statusConfig: Record<
 > = {
   confirmed: {
     label: 'Confirmed',
-    className: 'bg-success/10 text-success border-success/20',
+    className: 'border-success/20 bg-success/10 text-success',
   },
   checked_in: {
     label: 'Checked in',
-    className: 'bg-accent/15 text-accent-ink border-accent/30',
+    className: 'border-primary/30 bg-primary/15 text-brand-ink',
   },
   checked_out: {
     label: 'Checked out',
-    className: 'bg-muted/15 text-muted border-muted/30',
+    className: 'border-muted/30 bg-muted/15 text-muted-foreground',
   },
   pending: {
     label: 'Pending',
-    className: 'bg-ink/10 text-ink border-line',
+    className: 'border-line bg-ink/10 text-ink',
   },
   cancelled: {
     label: 'Cancelled',
-    className: 'bg-danger/10 text-danger border-danger/20',
+    className: 'border-destructive/20 bg-destructive/10 text-destructive',
   },
   no_show: {
     label: 'No show',
-    className: 'bg-danger/10 text-danger border-danger/20',
+    className: 'border-destructive/20 bg-destructive/10 text-destructive',
   },
   expired: {
     label: 'Expired',
-    className: 'bg-muted/15 text-muted border-muted/30',
+    className: 'border-muted/30 bg-muted/15 text-muted-foreground',
   },
 };
 
 export function StatusBadge({ status }: { status: ReservationStatus }) {
   const config = statusConfig[status] ?? {
     label: status,
-    className: 'bg-ink/10 text-ink border-line',
+    className: 'border-line bg-ink/10 text-ink',
   };
 
   return (
-    <span
-      className={`text-caption inline-flex items-center rounded-full border px-2 py-0.5 font-semibold ${config.className}`}
+    <Badge
+      variant="outline"
+      className={cn(
+        'text-caption rounded-full px-2 py-0.5 font-semibold',
+        config.className,
+      )}
     >
       {config.label}
-    </span>
+    </Badge>
   );
 }

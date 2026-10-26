@@ -3,7 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import type { Metadata } from 'next';
 
 import { CheckoutShell } from '@/components/checkout/CheckoutShell';
-import { ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/button';
 
 export const metadata: Metadata = {
   title: 'Payment not completed',
@@ -30,7 +30,7 @@ export default async function PaymentFailedPage({
     <CheckoutShell label="Secure checkout" backToHome>
       <section aria-labelledby="pf-title" className="container-page section-y">
         <div className="mx-auto max-w-xl space-y-5">
-          <AlertTriangle className="text-danger size-10" aria-hidden />
+          <AlertTriangle className="text-destructive size-10" aria-hidden />
           <h1 id="pf-title" className="font-display text-h2">
             Payment not completed
           </h1>
@@ -39,7 +39,7 @@ export default async function PaymentFailedPage({
             charged.
           </p>
           {ref && (
-            <p className="text-small text-muted">
+            <p className="text-small text-muted-foreground">
               If you were in the middle of paying for booking{' '}
               <span className="font-semibold">{ref}</span>, try again from
               checkout.
@@ -60,12 +60,12 @@ export default async function PaymentFailedPage({
               </ButtonLink>
             )}
           </div>
-          <p className="text-small text-muted">
+          <p className="text-small text-muted-foreground">
             If your bank shows a pending charge, it will usually drop off within
             a few days. If you think you were charged in error,{' '}
             <Link
               href="/contact"
-              className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
+              className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
             >
               contact us
             </Link>

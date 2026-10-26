@@ -1,7 +1,7 @@
 import { Reveal, TextReveal } from '@/components/motion';
 import { getEventFacilities } from '@/lib/content/data';
 
-import { ButtonLink } from '../ui/Button';
+import { ButtonLink } from '../ui/button';
 
 /** Conference and events: capacity, layouts and an Enquire button. Shown only when such a facility exists. */
 export async function EventsStrip() {

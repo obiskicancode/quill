@@ -22,7 +22,7 @@ export function PolicySection({
   return (
     <section
       aria-labelledby="policy-title"
-      className="rounded-card border-line bg-surface shadow-raised border p-5 md:p-6"
+      className="rounded-card border-line bg-card shadow-raised border p-5 md:p-6"
     >
       <h2 id="policy-title" className="font-display text-h3">
         Policies
@@ -31,7 +31,7 @@ export function PolicySection({
         {headline}
       </p>
       {c.freeCancellationUntil && (
-        <p className="text-small text-muted mt-2">
+        <p className="text-small text-muted-foreground mt-2">
           After that, cancellation charges apply.
         </p>
       )}
@@ -40,13 +40,13 @@ export function PolicySection({
           <p className="font-semibold">If you cancelled right now</p>
           <dl className="mt-2 space-y-1">
             <div className="flex justify-between gap-4">
-              <dt className="text-muted">You would get back</dt>
+              <dt className="text-muted-foreground">You would get back</dt>
               <dd className="font-semibold tabular-nums">
                 {formatMinor(refundNow.refundMinor)}
               </dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-muted">The hotel would keep</dt>
+              <dt className="text-muted-foreground">The hotel would keep</dt>
               <dd className="tabular-nums">
                 {formatMinor(refundNow.retainedMinor)}
               </dd>

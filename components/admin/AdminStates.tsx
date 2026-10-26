@@ -1,18 +1,19 @@
-import { Loader2 } from 'lucide-react';
+import { cn } from 'cn';
 import type { ReactNode } from 'react';
+
+import { Alert, AlertTitle } from '@/components/ui/alert';
+import { Card } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 
 export function AdminLoading({ label = 'Loading' }: { label?: string }) {
   return (
-    <div
+    <Card
       role="status"
-      className="rounded-card border-line bg-surface text-small text-muted flex min-h-40 flex-col items-center justify-center gap-3 border"
+      className="rounded-card border-line bg-card text-small text-muted-foreground min-h-40 items-center justify-center gap-3 border py-0 shadow-none ring-0"
     >
-      <Loader2
-        className="size-6 animate-spin motion-reduce:animate-none"
-        aria-hidden
-      />
+      <Spinner className="size-6" aria-hidden />
       <span>{label}</span>
-    </div>
+    </Card>
   );
 }
 
@@ -24,14 +25,14 @@ export function AdminEmpty({
   children?: ReactNode;
 }) {
   return (
-    <div className="rounded-card border-line bg-paper border border-dashed px-5 py-10 text-center">
+    <Card className="rounded-card border-line bg-paper border border-dashed px-5 py-10 text-center shadow-none ring-0">
       <p className="font-semibold">{title}</p>
       {children && (
-        <p className="text-small text-muted mx-auto mt-1 max-w-md">
+        <p className="text-small text-muted-foreground mx-auto mt-1 max-w-md">
           {children}
         </p>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -43,12 +44,14 @@ export function AdminError({
   action?: ReactNode;
 }) {
   return (
-    <div
-      role="alert"
-      className="rounded-card border-danger/30 bg-danger/5 text-small text-danger border px-5 py-6"
+    <Alert
+      variant="destructive"
+      className={cn(
+        'rounded-card border-destructive/30 bg-destructive/5 text-small text-destructive border px-5 py-6',
+      )}
     >
-      <p>{message}</p>
-      {action && <div className="mt-3">{action}</div>}
-    </div>
+      <AlertTitle>{message}</AlertTitle>
+      {action && <div className="col-start-2 mt-3">{action}</div>}
+    </Alert>
   );
 }

@@ -15,7 +15,7 @@ export function TextLink({
   external = false,
   className = '',
 }: TextLinkProps) {
-  const classes = `inline-flex min-h-11 items-center font-semibold underline decoration-accent decoration-2 underline-offset-[6px] transition-[text-decoration-color] hover:decoration-current ${className}`;
+  const classes = `inline-flex min-h-11 items-center font-semibold underline decoration-brand decoration-2 underline-offset-[6px] transition-[text-decoration-color] hover:decoration-current ${className}`;
   if (external || !href.startsWith('/')) {
     return (
       <a

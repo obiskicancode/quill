@@ -11,7 +11,7 @@ import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 
 import { EASE_OUT } from '../motion/variants';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
 
 type State = 'idle' | 'sending' | 'sent' | 'limited' | 'failed';
 
@@ -69,7 +69,7 @@ export function ResendEmail({
   return (
     <div className="text-small flex flex-wrap items-center gap-x-4 gap-y-2">
       <p className="inline-flex items-center gap-2">
-        <Mail className="text-accent-ink size-4" aria-hidden />
+        <Mail className="text-brand-ink size-4" aria-hidden />
         <span>
           {lead} <span className="font-semibold">{maskedEmail}</span>
         </span>
@@ -92,7 +92,7 @@ export function ResendEmail({
         )}
         target="_blank"
         rel="noopener noreferrer"
-        className="decoration-accent inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
+        className="decoration-brand inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
       >
         Wrong email? Contact us
         <span className="sr-only"> (opens in a new tab)</span>
@@ -100,7 +100,7 @@ export function ResendEmail({
       <p
         role="status"
         aria-live="polite"
-        className={`text-small basis-full font-medium ${state === 'failed' || state === 'limited' ? 'text-danger' : ''}`}
+        className={`text-small basis-full font-medium ${state === 'failed' || state === 'limited' ? 'text-destructive' : ''}`}
       >
         <AnimatePresence mode="wait" initial={false}>
           {message && (

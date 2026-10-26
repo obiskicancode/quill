@@ -22,7 +22,7 @@ export function CheckoutSkeleton() {
         </div>
         <div
           aria-hidden
-          className="rounded-card border-line bg-surface mt-8 hidden space-y-5 border p-5 lg:mt-0 lg:block"
+          className="rounded-card border-line bg-card mt-8 hidden space-y-5 border p-5 lg:mt-0 lg:block"
         >
           <div className="flex gap-4">
             <div className={`${bar} rounded-control size-20`} />

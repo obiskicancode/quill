@@ -1,10 +1,13 @@
 'use client';
 
-import { CheckCircle2, FileImage, Loader2, XCircle } from 'lucide-react';
+import { CheckCircle2, FileImage, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { formatNaira } from '@/lib/format';
 import type {
   ReservationDetail,
@@ -112,11 +115,11 @@ export function VerifyTransferModal({
         {/* Receipt and Details Row */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* Left: Receipt Preview */}
-          <div className="bg-canvas rounded-control border-line flex flex-col items-center justify-center border p-4 text-center">
+          <div className="bg-muted rounded-control border-line flex flex-col items-center justify-center border p-4 text-center">
             {payment.proofKey ? (
               <div className="space-y-2">
                 <FileImage
-                  className="text-accent mx-auto size-12"
+                  className="text-brand mx-auto size-12"
                   aria-hidden="true"
                 />
                 <p className="text-small text-ink font-semibold">
@@ -126,34 +129,40 @@ export function VerifyTransferModal({
                   href={`/api/admin/reservations/${reservation.id}/proof`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-caption text-accent inline-flex items-center font-semibold hover:underline"
+                  className="text-caption text-brand inline-flex items-center font-semibold hover:underline"
                 >
                   Open receipt in new tab &rarr;
                 </a>
               </div>
             ) : (
-              <p className="text-small text-muted">
+              <p className="text-small text-muted-foreground">
                 No image receipt uploaded for this transaction.
               </p>
             )}
           </div>
 
           {/* Right: Payment details */}
-          <div className="bg-canvas rounded-control border-line text-small space-y-2 border p-4">
+          <div className="bg-muted rounded-control border-line text-small space-y-2 border p-4">
             <div>
-              <span className="text-caption text-muted">Reference:</span>
+              <span className="text-caption text-muted-foreground">
+                Reference:
+              </span>
               <p className="text-ink font-mono font-semibold">
                 {payment.reference}
               </p>
             </div>
             <div>
-              <span className="text-caption text-muted">Expected Amount:</span>
+              <span className="text-caption text-muted-foreground">
+                Expected Amount:
+              </span>
               <p className="text-ink font-bold">
                 {formatNaira(payment.amountMinor / 100)}
               </p>
             </div>
             <div>
-              <span className="text-caption text-muted">Guest Name:</span>
+              <span className="text-caption text-muted-foreground">
+                Guest Name:
+              </span>
               <p className="text-ink">{reservation.guestName}</p>
             </div>
           </div>
@@ -161,88 +170,86 @@ export function VerifyTransferModal({
 
         {/* Action Toggle */}
         <div className="border-line grid grid-cols-2 gap-2 border-t pt-3">
-          <button
+          <Button
             type="button"
+            variant={mode === 'verify' ? 'default' : 'outline'}
+            size="md"
             onClick={() => setMode('verify')}
-            className={`rounded-control text-small flex items-center justify-center gap-2 border p-2.5 font-semibold transition-colors ${
+            className={
               mode === 'verify'
-                ? 'border-success bg-success/15 text-success ring-success ring-2'
-                : 'border-line text-muted hover:border-ink hover:text-ink'
-            }`}
+                ? 'bg-success hover:bg-success/90 text-white'
+                : ''
+            }
           >
             <CheckCircle2 className="size-4" aria-hidden="true" />
             <span>Mark as Received</span>
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant={mode === 'reject' ? 'destructive' : 'outline'}
+            size="md"
             onClick={() => setMode('reject')}
-            className={`rounded-control text-small flex items-center justify-center gap-2 border p-2.5 font-semibold transition-colors ${
-              mode === 'reject'
-                ? 'border-danger bg-danger/15 text-danger ring-danger ring-2'
-                : 'border-line text-muted hover:border-ink hover:text-ink'
-            }`}
           >
             <XCircle className="size-4" aria-hidden="true" />
             <span>Reject Proof</span>
-          </button>
+          </Button>
         </div>
 
         {mode === 'verify' ? (
-          <div>
-            <label className="text-small text-ink block font-semibold">
+          <div className="space-y-1.5">
+            <Label htmlFor="verified-amount">
               Verified Amount Received (₦){' '}
-              <span className="text-danger">*</span>
-            </label>
-            <input
+              <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="verified-amount"
               type="number"
               step="any"
               required
               value={verifiedNaira}
               onChange={(e) => setVerifiedNaira(e.target.value)}
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
             />
-            <p className="text-caption text-muted mt-1">
+            <p className="text-caption text-muted-foreground">
               If the verified amount satisfies the deposit or stay total, the
               booking will automatically move to confirmed.
             </p>
           </div>
         ) : (
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Rejection Reason <span className="text-danger">*</span>
-            </label>
-            <textarea
+          <div className="space-y-1.5">
+            <Label htmlFor="rejection-reason">
+              Rejection Reason <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              id="rejection-reason"
               rows={3}
               required
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
               placeholder="e.g. Funds not reflected in hotel bank account, blurred receipt, incorrect amount..."
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
             />
-            <p className="text-caption text-muted mt-1">
+            <p className="text-caption text-muted-foreground">
               This message will be emailed to the guest. Their booking hold will
               remain active until normal expiration.
             </p>
           </div>
         )}
 
-        <div>
-          <label className="text-small text-ink block font-semibold">
-            Internal Note
-          </label>
-          <input
+        <div className="space-y-1.5">
+          <Label htmlFor="transfer-internal-note">Internal Note</Label>
+          <Input
+            id="transfer-internal-note"
             type="text"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="Staff notes for audit log..."
-            className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
           />
         </div>
 
         <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
+            size="sm"
             onClick={onClose}
             disabled={submitting}
           >
@@ -250,22 +257,11 @@ export function VerifyTransferModal({
           </Button>
           <Button
             type="submit"
-            variant={mode === 'verify' ? 'primary' : 'danger'}
-            disabled={submitting}
+            variant={mode === 'verify' ? 'default' : 'destructive'}
+            size="sm"
+            loading={submitting}
           >
-            {submitting ? (
-              <>
-                <Loader2
-                  className="mr-2 size-4 animate-spin"
-                  aria-hidden="true"
-                />
-                Processing...
-              </>
-            ) : mode === 'verify' ? (
-              'Confirm receipt & verify'
-            ) : (
-              'Reject transfer'
-            )}
+            {mode === 'verify' ? 'Confirm receipt & verify' : 'Reject transfer'}
           </Button>
         </div>
       </form>

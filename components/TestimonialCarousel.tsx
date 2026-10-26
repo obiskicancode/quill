@@ -23,7 +23,7 @@ function Stars({ rating }: { rating: number }) {
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
-          className={`size-5 ${i < rating ? 'fill-accent text-accent-ink' : 'text-ink/25'}`}
+          className={`size-5 ${i < rating ? 'fill-accent text-brand-ink' : 'text-ink/25'}`}
           aria-hidden
         />
       ))}
@@ -51,7 +51,9 @@ function Quote({ t }: { t: Testimonial }) {
         )}
         <span>
           <span className="block font-semibold">{t.guestName}</span>
-          <span className="text-small text-muted block">{t.stayType}</span>
+          <span className="text-small text-muted-foreground block">
+            {t.stayType}
+          </span>
         </span>
       </figcaption>
     </>
@@ -97,7 +99,9 @@ function Quote({ t }: { t: Testimonial }) {
         )}
         <span>
           <span className="block font-semibold">{t.guestName}</span>
-          <span className="text-small text-muted block">{t.stayType}</span>
+          <span className="text-small text-muted-foreground block">
+            {t.stayType}
+          </span>
         </span>
       </motion.figcaption>
     </motion.figure>
@@ -114,7 +118,7 @@ export function TestimonialCarousel({
   const items = testimonials.slice(0, 6);
   if (items.length === 0) return null;
   return (
-    <section aria-labelledby="reviews-heading" className="section-y bg-surface">
+    <section aria-labelledby="reviews-heading" className="section-y bg-card">
       <div className="container-page">
         <TextReveal
           as="h2"

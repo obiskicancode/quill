@@ -28,7 +28,7 @@ import { AnimatedList } from '../motion/AnimatedList';
 import { Reveal } from '../motion/Reveal';
 import { EASE_OUT, springGentle } from '../motion/variants';
 import { RoomCard } from '../RoomCard';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
 import { EmptyState } from './EmptyState';
 import { FilterChips } from './FilterChips';
 import { FilterPanel, FilterSheet } from './FilterPanel';
@@ -119,7 +119,7 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
         <div className="container-page pt-6">
           <p
             role="status"
-            className="rounded-card border-accent bg-accent/15 text-small border p-4 font-medium"
+            className="rounded-card border-primary bg-primary/15 text-small border p-4 font-medium"
           >
             {notice}
           </p>
@@ -133,13 +133,14 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="font-display text-h3">Filters</h2>
                 {activeFilters > 0 && (
-                  <button
+                  <Button
                     type="button"
+                    variant="link"
                     onClick={clearFilters}
-                    className="text-small decoration-accent inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
+                    className="text-small decoration-brand inline-flex h-auto p-0 font-semibold underline decoration-2 underline-offset-4"
                   >
                     Clear all
-                  </button>
+                  </Button>
                 )}
               </div>
               <FilterPanel
@@ -157,7 +158,7 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
                 <p className="font-semibold">
                   {visible.length} {visible.length === 1 ? 'room' : 'rooms'}
                   {stay && (
-                    <span className="text-muted font-normal">
+                    <span className="text-muted-foreground font-normal">
                       {' '}
                       for {formatRange(stay.checkIn, stay.checkOut)}
                     </span>
@@ -197,7 +198,7 @@ export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {
             {status === 'error' && (
               <div
                 role="alert"
-                className="rounded-card border-danger/40 bg-surface mt-6 flex flex-wrap items-center justify-between gap-4 border p-4"
+                className="rounded-card border-destructive/40 bg-card mt-6 flex flex-wrap items-center justify-between gap-4 border p-4"
               >
                 <p className="text-small">
                   <span className="font-semibold">

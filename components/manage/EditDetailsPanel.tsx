@@ -15,7 +15,7 @@ import { VerifyForm } from '../booking/VerifyForm';
 import { Banner } from '../checkout/CheckoutStates';
 import { DetailsStep, type GuestField } from '../checkout/DetailsStep';
 import { EASE_OUT } from '../motion/variants';
-import { Button, ButtonLink } from '../ui/Button';
+import { Button, ButtonLink } from '../ui/button';
 
 const EDITABLE: GuestField[] = [
   'fullName',
@@ -134,7 +134,7 @@ export function EditDetailsPanel({
 
   if (sessionExpired) {
     return (
-      <section className="rounded-card border-line bg-surface shadow-raised border p-5 md:p-6 print:hidden">
+      <section className="rounded-card border-line bg-card shadow-raised border p-5 md:p-6 print:hidden">
         <VerifyForm
           embedded
           scope="manage"
@@ -150,7 +150,7 @@ export function EditDetailsPanel({
   return (
     <section
       aria-labelledby="edit-title"
-      className="rounded-card border-line bg-surface shadow-raised border p-5 md:p-6 print:hidden"
+      className="rounded-card border-line bg-card shadow-raised border p-5 md:p-6 print:hidden"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="edit-title" className="font-display text-h3">
@@ -187,7 +187,7 @@ export function EditDetailsPanel({
         />
 
         {Object.values(errors).some(Boolean) && (
-          <p role="alert" className="text-small text-danger font-medium">
+          <p role="alert" className="text-small text-destructive font-medium">
             Please fix the highlighted fields.
           </p>
         )}
@@ -238,7 +238,7 @@ export function EditDetailsPanel({
           <Button type="submit" size="lg" loading={busy} disabled={!dirty}>
             Save changes
           </Button>
-          <span className="text-small text-muted">
+          <span className="text-small text-muted-foreground">
             {dirty ? 'You have unsaved changes.' : 'No changes yet.'}
           </span>
         </div>

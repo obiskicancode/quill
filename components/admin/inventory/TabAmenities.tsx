@@ -11,7 +11,10 @@ import {
 import { useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import type { AdminAmenity } from '@/types/inventory.types';
 
 interface TabAmenitiesProps {
@@ -101,7 +104,7 @@ export function TabAmenities({
   if (loading) {
     return (
       <div className="flex justify-center p-8">
-        <Loader2 className="text-muted size-6 animate-spin" />
+        <Loader2 className="text-muted-foreground size-6 animate-spin" />
       </div>
     );
   }
@@ -111,7 +114,7 @@ export function TabAmenities({
       {errorMessage && (
         <div
           role="alert"
-          className="rounded-card border-danger/40 bg-danger/10 text-small text-danger flex items-center gap-3 border p-4"
+          className="rounded-card border-destructive/40 bg-destructive/10 text-small text-destructive flex items-center gap-3 border p-4"
         >
           <AlertCircle className="size-5 shrink-0" />
           <p>{errorMessage}</p>
@@ -133,29 +136,29 @@ export function TabAmenities({
           <h2 className="text-foreground text-h3 font-semibold">
             Room Amenities Checklist
           </h2>
-          <p className="text-small text-muted">
+          <p className="text-small text-muted-foreground">
             Select the amenities and facilities included in this room type.
           </p>
         </div>
 
         <Link
           href="/admin/amenities"
-          className="text-brand flex items-center gap-1 text-xs hover:underline"
+          className="text-primary flex items-center gap-1 text-xs hover:underline"
         >
           Manage Amenities Catalogue <ExternalLink className="size-3" />
         </Link>
       </div>
 
       {/* Search and Quick Filters */}
-      <div className="rounded-card border-line bg-surface flex flex-col gap-3 border p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="rounded-card border-line bg-card flex flex-col gap-3 border p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1">
-          <Search className="text-muted absolute top-2.5 left-3 size-4" />
-          <input
-            type="text"
+          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+          <Input
+            type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search amenities (e.g. Wi-Fi, Balcony, Minibar)..."
-            className="bg-background text-foreground focus:border-brand border-line text-small w-full rounded border py-1.5 pr-3 pl-9 focus:outline-none"
+            className="pl-9"
           />
         </div>
 
@@ -163,7 +166,7 @@ export function TabAmenities({
           <Button
             type="button"
             size="sm"
-            variant="secondary"
+            variant="outline"
             onClick={handleSelectAll}
           >
             Select Filtered
@@ -171,7 +174,7 @@ export function TabAmenities({
           <Button
             type="button"
             size="sm"
-            variant="secondary"
+            variant="outline"
             onClick={handleClearAll}
           >
             Clear All
@@ -181,7 +184,7 @@ export function TabAmenities({
 
       {/* Grid of Amenity Checkboxes */}
       {filtered.length === 0 ? (
-        <div className="rounded-card border-line bg-paper text-muted border p-8 text-center">
+        <div className="rounded-card border-line bg-paper text-muted-foreground border p-8 text-center">
           No matching amenities found.
         </div>
       ) : (
@@ -189,19 +192,18 @@ export function TabAmenities({
           {filtered.map((a) => {
             const isChecked = selectedIds.has(a.id);
             return (
-              <label
+              <Label
                 key={a.id}
                 className={`rounded-card flex cursor-pointer items-start gap-3 border p-3 transition-colors ${
                   isChecked
-                    ? 'border-brand bg-brand/5'
-                    : 'border-line bg-surface hover:bg-paper/40'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-line bg-card hover:bg-paper/40'
                 }`}
               >
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={isChecked}
-                  onChange={() => toggleAmenity(a.id)}
-                  className="text-brand focus:ring-brand mt-1 size-4 rounded"
+                  onCheckedChange={() => toggleAmenity(a.id)}
+                  className="mt-1"
                 />
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
@@ -209,18 +211,18 @@ export function TabAmenities({
                       {a.label}
                     </span>
                     {a.icon && (
-                      <span className="bg-paper text-muted rounded px-1.5 py-0.5 text-xs">
+                      <span className="bg-paper text-muted-foreground rounded px-1.5 py-0.5 text-xs">
                         {a.icon}
                       </span>
                     )}
                   </div>
                   {a.description && (
-                    <p className="text-muted mt-0.5 line-clamp-2 text-xs">
+                    <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">
                       {a.description}
                     </p>
                   )}
                 </div>
-              </label>
+              </Label>
             );
           })}
         </div>
@@ -228,7 +230,7 @@ export function TabAmenities({
 
       {/* Action footer */}
       <div className="border-line flex items-center justify-between border-t pt-4">
-        <p className="text-small text-muted">
+        <p className="text-small text-muted-foreground">
           {selectedIds.size} of {allAmenities.length} amenities selected
         </p>
         <Button

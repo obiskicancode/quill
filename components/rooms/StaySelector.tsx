@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, Pencil, Users, X } from 'lucide-react';
+import { CalendarDays, Pencil, Users } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type MouseEvent } from 'react';
 
 import { formatShort } from '@/lib/dates';
@@ -15,7 +15,14 @@ import {
 
 import { DatePicker, type DateRange } from '../DatePicker';
 import { GuestStepper } from '../GuestStepper';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '../ui/sheet';
 
 interface StaySelectorProps {
   query: RoomQuery;
@@ -26,8 +33,7 @@ interface StaySelectorProps {
   openSignal: number;
 }
 
-const field =
-  'relative flex min-h-[4rem] items-center gap-3 rounded-control px-4 text-left transition-colors hover:bg-paper active:bg-line/60';
+const field = 'h-auto min-h-[4rem] w-full justify-start gap-3 px-4 text-left';
 
 /**
  * Sticky under the header. Reads from the URL and writes back to it, so dates and guests stay in sync with the list.
@@ -50,9 +56,8 @@ export function StaySelector({
   const [sheetError, setSheetError] = useState<string | null>(null);
 
   const wrapRef = useRef<HTMLDivElement>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const lastTrigger = useRef<HTMLElement | null>(null);
-  const ids = { dates: useId(), guests: useId(), title: useId() };
+  const ids = { dates: useId(), guests: useId() };
 
   const { checkIn, checkOut } = query;
   const hasDates = Boolean(checkIn && checkOut);
@@ -102,17 +107,6 @@ export function StaySelector({
     };
   }, [panel]);
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (sheetOpen && !dialog.open) dialog.showModal();
-    if (!sheetOpen && dialog.open) dialog.close();
-    document.body.style.overflow = sheetOpen ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [sheetOpen]);
-
   function trigger(next: 'dates' | 'guests', e: MouseEvent<HTMLButtonElement>) {
     lastTrigger.current = e.currentTarget;
     if (panel === next) setPanel(null);
@@ -150,63 +144,63 @@ export function StaySelector({
           <div
             role="group"
             aria-label="Your stay"
-            className="rounded-card bg-surface shadow-raised ring-ink/10 grid grid-cols-3 p-1.5 ring-1"
+            className="rounded-card bg-card shadow-raised ring-ink/10 grid grid-cols-3 p-1.5 ring-1"
           >
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               aria-expanded={panel === 'dates'}
               aria-controls={ids.dates}
               onClick={(e) => trigger('dates', e)}
               className={`${field} after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-px ${panel === 'dates' ? 'bg-paper' : ''}`}
             >
-              <CalendarDays className="text-accent-ink size-5" aria-hidden />
+              <CalendarDays className="text-brand-ink size-5" aria-hidden />
               <span>
-                <span className="text-caption text-muted block font-semibold">
+                <span className="text-caption text-muted-foreground block font-semibold">
                   Check-in
                 </span>
                 <span
-                  className={`block ${checkIn ? 'font-semibold' : 'text-muted'}`}
+                  className={`block ${checkIn ? 'font-semibold' : 'text-muted-foreground'}`}
                 >
                   {checkIn ? formatShort(checkIn) : 'Add date'}
                 </span>
               </span>
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="ghost"
               aria-expanded={panel === 'dates'}
               aria-controls={ids.dates}
               onClick={(e) => trigger('dates', e)}
               className={`${field} after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-px ${panel === 'dates' ? 'bg-paper' : ''}`}
             >
-              <CalendarDays className="text-accent-ink size-5" aria-hidden />
+              <CalendarDays className="text-brand-ink size-5" aria-hidden />
               <span>
-                <span className="text-caption text-muted block font-semibold">
+                <span className="text-caption text-muted-foreground block font-semibold">
                   Check-out
                 </span>
                 <span
-                  className={`block ${checkOut ? 'font-semibold' : 'text-muted'}`}
+                  className={`block ${checkOut ? 'font-semibold' : 'text-muted-foreground'}`}
                 >
                   {checkOut ? formatShort(checkOut) : 'Add date'}
                 </span>
               </span>
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="ghost"
               aria-expanded={panel === 'guests'}
               aria-controls={ids.guests}
               onClick={(e) => trigger('guests', e)}
               className={`${field} ${panel === 'guests' ? 'bg-paper' : ''}`}
             >
-              <Users className="text-accent-ink size-5" aria-hidden />
+              <Users className="text-brand-ink size-5" aria-hidden />
               <span>
-                <span className="text-caption text-muted block font-semibold">
+                <span className="text-caption text-muted-foreground block font-semibold">
                   Guests
                 </span>
                 <span className="block font-semibold">
                   {guestSummary(query)}
                 </span>
               </span>
-            </button>
+            </Button>
           </div>
 
           {panel === 'dates' && (
@@ -214,7 +208,7 @@ export function StaySelector({
               id={ids.dates}
               role="group"
               aria-label="Choose your dates"
-              className="rounded-card bg-surface shadow-float ring-ink/10 absolute top-full left-0 z-30 mt-3 w-[44rem] max-w-full p-5 ring-1"
+              className="rounded-card bg-card shadow-float ring-ink/10 absolute top-full left-0 z-30 mt-3 w-[44rem] max-w-full p-5 ring-1"
             >
               <DatePicker
                 value={draft}
@@ -243,7 +237,7 @@ export function StaySelector({
               id={ids.guests}
               role="group"
               aria-label="Choose guests"
-              className="rounded-card bg-surface shadow-float ring-ink/10 absolute top-full right-0 z-30 mt-3 w-full max-w-sm p-5 ring-1"
+              className="rounded-card bg-card shadow-float ring-ink/10 absolute top-full right-0 z-30 mt-3 w-full max-w-sm p-5 ring-1"
             >
               <div className="divide-line divide-y">
                 <GuestStepper
@@ -277,15 +271,15 @@ export function StaySelector({
 
         {/* Mobile */}
         <div className="md:hidden">
-          <button
-            type="button"
+          <Button
+            variant="outline"
             aria-haspopup="dialog"
             onClick={openSheet}
-            className="border-ink/60 bg-surface active:bg-paper flex min-h-12 w-full items-center justify-between gap-3 rounded-full border px-5 text-left transition-colors"
+            className="h-auto min-h-12 w-full justify-between rounded-full px-5"
           >
             <span className="flex min-w-0 items-center gap-3">
               <CalendarDays
-                className="text-accent-ink size-5 shrink-0"
+                className="text-brand-ink size-5 shrink-0"
                 aria-hidden
               />
               <span className="truncate font-semibold">{chip}</span>
@@ -294,89 +288,89 @@ export function StaySelector({
               <Pencil className="size-4" aria-hidden />
               Edit
             </span>
-          </button>
+          </Button>
 
-          <dialog
-            ref={dialogRef}
-            aria-labelledby={ids.title}
-            onClose={() => setSheetOpen(false)}
-            className="text-ink backdrop:bg-ink/60 m-0 h-dvh max-h-none w-screen max-w-none bg-transparent p-0 open:flex open:flex-col"
+          <Sheet
+            open={sheetOpen}
+            onOpenChange={(nextOpen) => {
+              if (!nextOpen) setSheetOpen(false);
+            }}
           >
-            {sheetOpen && (
-              <div className="animate-sheet-rise bg-paper flex h-full w-full flex-col">
-                <div className="border-line flex items-center justify-between border-b px-5 py-2">
-                  <h2 id={ids.title} className="font-display text-h3">
-                    Your stay
-                  </h2>
-                  <button
-                    type="button"
-                    aria-label="Close"
-                    onClick={() => setSheetOpen(false)}
-                    className="hover:bg-ink/10 grid size-11 place-items-center rounded-full"
-                  >
-                    <X className="size-6" aria-hidden />
-                  </button>
-                </div>
-                <div className="flex-1 overflow-y-auto px-5 py-5">
-                  <DatePicker
-                    value={draft}
-                    onChange={(next) => {
-                      setDraft(next);
-                      setSheetError(null);
-                    }}
-                    monthsShown={1}
+            <SheetContent
+              side="bottom"
+              showCloseButton
+              className="border-line bg-paper text-ink h-dvh max-h-none gap-0 rounded-none border-t p-0"
+            >
+              <SheetHeader className="border-line border-b px-5 py-2 pr-14">
+                <SheetTitle className="font-display text-h3">
+                  Your stay
+                </SheetTitle>
+                <SheetDescription className="sr-only">
+                  Choose check-in and check-out dates and the number of guests.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="flex-1 overflow-y-auto px-5 py-5">
+                <DatePicker
+                  value={draft}
+                  onChange={(next) => {
+                    setDraft(next);
+                    setSheetError(null);
+                  }}
+                  monthsShown={1}
+                />
+                <div className="divide-line border-line mt-6 divide-y border-t">
+                  <GuestStepper
+                    label="Adults"
+                    hint="Age 13 and over"
+                    value={sheetAdults}
+                    min={1}
+                    max={MAX_ADULTS}
+                    onChange={setSheetAdults}
                   />
-                  <div className="divide-line border-line mt-6 divide-y border-t">
-                    <GuestStepper
-                      label="Adults"
-                      hint="Age 13 and over"
-                      value={sheetAdults}
-                      min={1}
-                      max={MAX_ADULTS}
-                      onChange={setSheetAdults}
-                    />
-                    <GuestStepper
-                      label="Children"
-                      hint="Age 0 to 12"
-                      value={sheetChildren}
-                      min={0}
-                      max={MAX_CHILDREN}
-                      onChange={setSheetChildren}
-                    />
-                  </div>
-                </div>
-                <div className="border-line bg-surface border-t px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-                  {sheetError && (
-                    <p
-                      role="alert"
-                      className="text-small text-danger mb-3 font-medium"
-                    >
-                      {sheetError}
-                    </p>
-                  )}
-                  <div className="flex gap-3">
-                    <Button
-                      variant="ghost"
-                      disabled={!draft.checkIn}
-                      onClick={() => {
-                        setDraft({ checkIn: null, checkOut: null });
-                        setSheetError(null);
-                      }}
-                    >
-                      Clear dates
-                    </Button>
-                    <Button size="lg" className="flex-1" onClick={applySheet}>
-                      Apply
-                    </Button>
-                  </div>
+                  <GuestStepper
+                    label="Children"
+                    hint="Age 0 to 12"
+                    value={sheetChildren}
+                    min={0}
+                    max={MAX_CHILDREN}
+                    onChange={setSheetChildren}
+                  />
                 </div>
               </div>
-            )}
-          </dialog>
+              <div className="border-line bg-card border-t px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                {sheetError && (
+                  <p
+                    role="alert"
+                    className="text-small text-destructive mb-3 font-medium"
+                  >
+                    {sheetError}
+                  </p>
+                )}
+                <div className="flex gap-3">
+                  <Button
+                    variant="ghost"
+                    disabled={!draft.checkIn}
+                    onClick={() => {
+                      setDraft({ checkIn: null, checkOut: null });
+                      setSheetError(null);
+                    }}
+                  >
+                    Clear dates
+                  </Button>
+                  <Button size="lg" className="flex-1" onClick={applySheet}>
+                    Apply
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
 
         {problem && (
-          <p role="status" className="text-small text-danger pt-2 font-medium">
+          <p
+            role="status"
+            className="text-small text-destructive pt-2 font-medium"
+          >
             {problem}
           </p>
         )}

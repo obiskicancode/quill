@@ -1,3 +1,5 @@
+import { Skeleton } from '@/components/ui/skeleton';
+
 export function DashboardSkeleton() {
   return (
     <div className="space-y-6" aria-label="Loading dashboard" role="status">
@@ -6,26 +8,26 @@ export function DashboardSkeleton() {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="rounded-card border-line bg-surface shadow-raised flex min-h-[7.5rem] flex-col justify-between border p-4 sm:p-5"
+            className="rounded-card border-line bg-card shadow-raised flex min-h-[7.5rem] flex-col justify-between border p-4 sm:p-5"
           >
             <div className="flex items-center justify-between">
-              <div className="bg-line/60 h-4 w-24 animate-pulse rounded" />
-              <div className="rounded-control bg-line/40 size-7 animate-pulse" />
+              <Skeleton className="h-4 w-24 rounded" />
+              <Skeleton className="rounded-control size-7" />
             </div>
             <div className="space-y-2">
-              <div className="bg-line/80 h-8 w-16 animate-pulse rounded" />
-              <div className="bg-line/40 h-3 w-28 animate-pulse rounded" />
+              <Skeleton className="h-8 w-16 rounded" />
+              <Skeleton className="h-3 w-28 rounded" />
             </div>
           </div>
         ))}
       </div>
 
       {/* Attention Skeleton */}
-      <div className="rounded-card border-line bg-surface shadow-raised border p-5">
-        <div className="bg-line/80 h-5 w-36 animate-pulse rounded" />
+      <div className="rounded-card border-line bg-card shadow-raised border p-5">
+        <Skeleton className="h-5 w-36 rounded" />
         <div className="mt-4 space-y-3">
-          <div className="rounded-control bg-line/30 h-10 animate-pulse" />
-          <div className="rounded-control bg-line/30 h-10 animate-pulse" />
+          <Skeleton className="rounded-control h-10 w-full" />
+          <Skeleton className="rounded-control h-10 w-full" />
         </div>
       </div>
 
@@ -34,18 +36,15 @@ export function DashboardSkeleton() {
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="rounded-card border-line bg-surface shadow-raised border p-5"
+            className="rounded-card border-line bg-card shadow-raised border p-5"
           >
             <div className="border-line flex items-center justify-between border-b pb-4">
-              <div className="bg-line/80 h-5 w-32 animate-pulse rounded" />
-              <div className="bg-line/40 h-4 w-20 animate-pulse rounded" />
+              <Skeleton className="h-5 w-32 rounded" />
+              <Skeleton className="h-4 w-20 rounded" />
             </div>
             <div className="mt-4 space-y-3">
               {[1, 2, 3].map((j) => (
-                <div
-                  key={j}
-                  className="rounded-control bg-line/20 h-12 animate-pulse"
-                />
+                <Skeleton key={j} className="rounded-control h-12 w-full" />
               ))}
             </div>
           </div>
@@ -53,13 +52,13 @@ export function DashboardSkeleton() {
       </div>
 
       {/* Occupancy Strip Skeleton */}
-      <div className="rounded-card border-line bg-surface shadow-raised border p-5">
-        <div className="bg-line/80 h-5 w-44 animate-pulse rounded" />
+      <div className="rounded-card border-line bg-card shadow-raised border p-5">
+        <Skeleton className="h-5 w-44 rounded" />
         <div className="mt-6 flex h-36 items-end gap-2">
           {Array.from({ length: 14 }).map((_, i) => (
-            <div
+            <Skeleton
               key={i}
-              className="bg-line/40 flex-1 animate-pulse rounded-t"
+              className="flex-1 rounded-t"
               style={{ height: `${30 + (i % 5) * 15}%` }}
             />
           ))}

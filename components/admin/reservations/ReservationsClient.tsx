@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AdminEmpty, AdminError } from '@/components/admin/AdminStates';
 import { StaleBanner } from '@/components/admin/dashboard/StaleBanner';
 import { PageHeader } from '@/components/admin/PageHeader';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import type { AdminRole, Permission } from '@/lib/auth/permissions';
 import type {
   ReservationsListResponse,

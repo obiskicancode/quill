@@ -11,7 +11,7 @@ export function PriceBreakdownCard({
     <AdminCard title="Price breakdown">
       <dl className="text-small space-y-2.5">
         <div className="flex items-center justify-between">
-          <dt className="text-muted">Room subtotal</dt>
+          <dt className="text-muted-foreground">Room subtotal</dt>
           <dd className="text-ink font-medium">
             {formatNaira(reservation.subtotalMinor / 100)}
           </dd>
@@ -19,7 +19,7 @@ export function PriceBreakdownCard({
 
         {reservation.extrasMinor > 0 && (
           <div className="flex items-center justify-between">
-            <dt className="text-muted">Extras</dt>
+            <dt className="text-muted-foreground">Extras</dt>
             <dd className="text-ink font-medium">
               +{formatNaira(reservation.extrasMinor / 100)}
             </dd>
@@ -37,7 +37,7 @@ export function PriceBreakdownCard({
 
         {reservation.serviceChargeMinor > 0 && (
           <div className="flex items-center justify-between">
-            <dt className="text-muted">Service charge</dt>
+            <dt className="text-muted-foreground">Service charge</dt>
             <dd className="text-ink font-medium">
               +{formatNaira(reservation.serviceChargeMinor / 100)}
             </dd>
@@ -46,7 +46,7 @@ export function PriceBreakdownCard({
 
         {reservation.taxMinor > 0 && (
           <div className="flex items-center justify-between">
-            <dt className="text-muted">Taxes (VAT)</dt>
+            <dt className="text-muted-foreground">Taxes (VAT)</dt>
             <dd className="text-ink font-medium">
               +{formatNaira(reservation.taxMinor / 100)}
             </dd>
@@ -59,21 +59,21 @@ export function PriceBreakdownCard({
         </div>
 
         {reservation.depositRequiredMinor > 0 && (
-          <div className="text-caption text-muted flex items-center justify-between">
+          <div className="text-caption text-muted-foreground flex items-center justify-between">
             <dt>Deposit required</dt>
             <dd>{formatNaira(reservation.depositRequiredMinor / 100)}</dd>
           </div>
         )}
 
         <div className="border-line/60 flex items-center justify-between border-t pt-2">
-          <dt className="text-muted">Amount paid</dt>
+          <dt className="text-muted-foreground">Amount paid</dt>
           <dd className="text-success font-semibold">
             {formatNaira(reservation.amountPaidMinor / 100)}
           </dd>
         </div>
 
         {reservation.amountRefundedMinor > 0 && (
-          <div className="text-danger flex items-center justify-between">
+          <div className="text-destructive flex items-center justify-between">
             <dt>Amount refunded</dt>
             <dd className="font-semibold">
               -{formatNaira(reservation.amountRefundedMinor / 100)}
@@ -85,7 +85,7 @@ export function PriceBreakdownCard({
           <dt className="text-ink font-bold">Balance due</dt>
           <dd
             className={`font-bold ${
-              reservation.balanceMinor > 0 ? 'text-danger' : 'text-success'
+              reservation.balanceMinor > 0 ? 'text-destructive' : 'text-success'
             }`}
           >
             {formatNaira(reservation.balanceMinor / 100)}

@@ -36,8 +36,14 @@
   --destructive-foreground: #ffffff;
 
   --border: #dddad3; /* line */
-  --input: #ddd​ad3;
+  --input: #dddad3;
   --ring: #1c2126; /* focus ring on light surfaces */
+
+  --scrollbar-size: 10px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: color-mix(in oklab, var(--foreground) 20%, transparent);
+  --scrollbar-thumb-hover: var(--brand);
+  --scrollbar-thumb-active: var(--brand-pressed);
 
   /* Brand extras (formerly accent / accent-hover / accent-pressed / accent-ink) */
   --brand: #e8a317;
@@ -48,7 +54,7 @@
   --ink: #1c2126;
   --ink-soft: #2d353c;
   --paper: #f7f6f3;
-  --line: #ddd​ad3;
+  --line: #dddad3;
 
   --whatsapp: #0f7a3e;
   --whatsapp-hover: #0c6433;
@@ -66,7 +72,7 @@
   --sidebar-primary-foreground: #1c2126;
   --sidebar-accent: #efede8;
   --sidebar-accent-foreground: #1c2126;
-  --sidebar-border: #ddd​ad3;
+  --sidebar-border: #dddad3;
   --sidebar-ring: #1c2126;
 
   --section-y: 4rem;
@@ -104,6 +110,9 @@
   --input: rgb(255 255 255 / 0.16);
   --ring: #e8a317;
   --brand-ink: #f5c25a;
+  --scrollbar-thumb: color-mix(in oklab, var(--foreground) 24%, transparent);
+  --scrollbar-thumb-hover: var(--brand);
+  --scrollbar-thumb-active: var(--brand-hover);
   --sidebar: #1c2126;
   --sidebar-foreground: #f7f6f3;
   --sidebar-accent: #2d353c;
@@ -115,6 +124,9 @@
 /* Dark sections switch the focus ring to the amber accent (7.5:1 on ink). */
 .on-dark {
   --ring: #e8a317;
+  --scrollbar-thumb: rgb(255 255 255 / 0.3);
+  --scrollbar-thumb-hover: var(--brand);
+  --scrollbar-thumb-active: var(--brand-hover);
 }
 
 /* ---------------------------------------------------------------
@@ -241,14 +253,40 @@
 @layer base {
   * {
     @apply border-border;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
   html {
     scroll-behavior: smooth;
+    scrollbar-gutter: stable;
     -webkit-text-size-adjust: 100%;
   }
   body {
     @apply bg-background text-foreground;
     text-rendering: optimizeLegibility;
+  }
+  *::-webkit-scrollbar {
+    width: var(--scrollbar-size);
+    height: var(--scrollbar-size);
+  }
+  *::-webkit-scrollbar-track,
+  *::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track);
+  }
+  *::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    background-color: var(--scrollbar-thumb);
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+  *::-webkit-scrollbar-thumb:active {
+    background-color: var(--scrollbar-thumb-active);
+  }
+  *::-webkit-scrollbar-button {
+    display: none;
   }
   :focus-visible {
     outline: 3px solid var(--ring);
@@ -277,5 +315,14 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  * {
+    scrollbar-color: auto;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: ButtonText;
   }
 }

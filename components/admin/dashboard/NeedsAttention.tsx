@@ -27,7 +27,7 @@ export function NeedsAttention({ items }: { items: AttentionItem[] }) {
       <AdminCard
         title="Needs attention"
         description="Prioritised operational items waiting on staff action."
-        className="border-danger/30"
+        className="border-destructive/30"
       >
         <AnimatedList className="divide-line divide-y">
           {items.map((item) => (
@@ -44,20 +44,20 @@ export function NeedsAttention({ items }: { items: AttentionItem[] }) {
                 className="group rounded-control hover:bg-paper flex flex-col gap-2 px-2 py-2 transition-colors sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-center gap-3">
-                  <span className="bg-danger/10 text-caption text-danger inline-flex size-6 shrink-0 items-center justify-center rounded-full font-bold">
+                  <span className="bg-destructive/10 text-caption text-destructive inline-flex size-6 shrink-0 items-center justify-center rounded-full font-bold">
                     {item.count}
                   </span>
                   <div>
-                    <span className="text-ink group-hover:text-accent-ink font-semibold">
+                    <span className="text-ink group-hover:text-brand-ink font-semibold">
                       {item.label}
                     </span>
-                    <span className="text-caption text-muted ml-2">
+                    <span className="text-caption text-muted-foreground ml-2">
                       (oldest {item.oldestAge})
                     </span>
                   </div>
                 </div>
 
-                <div className="text-caption text-muted group-hover:text-ink flex items-center gap-1.5 self-end font-semibold sm:self-auto">
+                <div className="text-caption text-muted-foreground group-hover:text-ink flex items-center gap-1.5 self-end font-semibold sm:self-auto">
                   <span>View</span>
                   <ArrowRight
                     className="size-3.5 transition-transform group-hover:translate-x-0.5"

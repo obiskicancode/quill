@@ -12,7 +12,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 
 import { AdminError, AdminLoading } from '@/components/admin/AdminStates';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import type { AdminRole, Permission } from '@/lib/auth/permissions';
 import type {
   ReservationDetail,
@@ -161,7 +161,7 @@ export function ReservationDetailClient({
       <div className="border-line flex flex-wrap items-center justify-between gap-3 border-b pb-3">
         <Link
           href={backUrl}
-          className="rounded-control text-small text-muted hover:bg-paper hover:text-ink inline-flex min-h-10 items-center gap-1.5 px-2.5 font-semibold"
+          className="rounded-control text-small text-muted-foreground hover:bg-paper hover:text-ink inline-flex min-h-10 items-center gap-1.5 px-2.5 font-semibold"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
           <span>Back to reservations</span>
@@ -207,25 +207,26 @@ export function ReservationDetailClient({
       {hasNewerVersion && (
         <div
           role="status"
-          className="rounded-control border-accent/40 bg-accent/15 text-small text-ink flex items-center justify-between gap-3 border p-3.5"
+          className="rounded-control border-primary/40 bg-primary/15 text-small text-ink flex items-center justify-between gap-3 border p-3.5"
         >
           <div className="flex items-center gap-2">
             <AlertTriangle
-              className="text-accent-ink size-4 shrink-0"
+              className="text-brand-ink size-4 shrink-0"
               aria-hidden="true"
             />
             <span className="font-semibold">
               This reservation was updated in another session.
             </span>
           </div>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={handleApplyUpdate}
-            className="text-accent-ink inline-flex items-center gap-1 font-semibold hover:underline"
           >
             <RefreshCw className="size-3.5" aria-hidden="true" />
             <span>Refresh latest version</span>
-          </button>
+          </Button>
         </div>
       )}
 

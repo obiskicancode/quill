@@ -1,10 +1,12 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
@@ -74,126 +76,108 @@ export function EditDetailsModal({
       onRefresh={onRefresh}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="text-small text-ink block font-semibold">
-            Guest Full Name <span className="text-danger">*</span>
-          </label>
-          <input
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-guest-name">
+            Guest Full Name <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="edit-guest-name"
             type="text"
             required
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
           />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Email Address
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-guest-email">Email Address</Label>
+            <Input
+              id="edit-guest-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="guest@example.com"
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
             />
-            <p className="text-caption text-muted mt-1">
+            <p className="text-caption text-muted-foreground">
               Changing email sends a new confirmation to the new address.
             </p>
           </div>
 
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Phone Number <span className="text-danger">*</span>
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-guest-phone">
+              Phone Number <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="edit-guest-phone"
               type="tel"
               required
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Country Code
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-guest-country">Country Code</Label>
+            <Input
+              id="edit-guest-country"
               type="text"
               maxLength={2}
               value={country}
               onChange={(e) => setCountry(e.target.value.toUpperCase())}
               placeholder="NG"
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 uppercase focus:outline-hidden"
+              className="uppercase"
             />
           </div>
 
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Estimated Arrival Time
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-arrival-time">Estimated Arrival Time</Label>
+            <Input
+              id="edit-arrival-time"
               type="text"
               value={arrivalTime}
               onChange={(e) => setArrivalTime(e.target.value)}
               placeholder="e.g. 15:00"
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
             />
           </div>
         </div>
 
-        <div>
-          <label className="text-small text-ink block font-semibold">
-            Special Requests
-          </label>
-          <textarea
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-special-requests">Special Requests</Label>
+          <Textarea
+            id="edit-special-requests"
             rows={2}
             value={specialRequests}
             onChange={(e) => setSpecialRequests(e.target.value)}
             placeholder="Guest preferences, dietary requests, early check-in notes..."
-            className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
           />
         </div>
 
-        <div>
-          <label className="text-small text-ink block font-semibold">
-            Internal Staff Notes
-          </label>
-          <textarea
+        <div className="space-y-1.5">
+          <Label htmlFor="edit-internal-notes">Internal Staff Notes</Label>
+          <Textarea
+            id="edit-internal-notes"
             rows={3}
             value={internalNotes}
             onChange={(e) => setInternalNotes(e.target.value)}
             placeholder="Confidential notes visible only to front desk and managers..."
-            className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
           />
         </div>
 
         <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
+            size="sm"
             onClick={onClose}
             disabled={loading}
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2
-                  className="mr-2 size-4 animate-spin"
-                  aria-hidden="true"
-                />
-                Saving...
-              </>
-            ) : (
-              'Save details'
-            )}
+          <Button type="submit" size="sm" loading={loading}>
+            Save details
           </Button>
         </div>
       </form>

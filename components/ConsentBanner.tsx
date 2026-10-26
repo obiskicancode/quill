@@ -7,7 +7,7 @@ import { Cookie } from 'lucide-react';
 import { useConsent } from '@/providers/consent.provider';
 
 import { EASE_OUT } from './motion/variants';
-import { Button } from './ui/Button';
+import { Button } from './ui/button';
 
 interface ConsentBannerProps {
   /** True only when the hotel has an analytics or marketing provider configured. */
@@ -31,7 +31,7 @@ export function ConsentBanner({ enabled, privacyHref }: ConsentBannerProps) {
           role="dialog"
           aria-labelledby="consent-title"
           aria-modal="false"
-          className="border-line bg-surface shadow-raised fixed inset-x-0 bottom-0 z-50 border-t p-4 md:p-5"
+          className="border-line bg-card shadow-raised fixed inset-x-0 bottom-0 z-50 border-t p-4 md:p-5"
           initial={reduced ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={reduced ? undefined : { opacity: 0, y: 16 }}
@@ -51,7 +51,7 @@ export function ConsentBanner({ enabled, privacyHref }: ConsentBannerProps) {
                 configured. You can accept or reject them at any time. Read our{' '}
                 <Link
                   href={privacyHref}
-                  className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
+                  className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
                 >
                   Privacy Policy
                 </Link>

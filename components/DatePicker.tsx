@@ -18,6 +18,8 @@ import {
   type ISODate,
 } from '@/lib/dates';
 
+import { Button } from './ui/button';
+
 export interface DateRange {
   checkIn: ISODate | null;
   checkOut: ISODate | null;
@@ -129,24 +131,28 @@ export function DatePicker({
       </p>
 
       <div className="relative">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           aria-label="Previous month"
           disabled={view <= minMonth}
           onClick={() => showMonth(addMonths(view, -1))}
           className={`${navButton} left-0`}
         >
           <ChevronLeft className="size-5" aria-hidden />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           aria-label="Next month"
           disabled={lastShownMonth >= maxMonth}
           onClick={() => showMonth(addMonths(view, 1))}
           className={`${navButton} right-0`}
         >
           <ChevronRight className="size-5" aria-hidden />
-        </button>
+        </Button>
 
         <div className={monthsShown === 2 ? 'grid grid-cols-2 gap-8' : ''}>
           {months.map((month) => {
@@ -183,7 +189,7 @@ export function DatePicker({
                           key={short}
                           scope="col"
                           abbr={long}
-                          className="text-caption text-muted h-8 text-center font-semibold"
+                          className="text-caption text-muted-foreground h-8 text-center font-semibold"
                         >
                           {short}
                         </th>
@@ -205,11 +211,11 @@ export function DatePicker({
                           );
                           const disabled = iso < today || iso > lastDay;
                           const band = inRange
-                            ? 'bg-accent/25'
+                            ? 'bg-primary/25'
                             : isStart && checkOut
-                              ? 'bg-gradient-to-r from-transparent from-50% to-accent/25 to-50%'
+                              ? 'bg-gradient-to-r from-transparent from-50% to-brand/25 to-50%'
                               : isEnd
-                                ? 'bg-gradient-to-l from-transparent from-50% to-accent/25 to-50%'
+                                ? 'bg-gradient-to-l from-transparent from-50% to-brand/25 to-50%'
                                 : '';
                           const state =
                             isStart || isEnd
@@ -223,18 +229,20 @@ export function DatePicker({
                               role="gridcell"
                               className={`p-0 text-center ${band}`}
                             >
-                              <button
+                              <Button
                                 type="button"
+                                variant={isStart || isEnd ? 'default' : 'ghost'}
+                                size="icon"
                                 data-date={iso}
                                 disabled={disabled}
                                 tabIndex={iso === focusIso ? 0 : -1}
                                 aria-pressed={isStart || isEnd}
                                 aria-label={`${formatLong(iso)}${isStart ? ', check-in' : ''}${isEnd ? ', check-out' : ''}`}
                                 onClick={() => pick(iso)}
-                                className={`text-small mx-auto grid size-11 place-items-center rounded-full font-medium tabular-nums transition-colors ${state}`}
+                                className={`text-small mx-auto size-11 rounded-full font-medium tabular-nums transition-colors ${state}`}
                               >
                                 {Number(iso.slice(8))}
-                              </button>
+                              </Button>
                             </td>
                           );
                         })}

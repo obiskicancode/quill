@@ -102,7 +102,7 @@ export function NextSteps({
   return (
     <section
       aria-labelledby="next-title"
-      className="rounded-card border-line bg-surface shadow-raised border p-5 md:p-6"
+      className="rounded-card border-line bg-card shadow-raised border p-5 md:p-6"
     >
       <h2 id="next-title" className="font-display text-h3">
         What happens next
@@ -111,7 +111,7 @@ export function NextSteps({
         {steps.map((s, i) => (
           <StaggerItem key={i} as="li" className="flex gap-4">
             <span
-              className={`text-small grid size-8 shrink-0 place-items-center rounded-full font-semibold ${s.state === 'done' ? 'bg-ink text-paper' : s.state === 'now' ? 'bg-accent text-ink' : 'border-ink/50 text-muted border'}`}
+              className={`text-small grid size-8 shrink-0 place-items-center rounded-full font-semibold ${s.state === 'done' ? 'bg-ink text-paper' : s.state === 'now' ? 'bg-primary text-ink' : 'border-ink/50 text-muted-foreground border'}`}
             >
               {s.state === 'done' ? (
                 <Check className="size-4" aria-hidden />
@@ -153,7 +153,7 @@ export function NextSteps({
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="decoration-accent inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
+                className="decoration-brand inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
               >
                 Tell the hotel about changes
                 <span className="sr-only"> (opens WhatsApp in a new tab)</span>

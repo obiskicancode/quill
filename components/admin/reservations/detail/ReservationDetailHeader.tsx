@@ -15,7 +15,7 @@ import {
 import { useState } from 'react';
 
 import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { PaymentBadge } from '../PaymentBadge';
@@ -63,11 +63,12 @@ export function ReservationDetailHeader({
             {reservation.reference}
           </h1>
 
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={handleCopy}
             aria-label={`Copy reference ${reservation.reference}`}
-            className="rounded-control border-line bg-paper text-caption text-muted hover:text-ink inline-flex min-h-8 items-center gap-1.5 border px-2 font-semibold transition-colors"
           >
             {copied ? (
               <>
@@ -80,13 +81,13 @@ export function ReservationDetailHeader({
                 <span>Copy</span>
               </>
             )}
-          </button>
+          </Button>
 
           <StatusBadge status={reservation.status} />
           <PaymentBadge state={reservation.paymentState} />
         </div>
 
-        <p className="text-small text-muted mt-1">
+        <p className="text-small text-muted-foreground mt-1">
           Booked on {formattedBookedDate} via{' '}
           <span className="text-ink font-semibold capitalize">
             {reservation.bookingSource}
@@ -180,34 +181,44 @@ export function ReservationDetailHeader({
               onMouseLeave={() => setShowMoreMenu(false)}
             >
               {/* Mark No-Show */}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 disabled={!acts.no_show.allowed}
                 title={acts.no_show.reason}
                 onClick={() => {
                   setShowMoreMenu(false);
                   onAction('no_show');
                 }}
-                className="hover:bg-canvas rounded-control text-small text-ink flex w-full items-center gap-2 px-2.5 py-1.5 text-left transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
+                className="w-full justify-start gap-2"
               >
-                <UserX className="text-muted size-4" aria-hidden="true" />
+                <UserX
+                  className="text-muted-foreground size-4"
+                  aria-hidden="true"
+                />
                 <span>Mark as No-Show</span>
-              </button>
+              </Button>
 
               {/* Resend Confirmation */}
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 disabled={!acts.resend_confirmation.allowed}
                 title={acts.resend_confirmation.reason}
                 onClick={() => {
                   setShowMoreMenu(false);
                   onAction('resend');
                 }}
-                className="hover:bg-canvas rounded-control text-small text-ink flex w-full items-center gap-2 px-2.5 py-1.5 text-left transition-colors disabled:opacity-40 disabled:hover:bg-transparent"
+                className="w-full justify-start gap-2"
               >
-                <Mail className="text-muted size-4" aria-hidden="true" />
+                <Mail
+                  className="text-muted-foreground size-4"
+                  aria-hidden="true"
+                />
                 <span>Resend Confirmation</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>

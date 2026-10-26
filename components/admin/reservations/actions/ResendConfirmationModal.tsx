@@ -1,10 +1,19 @@
 'use client';
 
-import { Loader2, MailCheck } from 'lucide-react';
+import { MailCheck } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
@@ -80,53 +89,77 @@ export function ResendConfirmationModal({
           <h3 className="text-ink text-base font-semibold">
             Notification Dispatched!
           </h3>
-          <p className="text-small text-muted">
+          <p className="text-small text-muted-foreground">
             The notification has been queued for immediate delivery to{' '}
             {recipient}.
           </p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Template Type <span className="text-danger">*</span>
-            </label>
-            <select
+          <div className="space-y-1.5">
+            <Label htmlFor="resend-template">
+              Template Type <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              items={[
+                {
+                  value: 'booking_confirmation',
+                  label: 'Booking Confirmation',
+                },
+                {
+                  value: 'payment_receipt',
+                  label: 'Payment Receipt',
+                },
+                {
+                  value: 'cancellation_notice',
+                  label: 'Cancellation Notice',
+                },
+              ]}
               value={templateKey}
-              onChange={(e) =>
-                setTemplateKey(
-                  e.target.value as
-                    | 'booking_confirmation'
-                    | 'payment_receipt'
-                    | 'cancellation_notice',
-                )
-              }
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+              onValueChange={(val) => {
+                if (val) {
+                  setTemplateKey(
+                    val as
+                      | 'booking_confirmation'
+                      | 'payment_receipt'
+                      | 'cancellation_notice',
+                  );
+                }
+              }}
             >
-              <option value="booking_confirmation">Booking Confirmation</option>
-              <option value="payment_receipt">Payment Receipt</option>
-              <option value="cancellation_notice">Cancellation Notice</option>
-            </select>
+              <SelectTrigger id="resend-template" className="w-full">
+                <SelectValue placeholder="Select template" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="booking_confirmation">
+                  Booking Confirmation
+                </SelectItem>
+                <SelectItem value="payment_receipt">Payment Receipt</SelectItem>
+                <SelectItem value="cancellation_notice">
+                  Cancellation Notice
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Recipient Email <span className="text-danger">*</span>
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="resend-recipient">
+              Recipient Email <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="resend-recipient"
               type="email"
               required
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
               placeholder="guest@example.com"
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
             />
-            <p className="text-caption text-muted mt-1">
+            <p className="text-caption text-muted-foreground">
               You can send to the guest&apos;s email or an alternative address.
             </p>
           </div>
 
-          <div className="bg-canvas rounded-control border-line text-caption text-muted border p-3">
+          <div className="bg-muted rounded-control border-line text-caption text-muted-foreground border p-3">
             Resend cooldown: to prevent mail provider throttling, requests are
             logged in audit history.
           </div>
@@ -134,24 +167,15 @@ export function ResendConfirmationModal({
           <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
             <Button
               type="button"
-              variant="secondary"
+              variant="outline"
+              size="sm"
               onClick={onClose}
               disabled={submitting}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? (
-                <>
-                  <Loader2
-                    className="mr-2 size-4 animate-spin"
-                    aria-hidden="true"
-                  />
-                  Sending...
-                </>
-              ) : (
-                'Send notification'
-              )}
+            <Button type="submit" size="sm" loading={submitting}>
+              Send notification
             </Button>
           </div>
         </form>

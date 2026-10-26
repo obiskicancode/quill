@@ -11,16 +11,39 @@ import {
   Smartphone,
   UserCheck,
   UserX,
-  X,
 } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import type { AdminRole } from '@/lib/auth/permissions';
 import type {
   StaffDetailResponse,
   StaffUpdateInput,
 } from '@/types/staff-admin.types';
+
+const ROLE_OPTIONS = [
+  { value: 'reception', label: 'Reception' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'owner', label: 'Owner' },
+];
 
 export function StaffDetailSheet({
   staff,
@@ -146,45 +169,47 @@ export function StaffDetailSheet({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm">
-      <div className="bg-surface border-line relative flex h-full w-full max-w-2xl flex-col border-l shadow-2xl">
-        {/* Header */}
-        <div className="border-line flex items-center justify-between border-b px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-full font-bold">
-              {staff.firstName[0]}
-              {staff.lastName[0]}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-h3 font-display text-ink font-semibold">
-                  {staff.fullName}
-                </h2>
-                <span
-                  className={`text-caption inline-flex items-center rounded-full border px-2 py-0.5 font-semibold capitalize ${
-                    staff.status === 'active'
-                      ? 'bg-success/10 text-success border-success/20'
-                      : staff.status === 'invited'
-                        ? 'border-amber-500/20 bg-amber-500/10 text-amber-600'
-                        : staff.status === 'locked'
-                          ? 'bg-danger/10 text-danger border-danger/20'
-                          : 'bg-muted/10 text-muted border-muted/20'
-                  }`}
-                >
-                  {staff.status}
-                </span>
-              </div>
-              <p className="text-caption text-muted">{staff.email}</p>
-            </div>
+    <Sheet
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <SheetContent
+        side="right"
+        showCloseButton
+        className="border-line bg-card w-full max-w-2xl gap-0 border-l p-0 sm:max-w-2xl"
+      >
+        <SheetHeader className="border-line flex-row items-center gap-3 border-b px-6 py-4 pr-14">
+          <div className="bg-primary/10 text-brand-ink flex size-10 items-center justify-center rounded-full font-bold">
+            {staff.firstName[0]}
+            {staff.lastName[0]}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-muted hover:bg-paper hover:text-ink rounded-full p-2"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <SheetTitle className="text-h3 font-display text-ink font-semibold">
+                {staff.fullName}
+              </SheetTitle>
+              <Badge
+                variant="outline"
+                className={`text-caption rounded-full px-2 py-0.5 font-semibold capitalize ${
+                  staff.status === 'active'
+                    ? 'border-success/20 bg-success/10 text-success'
+                    : staff.status === 'invited'
+                      ? 'border-primary/20 bg-primary/10 text-brand-ink'
+                      : staff.status === 'locked'
+                        ? 'border-destructive/20 bg-destructive/10 text-destructive'
+                        : 'border-muted/20 bg-muted/10 text-muted-foreground'
+                }`}
+              >
+                {staff.status}
+              </Badge>
+            </div>
+            <SheetDescription className="text-caption text-muted-foreground">
+              {staff.email}
+            </SheetDescription>
+          </div>
+        </SheetHeader>
 
         {/* Content Body */}
         <div className="text-small flex-1 space-y-6 overflow-y-auto p-6">
@@ -192,7 +217,7 @@ export function StaffDetailSheet({
             <div
               className={`text-caption rounded-lg border p-3 font-medium ${
                 message.isError
-                  ? 'border-danger/30 bg-danger/5 text-danger'
+                  ? 'border-destructive/30 bg-destructive/5 text-destructive'
                   : 'border-success/30 bg-success/5 text-success'
               }`}
             >
@@ -208,78 +233,73 @@ export function StaffDetailSheet({
             <h3 className="text-ink font-semibold">Account Profile</h3>
 
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-caption text-muted mb-1 block font-medium">
-                  First Name
-                </label>
-                <input
+              <div className="space-y-1.5">
+                <Label htmlFor="staff-first-name">First Name</Label>
+                <Input
+                  id="staff-first-name"
                   type="text"
                   required
                   value={form.firstName}
                   onChange={(e) =>
                     setForm({ ...form, firstName: e.target.value })
                   }
-                  className="border-line bg-surface text-ink w-full rounded-md border p-2"
                 />
               </div>
-              <div>
-                <label className="text-caption text-muted mb-1 block font-medium">
-                  Last Name
-                </label>
-                <input
+              <div className="space-y-1.5">
+                <Label htmlFor="staff-last-name">Last Name</Label>
+                <Input
+                  id="staff-last-name"
                   type="text"
                   required
                   value={form.lastName}
                   onChange={(e) =>
                     setForm({ ...form, lastName: e.target.value })
                   }
-                  className="border-line bg-surface text-ink w-full rounded-md border p-2"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-caption text-muted mb-1 block font-medium">
-                  Role
-                </label>
-                <select
+              <div className="space-y-1.5">
+                <Label htmlFor="staff-role">Role</Label>
+                <Select
+                  items={ROLE_OPTIONS}
                   value={form.role}
-                  onChange={(e) =>
-                    setForm({ ...form, role: e.target.value as AdminRole })
-                  }
-                  className="border-line bg-surface text-ink w-full rounded-md border p-2 capitalize"
+                  onValueChange={(val) => {
+                    if (val) setForm({ ...form, role: val as AdminRole });
+                  }}
                 >
-                  <option value="reception">Reception</option>
-                  <option value="manager">Manager</option>
-                  <option value="owner">Owner</option>
-                </select>
-                <p className="text-muted mt-1 text-[11px]">
+                  <SelectTrigger id="staff-role" className="w-full">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROLE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-muted-foreground text-[11px]">
                   Role changes require step-up authentication & immediately
                   revoke active sessions.
                 </p>
               </div>
-              <div>
-                <label className="text-caption text-muted mb-1 block font-medium">
-                  Phone Number
-                </label>
-                <input
+              <div className="space-y-1.5">
+                <Label htmlFor="staff-phone">Phone Number</Label>
+                <Input
+                  id="staff-phone"
                   type="tel"
                   value={form.phone || ''}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="border-line bg-surface text-ink w-full rounded-md border p-2"
                 />
               </div>
             </div>
 
             <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={saving}
-                className="bg-primary text-caption text-primary-ink rounded-md px-4 py-1.5 font-semibold hover:opacity-95"
-              >
-                {saving ? 'Saving...' : 'Save Changes'}
-              </button>
+              <Button type="submit" size="sm" loading={saving}>
+                Save Changes
+              </Button>
             </div>
           </form>
 
@@ -291,72 +311,82 @@ export function StaffDetailSheet({
             <div className="text-caption grid grid-cols-1 gap-2 sm:grid-cols-2">
               {/* Resend invite (invited accounts only) */}
               {staff.status === 'invited' && (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() =>
                     handleAction('resend', () =>
                       adminService.resendStaffInvite(staff.id),
                     )
                   }
-                  disabled={actionLoading === 'resend'}
-                  className="border-line bg-surface text-ink hover:bg-paper inline-flex items-center gap-1.5 rounded-md border p-2"
+                  loading={actionLoading === 'resend'}
+                  className="h-auto justify-start py-2"
                 >
                   <Mail className="text-primary size-4" />
                   <span>Resend Invitation Email</span>
-                </button>
+                </Button>
               )}
 
               {/* Unlock if locked */}
               {staff.status === 'locked' && (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() =>
                     handleAction('unlock', () =>
                       adminService.unlockStaff(staff.id),
                     )
                   }
-                  disabled={actionLoading === 'unlock'}
-                  className="border-line bg-surface text-ink hover:bg-paper inline-flex items-center gap-1.5 rounded-md border p-2"
+                  loading={actionLoading === 'unlock'}
+                  className="h-auto justify-start py-2"
                 >
                   <UserCheck className="text-success size-4" />
                   <span>Unlock Account</span>
-                </button>
+                </Button>
               )}
 
               {/* Password reset email */}
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() =>
                   handleAction('reset_pwd', () =>
                     adminService.sendStaffPasswordReset(staff.id),
                   )
                 }
-                disabled={actionLoading === 'reset_pwd'}
-                className="border-line bg-surface text-ink hover:bg-paper inline-flex items-center gap-1.5 rounded-md border p-2"
+                loading={actionLoading === 'reset_pwd'}
+                className="h-auto justify-start py-2"
               >
-                <KeyRound className="text-muted size-4" />
+                <KeyRound className="text-muted-foreground size-4" />
                 <span>Send Password Reset</span>
-              </button>
+              </Button>
 
               {/* Sign out of all sessions */}
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() =>
                   handleAction('revoke_sess', () =>
                     adminService.revokeStaffSessions(staff.id),
                   )
                 }
-                disabled={actionLoading === 'revoke_sess'}
-                className="border-line bg-surface text-ink hover:bg-paper inline-flex items-center gap-1.5 rounded-md border p-2"
+                loading={actionLoading === 'revoke_sess'}
+                className="h-auto justify-start py-2"
               >
                 <LogOut className="text-warning size-4" />
                 <span>Revoke All Sessions</span>
-              </button>
+              </Button>
 
               {/* Reset 2FA (Step-up required) */}
               {staff.mfaEnabled && (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() =>
                     handleAction(
                       'reset_2fa',
@@ -364,18 +394,20 @@ export function StaffDetailSheet({
                       true,
                     )
                   }
-                  disabled={actionLoading === 'reset_2fa'}
-                  className="border-line bg-surface text-ink hover:bg-paper inline-flex items-center gap-1.5 rounded-md border p-2"
+                  loading={actionLoading === 'reset_2fa'}
+                  className="h-auto justify-start py-2"
                 >
-                  <ShieldAlert className="text-danger size-4" />
+                  <ShieldAlert className="text-destructive size-4" />
                   <span>Reset 2FA (Requires Step-Up)</span>
-                </button>
+                </Button>
               )}
 
               {/* Deactivate / Reactivate (Step-up required for deactivation) */}
               {staff.status !== 'deactivated' ? (
-                <button
+                <Button
                   type="button"
+                  variant="destructive"
+                  size="sm"
                   onClick={() =>
                     handleAction(
                       'deactivate',
@@ -383,26 +415,28 @@ export function StaffDetailSheet({
                       true,
                     )
                   }
-                  disabled={actionLoading === 'deactivate'}
-                  className="border-danger/30 bg-danger/5 text-danger hover:bg-danger/10 inline-flex items-center gap-1.5 rounded-md border p-2"
+                  loading={actionLoading === 'deactivate'}
+                  className="h-auto justify-start py-2"
                 >
                   <UserX className="size-4" />
                   <span>Deactivate Account</span>
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() =>
                     handleAction('reactivate', () =>
                       adminService.reactivateStaff(staff.id),
                     )
                   }
-                  disabled={actionLoading === 'reactivate'}
-                  className="border-success/30 bg-success/5 text-success hover:bg-success/10 inline-flex items-center gap-1.5 rounded-md border p-2"
+                  loading={actionLoading === 'reactivate'}
+                  className="text-success hover:text-success border-success/30 hover:bg-success/10 h-auto justify-start py-2"
                 >
                   <UserCheck className="size-4" />
                   <span>Reactivate Account</span>
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -410,10 +444,13 @@ export function StaffDetailSheet({
           {/* Active Sessions */}
           <div className="border-line space-y-3 rounded-lg border p-4">
             <h3 className="text-ink flex items-center gap-1.5 font-semibold">
-              <Smartphone className="text-muted size-4" /> Active Sessions
+              <Smartphone className="text-muted-foreground size-4" /> Active
+              Sessions
             </h3>
             {staff.activeSessions.length === 0 ? (
-              <p className="text-caption text-muted">No active sessions.</p>
+              <p className="text-caption text-muted-foreground">
+                No active sessions.
+              </p>
             ) : (
               <div className="divide-line divide-y">
                 {staff.activeSessions.map((s) => (
@@ -425,12 +462,12 @@ export function StaffDetailSheet({
                       <div className="text-ink font-medium">
                         {s.deviceLabel}
                       </div>
-                      <div className="text-muted text-[11px]">
+                      <div className="text-muted-foreground text-[11px]">
                         IP: {s.ipAddress || 'unknown'} • Created:{' '}
                         {new Date(s.createdAt).toLocaleDateString()}
                       </div>
                     </div>
-                    <span className="text-muted text-[11px]">
+                    <span className="text-muted-foreground text-[11px]">
                       {s.lastSeenAt
                         ? `Active ${new Date(s.lastSeenAt).toLocaleTimeString()}`
                         : 'Active'}
@@ -445,8 +482,8 @@ export function StaffDetailSheet({
           <div className="border-line space-y-3 rounded-lg border p-4">
             <div className="flex items-center justify-between">
               <h3 className="text-ink flex items-center gap-1.5 font-semibold">
-                <History className="text-muted size-4" /> Recent Audit Entries
-                (20)
+                <History className="text-muted-foreground size-4" /> Recent
+                Audit Entries (20)
               </h3>
               <Link
                 href={`/admin/audit?q=${encodeURIComponent(staff.email)}`}
@@ -456,7 +493,7 @@ export function StaffDetailSheet({
               </Link>
             </div>
             {staff.recentAudits.length === 0 ? (
-              <p className="text-caption text-muted">
+              <p className="text-caption text-muted-foreground">
                 No recent audit events recorded for this user.
               </p>
             ) : (
@@ -467,11 +504,13 @@ export function StaffDetailSheet({
                       <span className="text-ink font-mono font-medium capitalize">
                         {a.action} ({a.entity})
                       </span>
-                      <span className="text-muted text-[11px]">
+                      <span className="text-muted-foreground text-[11px]">
                         {new Date(a.createdAt).toLocaleString('en-GB')}
                       </span>
                     </div>
-                    <div className="text-muted text-[11px]">{a.summary}</div>
+                    <div className="text-muted-foreground text-[11px]">
+                      {a.summary}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -479,17 +518,12 @@ export function StaffDetailSheet({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="border-line bg-paper flex justify-end border-t p-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="border-line bg-surface text-small text-ink hover:bg-paper rounded-md border px-4 py-2 font-medium"
-          >
+          <Button variant="outline" size="sm" onClick={onClose}>
             Close
-          </button>
+          </Button>
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -29,7 +29,7 @@ export async function ExtrasCards() {
               key={e.id}
               as="li"
               scale
-              className="rounded-card border-line bg-surface flex flex-col border p-6"
+              className="rounded-card border-line bg-card flex flex-col border p-6"
             >
               <h3 className="font-display text-h3">{e.name}</h3>
               <p className="text-small text-ink/85 mt-2 flex-1">
@@ -39,7 +39,7 @@ export async function ExtrasCards() {
                 <span className="font-display text-2xl tabular-nums">
                   {formatMinor(e.priceMinor)}
                 </span>
-                <span className="text-small text-muted">
+                <span className="text-small text-muted-foreground">
                   {' '}
                   {unitLabels[e.unit]}
                 </span>

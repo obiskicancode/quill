@@ -9,7 +9,23 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { bpsToPercentage, minorToNaira } from '@/lib/rate-resolution';
 import type {
   AdminRateRule,
@@ -105,39 +121,61 @@ export function RateRulesClient({
   return (
     <div className="space-y-6">
       {/* Filters & Action Bar */}
-      <div className="rounded-card border-line bg-surface flex flex-col gap-3 border p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="rounded-card border-line bg-card flex flex-col gap-3 border p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <Filter className="text-muted size-4" />
-            <select
+            <Filter className="text-muted-foreground size-4" />
+            <Select
+              items={[
+                { value: 'all', label: 'All Room Types' },
+                ...roomTypes.map((rt) => ({ value: rt.id, label: rt.name })),
+              ]}
               value={selectedRoomTypeId}
-              onChange={(e) => setSelectedRoomTypeId(e.target.value)}
-              className="bg-background text-foreground focus:border-brand border-line text-small rounded border px-3 py-1.5 focus:outline-none"
+              onValueChange={(val) => {
+                if (val) setSelectedRoomTypeId(val);
+              }}
             >
-              <option value="all">All Room Types</option>
-              {roomTypes.map((rt) => (
-                <option key={rt.id} value={rt.id}>
-                  {rt.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                aria-label="Filter by room type"
+                className="w-[160px]"
+              >
+                <SelectValue placeholder="All Room Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Room Types</SelectItem>
+                {roomTypes.map((rt) => (
+                  <SelectItem key={rt.id} value={rt.id}>
+                    {rt.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <select
+          <Select
+            items={[
+              { value: 'all', label: 'All Statuses' },
+              { value: 'active', label: 'Active Only' },
+              { value: 'inactive', label: 'Inactive Only' },
+            ]}
             value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')
-            }
-            className="bg-background text-foreground focus:border-brand border-line text-small rounded border px-3 py-1.5 focus:outline-none"
+            onValueChange={(val) => {
+              if (val) setStatusFilter(val as 'all' | 'active' | 'inactive');
+            }}
           >
-            <option value="all">All Statuses</option>
-            <option value="active">Active Only</option>
-            <option value="inactive">Inactive Only</option>
-          </select>
+            <SelectTrigger aria-label="Filter by status" className="w-[140px]">
+              <SelectValue placeholder="All Statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="active">Active Only</SelectItem>
+              <SelectItem value="inactive">Inactive Only</SelectItem>
+            </SelectContent>
+          </Select>
 
           <Button
             size="sm"
-            variant="secondary"
+            variant="outline"
             onClick={refresh}
             disabled={loading}
             aria-label="Refresh"
@@ -177,59 +215,76 @@ export function RateRulesClient({
           weekend uplifts, or extended stay discounts.
         </AdminEmpty>
       ) : (
-        <div className="rounded-card border-line bg-surface overflow-x-auto border">
-          <table className="text-small w-full text-left">
-            <thead className="border-line bg-paper text-muted border-b">
-              <tr>
-                <th className="py-3 pr-3 pl-4 font-medium">Rule Name</th>
-                <th className="px-4 py-3 font-medium">Room Type</th>
-                <th className="px-4 py-3 font-medium">Date Range</th>
-                <th className="px-4 py-3 font-medium">Adjustment</th>
-                <th className="px-4 py-3 font-medium">Priority</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="py-3 pr-4 pl-3 text-right font-medium">
+        <div className="rounded-card border-line bg-card overflow-x-auto border">
+          <Table className="text-small w-full text-left">
+            <TableHeader className="border-line bg-paper text-muted-foreground border-b">
+              <TableRow className="border-line hover:bg-transparent">
+                <TableHead className="py-3 pr-3 pl-4 font-medium">
+                  Rule Name
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">
+                  Room Type
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">
+                  Date Range
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">
+                  Adjustment
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">
+                  Priority
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">Status</TableHead>
+                <TableHead className="py-3 pr-4 pl-3 text-right font-medium">
                   Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-line divide-y">
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-line divide-y">
               {filteredRules.map((r) => (
-                <tr key={r.id} className="hover:bg-paper/40 transition-colors">
-                  <td className="text-foreground py-3 pr-3 pl-4 font-semibold">
-                    <div>
-                      {r.name}
+                <TableRow
+                  key={r.id}
+                  className="hover:bg-paper/40 border-line transition-colors"
+                >
+                  <TableCell className="text-foreground py-3 pr-3 pl-4 font-semibold">
+                    <div className="flex items-center gap-2">
+                      <span>{r.name}</span>
                       {r.minNights && (
-                        <span className="bg-paper text-muted ml-2 rounded px-1.5 py-0.5 text-xs font-normal">
+                        <Badge
+                          variant="outline"
+                          className="text-muted-foreground text-xs font-normal"
+                        >
                           Min {r.minNights} nights
-                        </span>
+                        </Badge>
                       )}
                     </div>
-                  </td>
+                  </TableCell>
 
-                  <td className="text-muted px-4 py-3">
+                  <TableCell className="text-muted-foreground px-4 py-3">
                     {r.roomTypeName || 'All Room Types (Global)'}
-                  </td>
+                  </TableCell>
 
-                  <td className="text-muted px-4 py-3">
+                  <TableCell className="text-muted-foreground px-4 py-3">
                     {r.startDate} to {r.endDate}
-                  </td>
+                  </TableCell>
 
-                  <td className="px-4 py-3">
+                  <TableCell className="px-4 py-3">
                     <span className="text-foreground font-semibold">
                       {formatAdjustment(r)}
                     </span>
-                  </td>
+                  </TableCell>
 
-                  <td className="text-muted px-4 py-3">
+                  <TableCell className="text-muted-foreground px-4 py-3">
                     Priority {r.priority}
-                  </td>
+                  </TableCell>
 
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  <TableCell className="px-4 py-3">
+                    <Badge
+                      variant="outline"
+                      className={`gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                         r.isActive
-                          ? 'bg-success/15 text-success'
-                          : 'bg-muted/20 text-muted'
+                          ? 'border-success/20 bg-success/15 text-success'
+                          : 'border-muted/30 bg-muted/20 text-muted-foreground'
                       }`}
                     >
                       <span
@@ -238,13 +293,13 @@ export function RateRulesClient({
                         }`}
                       />
                       {r.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
+                    </Badge>
+                  </TableCell>
 
-                  <td className="py-3 pr-4 pl-3 text-right">
+                  <TableCell className="py-3 pr-4 pl-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button
-                        size="sm"
+                        size="icon-xs"
                         variant="ghost"
                         onClick={() => {
                           setEditingRule(r);
@@ -255,20 +310,20 @@ export function RateRulesClient({
                         <Edit2 className="size-3.5" />
                       </Button>
                       <Button
-                        size="sm"
+                        size="icon-xs"
                         variant="ghost"
                         onClick={() => handleDelete(r)}
-                        className="text-danger hover:bg-danger/10 hover:text-danger"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                         aria-label={`Delete ${r.name}`}
                       >
                         <Trash2 className="size-3.5" />
                       </Button>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 

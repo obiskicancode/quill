@@ -3,6 +3,14 @@
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import type { AuditListItem } from '@/types/audit-admin.types';
 
 export function AuditTable({
@@ -17,44 +25,65 @@ export function AuditTable({
   return (
     <div>
       {/* Desktop Table */}
-      <div className="rounded-card border-line bg-surface hidden overflow-x-auto border md:block">
-        <table className="text-small w-full text-left">
+      <div className="rounded-card border-line bg-card hidden overflow-hidden border md:block">
+        <Table className="text-small w-full text-left">
           <caption className="sr-only">Audit log entries</caption>
-          <thead className="border-line bg-paper text-caption text-muted sticky top-0 z-10 border-b font-semibold uppercase">
-            <tr>
-              <th scope="col" className="px-4 py-3">
+          <TableHeader className="border-line bg-paper text-caption text-muted-foreground sticky top-0 z-10 border-b font-semibold uppercase">
+            <TableRow className="hover:bg-transparent">
+              <TableHead
+                scope="col"
+                className="text-muted-foreground px-4 py-3"
+              >
                 Time
-              </th>
-              <th scope="col" className="px-3 py-3">
+              </TableHead>
+              <TableHead
+                scope="col"
+                className="text-muted-foreground px-3 py-3"
+              >
                 Actor
-              </th>
-              <th scope="col" className="px-3 py-3">
+              </TableHead>
+              <TableHead
+                scope="col"
+                className="text-muted-foreground px-3 py-3"
+              >
                 Action
-              </th>
-              <th scope="col" className="px-3 py-3">
+              </TableHead>
+              <TableHead
+                scope="col"
+                className="text-muted-foreground px-3 py-3"
+              >
                 Entity
-              </th>
-              <th scope="col" className="px-3 py-3">
+              </TableHead>
+              <TableHead
+                scope="col"
+                className="text-muted-foreground px-3 py-3"
+              >
                 Target Ref / ID
-              </th>
-              <th scope="col" className="px-4 py-3">
+              </TableHead>
+              <TableHead
+                scope="col"
+                className="text-muted-foreground px-4 py-3"
+              >
                 Summary
-              </th>
+              </TableHead>
               {isOwner && (
-                <th scope="col" className="px-3 py-3">
+                <TableHead
+                  scope="col"
+                  className="text-muted-foreground px-3 py-3"
+                >
                   IP Address
-                </th>
+                </TableHead>
               )}
-            </tr>
-          </thead>
-          <tbody className="divide-line divide-y">
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-line divide-y">
             {items.map((entry) => (
-              <tr
+              <TableRow
                 key={entry.id}
                 onClick={() => onRowClick(entry)}
                 className="hover:bg-paper/80 cursor-pointer transition-colors"
               >
-                <td className="px-4 py-3 whitespace-nowrap">
+                <TableCell className="px-4 py-3 whitespace-nowrap">
                   <span
                     className="text-ink border-muted/50 cursor-help border-b border-dotted font-medium"
                     title={`Exact UTC: ${entry.utcTime}`}
@@ -65,60 +94,60 @@ export function AuditTable({
                       minute: '2-digit',
                     })}
                   </span>
-                  <div className="text-muted text-[11px]">
+                  <div className="text-muted-foreground text-caption">
                     {new Date(entry.createdAt).toLocaleDateString('en-GB', {
                       timeZone: 'Africa/Lagos',
                       day: '2-digit',
                       month: 'short',
                     })}
                   </div>
-                </td>
-                <td className="px-3 py-3">
-                  <div className="text-ink max-w-[130px] truncate font-semibold">
+                </TableCell>
+                <TableCell className="px-3 py-3">
+                  <div className="text-ink max-w-32.5 truncate font-semibold">
                     {entry.actorName}
                   </div>
-                  <div className="text-caption text-muted capitalize">
+                  <div className="text-caption text-muted-foreground capitalize">
                     {entry.actorRole}
                   </div>
-                </td>
-                <td className="px-3 py-3">
+                </TableCell>
+                <TableCell className="px-3 py-3">
                   <span className="text-caption bg-paper border-line rounded border px-2 py-0.5 font-mono capitalize">
                     {entry.action}
                   </span>
-                </td>
-                <td className="text-caption text-ink px-3 py-3 font-mono capitalize">
+                </TableCell>
+                <TableCell className="text-caption text-ink px-3 py-3 font-mono capitalize">
                   {entry.entity.replace('_', ' ')}
-                </td>
-                <td className="text-caption px-3 py-3 font-mono">
+                </TableCell>
+                <TableCell className="text-caption px-3 py-3 font-mono">
                   {entry.entityLink ? (
                     <Link
                       href={entry.entityLink}
                       onClick={(e) => e.stopPropagation()}
                       className="text-primary inline-flex items-center gap-1 font-semibold hover:underline"
                     >
-                      <span className="max-w-[120px] truncate">
+                      <span className="max-w-30 truncate">
                         {entry.entityRef || entry.entityId}
                       </span>
-                      <ExternalLink className="text-muted size-3" />
+                      <ExternalLink className="text-muted-foreground size-3" />
                     </Link>
                   ) : (
-                    <span className="text-muted block max-w-[120px] truncate">
+                    <span className="text-muted-foreground block max-w-30 truncate">
                       {entry.entityRef || entry.entityId}
                     </span>
                   )}
-                </td>
-                <td className="text-caption text-muted max-w-sm truncate px-4 py-3">
+                </TableCell>
+                <TableCell className="text-caption text-muted-foreground max-w-sm truncate px-4 py-3">
                   {entry.summary}
-                </td>
+                </TableCell>
                 {isOwner && (
-                  <td className="text-caption text-muted px-3 py-3 font-mono whitespace-nowrap">
+                  <TableCell className="text-caption text-muted-foreground px-3 py-3 font-mono whitespace-nowrap">
                     {entry.ipAddress || '—'}
-                  </td>
+                  </TableCell>
                 )}
-              </tr>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Mobile Cards */}
@@ -127,13 +156,13 @@ export function AuditTable({
           <div
             key={entry.id}
             onClick={() => onRowClick(entry)}
-            className="rounded-card border-line bg-surface hover:bg-paper/50 cursor-pointer space-y-2 border p-4 shadow-sm transition-colors"
+            className="rounded-card border-line bg-card hover:bg-paper/50 cursor-pointer space-y-2 border p-4 shadow-sm transition-colors"
           >
             <div className="flex items-center justify-between">
               <span className="text-caption bg-paper border-line text-ink rounded border px-2 py-0.5 font-mono font-semibold capitalize">
                 {entry.action}
               </span>
-              <span className="text-caption text-muted">
+              <span className="text-caption text-muted-foreground">
                 {new Date(entry.createdAt).toLocaleString('en-GB', {
                   timeZone: 'Africa/Lagos',
                   dateStyle: 'short',
@@ -146,9 +175,11 @@ export function AuditTable({
               {entry.actorName} ({entry.actorRole})
             </div>
 
-            <p className="text-caption text-muted">{entry.summary}</p>
+            <p className="text-caption text-muted-foreground">
+              {entry.summary}
+            </p>
 
-            <div className="border-line/60 text-muted flex items-center justify-between border-t pt-2 text-[11px]">
+            <div className="border-line/60 text-muted-foreground flex items-center justify-between border-t pt-2 text-[11px]">
               <span>Entity: {entry.entity}</span>
               <span className="font-mono">
                 {entry.entityRef || entry.entityId}

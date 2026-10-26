@@ -1,3 +1,6 @@
+import { cn } from 'cn';
+
+import { Badge } from '@/components/ui/badge';
 import type { PaymentState } from '@/types/reservation.types';
 
 const paymentConfig: Record<
@@ -6,33 +9,37 @@ const paymentConfig: Record<
 > = {
   fully_paid: {
     label: 'Fully paid',
-    className: 'bg-success/10 text-success border-success/20',
+    className: 'border-success/20 bg-success/10 text-success',
   },
   deposit_paid: {
     label: 'Deposit paid',
-    className: 'bg-accent/15 text-accent-ink border-accent/30',
+    className: 'border-primary/30 bg-primary/15 text-brand-ink',
   },
   unpaid: {
     label: 'Unpaid',
-    className: 'bg-danger/10 text-danger border-danger/20',
+    className: 'border-destructive/20 bg-destructive/10 text-destructive',
   },
   refunded: {
     label: 'Refunded',
-    className: 'bg-muted/15 text-muted border-muted/30',
+    className: 'border-muted/30 bg-muted/15 text-muted-foreground',
   },
 };
 
 export function PaymentBadge({ state }: { state: PaymentState }) {
   const config = paymentConfig[state] ?? {
     label: state,
-    className: 'bg-ink/10 text-ink border-line',
+    className: 'border-line bg-ink/10 text-ink',
   };
 
   return (
-    <span
-      className={`text-caption inline-flex items-center rounded-full border px-2 py-0.5 font-semibold ${config.className}`}
+    <Badge
+      variant="outline"
+      className={cn(
+        'text-caption rounded-full px-2 py-0.5 font-semibold',
+        config.className,
+      )}
     >
       {config.label}
-    </span>
+    </Badge>
   );
 }

@@ -1,10 +1,19 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { formatNaira } from '@/lib/format';
 import type {
   ReservationDetail,
@@ -102,24 +111,27 @@ export function RefundModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Payment Summary */}
-        <div className="bg-canvas rounded-control border-line text-small flex items-center justify-between border p-3">
+        <div className="bg-muted rounded-control border-line text-small flex items-center justify-between border p-3">
           <div>
-            <span className="text-caption text-muted">Original Payment:</span>
+            <span className="text-caption text-muted-foreground">
+              Original Payment:
+            </span>
             <p className="text-ink font-semibold">
               {formatNaira(payment.amountMinor / 100)} ({payment.provider})
             </p>
           </div>
-          <span className="text-caption text-muted font-mono">
+          <span className="text-caption text-muted-foreground font-mono">
             {payment.reference}
           </span>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Refund Amount (₦) <span className="text-danger">*</span>
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="refund-amount">
+              Refund Amount (₦) <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="refund-amount"
               type="number"
               step="any"
               min="1"
@@ -127,96 +139,115 @@ export function RefundModal({
               required
               value={amountNaira}
               onChange={(e) => setAmountNaira(e.target.value)}
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
             />
           </div>
 
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Refund Channel <span className="text-danger">*</span>
-            </label>
-            <select
+          <div className="space-y-1.5">
+            <Label htmlFor="refund-channel">
+              Refund Channel <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              items={[
+                ...(payment.provider !== 'cash' &&
+                payment.provider !== 'bank_transfer'
+                  ? [
+                      {
+                        value: 'provider',
+                        label: `Original Payment Gateway (${payment.provider})`,
+                      },
+                    ]
+                  : []),
+                {
+                  value: 'manual_bank',
+                  label: 'Bank Transfer to Guest',
+                },
+                {
+                  value: 'manual_cash',
+                  label: 'Cash Handed to Guest',
+                },
+              ]}
               value={method}
-              onChange={(e) =>
-                setMethod(
-                  e.target.value as 'provider' | 'manual_bank' | 'manual_cash',
-                )
-              }
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+              onValueChange={(val) => {
+                if (val) {
+                  setMethod(val as 'provider' | 'manual_bank' | 'manual_cash');
+                }
+              }}
             >
-              {payment.provider !== 'cash' &&
-                payment.provider !== 'bank_transfer' && (
-                  <option value="provider">
-                    Original Payment Gateway ({payment.provider})
-                  </option>
-                )}
-              <option value="manual_bank">Bank Transfer to Guest</option>
-              <option value="manual_cash">Cash Handed to Guest</option>
-            </select>
+              <SelectTrigger id="refund-channel" className="w-full">
+                <SelectValue placeholder="Select refund channel" />
+              </SelectTrigger>
+              <SelectContent>
+                {payment.provider !== 'cash' &&
+                  payment.provider !== 'bank_transfer' && (
+                    <SelectItem value="provider">
+                      Original Payment Gateway ({payment.provider})
+                    </SelectItem>
+                  )}
+                <SelectItem value="manual_bank">
+                  Bank Transfer to Guest
+                </SelectItem>
+                <SelectItem value="manual_cash">
+                  Cash Handed to Guest
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <div>
-          <label className="text-small text-ink block font-semibold">
-            Refund Reason <span className="text-danger">*</span>
-          </label>
-          <input
+        <div className="space-y-1.5">
+          <Label htmlFor="refund-reason">
+            Refund Reason <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="refund-reason"
             type="text"
             required
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="e.g. Overpayment adjustment, early departure..."
-            className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
           />
         </div>
 
-        <div>
-          <label className="text-small text-ink block font-semibold">
-            Internal Note / Reference
-          </label>
-          <input
+        <div className="space-y-1.5">
+          <Label htmlFor="refund-reference">Internal Note / Reference</Label>
+          <Input
+            id="refund-reference"
             type="text"
             value={reference}
             onChange={(e) => setReference(e.target.value)}
             placeholder="Transaction reference or receipt code..."
-            className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 font-mono focus:outline-hidden"
+            className="font-mono"
           />
         </div>
 
-        <div>
-          <label className="text-small text-ink block font-semibold">
-            Staff Notes
-          </label>
-          <textarea
+        <div className="space-y-1.5">
+          <Label htmlFor="refund-staff-notes">Staff Notes</Label>
+          <Textarea
+            id="refund-staff-notes"
             rows={2}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Additional context or notes..."
-            className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full resize-none border px-3 py-2 focus:outline-hidden"
           />
         </div>
 
         <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
+            size="sm"
             onClick={onClose}
             disabled={submitting}
           >
             Cancel
           </Button>
-          <Button type="submit" variant="danger" disabled={submitting}>
-            {submitting ? (
-              <>
-                <Loader2
-                  className="mr-2 size-4 animate-spin"
-                  aria-hidden="true"
-                />
-                Processing refund...
-              </>
-            ) : (
-              'Confirm refund'
-            )}
+          <Button
+            type="submit"
+            variant="destructive"
+            size="sm"
+            loading={submitting}
+          >
+            Confirm refund
           </Button>
         </div>
       </form>

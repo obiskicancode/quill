@@ -6,7 +6,15 @@ import { useState } from 'react';
 
 import { AdminCard } from '@/components/admin/AdminCard';
 import { AdminEmpty } from '@/components/admin/AdminStates';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { formatNaira } from '@/lib/format';
 import type { DashboardReservationRow } from '@/types/dashboard.types';
 
@@ -56,86 +64,110 @@ export function ArrivalsTable({
             There are no guests scheduled to check in today.
           </AdminEmpty>
         ) : (
-          <div className="overflow-x-auto">
+          <div>
             {/* Desktop Table View */}
-            <table className="text-small hidden w-full text-left md:table">
+            <Table className="text-small hidden w-full text-left md:table">
               <caption className="sr-only">
                 List of guests arriving today
               </caption>
-              <thead className="border-line text-caption text-muted border-b font-semibold tracking-wider uppercase">
-                <tr>
-                  <th scope="col" className="pr-3 pb-3">
+              <TableHeader className="border-line text-caption text-muted-foreground border-b font-semibold tracking-wider uppercase">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead
+                    scope="col"
+                    className="text-muted-foreground pr-3 pb-3"
+                  >
                     Reference
-                  </th>
-                  <th scope="col" className="px-3 pb-3">
+                  </TableHead>
+                  <TableHead
+                    scope="col"
+                    className="text-muted-foreground px-3 pb-3"
+                  >
                     Guest
-                  </th>
-                  <th scope="col" className="px-3 pb-3">
+                  </TableHead>
+                  <TableHead
+                    scope="col"
+                    className="text-muted-foreground px-3 pb-3"
+                  >
                     Room
-                  </th>
-                  <th scope="col" className="px-3 pb-3">
+                  </TableHead>
+                  <TableHead
+                    scope="col"
+                    className="text-muted-foreground px-3 pb-3"
+                  >
                     Stay
-                  </th>
-                  <th scope="col" className="px-3 pb-3">
+                  </TableHead>
+                  <TableHead
+                    scope="col"
+                    className="text-muted-foreground px-3 pb-3"
+                  >
                     Balance
-                  </th>
-                  <th scope="col" className="px-3 pb-3">
+                  </TableHead>
+                  <TableHead
+                    scope="col"
+                    className="text-muted-foreground px-3 pb-3"
+                  >
                     Status
-                  </th>
-                  <th scope="col" className="px-3 pb-3">
+                  </TableHead>
+                  <TableHead
+                    scope="col"
+                    className="text-muted-foreground px-3 pb-3"
+                  >
                     ETA
-                  </th>
-                  <th scope="col" className="pb-3 pl-3 text-right">
+                  </TableHead>
+                  <TableHead
+                    scope="col"
+                    className="text-muted-foreground pb-3 pl-3 text-right"
+                  >
                     Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-line divide-y">
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody className="divide-line divide-y">
                 {rows.map((row) => (
-                  <tr
+                  <TableRow
                     key={row.id}
                     className="hover:bg-paper/60 transition-colors"
                   >
-                    <td className="py-3 pr-3 font-semibold">
+                    <TableCell className="py-3 pr-3 font-semibold">
                       <Link
                         href={`/admin/reservations/${row.id}`}
                         className="underline-offset-4 hover:underline"
                       >
                         {row.reference}
                       </Link>
-                    </td>
-                    <td className="px-3 py-3">
+                    </TableCell>
+                    <TableCell className="px-3 py-3">
                       <span className="text-ink font-medium">
                         {row.guestName}
                       </span>
-                    </td>
-                    <td className="text-muted px-3 py-3">
+                    </TableCell>
+                    <TableCell className="text-muted-foreground px-3 py-3">
                       <span>{row.roomTypeName}</span>
                       <span className="text-ink ml-1 font-semibold">
                         #{row.roomNumber}
                       </span>
-                    </td>
-                    <td className="text-muted px-3 py-3">
+                    </TableCell>
+                    <TableCell className="text-muted-foreground px-3 py-3">
                       <span>{row.nights}n</span>
                       <span className="text-caption ml-1">
                         ({row.adults + row.children}g)
                       </span>
-                    </td>
-                    <td className="px-3 py-3">
+                    </TableCell>
+                    <TableCell className="px-3 py-3">
                       <span
                         className={
                           row.balanceMinor > 0
-                            ? 'text-danger font-semibold'
-                            : 'text-muted'
+                            ? 'text-destructive font-semibold'
+                            : 'text-muted-foreground'
                         }
                       >
                         {formatNaira(row.balanceMinor / 100)}
                       </span>
-                    </td>
-                    <td className="px-3 py-3">
+                    </TableCell>
+                    <TableCell className="px-3 py-3">
                       <StatusBadge status={row.status} />
-                    </td>
-                    <td className="text-muted px-3 py-3">
+                    </TableCell>
+                    <TableCell className="text-muted-foreground px-3 py-3">
                       {row.arrivalTime ? (
                         <span className="inline-flex items-center gap-1">
                           <Clock className="size-3" aria-hidden="true" />
@@ -144,8 +176,8 @@ export function ArrivalsTable({
                       ) : (
                         '—'
                       )}
-                    </td>
-                    <td className="py-3 pl-3 text-right">
+                    </TableCell>
+                    <TableCell className="py-3 pl-3 text-right">
                       {canManage && row.status === 'confirmed' ? (
                         <Button
                           variant="secondary"
@@ -167,17 +199,17 @@ export function ArrivalsTable({
                       ) : (
                         <Link
                           href={`/admin/reservations/${row.id}`}
-                          className="text-caption text-muted hover:text-ink inline-flex items-center gap-1 font-semibold"
+                          className="text-caption text-muted-foreground hover:text-ink inline-flex items-center gap-1 font-semibold"
                         >
                           Details
                           <ArrowRight className="size-3" aria-hidden="true" />
                         </Link>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
 
             {/* Mobile Card List View */}
             <div className="space-y-3 md:hidden">
@@ -198,7 +230,7 @@ export function ArrivalsTable({
 
                   <p className="text-ink mt-1 font-medium">{row.guestName}</p>
 
-                  <div className="text-caption text-muted mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <div className="text-caption text-muted-foreground mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span>
                       {row.roomTypeName} #{row.roomNumber}
                     </span>
@@ -209,7 +241,9 @@ export function ArrivalsTable({
                     <span>•</span>
                     <span
                       className={
-                        row.balanceMinor > 0 ? 'text-danger font-semibold' : ''
+                        row.balanceMinor > 0
+                          ? 'text-destructive font-semibold'
+                          : ''
                       }
                     >
                       Due: {formatNaira(row.balanceMinor / 100)}
@@ -217,7 +251,7 @@ export function ArrivalsTable({
                   </div>
 
                   {row.arrivalTime && (
-                    <p className="text-caption text-muted mt-1 flex items-center gap-1">
+                    <p className="text-caption text-muted-foreground mt-1 flex items-center gap-1">
                       <Clock className="size-3" aria-hidden="true" />
                       ETA: {row.arrivalTime}
                     </p>
@@ -226,7 +260,7 @@ export function ArrivalsTable({
                   <div className="border-line/60 mt-3 flex items-center justify-end gap-2 border-t pt-2">
                     <Link
                       href={`/admin/reservations/${row.id}`}
-                      className="text-caption text-muted hover:text-ink inline-flex min-h-11 items-center px-3 font-semibold"
+                      className="text-caption text-muted-foreground hover:text-ink inline-flex min-h-11 items-center px-3 font-semibold"
                     >
                       View
                     </Link>

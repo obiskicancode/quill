@@ -1,5 +1,13 @@
+import { cn } from 'cn';
 import { AlertCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
+
+import {
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  Field as FieldRoot,
+} from '@/components/ui/field';
 
 export interface FieldA11y {
   id: string;
@@ -17,11 +25,11 @@ interface FieldProps {
 }
 
 export const inputClass = (error?: string) =>
-  `min-h-12 w-full rounded-control border bg-surface px-4 text-body placeholder:text-muted/80 disabled:bg-paper disabled:text-muted ${
-    error ? 'border-2 border-danger' : 'border-ink/60'
-  }`;
+  cn(
+    'min-h-12 w-full rounded-control border border-input bg-card px-4 text-body text-foreground placeholder:text-muted-foreground/80 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:bg-paper disabled:text-muted-foreground',
+    error && 'border-2 border-destructive',
+  );
 
-/** A visible label, an optional hint, and an error linked with aria-describedby. */
 export function Field({
   id,
   label,
@@ -35,32 +43,35 @@ export function Field({
       .filter(Boolean)
       .join(' ') || undefined;
   return (
-    <div>
-      <label htmlFor={id} className="text-small mb-1.5 block font-semibold">
+    <FieldRoot data-invalid={Boolean(error)} className="gap-1.5">
+      <FieldLabel htmlFor={id} className="text-small font-semibold">
         {label}
         {optional && (
-          <span className="text-muted font-normal"> (optional)</span>
+          <span className="text-muted-foreground font-normal"> (optional)</span>
         )}
-      </label>
+      </FieldLabel>
       {children({
         id,
         'aria-describedby': describedBy,
         'aria-invalid': error ? true : undefined,
       })}
       {hint && (
-        <p id={`${id}-hint`} className="text-caption text-muted mt-1.5">
+        <FieldDescription id={`${id}-hint`} className="text-caption">
           {hint}
-        </p>
+        </FieldDescription>
       )}
       {error && (
-        <p
+        <FieldError
           id={`${id}-error`}
-          className="text-small text-danger mt-1.5 flex items-start gap-1.5 font-medium"
+          className="text-small font-medium"
+          aria-live="polite"
         >
-          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
-          {error}
-        </p>
+          <span className="flex items-start gap-1.5">
+            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            {error}
+          </span>
+        </FieldError>
       )}
-    </div>
+    </FieldRoot>
   );
 }

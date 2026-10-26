@@ -12,13 +12,13 @@ import { formatMinor } from '@/types/stay.types';
 
 import { DatePicker, type DateRange } from '../DatePicker';
 import { EASE_OUT } from '../motion/variants';
-import { Button, ButtonLink } from '../ui/Button';
+import { Button, ButtonLink } from '../ui/button';
 
 type Tone = 'info' | 'warn' | 'danger';
 const tones: Record<Tone, string> = {
-  info: 'border-ink/40 bg-surface',
-  warn: 'border-accent bg-accent/15',
-  danger: 'border-danger bg-danger/5',
+  info: 'border-ink/40 bg-card',
+  warn: 'border-primary bg-primary/15',
+  danger: 'border-destructive bg-destructive/5',
 };
 
 export function Banner({
@@ -200,18 +200,19 @@ export function UnavailableState({
         <ul className="grid gap-3 sm:grid-cols-3">
           {suggestions.map((s) => (
             <li key={s.checkIn}>
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => router.push(hrefFor(s))}
-                className="rounded-card border-ink/60 bg-surface hover:bg-ink hover:text-paper flex min-h-14 w-full flex-col items-start justify-center border px-4 text-left transition-colors"
+                className="border-line bg-card hover:bg-primary hover:text-primary-foreground h-auto min-h-14 w-full flex-col items-start justify-center p-4 text-left font-normal transition-colors"
               >
                 <span className="font-semibold">
                   {formatRange(s.checkIn, s.checkOut)}
                 </span>
-                <span className="text-small tabular-nums">
+                <span className="text-small tabular-nums opacity-90">
                   {formatMinor(s.totalMinor)} total
                 </span>
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
@@ -235,7 +236,7 @@ export function UnavailableState({
               exit={reduced ? undefined : { opacity: 0, height: 0 }}
               transition={{ duration: reduced ? 0 : 0.3, ease: EASE_OUT }}
               style={{ overflow: 'hidden' }}
-              className="rounded-card border-line bg-surface mt-4 max-w-sm border p-4"
+              className="rounded-card border-line bg-card mt-4 max-w-sm border p-4"
             >
               <DatePicker
                 value={range}
@@ -278,7 +279,7 @@ export function ConfirmingScreen({
   return (
     <section
       aria-labelledby="confirming-title"
-      className="rounded-card border-line bg-surface shadow-raised border p-8 text-center"
+      className="rounded-card border-line bg-card shadow-raised border p-8 text-center"
     >
       <AnimatePresence mode="wait" initial={false}>
         {!timedOut ? (
@@ -291,7 +292,7 @@ export function ConfirmingScreen({
             transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
           >
             <Loader2
-              className="text-accent-ink mx-auto size-10 animate-spin motion-reduce:animate-none"
+              className="text-brand-ink mx-auto size-10 animate-spin motion-reduce:animate-none"
               aria-hidden
             />
             <h1 id="confirming-title" className="font-display text-h2">
@@ -311,7 +312,7 @@ export function ConfirmingScreen({
             exit={reduced ? undefined : { opacity: 0 }}
             transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
           >
-            <Clock className="text-accent-ink mx-auto size-10" aria-hidden />
+            <Clock className="text-brand-ink mx-auto size-10" aria-hidden />
             <h1 id="confirming-title" className="font-display text-h2">
               We are still waiting for confirmation
             </h1>
@@ -410,9 +411,9 @@ export function TransferSubmittedScreen({
   return (
     <section
       aria-labelledby="transfer-title"
-      className="rounded-card border-line bg-surface shadow-raised space-y-5 border p-8"
+      className="rounded-card border-line bg-card shadow-raised space-y-5 border p-8"
     >
-      <CheckCircle2 className="text-accent-ink size-10" aria-hidden />
+      <CheckCircle2 className="text-brand-ink size-10" aria-hidden />
       <h1 id="transfer-title" className="font-display text-h2">
         Reservation received, awaiting verification
       </h1>
@@ -436,9 +437,9 @@ export function RequestReceivedScreen({
   return (
     <section
       aria-labelledby="request-title"
-      className="rounded-card border-line bg-surface shadow-raised space-y-5 border p-8"
+      className="rounded-card border-line bg-card shadow-raised space-y-5 border p-8"
     >
-      <CheckCircle2 className="text-accent-ink size-10" aria-hidden />
+      <CheckCircle2 className="text-brand-ink size-10" aria-hidden />
       <h1 id="request-title" className="font-display text-h2">
         Request received
       </h1>

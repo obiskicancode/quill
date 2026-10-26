@@ -13,17 +13,20 @@ export function StayInfoCard({
       <div className="grid gap-4 sm:grid-cols-2">
         {/* Room Type & Number */}
         <div className="flex items-start gap-2.5">
-          <Bed className="text-muted mt-1 size-4 shrink-0" aria-hidden="true" />
+          <Bed
+            className="text-muted-foreground mt-1 size-4 shrink-0"
+            aria-hidden="true"
+          />
           <div>
-            <p className="text-caption text-muted font-semibold tracking-wider uppercase">
+            <p className="text-caption text-muted-foreground font-semibold tracking-wider uppercase">
               Assigned Room
             </p>
             <p className="text-ink font-semibold">{reservation.roomTypeName}</p>
-            <p className="text-small text-muted">
+            <p className="text-small text-muted-foreground">
               Room #{reservation.roomNumber}
             </p>
             {reservation.extraBedAvailable && (
-              <span className="text-caption text-muted mt-1 inline-block">
+              <span className="text-caption text-muted-foreground mt-1 inline-block">
                 Extra bed available
               </span>
             )}
@@ -33,11 +36,11 @@ export function StayInfoCard({
         {/* Guests */}
         <div className="flex items-start gap-2.5">
           <Users
-            className="text-muted mt-1 size-4 shrink-0"
+            className="text-muted-foreground mt-1 size-4 shrink-0"
             aria-hidden="true"
           />
           <div>
-            <p className="text-caption text-muted font-semibold tracking-wider uppercase">
+            <p className="text-caption text-muted-foreground font-semibold tracking-wider uppercase">
               Guests
             </p>
             <p className="text-ink font-semibold">
@@ -45,7 +48,7 @@ export function StayInfoCard({
               {reservation.adults === 1 ? 'Adult' : 'Adults'}
               {reservation.children > 0 && `, ${reservation.children} Children`}
             </p>
-            <p className="text-small text-muted">
+            <p className="text-small text-muted-foreground">
               {reservation.nights} nights stay
             </p>
           </div>
@@ -54,15 +57,15 @@ export function StayInfoCard({
         {/* Check-in */}
         <div className="flex items-start gap-2.5">
           <Calendar
-            className="text-muted mt-1 size-4 shrink-0"
+            className="text-muted-foreground mt-1 size-4 shrink-0"
             aria-hidden="true"
           />
           <div>
-            <p className="text-caption text-muted font-semibold tracking-wider uppercase">
+            <p className="text-caption text-muted-foreground font-semibold tracking-wider uppercase">
               Check-in
             </p>
             <p className="text-ink font-semibold">{reservation.checkIn}</p>
-            <p className="text-caption text-muted">
+            <p className="text-caption text-muted-foreground">
               From {reservation.policySnapshot.checkInTime}
             </p>
             {reservation.arrivalTime && (
@@ -77,15 +80,15 @@ export function StayInfoCard({
         {/* Check-out */}
         <div className="flex items-start gap-2.5">
           <Calendar
-            className="text-muted mt-1 size-4 shrink-0"
+            className="text-muted-foreground mt-1 size-4 shrink-0"
             aria-hidden="true"
           />
           <div>
-            <p className="text-caption text-muted font-semibold tracking-wider uppercase">
+            <p className="text-caption text-muted-foreground font-semibold tracking-wider uppercase">
               Check-out
             </p>
             <p className="text-ink font-semibold">{reservation.checkOut}</p>
-            <p className="text-caption text-muted">
+            <p className="text-caption text-muted-foreground">
               Until {reservation.policySnapshot.checkOutTime}
             </p>
           </div>

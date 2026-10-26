@@ -11,6 +11,16 @@ import {
   type GuestInput,
 } from '@/schemas/checkout.schema';
 
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import { Textarea } from '../ui/textarea';
 import { Field, inputClass } from './Field';
 
 export type GuestField = keyof GuestInput;
@@ -68,7 +78,7 @@ export function DetailsStep({
 
       <Field id="field-fullName" label="Full name" error={errors.fullName}>
         {(a) => (
-          <input
+          <Input
             {...a}
             {...bind('fullName')}
             type="text"
@@ -90,7 +100,7 @@ export function DetailsStep({
           }
         >
           {(a) => (
-            <input
+            <Input
               {...a}
               {...bind('email')}
               type="email"
@@ -106,18 +116,29 @@ export function DetailsStep({
         </Field>
         <Field id="field-country" label="Country" error={errors.country}>
           {(a) => (
-            <select
-              {...a}
-              {...bind('country')}
-              autoComplete="country"
-              className={inputClass(errors.country)}
+            <Select
+              items={countries.map((c) => ({ value: c.code, label: c.name }))}
+              value={values.country || 'NG'}
+              onValueChange={(val) => {
+                if (val) onChange('country', val);
+              }}
+              disabled={disabled}
             >
-              {countries.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                id={a.id}
+                aria-describedby={a['aria-describedby']}
+                className={inputClass(errors.country)}
+              >
+                <SelectValue placeholder="Country" />
+              </SelectTrigger>
+              <SelectContent>
+                {countries.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         </Field>
       </div>
@@ -131,7 +152,7 @@ export function DetailsStep({
             )}
             target="_blank"
             rel="noopener noreferrer"
-            className="decoration-accent inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
+            className="decoration-brand inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
           >
             Change email? Contact us
             <span className="sr-only"> (opens in a new tab)</span>
@@ -146,7 +167,7 @@ export function DetailsStep({
         hint="Use a number that works on WhatsApp. Add the country code if it is not from your selected country."
       >
         {(a) => (
-          <input
+          <Input
             {...a}
             {...bind('phone')}
             type="tel"
@@ -164,18 +185,36 @@ export function DetailsStep({
         error={errors.arrivalTime}
       >
         {(a) => (
-          <select
-            {...a}
-            {...bind('arrivalTime')}
-            className={inputClass(errors.arrivalTime)}
+          <Select
+            items={[
+              { value: 'none', label: 'Choose a time' },
+              ...arrivalOptions.map((o) => ({
+                value: o.value,
+                label: o.label,
+              })),
+            ]}
+            value={values.arrivalTime || 'none'}
+            onValueChange={(val) => {
+              onChange('arrivalTime', val === 'none' || !val ? '' : val);
+            }}
+            disabled={disabled}
           >
-            <option value="">Choose a time</option>
-            {arrivalOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              id={a.id}
+              aria-describedby={a['aria-describedby']}
+              className={inputClass(errors.arrivalTime)}
+            >
+              <SelectValue placeholder="Choose a time" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Choose a time</SelectItem>
+              {arrivalOptions.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
       </Field>
 
@@ -187,7 +226,7 @@ export function DetailsStep({
         hint={`${(values.specialRequests ?? '').length} / ${MAX_REQUEST_LENGTH} characters. We pass requests on but cannot always guarantee them.`}
       >
         {(a) => (
-          <textarea
+          <Textarea
             {...a}
             {...bind('specialRequests')}
             rows={4}
@@ -205,17 +244,16 @@ export function DetailsStep({
             aria-hidden
             className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
           >
-            <label>
-              Website
-              <input
-                type="text"
-                name="website"
-                tabIndex={-1}
-                autoComplete="off"
-                value={website}
-                onChange={(e) => onWebsite?.(e.target.value)}
-              />
-            </label>
+            <Label htmlFor="checkout-website-honeypot">Website</Label>
+            <Input
+              id="checkout-website-honeypot"
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={website}
+              onChange={(e) => onWebsite?.(e.target.value)}
+            />
           </div>
         </>
       )}
@@ -234,7 +272,7 @@ export function DetailsStep({
           </p>
           <Link
             href={editHref}
-            className="decoration-accent inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
+            className="decoration-brand inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
           >
             Edit stay
           </Link>

@@ -12,13 +12,13 @@ export function RatesAndExtrasCard({
       <div className="space-y-5">
         {/* Nightly Rates Table */}
         <div>
-          <h4 className="text-caption text-muted font-semibold tracking-wider uppercase">
+          <h4 className="text-caption text-muted-foreground font-semibold tracking-wider uppercase">
             Nightly inventory rates ({reservation.nightsList.length} nights)
           </h4>
           <div className="mt-2 overflow-x-auto">
             <table className="text-small w-full text-left">
               <caption className="sr-only">List of nightly room rates</caption>
-              <thead className="border-line text-caption text-muted border-b font-medium">
+              <thead className="border-line text-caption text-muted-foreground border-b font-medium">
                 <tr>
                   <th scope="col" className="pb-2">
                     Date
@@ -35,7 +35,7 @@ export function RatesAndExtrasCard({
                 {reservation.nightsList.map((n) => (
                   <tr key={n.id}>
                     <td className="text-ink py-2.5 font-medium">{n.date}</td>
-                    <td className="text-caption text-muted py-2.5">
+                    <td className="text-caption text-muted-foreground py-2.5">
                       {n.ruleName ?? 'Standard base rate'}
                     </td>
                     <td className="text-ink py-2.5 text-right font-semibold">
@@ -51,7 +51,7 @@ export function RatesAndExtrasCard({
         {/* Extras Table */}
         {reservation.extrasList.length > 0 && (
           <div className="border-line border-t pt-3">
-            <h4 className="text-caption text-muted font-semibold tracking-wider uppercase">
+            <h4 className="text-caption text-muted-foreground font-semibold tracking-wider uppercase">
               Add-on extras ({reservation.extrasList.length})
             </h4>
             <div className="mt-2 overflow-x-auto">
@@ -59,7 +59,7 @@ export function RatesAndExtrasCard({
                 <caption className="sr-only">
                   List of booking add-on extras
                 </caption>
-                <thead className="border-line text-caption text-muted border-b font-medium">
+                <thead className="border-line text-caption text-muted-foreground border-b font-medium">
                   <tr>
                     <th scope="col" className="pb-2">
                       Item
@@ -79,8 +79,10 @@ export function RatesAndExtrasCard({
                   {reservation.extrasList.map((e) => (
                     <tr key={e.id}>
                       <td className="text-ink py-2.5 font-medium">{e.name}</td>
-                      <td className="text-muted py-2.5">{e.quantity}</td>
-                      <td className="text-muted py-2.5">
+                      <td className="text-muted-foreground py-2.5">
+                        {e.quantity}
+                      </td>
+                      <td className="text-muted-foreground py-2.5">
                         {formatNaira(e.unitPriceMinor / 100)}
                       </td>
                       <td className="text-ink py-2.5 text-right font-semibold">

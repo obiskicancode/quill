@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 
+import { Button } from '../ui/button';
+
 /** Clamps text to about six lines. The button only appears when the text is actually longer. */
 export function ReadMore({ text }: { text: string }) {
   const id = useId();
@@ -30,15 +32,16 @@ export function ReadMore({ text }: { text: string }) {
         {text}
       </p>
       {(overflowing || expanded) && (
-        <button
+        <Button
           type="button"
+          variant="link"
           aria-expanded={expanded}
           aria-controls={id}
           onClick={() => setExpanded((e) => !e)}
-          className="decoration-accent mt-1 inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-[6px]"
+          className="decoration-brand mt-1 inline-flex h-auto min-h-11 items-center p-0 font-semibold underline decoration-2 underline-offset-[6px]"
         >
           {expanded ? 'Show less' : 'Read more'}
-        </button>
+        </Button>
       )}
     </div>
   );

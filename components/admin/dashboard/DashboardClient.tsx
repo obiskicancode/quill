@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { AdminError } from '@/components/admin/AdminStates';
 import { PageHeader } from '@/components/admin/PageHeader';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/button';
 import {
   useDashboardOccupancy,
   useDashboardRevenue,
@@ -193,8 +193,8 @@ export function DashboardClient({
           role={toast.type === 'error' ? 'alert' : 'status'}
           className={`rounded-control text-small shadow-float fixed right-5 bottom-5 z-50 flex items-center gap-2.5 px-4 py-3 transition-all ${
             toast.type === 'success'
-              ? 'border-success/30 bg-surface text-success border'
-              : 'border-danger/30 bg-surface text-danger border'
+              ? 'border-success/30 bg-card text-success border'
+              : 'border-destructive/30 bg-card text-destructive border'
           }`}
         >
           {toast.type === 'success' ? (
@@ -281,7 +281,7 @@ export function DashboardClient({
 
               {/* 5. Next 14 days occupancy */}
               {occupancyLoading && !occupancyData ? (
-                <div className="rounded-card border-line bg-surface border p-6">
+                <div className="rounded-card border-line bg-card border p-6">
                   <div className="bg-line/80 h-5 w-40 animate-pulse rounded" />
                   <div className="bg-line/30 mt-6 h-32 animate-pulse rounded" />
                 </div>

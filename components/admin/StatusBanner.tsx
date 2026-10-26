@@ -1,10 +1,13 @@
+import { cn } from 'cn';
 import { AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import type { ReactNode } from 'react';
+
+import { Alert } from '@/components/ui/alert';
 
 type Tone = 'error' | 'success' | 'info';
 
 const tones: Record<Tone, string> = {
-  error: 'border-danger/30 bg-danger/5 text-danger',
+  error: 'border-destructive/30 bg-destructive/5 text-destructive',
   success: 'border-success/30 bg-success/5 text-success',
   info: 'border-line bg-paper text-ink',
 };
@@ -24,12 +27,15 @@ export function StatusBanner({
 }) {
   const Icon = icons[tone];
   return (
-    <div
+    <Alert
       role={tone === 'error' ? 'alert' : 'status'}
-      className={`rounded-control text-small flex items-start gap-2.5 border px-3.5 py-3 ${tones[tone]}`}
+      className={cn(
+        'rounded-control text-small items-start gap-2.5 border px-3.5 py-3',
+        tones[tone],
+      )}
     >
       <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
-      <div>{children}</div>
-    </div>
+      <div className="col-start-2">{children}</div>
+    </Alert>
   );
 }

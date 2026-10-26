@@ -44,7 +44,7 @@ export function PolicyToc({ headings }: { headings: PolicyHeading[] }) {
             aria-current={active === h.id ? 'true' : undefined}
             className={`text-small block min-h-11 py-1.5 underline-offset-4 transition-colors hover:underline ${
               h.level === 3 ? 'pl-4' : ''
-            } ${active === h.id ? 'text-ink font-semibold' : 'text-muted'}`}
+            } ${active === h.id ? 'text-ink font-semibold' : 'text-muted-foreground'}`}
           >
             {h.text}
           </a>
@@ -58,7 +58,7 @@ export function PolicyToc({ headings }: { headings: PolicyHeading[] }) {
       <details
         open={open}
         onToggle={(e) => setOpen((e.target as HTMLDetailsElement).open)}
-        className="rounded-card border-line bg-surface border p-4 md:border-0 md:bg-transparent md:p-0"
+        className="rounded-card border-line bg-card border p-4 md:border-0 md:bg-transparent md:p-0"
       >
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between font-semibold md:mb-3 md:cursor-default [&::-webkit-details-marker]:hidden">
           On this page

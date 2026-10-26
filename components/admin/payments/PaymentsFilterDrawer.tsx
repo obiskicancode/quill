@@ -3,7 +3,56 @@
 import { Filter, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useState } from 'react';
 
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import type { PaymentsQueryParams } from '@/types/payments-admin.types';
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'paid', label: 'Paid' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'refunded', label: 'Refunded' },
+];
+
+const METHOD_OPTIONS = [
+  { value: 'all', label: 'All methods' },
+  { value: 'card', label: 'Card' },
+  { value: 'bank_transfer', label: 'Bank transfer' },
+  { value: 'cash', label: 'Cash' },
+  { value: 'ussd', label: 'USSD' },
+];
+
+const PROVIDER_OPTIONS = [
+  { value: 'all', label: 'All providers' },
+  { value: 'paystack', label: 'Paystack' },
+  { value: 'flutterwave', label: 'Flutterwave' },
+  { value: 'stripe', label: 'Stripe' },
+  { value: 'bank_transfer', label: 'Bank transfer' },
+  { value: 'cash', label: 'Cash' },
+];
+
+const RECONCILED_OPTIONS = [
+  { value: 'all', label: 'All reconciliation' },
+  { value: 'yes', label: 'Reconciled' },
+  { value: 'no', label: 'Unreconciled' },
+];
 
 export function PaymentsFilterDrawer({
   filters,
@@ -41,19 +90,26 @@ export function PaymentsFilterDrawer({
       {/* Search and primary bar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
-          <Search className="text-muted absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-          <input
+          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+          <Input
             type="search"
+            aria-label="Search payments"
             placeholder="Search ref, guest name, provider ref..."
             value={filters.q || ''}
             onChange={(e) => onChange({ q: e.target.value, page: 1 })}
-            className="border-line bg-surface text-small text-ink placeholder:text-muted focus:border-primary focus:ring-primary w-full rounded-md border py-1.5 pr-3 pl-9 focus:ring-1 focus:outline-none"
+            className="border-line bg-card pl-9"
           />
         </div>
 
         {/* Quick shortcut: Needs reconciliation */}
-        <button
+        <Button
           type="button"
+          variant={
+            filters.status === 'paid' && filters.reconciled === 'no'
+              ? 'primary'
+              : 'outline'
+          }
+          size="sm"
           onClick={() => {
             onChange({
               status: 'paid',
@@ -61,95 +117,133 @@ export function PaymentsFilterDrawer({
               page: 1,
             });
           }}
-          className={`text-caption inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 font-semibold transition-colors ${
-            filters.status === 'paid' && filters.reconciled === 'no'
-              ? 'bg-primary text-primary-ink border-primary'
-              : 'border-line bg-surface text-ink hover:bg-paper'
-          }`}
         >
-          <Filter className="size-3.5" />
+          <Filter aria-hidden />
           Needs Reconciliation
-        </button>
+        </Button>
 
         {/* Desktop inline dropdowns */}
         <div className="hidden items-center gap-2 lg:flex">
-          <select
+          <Select
+            items={STATUS_OPTIONS}
             value={filters.status}
-            onChange={(e) =>
-              onChange({
-                status: e.target.value as PaymentsQueryParams['status'],
-                page: 1,
-              })
-            }
-            className="border-line bg-surface text-caption text-ink focus:border-primary rounded-md border px-2.5 py-1.5 focus:outline-none"
+            onValueChange={(val) => {
+              if (val) {
+                onChange({
+                  status: val as PaymentsQueryParams['status'],
+                  page: 1,
+                });
+              }
+            }}
           >
-            <option value="all">All statuses</option>
-            <option value="paid">Paid</option>
-            <option value="pending">Pending</option>
-            <option value="failed">Failed</option>
-            <option value="refunded">Refunded</option>
-          </select>
+            <SelectTrigger
+              aria-label="Filter by payment status"
+              className="w-[130px]"
+            >
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <select
+          <Select
+            items={METHOD_OPTIONS}
             value={filters.method}
-            onChange={(e) =>
-              onChange({
-                method: e.target.value as PaymentsQueryParams['method'],
-                page: 1,
-              })
-            }
-            className="border-line bg-surface text-caption text-ink focus:border-primary rounded-md border px-2.5 py-1.5 focus:outline-none"
+            onValueChange={(val) => {
+              if (val) {
+                onChange({
+                  method: val as PaymentsQueryParams['method'],
+                  page: 1,
+                });
+              }
+            }}
           >
-            <option value="all">All methods</option>
-            <option value="card">Card</option>
-            <option value="bank_transfer">Bank transfer</option>
-            <option value="cash">Cash</option>
-            <option value="ussd">USSD</option>
-          </select>
+            <SelectTrigger
+              aria-label="Filter by payment method"
+              className="w-[135px]"
+            >
+              <SelectValue placeholder="All methods" />
+            </SelectTrigger>
+            <SelectContent>
+              {METHOD_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <select
+          <Select
+            items={PROVIDER_OPTIONS}
             value={filters.provider}
-            onChange={(e) =>
-              onChange({
-                provider: e.target.value as PaymentsQueryParams['provider'],
-                page: 1,
-              })
-            }
-            className="border-line bg-surface text-caption text-ink focus:border-primary rounded-md border px-2.5 py-1.5 focus:outline-none"
+            onValueChange={(val) => {
+              if (val) {
+                onChange({
+                  provider: val as PaymentsQueryParams['provider'],
+                  page: 1,
+                });
+              }
+            }}
           >
-            <option value="all">All providers</option>
-            <option value="paystack">Paystack</option>
-            <option value="flutterwave">Flutterwave</option>
-            <option value="stripe">Stripe</option>
-            <option value="bank_transfer">Bank transfer</option>
-            <option value="cash">Cash</option>
-          </select>
+            <SelectTrigger
+              aria-label="Filter by payment provider"
+              className="w-[140px]"
+            >
+              <SelectValue placeholder="All providers" />
+            </SelectTrigger>
+            <SelectContent>
+              {PROVIDER_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <select
+          <Select
+            items={RECONCILED_OPTIONS}
             value={filters.reconciled}
-            onChange={(e) =>
-              onChange({
-                reconciled: e.target.value as PaymentsQueryParams['reconciled'],
-                page: 1,
-              })
-            }
-            className="border-line bg-surface text-caption text-ink focus:border-primary rounded-md border px-2.5 py-1.5 focus:outline-none"
+            onValueChange={(val) => {
+              if (val) {
+                onChange({
+                  reconciled: val as PaymentsQueryParams['reconciled'],
+                  page: 1,
+                });
+              }
+            }}
           >
-            <option value="all">All reconciliation</option>
-            <option value="yes">Reconciled</option>
-            <option value="no">Unreconciled</option>
-          </select>
+            <SelectTrigger
+              aria-label="Filter by reconciliation status"
+              className="w-[150px]"
+            >
+              <SelectValue placeholder="All reconciliation" />
+            </SelectTrigger>
+            <SelectContent>
+              {RECONCILED_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Mobile toggle */}
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={() => setMobileOpen(true)}
-          className="border-line bg-surface text-caption text-ink inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 font-medium lg:hidden"
+          className="lg:hidden"
         >
-          <SlidersHorizontal className="size-3.5" />
+          <SlidersHorizontal aria-hidden />
           Filters {activeChips.length > 0 && `(${activeChips.length})`}
-        </button>
+        </Button>
       </div>
 
       {/* Removable chips */}
@@ -161,8 +255,10 @@ export function PaymentsFilterDrawer({
               className="border-line bg-paper text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5"
             >
               <span>{chip.label}</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => {
                   if (chip.key === 'q') onChange({ q: '' });
                   else
@@ -170,147 +266,183 @@ export function PaymentsFilterDrawer({
                       [chip.key]: 'all',
                     } as Partial<PaymentsQueryParams>);
                 }}
-                className="hover:text-danger"
+                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
+                aria-label={`Remove filter ${chip.label}`}
               >
                 <X className="size-3" />
-              </button>
+              </Button>
             </span>
           ))}
 
-          <button
+          <Button
             type="button"
+            variant="link"
+            size="xs"
             onClick={onReset}
-            className="text-caption text-danger ml-1 font-semibold hover:underline"
+            className="text-destructive ml-1"
           >
             Clear all
-          </button>
+          </Button>
         </div>
       )}
 
-      {/* Mobile Filter Sheet */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/50 lg:hidden">
-          <div className="border-line bg-surface max-h-[85vh] space-y-4 overflow-y-auto rounded-t-2xl border-t p-5">
-            <div className="border-line flex items-center justify-between border-b pb-3">
-              <h3 className="text-ink font-semibold">Payment Filters</h3>
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                className="text-muted hover:text-ink p-1"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent
+          side="bottom"
+          showCloseButton
+          className="border-line bg-card max-h-[85vh] gap-0 overflow-y-auto rounded-t-2xl border-t p-0 lg:hidden"
+        >
+          <SheetHeader className="border-line border-b p-5 pr-14">
+            <SheetTitle className="text-ink">Payment Filters</SheetTitle>
+            <SheetDescription>
+              Narrow the payment ledger by status, provider, method, or
+              reconciliation state.
+            </SheetDescription>
+          </SheetHeader>
 
-            <div className="text-small space-y-3">
-              <div>
-                <label className="text-caption text-muted mb-1 block font-medium">
-                  Status
-                </label>
-                <select
-                  value={filters.status}
-                  onChange={(e) =>
+          <div className="text-small space-y-4 p-5">
+            {activeChips.length > 0 && (
+              <Alert className="bg-muted/40 border-line text-caption">
+                {activeChips.length} active filter
+                {activeChips.length === 1 ? '' : 's'} applied.
+              </Alert>
+            )}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="payments-status" className="text-caption">
+                Status
+              </Label>
+              <Select
+                items={STATUS_OPTIONS}
+                value={filters.status}
+                onValueChange={(val) => {
+                  if (val) {
                     onChange({
-                      status: e.target.value as PaymentsQueryParams['status'],
-                    })
+                      status: val as PaymentsQueryParams['status'],
+                    });
                   }
-                  className="border-line bg-paper w-full rounded-md border p-2"
-                >
-                  <option value="all">All statuses</option>
-                  <option value="paid">Paid</option>
-                  <option value="pending">Pending</option>
-                  <option value="failed">Failed</option>
-                  <option value="refunded">Refunded</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-caption text-muted mb-1 block font-medium">
-                  Provider
-                </label>
-                <select
-                  value={filters.provider}
-                  onChange={(e) =>
-                    onChange({
-                      provider: e.target
-                        .value as PaymentsQueryParams['provider'],
-                    })
-                  }
-                  className="border-line bg-paper w-full rounded-md border p-2"
-                >
-                  <option value="all">All providers</option>
-                  <option value="paystack">Paystack</option>
-                  <option value="flutterwave">Flutterwave</option>
-                  <option value="stripe">Stripe</option>
-                  <option value="bank_transfer">Bank transfer</option>
-                  <option value="cash">Cash</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-caption text-muted mb-1 block font-medium">
-                  Payment Method
-                </label>
-                <select
-                  value={filters.method}
-                  onChange={(e) =>
-                    onChange({
-                      method: e.target.value as PaymentsQueryParams['method'],
-                    })
-                  }
-                  className="border-line bg-paper w-full rounded-md border p-2"
-                >
-                  <option value="all">All methods</option>
-                  <option value="card">Card</option>
-                  <option value="bank_transfer">Bank transfer</option>
-                  <option value="cash">Cash</option>
-                  <option value="ussd">USSD</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-caption text-muted mb-1 block font-medium">
-                  Reconciliation State
-                </label>
-                <select
-                  value={filters.reconciled}
-                  onChange={(e) =>
-                    onChange({
-                      reconciled: e.target
-                        .value as PaymentsQueryParams['reconciled'],
-                    })
-                  }
-                  className="border-line bg-paper w-full rounded-md border p-2"
-                >
-                  <option value="all">All</option>
-                  <option value="yes">Reconciled</option>
-                  <option value="no">Unreconciled</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="border-line flex items-center justify-between gap-2 border-t pt-3">
-              <button
-                type="button"
-                onClick={() => {
-                  onReset();
-                  setMobileOpen(false);
                 }}
-                className="border-line text-small text-muted hover:bg-paper flex-1 rounded-md border py-2 font-medium"
               >
-                Reset
-              </button>
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                className="bg-primary text-small text-primary-ink flex-1 rounded-md py-2 font-semibold"
+                <SelectTrigger id="payments-status" className="w-full">
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="payments-provider" className="text-caption">
+                Provider
+              </Label>
+              <Select
+                items={PROVIDER_OPTIONS}
+                value={filters.provider}
+                onValueChange={(val) => {
+                  if (val) {
+                    onChange({
+                      provider: val as PaymentsQueryParams['provider'],
+                    });
+                  }
+                }}
               >
-                Apply Filters
-              </button>
+                <SelectTrigger id="payments-provider" className="w-full">
+                  <SelectValue placeholder="All providers" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROVIDER_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="payments-method" className="text-caption">
+                Payment Method
+              </Label>
+              <Select
+                items={METHOD_OPTIONS}
+                value={filters.method}
+                onValueChange={(val) => {
+                  if (val) {
+                    onChange({
+                      method: val as PaymentsQueryParams['method'],
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger id="payments-method" className="w-full">
+                  <SelectValue placeholder="All methods" />
+                </SelectTrigger>
+                <SelectContent>
+                  {METHOD_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="payments-reconciled" className="text-caption">
+                Reconciliation State
+              </Label>
+              <Select
+                items={RECONCILED_OPTIONS}
+                value={filters.reconciled}
+                onValueChange={(val) => {
+                  if (val) {
+                    onChange({
+                      reconciled: val as PaymentsQueryParams['reconciled'],
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger id="payments-reconciled" className="w-full">
+                  <SelectValue placeholder="All reconciliation" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RECONCILED_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        </div>
-      )}
+
+          <div className="border-line bg-card sticky bottom-0 flex items-center gap-2 border-t p-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                onReset();
+                setMobileOpen(false);
+              }}
+            >
+              Reset
+            </Button>
+            <Button
+              type="button"
+              className="flex-1"
+              onClick={() => setMobileOpen(false)}
+            >
+              Apply Filters
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

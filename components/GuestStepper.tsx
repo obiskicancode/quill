@@ -3,6 +3,8 @@
 import { Minus, Plus } from 'lucide-react';
 import { useId } from 'react';
 
+import { Button } from './ui/button';
+
 interface GuestStepperProps {
   label: string;
   hint: string;
@@ -11,10 +13,6 @@ interface GuestStepperProps {
   max: number;
   onChange: (value: number) => void;
 }
-
-const stepButton =
-  'grid size-11 place-items-center rounded-full border border-ink/60 text-ink transition-colors hover:bg-ink hover:text-paper active:bg-ink-soft active:text-paper ' +
-  'disabled:border-line disabled:text-ink/30 disabled:hover:bg-transparent disabled:hover:text-ink/30';
 
 export function GuestStepper({
   label,
@@ -32,37 +30,41 @@ export function GuestStepper({
         <p id={id} className="font-semibold">
           {label}
         </p>
-        <p className="text-small text-muted">{hint}</p>
+        <p className="text-small text-muted-foreground">{hint}</p>
       </div>
       <div
         role="group"
         aria-labelledby={id}
         className="flex items-center gap-3"
       >
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="icon"
           aria-label={`Fewer ${noun}`}
           disabled={value <= min}
           onClick={() => onChange(value - 1)}
-          className={stepButton}
+          className="border-line hover:bg-primary hover:text-primary-foreground size-11 rounded-full disabled:opacity-30"
         >
           <Minus className="size-5" aria-hidden />
-        </button>
+        </Button>
         <output
           aria-live="polite"
           className="text-body-lg w-6 text-center font-semibold tabular-nums"
         >
           {value}
         </output>
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="icon"
           aria-label={`More ${noun}`}
           disabled={value >= max}
           onClick={() => onChange(value + 1)}
-          className={stepButton}
+          className="border-line hover:bg-primary hover:text-primary-foreground size-11 rounded-full disabled:opacity-30"
         >
           <Plus className="size-5" aria-hidden />
-        </button>
+        </Button>
       </div>
     </div>
   );

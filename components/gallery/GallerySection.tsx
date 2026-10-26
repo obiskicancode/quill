@@ -6,7 +6,7 @@ import {
 
 import { Reveal } from '../motion/Reveal';
 import { EmptyState } from '../rooms/EmptyState';
-import { ButtonLink } from '../ui/Button';
+import { ButtonLink } from '../ui/button';
 import { GalleryBrowser } from './GalleryBrowser';
 
 interface GallerySectionProps {
@@ -74,7 +74,7 @@ export async function GallerySection({
           }}
         />
         <Reveal>
-          <div className="rounded-card bg-surface shadow-raised mt-16 flex flex-col items-start justify-between gap-6 p-8 md:flex-row md:items-center">
+          <div className="rounded-card bg-card shadow-raised mt-16 flex flex-col items-start justify-between gap-6 p-8 md:flex-row md:items-center">
             <div className="max-w-xl">
               <p className="font-display text-h3">Like what you see?</p>
               <p className="text-ink/85 mt-2">

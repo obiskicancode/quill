@@ -6,7 +6,7 @@ import { AlertCircle, BedDouble, Loader2, RefreshCw } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import type { AdminRole } from '@/lib/auth/permissions';
 import type {
   CalendarBlockBar,
@@ -215,18 +215,20 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
       {/* Main Content States */}
       {loading ? (
         <div className="rounded-card border-line bg-paper flex h-96 flex-col items-center justify-center border">
-          <Loader2 className="text-muted size-8 animate-spin" />
-          <p className="text-small text-muted mt-3">
+          <Loader2 className="text-muted-foreground size-8 animate-spin" />
+          <p className="text-small text-muted-foreground mt-3">
             Loading calendar availability...
           </p>
         </div>
       ) : error ? (
-        <div className="rounded-card border-danger/30 bg-paper flex h-96 flex-col items-center justify-center border p-6 text-center">
-          <AlertCircle className="text-danger size-10" />
+        <div className="rounded-card border-destructive/30 bg-paper flex h-96 flex-col items-center justify-center border p-6 text-center">
+          <AlertCircle className="text-destructive size-10" />
           <h2 className="text-h4 text-ink mt-2 font-semibold">
             Failed to Load Calendar
           </h2>
-          <p className="text-small text-muted mt-1 max-w-md">{error}</p>
+          <p className="text-small text-muted-foreground mt-1 max-w-md">
+            {error}
+          </p>
           <Button
             type="button"
             variant="secondary"
@@ -239,11 +241,11 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
         </div>
       ) : data.rooms.length === 0 ? (
         <div className="rounded-card border-line bg-paper flex h-96 flex-col items-center justify-center border p-6 text-center">
-          <BedDouble className="text-muted size-10" />
+          <BedDouble className="text-muted-foreground size-10" />
           <h2 className="text-h4 text-ink mt-2 font-semibold">
             No Rooms Configured
           </h2>
-          <p className="text-small text-muted mt-1 max-w-md">
+          <p className="text-small text-muted-foreground mt-1 max-w-md">
             There are no rooms found in the property inventory matching this
             filter.
           </p>

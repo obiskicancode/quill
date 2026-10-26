@@ -1,4 +1,14 @@
+import { cn } from 'cn';
 import type { ReactNode } from 'react';
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 export function AdminCard({
   title,
@@ -14,21 +24,34 @@ export function AdminCard({
   className?: string;
 }) {
   return (
-    <section
-      className={`rounded-card border-line bg-surface shadow-raised border ${className}`}
+    <Card
+      className={cn(
+        'rounded-card border-line bg-card shadow-raised gap-0 border py-0 ring-0',
+        className,
+      )}
     >
       {(title || description) && (
-        <div className="border-line border-b px-4 py-4 sm:px-5">
-          {title && <h2 className="font-display text-h3">{title}</h2>}
-          {description && (
-            <p className="text-small text-muted mt-1">{description}</p>
+        <CardHeader className="border-line border-b px-4 py-4 sm:px-5">
+          {title && (
+            <CardTitle>
+              <h2 className="font-display text-h3">{title}</h2>
+            </CardTitle>
           )}
-        </div>
+          {description && (
+            <CardDescription className="text-small text-muted-foreground">
+              {description}
+            </CardDescription>
+          )}
+        </CardHeader>
       )}
-      <div className="px-4 py-4 sm:px-5 sm:py-5">{children}</div>
+      <CardContent className="px-4 py-4 sm:px-5 sm:py-5">
+        {children}
+      </CardContent>
       {footer && (
-        <div className="border-line border-t px-4 py-3 sm:px-5">{footer}</div>
+        <CardFooter className="border-line border-t bg-transparent px-4 py-3 sm:px-5">
+          {footer}
+        </CardFooter>
       )}
-    </section>
+    </Card>
   );
 }

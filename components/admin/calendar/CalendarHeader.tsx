@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import {
   ChevronLeft,
   ChevronRight,
@@ -10,9 +9,16 @@ import {
   Plus,
   ShieldAlert,
 } from 'lucide-react';
-import React from 'react';
 
-import { Button } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { addDays, formatMonthYear } from '@/lib/dates';
 
 interface CalendarHeaderProps {
@@ -62,41 +68,43 @@ export function CalendarHeader({
           <h1 className="text-h2 text-ink font-serif font-semibold">
             Calendar
           </h1>
-          <p className="text-small text-muted">
+          <p className="text-small text-muted-foreground">
             Live occupancy, reservations and room blocks •{' '}
             {formatMonthYear(from)}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Blocks Management Link */}
-          <Link
+          <ButtonLink
             href="/admin/calendar/blocks"
-            className="hover:bg-canvas rounded-control border-line bg-paper text-small text-ink inline-flex items-center gap-1.5 border px-3 py-1.5 font-medium transition-colors focus:outline-hidden"
+            variant="outline"
+            size="sm"
+            icon={<ShieldAlert className="size-4" />}
           >
-            <ShieldAlert className="text-muted size-4" />
-            <span>Manage Blocks</span>
-          </Link>
+            Manage Blocks
+          </ButtonLink>
 
           {/* Quick Block Dates */}
           <Button
             type="button"
             variant="secondary"
+            size="sm"
             onClick={onOpenBlockModal}
-            className="flex items-center gap-1.5"
+            icon={<Plus className="size-4" />}
           >
-            <Plus className="size-4" />
-            <span>Block dates</span>
+            Block dates
           </Button>
 
           {/* New Reservation */}
-          <Link
+          <ButtonLink
             href="/admin/reservations/new"
-            className="rounded-control bg-ink text-small text-paper inline-flex items-center gap-1.5 px-4 py-2 font-medium transition-opacity hover:opacity-90 focus:outline-hidden active:opacity-100"
+            variant="default"
+            size="sm"
+            icon={<Plus className="size-4" />}
           >
-            <Plus className="size-4" />
-            <span>New reservation</span>
-          </Link>
+            New reservation
+          </ButtonLink>
         </div>
       </div>
 
@@ -104,66 +112,64 @@ export function CalendarHeader({
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Date stepper & Jump */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="rounded-control border-line bg-paper flex items-center border p-0.5 shadow-xs">
-            <button
+          <div className="rounded-control border-line bg-paper flex h-8 items-center border p-0.5 shadow-xs">
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-sm"
               onClick={handlePrev}
               title={`Previous ${days} days`}
               aria-label={`Previous ${days} days`}
-              className="hover:bg-canvas rounded-control text-muted hover:text-ink p-1.5 transition-colors focus:outline-hidden"
             >
               <ChevronLeft className="size-4" />
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant={from === today ? 'default' : 'ghost'}
+              size="xs"
               onClick={handleToday}
-              className={`rounded-control text-caption px-2.5 py-1 font-medium transition-colors focus:outline-hidden ${
-                from === today
-                  ? 'bg-ink text-paper'
-                  : 'hover:bg-canvas text-ink'
-              }`}
+              className="h-7 px-2.5"
             >
               Today
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-sm"
               onClick={handleNext}
               title={`Next ${days} days`}
               aria-label={`Next ${days} days`}
-              className="hover:bg-canvas rounded-control text-muted hover:text-ink p-1.5 transition-colors focus:outline-hidden"
             >
               <ChevronRight className="size-4" />
-            </button>
+            </Button>
           </div>
 
           {/* Date jump */}
           <div className="relative flex items-center">
-            <input
+            <Input
               type="date"
               aria-label="Jump to specific date"
               value={from}
               onChange={(e) => {
                 if (e.target.value) onFromChange(e.target.value);
               }}
-              className="rounded-control border-line bg-paper text-caption text-ink focus:border-ink border px-2.5 py-1 font-medium shadow-xs focus:outline-hidden"
+              className="h-8 w-auto px-2.5 text-xs font-medium"
             />
           </div>
 
           {/* Range tabs (14, 30, 60 days) */}
-          <div className="rounded-control border-line bg-paper flex items-center border p-0.5 shadow-xs">
+          <div className="rounded-control border-line bg-paper flex h-8 items-center border p-0.5 shadow-xs">
             {[14, 30, 60].map((d) => (
-              <button
+              <Button
                 key={d}
                 type="button"
+                variant={days === d ? 'default' : 'ghost'}
+                size="xs"
                 onClick={() => onDaysChange(d)}
-                className={`rounded-control text-caption px-2.5 py-1 font-medium transition-colors focus:outline-hidden ${
-                  days === d
-                    ? 'bg-ink text-paper'
-                    : 'hover:bg-canvas text-muted hover:text-ink'
-                }`}
+                className="h-7 px-2.5"
               >
                 {d}d
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -172,50 +178,53 @@ export function CalendarHeader({
         <div className="flex items-center gap-2">
           {/* Room Type Filter */}
           <div className="flex items-center gap-1.5">
-            <Filter className="text-muted size-3.5" />
-            <select
-              aria-label="Filter by room type"
-              value={roomTypeId || ''}
-              onChange={(e) => onRoomTypeChange(e.target.value || undefined)}
-              className="rounded-control border-line bg-paper text-caption text-ink focus:border-ink border px-2.5 py-1 font-medium shadow-xs focus:outline-hidden"
+            <Filter className="text-muted-foreground size-3.5" />
+            <Select
+              items={[
+                { value: 'all', label: 'All Room Types' },
+                ...roomTypes.map((rt) => ({ value: rt.id, label: rt.name })),
+              ]}
+              value={roomTypeId || 'all'}
+              onValueChange={(val) =>
+                onRoomTypeChange(val === 'all' || !val ? undefined : val)
+              }
             >
-              <option value="">All Room Types</option>
-              {roomTypes.map((rt) => (
-                <option key={rt.id} value={rt.id}>
-                  {rt.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger aria-label="Filter by room type" className="w-40">
+                <SelectValue placeholder="All Room Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Room Types</SelectItem>
+                {roomTypes.map((rt) => (
+                  <SelectItem key={rt.id} value={rt.id}>
+                    {rt.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Grid vs Agenda Toggle */}
-          <div className="rounded-control border-line bg-paper flex items-center border p-0.5 shadow-xs">
-            <button
+          <div className="rounded-control border-line bg-paper flex h-8 items-center border p-0.5 shadow-xs">
+            <Button
               type="button"
+              variant={view === 'grid' ? 'default' : 'ghost'}
+              size="icon-sm"
               onClick={() => onViewChange('grid')}
               title="Grid View"
               aria-label="Switch to grid view"
-              className={`rounded-control p-1.5 transition-colors focus:outline-hidden ${
-                view === 'grid'
-                  ? 'bg-ink text-paper'
-                  : 'hover:bg-canvas text-muted hover:text-ink'
-              }`}
             >
               <LayoutGrid className="size-4" />
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant={view === 'agenda' ? 'default' : 'ghost'}
+              size="icon-sm"
               onClick={() => onViewChange('agenda')}
               title="Agenda View"
               aria-label="Switch to agenda view"
-              className={`rounded-control p-1.5 transition-colors focus:outline-hidden ${
-                view === 'agenda'
-                  ? 'bg-ink text-paper'
-                  : 'hover:bg-canvas text-muted hover:text-ink'
-              }`}
             >
               <List className="size-4" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>

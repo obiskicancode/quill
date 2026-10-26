@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, ShieldCheck, UserPlus } from 'lucide-react';
+import { Search, ShieldCheck, UserPlus, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
@@ -9,6 +9,24 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import type {
   StaffDetailResponse,
   StaffListItem,
@@ -18,6 +36,21 @@ import type {
 import { InviteStaffDialog } from './InviteStaffDialog';
 import { StaffDetailSheet } from './StaffDetailSheet';
 import { StepUpDialog } from './StepUpDialog';
+
+const ROLE_FILTER_OPTIONS = [
+  { value: 'all', label: 'All roles' },
+  { value: 'owner', label: 'Owner' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'reception', label: 'Reception' },
+];
+
+const STATUS_FILTER_OPTIONS = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'active', label: 'Active' },
+  { value: 'invited', label: 'Invited' },
+  { value: 'deactivated', label: 'Deactivated' },
+  { value: 'locked', label: 'Locked' },
+];
 
 export function StaffClient() {
   const [staffList, setStaffList] = useState<StaffListItem[]>([]);
@@ -125,13 +158,16 @@ export function StaffClient() {
       {banner && (
         <div className="border-success/30 bg-success/5 text-caption text-success flex items-center justify-between rounded-md border p-3 font-medium">
           <span>{banner}</span>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setBanner(null)}
-            className="text-muted hover:text-ink"
+            className="h-6 px-2 text-xs"
           >
+            <X className="mr-1 size-3" />
             Dismiss
-          </button>
+          </Button>
         </div>
       )}
 
@@ -139,58 +175,78 @@ export function StaffClient() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <div className="relative max-w-sm min-w-[220px] flex-1">
-            <Search className="text-muted absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-            <input
+            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+            <Input
               type="search"
               placeholder="Search by name or email..."
               value={filters.q || ''}
               onChange={(e) => setFilters({ ...filters, q: e.target.value })}
-              className="focus:border-primary focus:ring-primary border-line bg-surface text-small text-ink placeholder:text-muted w-full rounded-md border py-1.5 pr-3 pl-9 focus:ring-1 focus:outline-none"
+              className="pl-9"
             />
           </div>
 
-          <select
+          <Select
+            items={ROLE_FILTER_OPTIONS}
             value={filters.role}
-            onChange={(e) =>
-              setFilters({
-                ...filters,
-                role: e.target.value as StaffQueryParams['role'],
-              })
-            }
-            className="focus:border-primary border-line bg-surface text-caption text-ink rounded-md border px-3 py-1.5 capitalize focus:outline-none"
+            onValueChange={(val) => {
+              if (val) {
+                setFilters({
+                  ...filters,
+                  role: val as StaffQueryParams['role'],
+                });
+              }
+            }}
           >
-            <option value="all">All roles</option>
-            <option value="owner">Owner</option>
-            <option value="manager">Manager</option>
-            <option value="reception">Reception</option>
-          </select>
+            <SelectTrigger
+              aria-label="Filter by staff role"
+              className="w-[130px]"
+            >
+              <SelectValue placeholder="All roles" />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLE_FILTER_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <select
+          <Select
+            items={STATUS_FILTER_OPTIONS}
             value={filters.status}
-            onChange={(e) =>
-              setFilters({
-                ...filters,
-                status: e.target.value as StaffQueryParams['status'],
-              })
-            }
-            className="focus:border-primary border-line bg-surface text-caption text-ink rounded-md border px-3 py-1.5 capitalize focus:outline-none"
+            onValueChange={(val) => {
+              if (val) {
+                setFilters({
+                  ...filters,
+                  status: val as StaffQueryParams['status'],
+                });
+              }
+            }}
           >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="invited">Invited</option>
-            <option value="deactivated">Deactivated</option>
-            <option value="locked">Locked</option>
-          </select>
+            <SelectTrigger
+              aria-label="Filter by staff status"
+              className="w-[140px]"
+            >
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_FILTER_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <button
-          type="button"
+        <Button
+          size="sm"
           onClick={() => setInviteOpen(true)}
-          className="bg-primary text-primary-ink text-small inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 font-semibold shadow-sm hover:opacity-95"
+          icon={<UserPlus className="size-4" />}
         >
-          <UserPlus className="size-4" />
           Invite Staff Member
-        </button>
+        </Button>
       </div>
 
       {/* Table view */}
@@ -200,9 +256,9 @@ export function StaffClient() {
         <AdminError
           message={error}
           action={
-            <button onClick={loadStaff} className="btn-secondary">
+            <Button variant="secondary" onClick={loadStaff}>
               Retry
-            </button>
+            </Button>
           }
         />
       ) : staffList.length === 0 ? (
@@ -210,73 +266,93 @@ export function StaffClient() {
           Adjust your filters or invite your first team member.
         </AdminEmpty>
       ) : (
-        <div className="rounded-card border-line bg-surface overflow-x-auto border">
-          <table className="text-small w-full text-left">
+        <div className="rounded-card border-line bg-card overflow-hidden border">
+          <Table className="text-small w-full text-left">
             <caption className="sr-only">Staff directory</caption>
-            <thead className="border-line bg-paper text-caption text-muted border-b font-semibold uppercase">
-              <tr>
-                <th className="px-4 py-3">Staff Member</th>
-                <th className="px-4 py-3">Role</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Two-Factor (2FA)</th>
-                <th className="px-4 py-3">Last Login</th>
-                <th className="px-4 py-3">Created</th>
-              </tr>
-            </thead>
-            <tbody className="divide-line divide-y">
+            <TableHeader className="border-line bg-paper text-caption text-muted-foreground border-b font-semibold uppercase">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="text-muted-foreground px-4 py-3">
+                  Staff Member
+                </TableHead>
+                <TableHead className="text-muted-foreground px-4 py-3">
+                  Role
+                </TableHead>
+                <TableHead className="text-muted-foreground px-4 py-3">
+                  Status
+                </TableHead>
+                <TableHead className="text-muted-foreground px-4 py-3">
+                  Two-Factor (2FA)
+                </TableHead>
+                <TableHead className="text-muted-foreground px-4 py-3">
+                  Last Login
+                </TableHead>
+                <TableHead className="text-muted-foreground px-4 py-3">
+                  Created
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-line divide-y">
               {staffList.map((staff) => (
-                <tr
+                <TableRow
                   key={staff.id}
                   onClick={() => handleRowClick(staff)}
                   className="hover:bg-paper/70 cursor-pointer transition-colors"
                 >
-                  <td className="px-4 py-3">
+                  <TableCell className="px-4 py-3">
                     <div className="text-ink font-semibold">
                       {staff.fullName}
                     </div>
-                    <div className="text-caption text-muted">{staff.email}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="border-line bg-paper text-caption text-ink rounded border px-2 py-0.5 font-medium capitalize">
+                    <div className="text-caption text-muted-foreground">
+                      {staff.email}
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Badge
+                      variant="outline"
+                      className="border-line bg-paper text-caption text-ink rounded border px-2 py-0.5 font-medium capitalize"
+                    >
                       {staff.role}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold capitalize ${
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Badge
+                      variant="outline"
+                      className={`text-caption rounded-full px-2 py-0.5 font-semibold capitalize ${
                         staff.status === 'active'
                           ? 'border-success/20 bg-success/10 text-success'
                           : staff.status === 'invited'
-                            ? 'border-amber-500/20 bg-amber-500/10 text-amber-600'
+                            ? 'border-primary/30 bg-primary/15 text-brand-ink'
                             : staff.status === 'locked'
-                              ? 'border-danger/20 bg-danger/10 text-danger'
-                              : 'border-muted/20 bg-muted/10 text-muted'
+                              ? 'border-destructive/20 bg-destructive/10 text-destructive'
+                              : 'border-muted/20 bg-muted/10 text-muted-foreground'
                       }`}
                     >
                       {staff.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
                     {staff.mfaEnabled ? (
-                      <span className="text-success inline-flex items-center gap-1 text-[11px] font-medium">
+                      <span className="text-success text-caption inline-flex items-center gap-1 font-medium">
                         <ShieldCheck className="size-3.5" /> Enrolled
                       </span>
                     ) : (
-                      <span className="text-muted text-[11px]">Disabled</span>
+                      <span className="text-muted-foreground text-caption">
+                        Disabled
+                      </span>
                     )}
-                  </td>
-                  <td className="text-caption text-muted px-4 py-3">
+                  </TableCell>
+                  <TableCell className="text-caption text-muted-foreground px-4 py-3">
                     {staff.lastLoginAt
                       ? new Date(staff.lastLoginAt).toLocaleString('en-GB')
                       : 'Never'}
-                  </td>
-                  <td className="text-caption text-muted px-4 py-3">
+                  </TableCell>
+                  <TableCell className="text-caption text-muted-foreground px-4 py-3">
                     {new Date(staff.createdAt).toLocaleDateString('en-GB')}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 

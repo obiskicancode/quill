@@ -1,6 +1,5 @@
 'use client';
 
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   BadgeCheck,
   ChevronDown,
@@ -8,9 +7,8 @@ import {
   Lock,
   MessageCircle,
   ShieldCheck,
-  X,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { formatCountdown, formatDeadline } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
@@ -22,12 +20,19 @@ import type {
 } from '@/types/checkout.types';
 import { formatMinor } from '@/types/stay.types';
 
-import { EASE_OUT } from '../motion/variants';
 import {
   BreakdownSkeleton,
   PriceBreakdown,
 } from '../room-detail/PriceBreakdown';
+import { Button } from '../ui/button';
 import { Photo } from '../ui/Photo';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '../ui/sheet';
 
 export type OkQuote = Extract<CheckoutQuoteResponse, { status: 'ok' }>;
 
@@ -91,13 +96,15 @@ export function StayFacts({
         )}
         <div className="min-w-0">
           <h2 className="font-display text-h3 line-clamp-2">{room.name}</h2>
-          <p className="text-small text-muted mt-1">{room.bedConfig}</p>
+          <p className="text-small text-muted-foreground mt-1">
+            {room.bedConfig}
+          </p>
         </div>
       </div>
 
       <dl className="text-small space-y-1.5">
         <div className={row}>
-          <dt className="text-muted">Dates</dt>
+          <dt className="text-muted-foreground">Dates</dt>
           <dd className="font-semibold">
             {stay.checkIn && stay.checkOut
               ? formatRange(stay.checkIn, stay.checkOut)
@@ -106,7 +113,7 @@ export function StayFacts({
           </dd>
         </div>
         <div className={row}>
-          <dt className="text-muted">Guests</dt>
+          <dt className="text-muted-foreground">Guests</dt>
           <dd className="font-semibold">
             {stay.adults} {stay.adults === 1 ? 'adult' : 'adults'}
             {stay.children > 0
@@ -115,11 +122,11 @@ export function StayFacts({
           </dd>
         </div>
         <div className={row}>
-          <dt className="text-muted">Check-in</dt>
+          <dt className="text-muted-foreground">Check-in</dt>
           <dd>From {hotelTimes.checkIn}</dd>
         </div>
         <div className={row}>
-          <dt className="text-muted">Check-out</dt>
+          <dt className="text-muted-foreground">Check-out</dt>
           <dd>By {hotelTimes.checkOut}</dd>
         </div>
       </dl>
@@ -144,7 +151,7 @@ export function SummaryCard({
   return (
     <section
       aria-label="Your stay"
-      className="rounded-card border-line bg-surface shadow-float space-y-5 border p-5"
+      className="rounded-card border-line bg-card shadow-float space-y-5 border p-5"
     >
       <StayFacts
         room={room}
@@ -172,7 +179,7 @@ export function SummaryCard({
                 : quote.policy.note}
           </p>
           {quote.policy.freeCancellationUntil && (
-            <p className="text-muted mt-1">
+            <p className="text-muted-foreground mt-1">
               After that, cancellation charges apply. See the Cancellation
               Policy.
             </p>
@@ -183,14 +190,14 @@ export function SummaryCard({
       <div
         className={`rounded-control text-small flex items-center gap-3 border p-4 ${
           hold?.expired
-            ? 'border-danger bg-danger/5'
+            ? 'border-destructive bg-destructive/5'
             : hold?.expiring
-              ? 'border-danger bg-danger/5'
+              ? 'border-destructive bg-destructive/5'
               : 'border-line'
         }`}
       >
         <Clock
-          className={`size-5 shrink-0 ${hold?.expiring || hold?.expired ? 'text-danger' : 'text-accent-ink'}`}
+          className={`size-5 shrink-0 ${hold?.expiring || hold?.expired ? 'text-destructive' : 'text-brand-ink'}`}
           aria-hidden
         />
         {!hold ? (
@@ -199,9 +206,11 @@ export function SummaryCard({
             minutes once you continue.
           </p>
         ) : hold.expired ? (
-          <p className="text-danger font-semibold">Your hold has expired.</p>
+          <p className="text-destructive font-semibold">
+            Your hold has expired.
+          </p>
         ) : (
-          <p className={hold.expiring ? 'text-danger font-semibold' : ''}>
+          <p className={hold.expiring ? 'text-destructive font-semibold' : ''}>
             We&rsquo;re holding this room for you:{' '}
             <span
               className="font-display text-body-lg tabular-nums"
@@ -218,14 +227,14 @@ export function SummaryCard({
 
       <ul className="text-small space-y-1.5">
         <li className="flex items-center gap-2">
-          <Lock className="text-accent-ink size-4 shrink-0" aria-hidden />
+          <Lock className="text-brand-ink size-4 shrink-0" aria-hidden />
           Secure payment
         </li>
         <li className="flex items-center gap-2">
           {confirmationMode === 'instant' ? (
             <>
               <BadgeCheck
-                className="text-accent-ink size-4 shrink-0"
+                className="text-brand-ink size-4 shrink-0"
                 aria-hidden
               />
               Instant confirmation
@@ -233,7 +242,7 @@ export function SummaryCard({
           ) : (
             <>
               <ShieldCheck
-                className="text-accent-ink size-4 shrink-0"
+                className="text-brand-ink size-4 shrink-0"
                 aria-hidden
               />
               Confirmed after hotel approval
@@ -248,7 +257,7 @@ export function SummaryCard({
             )}
             target="_blank"
             rel="noopener noreferrer"
-            className="decoration-accent inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-2 underline-offset-4"
+            className="decoration-brand inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-2 underline-offset-4"
           >
             <MessageCircle className="size-4" aria-hidden />
             Need help? Chat on WhatsApp
@@ -263,40 +272,17 @@ export function SummaryCard({
 /** Mobile: a collapsed "₦X total, View details" row that opens the full summary in a bottom sheet. */
 export function MobileSummary(props: SummaryProps) {
   const [open, setOpen] = useState(false);
-  const [visible, setVisible] = useState(false);
-  const ref = useRef<HTMLDialogElement>(null);
-  const reduced = useReducedMotion();
-
-  useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) return;
-    if (open) {
-      if (!dialog.open) dialog.showModal();
-      return;
-    }
-    // Reduced motion skips the exit animation, so close the dialog straight away.
-    if (reduced && dialog.open) dialog.close();
-  }, [open, reduced]);
-
-  useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
 
   return (
     <div className="lg:hidden">
-      <button
-        type="button"
+      <Button
+        variant="outline"
+        size="md"
         aria-haspopup="dialog"
-        onClick={() => {
-          setOpen(true);
-          setVisible(true);
-        }}
-        className="rounded-card border-line bg-surface shadow-raised flex min-h-14 w-full items-center justify-between gap-3 border px-5 text-left"
+        onClick={() => setOpen(true)}
+        className="h-auto w-full justify-between py-3"
       >
-        <span className="min-w-0">
+        <span className="min-w-0 text-left">
           {props.quote ? (
             <span className="font-semibold">
               {formatMinor(props.quote.breakdown.totalMinor)} total
@@ -307,63 +293,35 @@ export function MobileSummary(props: SummaryProps) {
               className="bg-ink/10 block h-5 w-28 rounded motion-safe:animate-pulse"
             />
           )}
-          <span className="text-small text-muted block truncate">
+          <span className="text-small text-muted-foreground block truncate">
             {props.room.name},{' '}
             {formatRange(props.stay.checkIn, props.stay.checkOut)}
           </span>
         </span>
-        <span className="text-small decoration-accent inline-flex shrink-0 items-center gap-1 font-semibold underline decoration-2 underline-offset-4">
+        <span className="text-small decoration-brand inline-flex shrink-0 items-center gap-1 font-semibold underline decoration-2 underline-offset-4">
           View details <ChevronDown className="size-4" aria-hidden />
         </span>
-      </button>
+      </Button>
 
-      <dialog
-        ref={ref}
-        aria-labelledby="mobile-summary-title"
-        onClose={() => {
-          setOpen(false);
-          setVisible(false);
-        }}
-        className="rounded-t-card bg-paper text-ink backdrop:bg-ink/60 inset-x-0 top-auto bottom-0 m-0 max-h-[92dvh] w-full max-w-none p-0 open:flex open:flex-col"
-      >
-        <AnimatePresence
-          onExitComplete={() => {
-            const dialog = ref.current;
-            if (dialog?.open) dialog.close();
-          }}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent
+          side="bottom"
+          showCloseButton
+          className="rounded-t-card border-line bg-paper text-ink max-h-[92dvh] gap-0 border-t p-0"
         >
-          {visible && (
-            <motion.div
-              key="mobile-summary"
-              initial={reduced ? false : { opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={reduced ? undefined : { opacity: 0, y: 16 }}
-              transition={{ duration: reduced ? 0 : 0.26, ease: EASE_OUT }}
-              className="flex min-h-0 flex-1 flex-col"
-            >
-              <div className="border-line flex items-center justify-between border-b px-5 py-2">
-                <h2 id="mobile-summary-title" className="font-display text-h3">
-                  Your booking
-                </h2>
-                <button
-                  type="button"
-                  aria-label="Close"
-                  onClick={() => {
-                    setOpen(false);
-                    setVisible(false);
-                  }}
-                  className="hover:bg-ink/10 grid size-11 place-items-center rounded-full"
-                >
-                  <X className="size-6" aria-hidden />
-                </button>
-              </div>
-              <div className="overflow-y-auto p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-                <SummaryCard {...props} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </dialog>
+          <SheetHeader className="border-line border-b px-5 py-2 pr-14">
+            <SheetTitle className="font-display text-h3">
+              Your booking
+            </SheetTitle>
+            <SheetDescription className="sr-only">
+              Review the room, stay dates, and total price for this booking.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="overflow-y-auto p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            <SummaryCard {...props} />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

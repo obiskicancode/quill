@@ -124,7 +124,7 @@ export function Footer({ site }: { site: SiteConfig }) {
               </li>
             ))}
             <li>
-              <CookieSettingsButton className={`${link} gap-2`} />
+              <CookieSettingsButton className={`${link} gap-2 pl-0`} />
             </li>
           </ul>
         </nav>

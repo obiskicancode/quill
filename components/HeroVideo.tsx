@@ -3,6 +3,8 @@
 import { Pause, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { Button } from './ui/button';
+
 interface HeroVideoProps {
   src: string;
   type: string;
@@ -58,20 +60,22 @@ export function HeroVideo({ src, type }: HeroVideoProps) {
       >
         <source src={src} type={type} />
       </video>
-      <button
+      <Button
         type="button"
+        variant="secondary"
+        size="icon"
         onClick={toggle}
         aria-label={
           playing ? 'Pause background video' : 'Play background video'
         }
-        className="bg-ink/70 hover:bg-ink absolute right-4 bottom-4 z-10 hidden size-11 place-items-center rounded-full text-white transition-colors md:grid"
+        className="bg-ink/70 hover:bg-ink absolute right-4 bottom-4 z-10 hidden size-11 rounded-full text-white transition-colors md:inline-flex"
       >
         {playing ? (
           <Pause className="size-5" aria-hidden />
         ) : (
           <Play className="size-5" aria-hidden />
         )}
-      </button>
+      </Button>
     </>
   );
 }

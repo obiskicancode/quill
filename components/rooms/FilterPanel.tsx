@@ -1,7 +1,6 @@
 'use client';
 
-import { X } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 import { formatNaira } from '@/lib/format';
 import {
@@ -17,7 +16,17 @@ import {
 import { GuestStepper } from '../GuestStepper';
 import { StaggerGroup } from '../motion/StaggerGroup';
 import { StaggerItem } from '../motion/StaggerItem';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
+import { Checkbox } from '../ui/checkbox';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '../ui/sheet';
 
 interface PanelProps {
   value: RoomFilters;
@@ -45,14 +54,20 @@ function PriceField({
   };
   return (
     <div className="flex-1">
-      <label htmlFor={id} className="text-caption text-muted font-semibold">
+      <Label
+        htmlFor={id}
+        className="text-caption text-muted-foreground font-semibold"
+      >
         {label}
-      </label>
-      <div className="rounded-control border-ink/60 bg-surface focus-within:ring-ink mt-1 flex min-h-11 items-center gap-1 border px-3 focus-within:ring-2">
-        <span aria-hidden className="text-muted">
+      </Label>
+      <div className="relative mt-1">
+        <span
+          aria-hidden
+          className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2"
+        >
           ₦
         </span>
-        <input
+        <Input
           id={id}
           inputMode="numeric"
           autoComplete="off"
@@ -66,7 +81,7 @@ function PriceField({
               commit();
             }
           }}
-          className="w-full min-w-0 bg-transparent py-2 tabular-nums focus-visible:outline-none"
+          className="min-h-11 pl-7 tabular-nums"
         />
       </div>
     </div>
@@ -87,20 +102,18 @@ function CheckGroup<T extends string>({
   return (
     <fieldset>
       <legend className="font-semibold">{legend}</legend>
-      <div className="mt-1">
+      <div className="mt-1 space-y-1">
         {options.map((o) => (
-          <label
+          <Label
             key={o.key}
-            className="text-small flex min-h-11 cursor-pointer items-center gap-3"
+            className="text-small flex min-h-11 cursor-pointer items-center gap-3 font-normal"
           >
-            <input
-              type="checkbox"
+            <Checkbox
               checked={selected.includes(o.key)}
-              onChange={() => onToggle(o.key)}
-              className="accent-ink size-5 shrink-0"
+              onCheckedChange={() => onToggle(o.key)}
             />
             {o.label}
-          </label>
+          </Label>
         ))}
       </div>
     </fieldset>
@@ -152,7 +165,7 @@ export function FilterPanel({
             />
           </div>
           {priceBounds && (
-            <p className="text-caption text-muted mt-2">
+            <p className="text-caption text-muted-foreground mt-2">
               Rooms run from {formatNaira(priceBounds.min)} to{' '}
               {formatNaira(priceBounds.max)}. Rooms with no published price
               always show.
@@ -213,7 +226,7 @@ interface SheetProps extends Omit<PanelProps, 'onChange'> {
   countFor: (draft: RoomFilters) => number;
 }
 
-/** Mobile bottom sheet (native dialog: focus is trapped, Esc closes). Changes apply when "Show rooms" is tapped. */
+/** Mobile bottom sheet. Changes apply when "Show rooms" is tapped. */
 export function FilterSheet({
   open,
   onClose,
@@ -223,8 +236,6 @@ export function FilterSheet({
   priceBounds,
   maxGuestsAvailable,
 }: SheetProps) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
   const [draft, setDraft] = useState(value);
 
   useEffect(() => {
@@ -232,74 +243,59 @@ export function FilterSheet({
     if (open) setDraft(value);
   }, [open, value]);
 
-  useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-    document.body.style.overflow = open ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
-
   const count = countFor(draft);
 
   return (
-    <dialog
-      ref={ref}
-      aria-labelledby={titleId}
-      onClose={onClose}
-      className="text-ink backdrop:bg-ink/60 inset-x-0 top-auto bottom-0 m-0 max-h-[90dvh] w-full max-w-none bg-transparent p-0 open:flex open:flex-col"
+    <Sheet
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
     >
-      {open && (
-        <div className="animate-sheet-rise rounded-t-card bg-paper flex max-h-[90dvh] min-h-0 w-full flex-col overflow-hidden">
-          <div className="border-line flex items-center justify-between border-b px-5 py-2">
-            <h2 id={titleId} className="font-display text-h3">
-              Filters
-            </h2>
-            <button
-              type="button"
-              aria-label="Close filters"
-              onClick={onClose}
-              className="hover:bg-ink/10 grid size-11 place-items-center rounded-full"
-            >
-              <X className="size-6" aria-hidden />
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto px-5 py-5">
-            <FilterPanel
-              value={draft}
-              onChange={setDraft}
-              priceBounds={priceBounds}
-              maxGuestsAvailable={maxGuestsAvailable}
-            />
-          </div>
-          <div className="border-line bg-surface flex items-center gap-3 border-t px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <Button
-              variant="ghost"
-              size="md"
-              disabled={countActiveFilters(draft) === 0}
-              onClick={() => setDraft(emptyFilters)}
-            >
-              Clear all
-            </Button>
-            <Button
-              size="md"
-              className="flex-1"
-              disabled={count === 0}
-              onClick={() => {
-                onApply(draft);
-                onClose();
-              }}
-            >
-              {count === 0
-                ? 'No rooms match'
-                : `Show ${count} ${count === 1 ? 'room' : 'rooms'}`}
-            </Button>
-          </div>
+      <SheetContent
+        side="bottom"
+        showCloseButton
+        className="rounded-t-card border-line bg-paper text-ink max-h-[90dvh] gap-0 border-t p-0"
+      >
+        <SheetHeader className="border-line border-b px-5 py-2 pr-14">
+          <SheetTitle className="font-display text-h3">Filters</SheetTitle>
+          <SheetDescription className="sr-only">
+            Filter available rooms by price, guests, room type, bed type, and
+            amenities.
+          </SheetDescription>
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto px-5 py-5">
+          <FilterPanel
+            value={draft}
+            onChange={setDraft}
+            priceBounds={priceBounds}
+            maxGuestsAvailable={maxGuestsAvailable}
+          />
         </div>
-      )}
-    </dialog>
+        <div className="border-line bg-card flex items-center gap-3 border-t px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <Button
+            variant="ghost"
+            size="md"
+            disabled={countActiveFilters(draft) === 0}
+            onClick={() => setDraft(emptyFilters)}
+          >
+            Clear all
+          </Button>
+          <Button
+            size="md"
+            className="flex-1"
+            disabled={count === 0}
+            onClick={() => {
+              onApply(draft);
+              onClose();
+            }}
+          >
+            {count === 0
+              ? 'No rooms match'
+              : `Show ${count} ${count === 1 ? 'room' : 'rooms'}`}
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

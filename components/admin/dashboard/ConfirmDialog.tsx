@@ -1,9 +1,18 @@
 'use client';
 
 import { AlertCircle } from 'lucide-react';
-import { useEffect, useRef } from 'react';
 
-import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -26,71 +35,53 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
-    if (open) {
-      if (!dialog.open) {
-        dialog.showModal();
-      }
-    } else {
-      if (dialog.open) {
-        dialog.close();
-      }
-    }
-  }, [open]);
-
-  if (!open) return null;
-
   return (
-    <dialog
-      ref={dialogRef}
-      onCancel={(e) => {
-        e.preventDefault();
-        if (!isConfirming) onCancel();
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && !isConfirming) onCancel();
       }}
-      className="open:animate-sheet-rise rounded-card border-line bg-surface shadow-float backdrop:bg-ink/50 fixed inset-0 z-50 m-auto w-[min(28rem,90vw)] border p-0 backdrop:backdrop-blur-sm"
     >
-      <div className="p-5 sm:p-6">
-        <h3 className="font-display text-h3 text-ink">{title}</h3>
-        <p className="text-small text-muted mt-2">{description}</p>
+      <AlertDialogContent className="rounded-card border-line bg-card shadow-float border">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="font-display text-h3">
+            {title}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-small">
+            {description}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
 
         {errorMessage && (
-          <div
-            role="alert"
-            className="rounded-control border-danger/30 bg-danger/5 text-caption text-danger mt-4 flex items-start gap-2.5 border p-3"
+          <Alert
+            variant="destructive"
+            className="border-destructive/30 bg-destructive/5 text-caption text-destructive"
           >
-            <AlertCircle
-              className="mt-0.5 size-4 shrink-0"
-              aria-hidden="true"
-            />
-            <span>{errorMessage}</span>
-          </div>
+            <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span className="col-start-2">{errorMessage}</span>
+          </Alert>
         )}
 
-        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button
+        <AlertDialogFooter className="bg-transparent">
+          <AlertDialogCancel
             variant="ghost"
-            size="sm"
+            size="md"
             disabled={isConfirming}
-            onClick={onCancel}
+            className="mt-0 sm:mt-0"
           >
             Cancel
-          </Button>
+          </AlertDialogCancel>
           <Button
             variant="primary"
-            size="sm"
+            size="md"
             loading={isConfirming}
             disabled={isConfirming}
             onClick={onConfirm}
           >
             {confirmLabel}
           </Button>
-        </div>
-      </div>
-    </dialog>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

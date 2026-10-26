@@ -1,10 +1,20 @@
 'use client';
 
-import { AlertCircle, Check, Loader2 } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { AlertCircle, CalendarDays, Check, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { formatNaira } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
@@ -133,38 +143,45 @@ export function ChangeDatesModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Date Inputs */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Check-in Date <span className="text-danger">*</span>
-            </label>
-            <input
-              type="date"
-              required
-              value={checkIn}
-              onChange={(e) => {
-                setCheckIn(e.target.value);
-                setQuoteData(null);
-              }}
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
-            />
-          </div>
-
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Check-out Date <span className="text-danger">*</span>
-            </label>
-            <input
-              type="date"
-              required
-              value={checkOut}
-              onChange={(e) => {
-                setCheckOut(e.target.value);
-                setQuoteData(null);
-              }}
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
-            />
-          </div>
+        <div className="space-y-1.5">
+          <Label className="text-small text-ink font-semibold">
+            New Stay Dates <span className="text-destructive">*</span>
+          </Label>
+          <Popover>
+            <PopoverTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="md"
+                  className="w-full justify-start gap-2.5 text-left font-normal"
+                />
+              }
+            >
+              <CalendarDays className="text-muted-foreground size-4 shrink-0" />
+              <span>
+                {checkIn && checkOut
+                  ? `${format(parseISO(checkIn), 'LLL dd, y')} - ${format(parseISO(checkOut), 'LLL dd, y')}`
+                  : checkIn
+                    ? `From ${format(parseISO(checkIn), 'LLL dd, y')}`
+                    : 'Select new stay dates'}
+              </span>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-auto p-0">
+              <Calendar
+                mode="range"
+                selected={{
+                  from: checkIn ? parseISO(checkIn) : undefined,
+                  to: checkOut ? parseISO(checkOut) : undefined,
+                }}
+                onSelect={(range) => {
+                  if (range?.from) setCheckIn(format(range.from, 'yyyy-MM-dd'));
+                  if (range?.to) setCheckOut(format(range.to, 'yyyy-MM-dd'));
+                  setQuoteData(null);
+                }}
+                numberOfMonths={1}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div>
@@ -190,18 +207,18 @@ export function ChangeDatesModal({
 
         {/* Quote Comparison Results */}
         {quoteData && (
-          <div className="bg-canvas rounded-control border-line text-small space-y-3 border p-4">
+          <div className="bg-muted rounded-control border-line text-small space-y-3 border p-4">
             <h3 className="text-ink font-semibold">Stay Comparison</h3>
 
             {/* Price Difference Indicator */}
             <div className="border-line flex items-center justify-between border-b pb-2">
-              <span className="text-muted">Previous Total:</span>
+              <span className="text-muted-foreground">Previous Total:</span>
               <span className="text-ink font-medium">
                 {formatNaira(quoteData.comparison.currentTotalMinor / 100)}
               </span>
             </div>
             <div className="border-line flex items-center justify-between border-b pb-2">
-              <span className="text-muted">New Total:</span>
+              <span className="text-muted-foreground">New Total:</span>
               <span className="text-ink font-bold">
                 {formatNaira(quoteData.comparison.newTotalMinor / 100)}
               </span>
@@ -212,10 +229,10 @@ export function ChangeDatesModal({
               <span
                 className={`font-bold ${
                   quoteData.comparison.guestOwesMinor > 0
-                    ? 'text-accent-ink'
+                    ? 'text-brand-ink'
                     : quoteData.comparison.refundDueMinor > 0
                       ? 'text-success'
-                      : 'text-muted'
+                      : 'text-muted-foreground'
                 }`}
               >
                 {quoteData.comparison.guestOwesMinor > 0
@@ -230,7 +247,7 @@ export function ChangeDatesModal({
             <div className="border-line border-t pt-2">
               {!quoteData.currentRoomAvailable ? (
                 <div className="space-y-2">
-                  <div className="text-caption text-danger flex items-start gap-2">
+                  <div className="text-caption text-destructive flex items-start gap-2">
                     <AlertCircle
                       className="mt-0.5 size-4 shrink-0"
                       aria-hidden="true"
@@ -242,24 +259,23 @@ export function ChangeDatesModal({
                   </div>
 
                   {quoteData.candidateRooms.length === 0 ? (
-                    <p className="text-caption text-danger font-semibold">
+                    <p className="text-caption text-destructive font-semibold">
                       No rooms of this type are available for the new dates.
                     </p>
                   ) : (
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                       {quoteData.candidateRooms.map((r) => (
-                        <button
+                        <Button
                           key={r.id}
                           type="button"
+                          variant={
+                            selectedRoomId === r.id ? 'default' : 'outline'
+                          }
+                          size="sm"
                           onClick={() => setSelectedRoomId(r.id)}
-                          className={`rounded-control text-caption border p-2 text-center font-semibold transition-colors ${
-                            selectedRoomId === r.id
-                              ? 'border-accent bg-accent/15 text-accent-ink'
-                              : 'border-line text-ink hover:border-ink'
-                          }`}
                         >
                           Room {r.roomNumber}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   )}
@@ -279,28 +295,33 @@ export function ChangeDatesModal({
 
         {/* Manager Override Controls */}
         <div className="border-line space-y-2 border-t pt-3">
-          <label className="text-small text-ink flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
+          <Label
+            htmlFor="override-rules-toggle"
+            className="text-small text-ink flex cursor-pointer items-center gap-2"
+          >
+            <Checkbox
+              id="override-rules-toggle"
               checked={overrideRules}
-              onChange={(e) => setOverrideRules(e.target.checked)}
-              className="border-line text-accent focus:ring-accent size-4 rounded-sm"
+              onCheckedChange={(checked) => setOverrideRules(!!checked)}
             />
             <span>Override hotel policies (min notice, same-day cut-off)</span>
-          </label>
+          </Label>
 
           {overrideRules && (
-            <div>
-              <label className="text-small text-ink block font-semibold">
-                Override Reason <span className="text-danger">*</span>
-              </label>
-              <input
+            <div className="space-y-1.5 pt-2">
+              <Label
+                htmlFor="override-reason-input"
+                className="text-small text-ink font-semibold"
+              >
+                Override Reason <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="override-reason-input"
                 type="text"
                 required
                 value={overrideReason}
                 onChange={(e) => setOverrideReason(e.target.value)}
                 placeholder="e.g. VIP guest request approved by General Manager..."
-                className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
               />
             </div>
           )}
@@ -309,24 +330,20 @@ export function ChangeDatesModal({
         <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
+            size="sm"
             onClick={onClose}
             disabled={submitting}
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={submitting || !quoteData}>
-            {submitting ? (
-              <>
-                <Loader2
-                  className="mr-2 size-4 animate-spin"
-                  aria-hidden="true"
-                />
-                Applying date change...
-              </>
-            ) : (
-              'Confirm date change'
-            )}
+          <Button
+            type="submit"
+            size="sm"
+            disabled={submitting || !quoteData}
+            loading={submitting}
+          >
+            Confirm date change
           </Button>
         </div>
       </form>

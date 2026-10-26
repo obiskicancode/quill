@@ -14,7 +14,7 @@ import type { GuestReservation, HeaderKind } from '@/types/booking.types';
 import { formatMinor } from '@/types/stay.types';
 
 import { EASE_OUT } from '../motion/variants';
-import { ButtonLink } from '../ui/Button';
+import { ButtonLink } from '../ui/button';
 import { ReferenceBlock } from './ReferenceBlock';
 
 interface Copy {
@@ -167,7 +167,7 @@ export function StatusHeader({
   return (
     <section
       aria-labelledby="status-title"
-      className={`rounded-card p-6 md:p-8 ${success ? 'on-dark bg-ink text-paper' : 'border-line bg-surface text-ink shadow-raised border'}`}
+      className={`rounded-card p-6 md:p-8 ${success ? 'on-dark bg-ink text-paper' : 'border-line bg-card text-ink shadow-raised border'}`}
     >
       <AnimatePresence mode="wait">
         <motion.div
@@ -179,7 +179,7 @@ export function StatusHeader({
           transition={{ duration: reduced ? 0 : 0.25, ease: EASE_OUT }}
         >
           <span
-            className={`grid size-14 shrink-0 place-items-center rounded-full ${success ? 'bg-accent text-ink' : 'bg-ink/10 text-ink'}`}
+            className={`grid size-14 shrink-0 place-items-center rounded-full ${success ? 'bg-primary text-ink' : 'bg-ink/10 text-ink'}`}
           >
             {icon}
           </span>

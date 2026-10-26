@@ -1,14 +1,19 @@
 'use client';
 
-import { X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { roomAmenityLabels, type RoomAmenityKey } from '@/lib/rooms';
 
 import { RoomAmenityIcon } from '../rooms/RoomAmenityIcon';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
 
-/** "Show all N amenities" opens a grouped list in a native modal dialog (focus trapped, Esc closes). */
 export function AmenitiesModal({
   total,
   groups,
@@ -17,21 +22,9 @@ export function AmenitiesModal({
   groups: { title: string; keys: RoomAmenityKey[] }[];
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) return;
-    if (open && !dialog.open) dialog.showModal();
-    if (!open && dialog.open) dialog.close();
-    document.body.style.overflow = open ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
 
   return (
-    <>
+    <Dialog open={open} onOpenChange={setOpen}>
       <Button
         variant="secondary"
         aria-haspopup="dialog"
@@ -39,51 +32,32 @@ export function AmenitiesModal({
       >
         Show all {total} amenities
       </Button>
-      <dialog
-        ref={ref}
-        aria-labelledby="amenities-modal-title"
-        onClose={() => setOpen(false)}
-        className="rounded-card bg-paper text-ink backdrop:bg-ink/60 m-auto max-h-[85dvh] w-[min(36rem,calc(100vw-2rem))] p-0 open:flex open:flex-col"
-      >
-        {open && (
-          <>
-            <div className="border-line flex items-center justify-between border-b px-6 py-3">
-              <h2 id="amenities-modal-title" className="font-display text-h3">
-                Amenities
-              </h2>
-              <button
-                type="button"
-                aria-label="Close amenities"
-                onClick={() => setOpen(false)}
-                className="hover:bg-ink/10 grid size-11 place-items-center rounded-full"
-              >
-                <X className="size-6" aria-hidden />
-              </button>
-            </div>
-            <div className="space-y-6 overflow-y-auto px-6 py-6">
-              {groups.map((g) => (
-                <section key={g.title} aria-label={g.title}>
-                  <h3 className="font-semibold">{g.title}</h3>
-                  <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-                    {g.keys.map((k) => (
-                      <li
-                        key={k}
-                        className="text-small flex items-center gap-3"
-                      >
-                        <RoomAmenityIcon
-                          name={k}
-                          className="text-accent-ink size-5"
-                        />
-                        {roomAmenityLabels[k]}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          </>
-        )}
-      </dialog>
-    </>
+      <DialogContent className="rounded-card border-line bg-paper text-ink flex max-h-[85dvh] w-[min(36rem,calc(100vw-2rem))] flex-col gap-0 border p-0 sm:max-w-[36rem]">
+        <DialogHeader className="border-line border-b px-6 py-3 pr-14">
+          <DialogTitle className="font-display text-h3">Amenities</DialogTitle>
+          <DialogDescription className="sr-only">
+            Full list of amenities available with this room.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-6 overflow-y-auto px-6 py-6">
+          {groups.map((g) => (
+            <section key={g.title} aria-label={g.title}>
+              <h3 className="font-semibold">{g.title}</h3>
+              <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+                {g.keys.map((k) => (
+                  <li key={k} className="text-small flex items-center gap-3">
+                    <RoomAmenityIcon
+                      name={k}
+                      className="text-brand-ink size-5"
+                    />
+                    {roomAmenityLabels[k]}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

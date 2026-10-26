@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { Button } from '@/components/ui/button';
 import type { GalleryImage } from '@/lib/rooms';
 
 interface LightboxProps {
@@ -108,14 +109,15 @@ export function Lightbox({
                 ? `${index + 1} of ${count}`
                 : `${index + 1} / ${count}`}
             </p>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               aria-label="Close photo viewer"
               onClick={() => dialogRef.current?.close()}
-              className="grid size-11 place-items-center rounded-full hover:bg-white/15"
+              className="rounded-full text-white hover:bg-white/15 hover:text-white"
             >
               <X className="size-6" aria-hidden />
-            </button>
+            </Button>
           </div>
 
           <div className="relative min-h-0 flex-1">
@@ -156,24 +158,26 @@ export function Lightbox({
             </div>
             {count > 1 && (
               <>
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="icon"
                   aria-label="Previous photo"
                   disabled={index === 0}
                   onClick={() => goTo(index - 1)}
-                  className="bg-ink/70 hover:bg-ink absolute top-1/2 left-3 hidden size-12 -translate-y-1/2 place-items-center rounded-full disabled:opacity-30 md:grid"
+                  className="bg-ink/70 hover:bg-ink absolute top-1/2 left-3 hidden size-12 -translate-y-1/2 rounded-full text-white hover:text-white disabled:opacity-30 md:inline-flex"
                 >
                   <ChevronLeft className="size-6" aria-hidden />
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
                   aria-label="Next photo"
                   disabled={index === count - 1}
                   onClick={() => goTo(index + 1)}
-                  className="bg-ink/70 hover:bg-ink absolute top-1/2 right-3 hidden size-12 -translate-y-1/2 place-items-center rounded-full disabled:opacity-30 md:grid"
+                  className="bg-ink/70 hover:bg-ink absolute top-1/2 right-3 hidden size-12 -translate-y-1/2 rounded-full text-white hover:text-white disabled:opacity-30 md:inline-flex"
                 >
                   <ChevronRight className="size-6" aria-hidden />
-                </button>
+                </Button>
               </>
             )}
           </div>

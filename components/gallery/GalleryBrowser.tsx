@@ -13,7 +13,7 @@ import {
 import { HoverZoom } from '../motion/HoverZoom';
 import { EASE_OUT, spring } from '../motion/variants';
 import { Lightbox } from '../room-detail/Lightbox';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
 import { Photo } from '../ui/Photo';
 
 const PAGE_SIZE = 24;
@@ -54,24 +54,25 @@ function Chip({
   const reduced = useReducedMotion();
   const showPill = active && !reduced;
   return (
-    <button
-      type="button"
+    <Button
+      variant={active ? 'default' : 'outline'}
+      size="sm"
       aria-pressed={active}
       onClick={onClick}
-      className={`text-small relative inline-flex min-h-11 items-center rounded-full border px-4 font-semibold transition-colors ${active ? 'border-ink text-paper' : 'border-ink/50 bg-surface hover:bg-ink hover:text-paper'}`}
+      className="relative rounded-full"
     >
       {showPill && (
         <motion.span
           layoutId={pillId}
-          className="bg-ink absolute inset-0 rounded-full"
+          className="bg-primary absolute inset-0 rounded-full"
           transition={spring}
         />
       )}
       {active && reduced && (
-        <span className="bg-ink absolute inset-0 rounded-full" />
+        <span className="bg-primary absolute inset-0 rounded-full" />
       )}
       <span className="relative">{children}</span>
-    </button>
+    </Button>
   );
 }
 
@@ -221,7 +222,7 @@ export function GalleryBrowser({
       <p
         role="status"
         aria-live="polite"
-        className="text-small text-muted mt-6"
+        className="text-small text-muted-foreground mt-6"
       >
         Showing {shown.length} of {filtered.length}{' '}
         {filtered.length === 1 ? 'photo' : 'photos'}
@@ -253,15 +254,15 @@ export function GalleryBrowser({
                 delay: Math.min(i % PAGE_SIZE, 8) * 0.035,
               }}
             >
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 aria-label={`Open photo: ${img.altText}`}
                 onClick={(e) => {
                   setTriggerEl(e.currentTarget);
                   setLightbox({ open: true, index: i });
                   syncUrl({ category, room, image: img.id });
                 }}
-                className="group/media rounded-card block w-full overflow-hidden"
+                className="group/media rounded-card block h-auto w-full overflow-hidden p-0 hover:bg-transparent"
               >
                 <HoverZoom
                   className="rounded-card"
@@ -284,7 +285,7 @@ export function GalleryBrowser({
                     />
                   </div>
                 </HoverZoom>
-              </button>
+              </Button>
             </motion.li>
           ))}
         </ul>

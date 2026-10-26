@@ -10,7 +10,7 @@ import type { GuestReservation } from '@/types/booking.types';
 
 import { AnimatedList } from '../motion';
 import { EASE_OUT } from '../motion/variants';
-import { Button, ButtonLink } from '../ui/Button';
+import { Button, ButtonLink } from '../ui/button';
 
 interface ActionsPanelProps {
   v: GuestReservation;
@@ -67,7 +67,7 @@ export function ActionsPanel({
   return (
     <section
       aria-labelledby="actions-title"
-      className="rounded-card border-line bg-surface shadow-raised border p-5 md:p-6 print:hidden"
+      className="rounded-card border-line bg-card shadow-raised border p-5 md:p-6 print:hidden"
     >
       <h2 id="actions-title" className="font-display text-h3">
         {finished ? 'About this booking' : 'What would you like to do?'}

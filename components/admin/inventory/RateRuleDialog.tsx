@@ -4,7 +4,26 @@ import { AlertCircle, ShieldAlert } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   bpsToPercentage,
   minorToNaira,
@@ -182,159 +201,168 @@ export function RateRuleDialog({
     }
   }
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="rounded-card border-line bg-surface max-h-[90vh] w-full max-w-xl overflow-y-auto border p-6 shadow-2xl">
-        <div className="border-line flex items-center justify-between border-b pb-4">
-          <h3 className="text-foreground text-h3 font-semibold">
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && !isSaving) onClose();
+      }}
+    >
+      <DialogContent className="rounded-card border-line bg-card max-h-[90vh] max-w-xl gap-0 overflow-y-auto border p-0 shadow-2xl sm:max-w-xl">
+        <DialogHeader className="border-line border-b p-6 pr-14 pb-4">
+          <DialogTitle className="text-h3 text-foreground font-semibold">
             {isEditing ? 'Edit Rate Rule' : 'New Rate Rule'}
-          </h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="hover:text-foreground text-muted text-xs"
-          >
-            Close ✕
-          </button>
-        </div>
+          </DialogTitle>
+          <DialogDescription className="text-caption text-muted-foreground">
+            Configure seasonal pricing, occupancy adjustments, or long-stay
+            discounts.
+          </DialogDescription>
+        </DialogHeader>
 
-        {errorMessage && (
-          <div
-            role="alert"
-            className="border-danger/40 bg-danger/10 text-danger mt-4 flex items-center gap-2 rounded border p-3 text-xs"
-          >
-            <AlertCircle className="size-4 shrink-0" />
-            <p>{errorMessage}</p>
-          </div>
-        )}
+        <form onSubmit={handleSubmit} className="text-small space-y-4 p-6">
+          {errorMessage && (
+            <Alert
+              variant="destructive"
+              className="border-destructive/40 bg-destructive/10 text-destructive text-xs"
+            >
+              <AlertCircle className="size-4 shrink-0" />
+              <p>{errorMessage}</p>
+            </Alert>
+          )}
 
-        {overlapData && overlapData.conflicts.length > 0 && (
-          <div
-            role="region"
-            aria-label="Overlap warning"
-            className="border-warning/40 bg-warning/10 mt-4 rounded border p-3 text-xs"
-          >
-            <div className="flex items-start gap-2">
-              <ShieldAlert className="text-warning size-4 shrink-0" />
-              <div>
-                <p className="text-warning-contrast font-semibold">
-                  Overlap Guidance ({overlapData.conflicts.length} existing
-                  rules in date range)
-                </p>
-                <p className="text-muted mt-1">
-                  The rule with the highest priority wins. If priorities are
-                  equal, a room-specific rule beats a property-wide rule.
-                </p>
-                <ul className="mt-2 space-y-1">
-                  {overlapData.conflicts.map((c) => (
-                    <li key={c.id} className="text-muted flex justify-between">
-                      <span>
-                        {c.name} ({c.startDate} to {c.endDate})
-                      </span>
-                      <span
-                        className={
-                          c.equalPriority
-                            ? 'text-warning-contrast font-semibold'
-                            : ''
-                        }
+          {overlapData && overlapData.conflicts.length > 0 && (
+            <Alert
+              role="region"
+              aria-label="Overlap warning"
+              className="border-warning/40 bg-warning/10 text-xs"
+            >
+              <div className="flex items-start gap-2">
+                <ShieldAlert className="text-warning size-4 shrink-0" />
+                <div>
+                  <p className="text-warning-contrast font-semibold">
+                    Overlap Guidance ({overlapData.conflicts.length} existing
+                    rules in date range)
+                  </p>
+                  <p className="text-muted-foreground mt-1">
+                    The rule with the highest priority wins. If priorities are
+                    equal, a room-specific rule beats a property-wide rule.
+                  </p>
+                  <ul className="mt-2 space-y-1">
+                    {overlapData.conflicts.map((c) => (
+                      <li
+                        key={c.id}
+                        className="text-muted-foreground flex justify-between"
                       >
-                        Priority {c.priority}{' '}
-                        {c.equalPriority ? '(Equal!)' : ''}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                        <span>
+                          {c.name} ({c.startDate} to {c.endDate})
+                        </span>
+                        <span
+                          className={
+                            c.equalPriority
+                              ? 'text-warning-contrast font-semibold'
+                              : ''
+                          }
+                        >
+                          Priority {c.priority}{' '}
+                          {c.equalPriority ? '(Equal!)' : ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            </Alert>
+          )}
 
-        <form onSubmit={handleSubmit} className="text-small mt-4 space-y-4">
           {/* Rule Name */}
-          <div>
-            <label className="text-foreground block font-medium">
-              Rule Name <span className="text-danger">*</span>
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="rule-name">
+              Rule Name <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="rule-name"
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. December Peak Holiday Uplift, Long Stay Discount"
-              className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
             />
           </div>
 
           {/* Room Type Selector */}
-          <div>
-            <label className="text-foreground block font-medium">
-              Applicable Room Type
-            </label>
-            <select
-              value={roomTypeId}
-              onChange={(e) => setRoomTypeId(e.target.value)}
-              className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
+          <div className="space-y-1.5">
+            <Label htmlFor="rule-room-type">Applicable Room Type</Label>
+            <Select
+              items={[
+                { value: 'all', label: 'All Room Types (Property-Wide)' },
+                ...roomTypes.map((rt) => ({ value: rt.id, label: rt.name })),
+              ]}
+              value={roomTypeId || 'all'}
+              onValueChange={(val) =>
+                setRoomTypeId(val === 'all' || !val ? '' : val)
+              }
             >
-              <option value="">All Room Types (Property-Wide)</option>
-              {roomTypes.map((rt) => (
-                <option key={rt.id} value={rt.id}>
-                  {rt.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id="rule-room-type" className="w-full">
+                <SelectValue placeholder="All Room Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  All Room Types (Property-Wide)
+                </SelectItem>
+                {roomTypes.map((rt) => (
+                  <SelectItem key={rt.id} value={rt.id}>
+                    {rt.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Date Range */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-foreground block font-medium">
-                Start Date <span className="text-danger">*</span>
-              </label>
-              <input
+            <div className="space-y-1.5">
+              <Label htmlFor="rule-start-date">
+                Start Date <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="rule-start-date"
                 type="date"
                 required
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
               />
             </div>
-            <div>
-              <label className="text-foreground block font-medium">
-                End Date <span className="text-danger">*</span>
-              </label>
-              <input
+            <div className="space-y-1.5">
+              <Label htmlFor="rule-end-date">
+                End Date <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="rule-end-date"
                 type="date"
                 required
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
               />
             </div>
           </div>
 
           {/* Days of Week */}
-          <div>
-            <label className="text-foreground block font-medium">
-              Days of Week (Leave all unchecked for everyday)
-            </label>
-            <div className="mt-1 flex flex-wrap gap-2">
+          <div className="space-y-1.5">
+            <Label>Days of Week (Leave all unchecked for everyday)</Label>
+            <div className="flex flex-wrap gap-2 pt-0.5">
               {DAYS.map((d) => {
                 const isSelected = selectedDays.includes(d.day);
                 return (
-                  <button
+                  <Button
                     key={d.day}
                     type="button"
+                    variant={isSelected ? 'default' : 'outline'}
+                    size="xs"
                     onClick={() => toggleDay(d.day)}
-                    className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
-                      isSelected
-                        ? 'bg-brand text-white'
-                        : 'bg-background border-line text-muted hover:bg-paper border'
-                    }`}
+                    className="h-7 px-2.5"
                   >
                     {d.label}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -342,34 +370,53 @@ export function RateRuleDialog({
 
           {/* Adjustment Type & Value */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-foreground block font-medium">
-                Adjustment Type
-              </label>
-              <select
+            <div className="space-y-1.5">
+              <Label htmlFor="rule-adjustment-type">Adjustment Type</Label>
+              <Select
+                items={[
+                  {
+                    value: 'percent_markup',
+                    label: 'Percentage Markup / Discount (%)',
+                  },
+                  {
+                    value: 'fixed_price',
+                    label: 'Fixed Price Replacement (₦)',
+                  },
+                  {
+                    value: 'amount_markup',
+                    label: 'Fixed Amount Adjustment (₦)',
+                  },
+                ]}
                 value={adjustmentType}
-                onChange={(e) =>
-                  setAdjustmentType(e.target.value as RateAdjustmentType)
-                }
-                className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
+                onValueChange={(val) => {
+                  if (val) setAdjustmentType(val as RateAdjustmentType);
+                }}
               >
-                <option value="percent_markup">
-                  Percentage Markup / Discount (%)
-                </option>
-                <option value="fixed_price">Fixed Price Replacement (₦)</option>
-                <option value="amount_markup">
-                  Fixed Amount Adjustment (₦)
-                </option>
-              </select>
+                <SelectTrigger id="rule-adjustment-type" className="w-full">
+                  <SelectValue placeholder="Select adjustment type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="percent_markup">
+                    Percentage Markup / Discount (%)
+                  </SelectItem>
+                  <SelectItem value="fixed_price">
+                    Fixed Price Replacement (₦)
+                  </SelectItem>
+                  <SelectItem value="amount_markup">
+                    Fixed Amount Adjustment (₦)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div>
-              <label className="text-foreground block font-medium">
+            <div className="space-y-1.5">
+              <Label htmlFor="rule-adjustment-value">
                 {adjustmentType === 'percent_markup'
                   ? 'Percentage (% e.g. 20 or -15)'
                   : 'Value in Naira (₦)'}
-              </label>
-              <input
+              </Label>
+              <Input
+                id="rule-adjustment-value"
                 type="text"
                 required
                 value={inputValue}
@@ -377,87 +424,82 @@ export function RateRuleDialog({
                 placeholder={
                   adjustmentType === 'percent_markup' ? '20' : '90,000'
                 }
-                className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
               />
             </div>
           </div>
 
           {/* Min / Max Nights */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-foreground block font-medium">
+            <div className="space-y-1.5">
+              <Label htmlFor="rule-min-nights">
                 Min Stay Nights (Optional)
-              </label>
-              <input
+              </Label>
+              <Input
+                id="rule-min-nights"
                 type="number"
                 min="1"
                 value={minNights}
                 onChange={(e) => setMinNights(e.target.value)}
                 placeholder="e.g. 3"
-                className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
               />
             </div>
-            <div>
-              <label className="text-foreground block font-medium">
+            <div className="space-y-1.5">
+              <Label htmlFor="rule-max-nights">
                 Max Stay Nights (Optional)
-              </label>
-              <input
+              </Label>
+              <Input
+                id="rule-max-nights"
                 type="number"
                 min="1"
                 value={maxNights}
                 onChange={(e) => setMaxNights(e.target.value)}
                 placeholder="e.g. 14"
-                className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
               />
             </div>
           </div>
 
           {/* Priority & Active */}
-          <div className="grid grid-cols-2 items-center gap-4 pt-2">
-            <div>
-              <label className="text-foreground block font-medium">
+          <div className="grid grid-cols-2 items-center gap-4 pt-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="rule-priority">
                 Priority Integer (Higher wins)
-              </label>
-              <input
+              </Label>
+              <Input
+                id="rule-priority"
                 type="number"
                 value={priority}
                 onChange={(e) => setPriority(parseInt(e.target.value, 10) || 0)}
-                className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
               />
             </div>
 
-            <div className="flex items-center gap-3 pt-6">
-              <input
-                type="checkbox"
+            <div className="flex items-center gap-2.5 pt-5">
+              <Checkbox
                 id="ruleActive"
                 checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-                className="text-brand focus:ring-brand size-4 rounded"
+                onCheckedChange={(checked) => setIsActive(!!checked)}
               />
-              <label
-                htmlFor="ruleActive"
-                className="text-foreground font-medium"
-              >
+              <Label htmlFor="ruleActive" className="cursor-pointer">
                 Rule is Active
-              </label>
+              </Label>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="border-line flex items-center justify-end gap-2 border-t pt-4">
-            <Button type="button" variant="secondary" onClick={onClose}>
+          <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving
-                ? 'Saving...'
-                : isEditing
-                  ? 'Save Changes'
-                  : 'Create Rule'}
+            <Button type="submit" size="sm" loading={isSaving}>
+              {isEditing ? 'Save Changes' : 'Create Rule'}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

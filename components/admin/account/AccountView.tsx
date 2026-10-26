@@ -13,6 +13,7 @@ import { ProfilePanel } from '@/components/admin/account/ProfilePanel';
 import { SessionsPanel } from '@/components/admin/account/SessionsPanel';
 import { TwoFactorPanel } from '@/components/admin/account/TwoFactorPanel';
 import { StatusBanner } from '@/components/admin/StatusBanner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { AdminRole } from '@/lib/auth/permissions';
 import type { AdminStaff } from '@/types/admin.types';
 
@@ -70,44 +71,34 @@ export function AccountView({
         </StatusBanner>
       )}
 
-      <div
-        role="tablist"
-        aria-label="Account settings"
-        className="rounded-control border-line bg-surface flex gap-1 overflow-x-auto border p-1"
+      <Tabs
+        value={activeTab}
+        onValueChange={(val) => setTab(val as AccountTab)}
+        className="w-full space-y-4"
       >
-        {visibleTabs.map((item) => {
-          const Icon = item.icon;
-          const active = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              id={`account-tab-${item.id}`}
-              aria-selected={active}
-              aria-controls={`account-panel-${item.id}`}
-              onClick={() => setTab(item.id)}
-              className={`rounded-control text-small flex min-h-10 shrink-0 items-center gap-2 px-3 font-semibold ${
-                active
-                  ? 'bg-ink text-paper'
-                  : 'text-muted hover:bg-ink/5 hover:text-ink'
-              }`}
-            >
-              <Icon className="size-4" aria-hidden />
-              {item.label}
-            </button>
-          );
-        })}
-      </div>
+        <TabsList className="border-line bg-card flex h-auto w-full justify-start gap-1 overflow-x-auto border p-1">
+          {visibleTabs.map((item) => {
+            const Icon = item.icon;
+            return (
+              <TabsTrigger
+                key={item.id}
+                value={item.id}
+                className="gap-2 px-3 py-2 text-sm font-semibold"
+              >
+                <Icon className="size-4" aria-hidden />
+                {item.label}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
-      <div
-        role="tabpanel"
-        id={`account-panel-${activeTab}`}
-        aria-labelledby={`account-tab-${activeTab}`}
-      >
-        {activeTab === 'profile' && <ProfilePanel staff={staff} />}
-        {activeTab === 'password' && <PasswordPanel />}
-        {activeTab === 'two-factor' && (
+        <TabsContent value="profile">
+          <ProfilePanel staff={staff} />
+        </TabsContent>
+        <TabsContent value="password">
+          <PasswordPanel />
+        </TabsContent>
+        <TabsContent value="two-factor">
           <TwoFactorPanel
             enabled={staff.mfaEnabled}
             role={role}
@@ -116,9 +107,11 @@ export function AccountView({
               if (enabled) setPending(false);
             }}
           />
-        )}
-        {activeTab === 'sessions' && <SessionsPanel />}
-      </div>
+        </TabsContent>
+        <TabsContent value="sessions">
+          <SessionsPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

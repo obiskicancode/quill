@@ -28,8 +28,8 @@ export function ProgressSteps({ steps }: { steps: StepInfo[] }) {
                   s.state === 'complete'
                     ? 'bg-ink text-paper'
                     : s.state === 'current'
-                      ? 'bg-accent text-ink'
-                      : 'border-ink/50 text-muted border'
+                      ? 'bg-primary text-ink'
+                      : 'border-ink/50 text-muted-foreground border'
                 }`}
               >
                 {reduced ? (
@@ -65,7 +65,7 @@ export function ProgressSteps({ steps }: { steps: StepInfo[] }) {
                 )}
               </span>
               <span
-                className={`text-small truncate ${s.state === 'upcoming' ? 'text-muted' : 'font-semibold'}`}
+                className={`text-small truncate ${s.state === 'upcoming' ? 'text-muted-foreground' : 'font-semibold'}`}
               >
                 {s.label}
                 {s.state === 'complete' && (

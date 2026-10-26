@@ -1,11 +1,36 @@
 'use client';
 
-import { UserPlus, X } from 'lucide-react';
+import { UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { AdminRole } from '@/lib/auth/permissions';
 import type { StaffInviteInput } from '@/types/staff-admin.types';
+
+const ROLE_OPTIONS = [
+  { value: 'reception', label: 'Reception' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'owner', label: 'Owner (Full Privileges)' },
+];
 
 export function InviteStaffDialog({
   isOpen,
@@ -71,36 +96,33 @@ export function InviteStaffDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="rounded-card border-line bg-surface w-full max-w-lg border p-6 shadow-xl">
-        <div className="border-line flex items-center justify-between border-b pb-3">
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !submitting) onClose();
+      }}
+    >
+      <DialogContent className="rounded-card border-line bg-card max-w-lg gap-0 border p-0 shadow-xl sm:max-w-lg">
+        <DialogHeader className="border-line border-b p-6 pr-14 pb-3">
           <div className="flex items-center gap-2">
-            <UserPlus className="text-primary size-5" />
-            <h3 className="font-display text-h3 text-ink font-semibold">
+            <UserPlus className="text-primary size-5" aria-hidden />
+            <DialogTitle className="font-display text-h3 text-ink font-semibold">
               Invite Staff Member
-            </h3>
+            </DialogTitle>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-muted hover:text-ink rounded p-1"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="text-small mt-4 space-y-4">
-          <p className="text-caption text-muted">
+        <form onSubmit={handleSubmit} className="text-small space-y-4 p-6">
+          <DialogDescription className="text-caption text-muted-foreground">
             The invited staff member will receive a secure 72-hour single-use
             link to set their password and enrol in 2FA.
-          </p>
+          </DialogDescription>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-caption text-ink mb-1 block font-semibold">
-                First Name
-              </label>
-              <input
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-first-name">First Name</Label>
+              <Input
+                id="invite-first-name"
                 type="text"
                 required
                 placeholder="Ada"
@@ -108,94 +130,92 @@ export function InviteStaffDialog({
                 onChange={(e) =>
                   setForm({ ...form, firstName: e.target.value })
                 }
-                className="border-line bg-paper text-ink placeholder:text-muted focus:border-primary w-full rounded-md border p-2.5 focus:outline-none"
               />
             </div>
-            <div>
-              <label className="text-caption text-ink mb-1 block font-semibold">
-                Last Name
-              </label>
-              <input
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-last-name">Last Name</Label>
+              <Input
+                id="invite-last-name"
                 type="text"
                 required
                 placeholder="Okafor"
                 value={form.lastName}
                 onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                className="border-line bg-paper text-ink placeholder:text-muted focus:border-primary w-full rounded-md border p-2.5 focus:outline-none"
               />
             </div>
           </div>
 
-          <div>
-            <label className="text-caption text-ink mb-1 block font-semibold">
-              Email Address
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="invite-email">Email Address</Label>
+            <Input
+              id="invite-email"
               type="email"
               required
               placeholder="staff@hoteldela.com"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="border-line bg-paper text-ink placeholder:text-muted focus:border-primary w-full rounded-md border p-2.5 focus:outline-none"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-caption text-ink mb-1 block font-semibold">
-                Role
-              </label>
-              <select
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-role">Role</Label>
+              <Select
+                items={ROLE_OPTIONS}
                 value={form.role}
-                onChange={(e) =>
-                  setForm({ ...form, role: e.target.value as AdminRole })
-                }
-                className="border-line bg-paper text-ink focus:border-primary w-full rounded-md border p-2.5 capitalize focus:outline-none"
+                onValueChange={(val) => {
+                  if (val) setForm({ ...form, role: val as AdminRole });
+                }}
               >
-                <option value="reception">Reception</option>
-                <option value="manager">Manager</option>
-                <option value="owner">Owner (Full Privileges)</option>
-              </select>
+                <SelectTrigger id="invite-role" className="w-full">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div>
-              <label className="text-caption text-ink mb-1 block font-semibold">
-                Phone Number (Optional)
-              </label>
-              <input
+            <div className="space-y-1.5">
+              <Label htmlFor="invite-phone">Phone Number (Optional)</Label>
+              <Input
+                id="invite-phone"
                 type="tel"
                 placeholder="+234..."
                 value={form.phone || ''}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="border-line bg-paper text-ink placeholder:text-muted focus:border-primary w-full rounded-md border p-2.5 focus:outline-none"
               />
             </div>
           </div>
 
           {error && (
-            <div className="border-danger/30 bg-danger/5 text-caption text-danger rounded border p-2.5">
+            <Alert
+              variant="destructive"
+              className="border-destructive/30 bg-destructive/5 text-caption text-destructive"
+            >
               {error}
-            </div>
+            </Alert>
           )}
 
-          <div className="border-line flex items-center justify-end gap-2 border-t pt-2">
-            <button
+          <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={onClose}
               disabled={submitting}
-              className="border-line text-small text-ink hover:bg-paper rounded-md border px-4 py-2 font-medium"
             >
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="bg-primary text-small text-primary-ink rounded-md px-4 py-2 font-semibold hover:opacity-95"
-            >
-              {submitting ? 'Sending Invitation...' : 'Send Invitation'}
-            </button>
-          </div>
+            </Button>
+            <Button type="submit" size="sm" loading={submitting}>
+              Send Invitation
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

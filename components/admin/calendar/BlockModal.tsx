@@ -12,7 +12,16 @@ import React, { useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
 import { ActionModal } from '@/components/admin/reservations/actions/ActionModal';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { AdminRole } from '@/lib/auth/permissions';
 import { addDays, formatShort, nightsBetween } from '@/lib/dates';
 import type {
@@ -285,7 +294,7 @@ export function BlockModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="rounded-control border-danger/30 bg-danger/10 text-small text-danger flex items-start gap-2 border p-3">
+          <div className="rounded-control border-destructive/30 bg-destructive/10 text-small text-destructive flex items-start gap-2 border p-3">
             <AlertCircle className="mt-0.5 size-4 shrink-0" />
             <span>{error}</span>
           </div>
@@ -293,27 +302,29 @@ export function BlockModal({
 
         {/* Delete Confirmation Banner */}
         {confirmDelete && (
-          <div className="rounded-control border-danger/40 bg-danger/10 space-y-2 border p-3.5">
-            <div className="text-small text-danger flex items-center gap-2 font-semibold">
+          <div className="rounded-control border-destructive/40 bg-destructive/10 space-y-2 border p-3.5">
+            <div className="text-small text-destructive flex items-center gap-2 font-semibold">
               <AlertTriangle className="size-4" />
               <span>Are you sure you want to remove this block?</span>
             </div>
-            <p className="text-caption text-muted">
+            <p className="text-caption text-muted-foreground">
               These dates will become available again immediately for new
               bookings. This action is permanently audited.
             </p>
             <div className="flex items-center gap-2 pt-1">
               <Button
                 type="button"
-                variant="danger"
-                disabled={deleting}
+                variant="destructive"
+                size="sm"
+                loading={deleting}
                 onClick={handleDelete}
               >
-                {deleting ? 'Removing...' : 'Confirm Remove Block'}
+                Confirm Remove Block
               </Button>
               <Button
                 type="button"
-                variant="secondary"
+                variant="outline"
+                size="sm"
                 disabled={deleting}
                 onClick={() => setConfirmDelete(false)}
               >
@@ -326,55 +337,57 @@ export function BlockModal({
         {/* Room Selection */}
         <div>
           <div className="flex items-center justify-between">
-            <label className="text-small text-ink block font-semibold">
+            <Label className="text-small text-ink block font-semibold">
               Select Rooms ({selectedRoomIds.length} selected)
-            </label>
+            </Label>
             {!isEditing && (
               <div className="text-caption flex items-center gap-2">
-                <button
+                <Button
                   type="button"
+                  variant="link"
+                  size="sm"
                   onClick={handleSelectWholeProperty}
-                  className="text-ink underline hover:opacity-80"
+                  className="text-ink h-auto p-0 underline hover:opacity-80"
                 >
                   Whole Property
-                </button>
+                </Button>
               </div>
             )}
           </div>
 
           {!isEditing && (
-            <div className="text-muted mt-1 flex flex-wrap gap-1 text-[11px]">
+            <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1 text-[11px]">
               <span>Quick select:</span>
               {roomTypes.map((rt) => (
-                <button
+                <Button
                   key={rt.id}
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => handleSelectAllOfType(rt.id)}
-                  className="bg-canvas rounded-control border-line text-ink hover:bg-paper border px-1.5 py-0.5"
+                  className="h-6 px-1.5 py-0.5 text-[11px]"
                 >
                   All {rt.name}
-                </button>
+                </Button>
               ))}
             </div>
           )}
 
           {/* Room Pills */}
-          <div className="bg-canvas/30 rounded-control border-line mt-2 flex max-h-36 flex-wrap gap-1.5 overflow-y-auto border p-2">
+          <div className="bg-muted/30 rounded-control border-line mt-2 flex max-h-36 flex-wrap gap-1.5 overflow-y-auto border p-2">
             {rooms.map((room) => {
               const isSelected = selectedRoomIds.includes(room.id);
               return (
-                <button
+                <Button
                   key={room.id}
                   type="button"
+                  variant={isSelected ? 'default' : 'outline'}
+                  size="sm"
                   onClick={() => handleToggleRoom(room.id)}
-                  className={`rounded-control text-caption border px-2.5 py-1 font-medium transition-colors focus:outline-hidden ${
-                    isSelected
-                      ? 'border-ink bg-ink text-paper'
-                      : 'border-line bg-paper text-muted hover:border-ink hover:text-ink'
-                  }`}
+                  className="h-auto rounded-full px-2.5 py-1 text-xs font-medium"
                 >
                   #{room.roomNumber} ({room.roomTypeName})
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -382,91 +395,126 @@ export function BlockModal({
 
         {/* Dates Selection */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              First Blocked Night <span className="text-danger">*</span>
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="block-start-date"
+              className="text-small text-ink font-semibold"
+            >
+              First Blocked Night <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="block-start-date"
               type="date"
               required
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+              className="bg-paper"
             />
           </div>
 
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Last Blocked Night <span className="text-danger">*</span>
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="block-last-night"
+              className="text-small text-ink font-semibold"
+            >
+              Last Blocked Night <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="block-last-night"
               type="date"
               required
               value={lastNight}
               onChange={(e) => setLastNight(e.target.value)}
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+              className="bg-paper"
             />
           </div>
         </div>
 
-        <p className="text-caption text-muted">
+        <p className="text-caption text-muted-foreground">
           Blocked duration: <strong>{nightsCount} night(s)</strong> (Free again
           on {formatShort(exclusiveEndDate)} for check-in).
         </p>
 
         {/* Backdate Reason Banner (Manager/Owner only) */}
         {isBackdated && (
-          <div className="rounded-control space-y-1.5 border border-amber-300 bg-amber-50/50 p-3 dark:bg-amber-950/20">
-            <div className="text-small flex items-center gap-1.5 font-semibold text-amber-800 dark:text-amber-300">
+          <div className="rounded-control border-primary/30 bg-primary/10 space-y-1.5 border p-3">
+            <div className="text-small text-brand-ink flex items-center gap-1.5 font-semibold">
               <AlertTriangle className="size-4" />
               <span>Backdating Room Block</span>
             </div>
-            <p className="text-caption text-muted">
+            <p className="text-caption text-muted-foreground">
               This block starts in the past. An audit justification is required.
             </p>
-            <input
+            <Label htmlFor="block-backdate-reason" className="sr-only">
+              Audit justification for backdating
+            </Label>
+            <Input
+              id="block-backdate-reason"
               type="text"
               required
               placeholder="e.g. Emergency leak documented retrospectively..."
               value={backdateReason}
               onChange={(e) => setBackdateReason(e.target.value)}
-              className="rounded-control bg-paper text-small text-ink focus:border-ink w-full border border-amber-300 px-3 py-1.5 focus:outline-hidden"
+              className="bg-paper border-primary/40"
             />
           </div>
         )}
 
         {/* Reason and Note */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Block Reason <span className="text-danger">*</span>
-            </label>
-            <select
-              value={reason}
-              onChange={(e) => setReason(e.target.value as BlockReason)}
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="block-reason"
+              className="text-small text-ink font-semibold"
             >
-              <option value="maintenance">Maintenance</option>
-              <option value="other">Other Operations</option>
-              <option value="owner_hold" disabled={!isManagerOrOwner}>
-                Owner Hold {!isManagerOrOwner && '(Manager/Owner only)'}
-              </option>
-              <option value="renovation" disabled={!isManagerOrOwner}>
-                Renovation {!isManagerOrOwner && '(Manager/Owner only)'}
-              </option>
-            </select>
+              Block Reason <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              items={{
+                maintenance: 'Maintenance',
+                other: 'Other Operations',
+                owner_hold: isManagerOrOwner
+                  ? 'Owner Hold'
+                  : 'Owner Hold (Manager/Owner only)',
+                renovation: isManagerOrOwner
+                  ? 'Renovation'
+                  : 'Renovation (Manager/Owner only)',
+              }}
+              value={reason}
+              onValueChange={(val) => {
+                if (val) setReason(val as BlockReason);
+              }}
+            >
+              <SelectTrigger id="block-reason" className="w-full">
+                <SelectValue placeholder="Select block reason" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="maintenance">Maintenance</SelectItem>
+                <SelectItem value="other">Other Operations</SelectItem>
+                <SelectItem value="owner_hold" disabled={!isManagerOrOwner}>
+                  Owner Hold {!isManagerOrOwner && '(Manager/Owner only)'}
+                </SelectItem>
+                <SelectItem value="renovation" disabled={!isManagerOrOwner}>
+                  Renovation {!isManagerOrOwner && '(Manager/Owner only)'}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div>
-            <label className="text-small text-ink block font-semibold">
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="block-notes"
+              className="text-small text-ink font-semibold"
+            >
               Internal Notes
-            </label>
-            <input
+            </Label>
+            <Input
+              id="block-notes"
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="e.g. AC servicing, plumbing inspection..."
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+              className="bg-paper"
             />
           </div>
         </div>
@@ -474,19 +522,19 @@ export function BlockModal({
         {/* Live Conflict Alerts */}
         <div className="pt-1">
           {checking ? (
-            <div className="text-caption text-muted flex items-center gap-2">
+            <div className="text-caption text-muted-foreground flex items-center gap-2">
               <Loader2 className="size-3.5 animate-spin" />
               <span>Verifying calendar availability...</span>
             </div>
           ) : conflicts.length > 0 ? (
-            <div className="rounded-control border-danger/40 bg-danger/10 space-y-2 border p-3">
-              <div className="text-small text-danger flex items-center gap-2 font-semibold">
+            <div className="rounded-control border-destructive/40 bg-destructive/10 space-y-2 border p-3">
+              <div className="text-small text-destructive flex items-center gap-2 font-semibold">
                 <AlertCircle className="size-4 shrink-0" />
                 <span>
                   {conflicts.length} Conflict(s) Detected — Cannot Save Block
                 </span>
               </div>
-              <p className="text-caption text-muted">
+              <p className="text-caption text-muted-foreground">
                 One or more selected rooms already have active reservations or
                 overlapping blocks during this range:
               </p>
@@ -504,18 +552,18 @@ export function BlockModal({
                       {c.type === 'reservation' ? (
                         <>
                           <span className="text-ink">{c.guestName}</span>
-                          <span className="text-muted font-mono">
+                          <span className="text-muted-foreground font-mono">
                             ({c.reference})
                           </span>
                         </>
                       ) : (
-                        <span className="text-danger font-medium uppercase">
+                        <span className="text-destructive font-medium uppercase">
                           Existing Block ({c.reason})
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-muted font-mono text-[11px]">
+                      <span className="text-muted-foreground font-mono text-[11px]">
                         {formatShort(c.startDate)} → {formatShort(c.endDate)}
                       </span>
                       {c.type === 'reservation' && (
@@ -533,7 +581,7 @@ export function BlockModal({
               </div>
             </div>
           ) : (
-            <div className="text-caption flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+            <div className="text-caption text-success flex items-center gap-1.5">
               <CheckCircle2 className="size-3.5" />
               <span>All selected rooms and dates are free of conflicts.</span>
             </div>
@@ -545,7 +593,8 @@ export function BlockModal({
           {isEditing && !confirmDelete ? (
             <Button
               type="button"
-              variant="danger"
+              variant="destructive"
+              size="sm"
               disabled={submitting}
               onClick={() => setConfirmDelete(true)}
               className="flex items-center gap-1.5"
@@ -560,7 +609,8 @@ export function BlockModal({
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              variant="secondary"
+              variant="outline"
+              size="sm"
               onClick={onClose}
               disabled={submitting}
             >
@@ -568,13 +618,13 @@ export function BlockModal({
             </Button>
             <Button
               type="submit"
+              size="sm"
+              loading={submitting}
               disabled={submitting || checking || conflicts.length > 0}
             >
-              {submitting
-                ? 'Saving...'
-                : isEditing
-                  ? 'Update Block'
-                  : `Create Block (${selectedRoomIds.length} Rooms)`}
+              {isEditing
+                ? 'Update Block'
+                : `Create Block (${selectedRoomIds.length} Rooms)`}
             </Button>
           </div>
         </div>

@@ -4,7 +4,7 @@ import { LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Reveal } from '../motion';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
 
 /** "Session expires in N min" and "Sign out of this booking". The booking is managed in a short, signed-in window. */
 export function SessionBar({

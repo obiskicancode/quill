@@ -11,7 +11,7 @@ import { useSite } from '@/providers/site.provider';
 
 import { EASE_OUT } from './motion/variants';
 import { SiteLogo } from './SiteLogo';
-import { ButtonLink } from './ui/Button';
+import { Button, ButtonLink } from './ui/button';
 
 /** Fixed header. Transparent over the hero on the home page, solid and compact once scrolled. */
 export function Header() {
@@ -82,7 +82,7 @@ export function Header() {
                   <Link
                     href={item.href}
                     aria-current={pathname === item.href ? 'page' : undefined}
-                    className="decoration-accent inline-flex min-h-11 items-center px-3 font-medium decoration-2 underline-offset-[10px] hover:underline aria-[current=page]:underline"
+                    className="decoration-brand inline-flex min-h-11 items-center px-3 font-medium decoration-2 underline-offset-[10px] hover:underline aria-[current=page]:underline"
                   >
                     {item.label}
                   </Link>
@@ -109,9 +109,11 @@ export function Header() {
             <ButtonLink href={site.bookingHref} size="sm">
               Book Now
             </ButtonLink>
-            <button
+            <Button
               ref={toggleRef}
               type="button"
+              variant="ghost"
+              size="icon"
               aria-expanded={open}
               aria-controls="mobile-nav"
               aria-label={open ? 'Close menu' : 'Open menu'}
@@ -123,7 +125,7 @@ export function Header() {
               ) : (
                 <Menu className="size-6" aria-hidden />
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -161,7 +163,7 @@ export function Header() {
                           pathname === item.href ? 'page' : undefined
                         }
                         onClick={() => setOpen(false)}
-                        className="decoration-accent aria-[current=page]:text-accent-ink block py-4 text-center text-xl font-medium tracking-tight decoration-2 underline-offset-[10px] transition-colors hover:opacity-80 aria-[current=page]:underline sm:text-2xl"
+                        className="decoration-brand aria-[current=page]:text-brand-ink block py-4 text-center text-xl font-medium tracking-tight decoration-2 underline-offset-[10px] transition-colors hover:opacity-80 aria-[current=page]:underline sm:text-2xl"
                       >
                         {item.label}
                       </Link>

@@ -92,7 +92,7 @@ export default async function AdminSectionPage({
             <Construction className="size-7" aria-hidden />
           </span>
           <h2 className="font-display text-h3 mt-4">Access confirmed</h2>
-          <p className="text-small text-muted mt-2">
+          <p className="text-small text-muted-foreground mt-2">
             Your role can open this section. The working screens are part of the
             next build phase, so no live records are shown yet.
           </p>
@@ -102,7 +102,7 @@ export default async function AdminSectionPage({
                 key={item}
                 className="rounded-control border-line text-small flex items-start gap-2 border px-3 py-2"
               >
-                <span className="bg-accent mt-2 size-1.5 shrink-0 rounded-full" />
+                <span className="bg-primary mt-2 size-1.5 shrink-0 rounded-full" />
                 {item}
               </li>
             ))}

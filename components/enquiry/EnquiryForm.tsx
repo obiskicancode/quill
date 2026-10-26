@@ -17,7 +17,19 @@ import { Field, inputClass } from '../checkout/Field';
 import { DatePicker, type DateRange } from '../DatePicker';
 import { GuestStepper } from '../GuestStepper';
 import { EASE_OUT } from '../motion/variants';
-import { Button, ButtonLink } from '../ui/Button';
+import { Button, ButtonLink } from '../ui/button';
+import { Checkbox } from '../ui/checkbox';
+import { FieldLegend, FieldSet } from '../ui/field';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import { Textarea } from '../ui/textarea';
 import { AvailabilityHint } from './AvailabilityHint';
 
 type FieldName =
@@ -225,9 +237,9 @@ export function EnquiryForm({
   const successPanel = (
     <div
       role="status"
-      className="rounded-card border-line bg-surface shadow-raised space-y-5 border p-8"
+      className="rounded-card border-line bg-card shadow-raised space-y-5 border p-8"
     >
-      <CheckCircle2 className="text-accent-ink size-10" aria-hidden />
+      <CheckCircle2 className="text-brand-ink size-10" aria-hidden />
       <h2 id="enquiry-form-title" className="font-display text-h2">
         Thanks, we&rsquo;ll be in touch within {responseHours}{' '}
         {responseHours === 1 ? 'hour' : 'hours'}
@@ -324,7 +336,7 @@ export function EnquiryForm({
               <div className="grid gap-5 md:grid-cols-2">
                 <Field id="enquiry-name" label="Name" error={errors.name}>
                   {(a) => (
-                    <input
+                    <Input
                       {...a}
                       {...bind('name')}
                       type="text"
@@ -335,7 +347,7 @@ export function EnquiryForm({
                 </Field>
                 <Field id="enquiry-email" label="Email" error={errors.email}>
                   {(a) => (
-                    <input
+                    <Input
                       {...a}
                       {...bind('email')}
                       type="email"
@@ -357,7 +369,7 @@ export function EnquiryForm({
                   hint="Add the country code if it is not a Nigerian number."
                 >
                   {(a) => (
-                    <input
+                    <Input
                       {...a}
                       {...bind('phone')}
                       type="tel"
@@ -374,24 +386,44 @@ export function EnquiryForm({
                   error={errors.roomType}
                 >
                   {(a) => (
-                    <select
-                      {...a}
-                      {...bind('roomType')}
-                      className={inputClass(errors.roomType)}
+                    <Select
+                      items={[
+                        { value: '', label: 'No preference' },
+                        ...rooms.map((r) => ({
+                          value: r.slug,
+                          label: r.name,
+                        })),
+                      ]}
+                      value={values.roomType}
+                      onValueChange={(val) => {
+                        set('roomType', val ?? '');
+                      }}
+                      disabled={status === 'submitting'}
                     >
-                      <option value="">No preference</option>
-                      {rooms.map((r) => (
-                        <option key={r.slug} value={r.slug}>
-                          {r.name}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger
+                        id={a.id}
+                        aria-describedby={a['aria-describedby']}
+                        className={inputClass(errors.roomType)}
+                      >
+                        <SelectValue placeholder="No preference" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">No preference</SelectItem>
+                        {rooms.map((r) => (
+                          <SelectItem key={r.slug} value={r.slug}>
+                            {r.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 </Field>
               </div>
 
-              <fieldset className="rounded-card border-line bg-surface space-y-5 border p-5">
-                <legend className="px-2 font-semibold">Your stay</legend>
+              <FieldSet className="rounded-card border-line bg-card space-y-5 border p-5">
+                <FieldLegend className="px-2 font-semibold">
+                  Your stay
+                </FieldLegend>
                 <div>
                   <span
                     id="enquiry-dates-label"
@@ -422,7 +454,7 @@ export function EnquiryForm({
                   {(errors.checkIn || errors.checkOut) && (
                     <p
                       id="enquiry-dates-error"
-                      className="text-small text-danger mt-1.5 font-medium"
+                      className="text-small text-destructive mt-1.5 font-medium"
                     >
                       {errors.checkIn || errors.checkOut}
                     </p>
@@ -451,7 +483,7 @@ export function EnquiryForm({
                   roomSlug={values.roomType}
                   stay={stay}
                 />
-              </fieldset>
+              </FieldSet>
 
               <Field
                 id="enquiry-message"
@@ -460,7 +492,7 @@ export function EnquiryForm({
                 hint={`${values.message.length.toLocaleString('en-NG')} / ${MAX_MESSAGE.toLocaleString('en-NG')} characters`}
               >
                 {(a) => (
-                  <textarea
+                  <Textarea
                     {...a}
                     {...bind('message')}
                     rows={6}
@@ -477,51 +509,54 @@ export function EnquiryForm({
                 aria-hidden
                 className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
               >
-                <label>
-                  Website
-                  <input
-                    type="text"
-                    name="website"
-                    tabIndex={-1}
-                    autoComplete="off"
-                    value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
-                  />
-                </label>
+                <Label htmlFor="enquiry-website-honeypot">Website</Label>
+                <Input
+                  id="enquiry-website-honeypot"
+                  type="text"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                />
               </div>
 
               <div>
-                <label className="flex cursor-pointer items-start gap-3 py-1">
-                  <input
+                <div className="flex items-start gap-3 py-1">
+                  <Checkbox
                     id="enquiry-consent"
-                    type="checkbox"
                     checked={values.consent}
                     disabled={status === 'submitting'}
                     aria-invalid={errors.consent ? true : undefined}
                     aria-describedby={
                       errors.consent ? 'enquiry-consent-error' : undefined
                     }
-                    onChange={(e) => set('consent', e.target.checked)}
-                    className="accent-ink mt-0.5 size-6 shrink-0"
+                    onCheckedChange={(checked) =>
+                      set('consent', checked === true)
+                    }
+                    className="mt-0.5"
                   />
-                  <span className="text-small">
+                  <Label
+                    htmlFor="enquiry-consent"
+                    className="text-small cursor-pointer leading-relaxed font-normal"
+                  >
                     I agree to the{' '}
                     <Link
                       href="/policies/privacy"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
+                      className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
                     >
                       Privacy Policy
                       <span className="sr-only"> (opens in a new tab)</span>
                     </Link>{' '}
                     so the hotel can reply to me.
-                  </span>
-                </label>
+                  </Label>
+                </div>
                 {errors.consent && (
                   <p
                     id="enquiry-consent-error"
-                    className="text-small text-danger mt-1.5 font-medium"
+                    className="text-small text-destructive mt-1.5 font-medium"
                   >
                     {errors.consent}
                   </p>

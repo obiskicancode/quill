@@ -1,7 +1,20 @@
 'use client';
 
-import { AlertCircle, ShieldCheck, X } from 'lucide-react';
+import { AlertCircle, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
+
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export function ReconciliationModal({
   isOpen,
@@ -45,44 +58,46 @@ export function ReconciliationModal({
   const isReconcile = mode === 'reconcile';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="rounded-card border-line bg-surface w-full max-w-md border p-6 shadow-xl">
-        <div className="border-line flex items-center justify-between border-b pb-3">
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !loading) onClose();
+      }}
+    >
+      <DialogContent className="rounded-card border-line bg-card max-w-md gap-0 border p-0 shadow-xl sm:max-w-md">
+        <DialogHeader className="border-line border-b p-6 pr-14 pb-3">
           <div className="flex items-center gap-2">
             {isReconcile ? (
-              <ShieldCheck className="text-success size-5" />
+              <ShieldCheck className="text-success size-5" aria-hidden />
             ) : (
-              <AlertCircle className="text-danger size-5" />
+              <AlertCircle className="text-destructive size-5" aria-hidden />
             )}
-            <h3 className="font-display text-h3 text-ink font-semibold">
+            <DialogTitle className="font-display text-h3 text-ink font-semibold">
               {isReconcile
                 ? `Reconcile Payment${paymentIds.length > 1 ? 's' : ''}`
                 : 'Unreconcile Payment'}
-            </h3>
+            </DialogTitle>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-muted hover:text-ink rounded p-1"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
+        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <p className="text-small text-muted">
+        <form onSubmit={handleSubmit} className="space-y-4 p-6">
+          <DialogDescription className="text-small text-muted-foreground">
             {isReconcile
               ? `You are marking ${paymentIds.length} payment(s) as verified against the hotel bank or physical cash records.`
               : 'Unreconciling will reset this payment to unverified and clear reconciliation timestamps. This action will be audited.'}
-          </p>
+          </DialogDescription>
 
-          <div>
-            <label className="text-caption text-ink mb-1 block font-semibold">
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="reconcile-note"
+              className="text-caption font-semibold"
+            >
               {isReconcile
                 ? 'Audit Note (Optional)'
                 : 'Reason for Unreconciling (Required)'}
-            </label>
-            <textarea
+            </Label>
+            <Textarea
+              id="reconcile-note"
               rows={3}
               required={!isReconcile}
               placeholder={
@@ -92,43 +107,39 @@ export function ReconciliationModal({
               }
               value={noteOrReason}
               onChange={(e) => setNoteOrReason(e.target.value)}
-              className="border-line bg-paper text-small text-ink placeholder:text-muted focus:border-primary w-full rounded-md border p-2.5 focus:outline-none"
             />
           </div>
 
           {error && (
-            <div className="border-danger/30 bg-danger/5 text-caption text-danger rounded border p-2">
+            <Alert
+              variant="destructive"
+              className="border-destructive/30 bg-destructive/5 text-caption text-destructive"
+            >
               {error}
-            </div>
+            </Alert>
           )}
 
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <button
+          <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={onClose}
               disabled={loading}
-              className="border-line text-small text-ink hover:bg-paper rounded-md border px-4 py-2 font-medium"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              disabled={loading}
-              className={`text-small rounded-md px-4 py-2 font-semibold ${
-                isReconcile
-                  ? 'bg-primary text-primary-ink hover:opacity-95'
-                  : 'bg-danger text-white hover:opacity-95'
-              }`}
+              size="sm"
+              variant={isReconcile ? 'primary' : 'danger'}
+              loading={loading}
             >
-              {loading
-                ? 'Processing...'
-                : isReconcile
-                  ? 'Confirm Reconciliation'
-                  : 'Confirm Unreconcile'}
-            </button>
-          </div>
+              {isReconcile ? 'Confirm Reconciliation' : 'Confirm Unreconcile'}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

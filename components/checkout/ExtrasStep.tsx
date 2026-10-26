@@ -6,6 +6,7 @@ import { formatMinor } from '@/types/stay.types';
 
 import { GuestStepper } from '../GuestStepper';
 import { EASE_OUT } from '../motion/variants';
+import { Switch } from '../ui/switch';
 
 interface ExtrasStepProps {
   catalog: ExtraItem[];
@@ -47,31 +48,25 @@ export function ExtrasStep({
       </h2>
 
       {extraBed.needed && extraBed.available && (
-        <div className="rounded-card border-line bg-surface flex items-start justify-between gap-4 border p-5">
+        <div className="rounded-card border-line bg-card flex items-start justify-between gap-4 border p-5">
           <div>
             <p id="extra-bed-label" className="font-semibold">
               Extra bed
             </p>
-            <p className="text-small text-muted mt-1">
+            <p className="text-small text-muted-foreground mt-1">
               {guests} guests need one.{' '}
               {extraBed.priceMinor
                 ? `${formatMinor(extraBed.priceMinor)} per night.`
                 : 'No charge.'}
             </p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={extraBed.selected}
+          <Switch
+            checked={extraBed.selected}
+            onCheckedChange={onExtraBed}
             aria-labelledby="extra-bed-label"
             disabled={disabled}
-            onClick={() => onExtraBed(!extraBed.selected)}
-            className={`relative mt-1 inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors disabled:opacity-50 ${extraBed.selected ? 'border-ink bg-ink' : 'border-ink/60 bg-surface'}`}
-          >
-            <span
-              className={`inline-block size-5 rounded-full transition-transform ${extraBed.selected ? 'bg-paper translate-x-6' : 'bg-ink translate-x-1'}`}
-            />
-          </button>
+            className="mt-1"
+          />
         </div>
       )}
 
@@ -81,7 +76,7 @@ export function ExtrasStep({
           return (
             <li
               key={item.id}
-              className="rounded-card border-line bg-surface border px-5"
+              className="rounded-card border-line bg-card border px-5"
             >
               <GuestStepper
                 label={item.name}

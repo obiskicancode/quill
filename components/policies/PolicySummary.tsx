@@ -48,7 +48,7 @@ export function CancellationSummary({
   return (
     <section
       aria-labelledby="cancel-summary-title"
-      className="rounded-card border-line bg-surface shadow-raised border p-5 md:p-6"
+      className="rounded-card border-line bg-card shadow-raised border p-5 md:p-6"
     >
       <h2 id="cancel-summary-title" className="font-display text-h3">
         The short version

@@ -83,7 +83,7 @@ export default async function PolicyPage({
           >
             {page.title}
           </h1>
-          <p className="text-small text-muted mt-2">
+          <p className="text-small text-muted-foreground mt-2">
             Last updated {formatDate(page.updatedAt)}
           </p>
 
@@ -112,11 +112,11 @@ export default async function PolicyPage({
             <RichText blocks={page.body} />
           </div>
 
-          <p className="text-small text-muted mt-10">
+          <p className="text-small text-muted-foreground mt-10">
             Questions about this policy?{' '}
             <Link
               href="/contact"
-              className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
+              className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
             >
               Contact us
             </Link>

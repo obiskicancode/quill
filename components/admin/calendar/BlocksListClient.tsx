@@ -18,7 +18,30 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import type { AdminRole } from '@/lib/auth/permissions';
 import { formatShort } from '@/lib/dates';
 import type {
@@ -191,7 +214,7 @@ export function BlocksListClient({
           <div className="flex items-center gap-2">
             <Link
               href="/admin/calendar"
-              className="text-caption text-muted hover:text-ink inline-flex items-center gap-1 focus:outline-hidden"
+              className="text-caption text-muted-foreground hover:text-ink inline-flex items-center gap-1 focus:outline-hidden"
             >
               <ArrowLeft className="size-3.5" />
               <span>Back to Calendar</span>
@@ -200,7 +223,7 @@ export function BlocksListClient({
           <h1 className="text-h2 text-ink mt-1 font-serif font-semibold">
             Room Blocks
           </h1>
-          <p className="text-small text-muted">
+          <p className="text-small text-muted-foreground">
             Manage administrative room blocks and maintenance holds
           </p>
         </div>
@@ -222,83 +245,120 @@ export function BlocksListClient({
       <div className="rounded-card border-line bg-paper flex flex-wrap items-center justify-between gap-3 border p-3 shadow-xs">
         <div className="flex flex-wrap items-center gap-2">
           {/* Status Tabs */}
-          <div className="bg-canvas rounded-control border-line flex items-center border p-0.5">
+          <div className="bg-muted rounded-control border-line flex items-center border p-0.5">
             {(['all', 'upcoming', 'current', 'past'] as const).map((s) => (
-              <button
+              <Button
                 key={s}
                 type="button"
+                variant={status === s ? 'secondary' : 'ghost'}
+                size="xs"
                 onClick={() => {
                   setStatus(s);
                   setPage(1);
                 }}
-                className={`rounded-control text-caption px-2.5 py-1 font-medium capitalize transition-colors focus:outline-hidden ${
+                className={`capitalize ${
                   status === s
-                    ? 'bg-paper text-ink shadow-xs'
-                    : 'text-muted hover:text-ink'
+                    ? 'font-semibold shadow-xs'
+                    : 'text-muted-foreground'
                 }`}
               >
                 {s}
-              </button>
+              </Button>
             ))}
           </div>
 
           {/* Room Type */}
-          <select
-            value={roomTypeId}
-            onChange={(e) => {
-              setRoomTypeId(e.target.value);
+          <Select
+            items={[
+              { value: 'all', label: 'All Room Types' },
+              ...initialRoomTypes.map((rt) => ({
+                value: rt.id,
+                label: rt.name,
+              })),
+            ]}
+            value={roomTypeId || 'all'}
+            onValueChange={(val) => {
+              setRoomTypeId(val === 'all' || !val ? '' : val);
               setRoomId('');
               setPage(1);
             }}
-            aria-label="Filter by room type"
-            className="rounded-control border-line bg-paper text-caption text-ink focus:border-ink border px-2.5 py-1 font-medium focus:outline-hidden"
           >
-            <option value="">All Room Types</option>
-            {initialRoomTypes.map((rt) => (
-              <option key={rt.id} value={rt.id}>
-                {rt.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              aria-label="Filter by room type"
+              className="w-[150px]"
+            >
+              <SelectValue placeholder="All Room Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Room Types</SelectItem>
+              {initialRoomTypes.map((rt) => (
+                <SelectItem key={rt.id} value={rt.id}>
+                  {rt.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Room */}
-          <select
-            value={roomId}
-            onChange={(e) => {
-              setRoomId(e.target.value);
+          <Select
+            items={[
+              { value: 'all', label: 'All Rooms' },
+              ...filteredRooms.map((r) => ({
+                value: r.id,
+                label: `#${r.roomNumber} (${r.roomTypeName})`,
+              })),
+            ]}
+            value={roomId || 'all'}
+            onValueChange={(val) => {
+              setRoomId(val === 'all' || !val ? '' : val);
               setPage(1);
             }}
-            aria-label="Filter by room"
-            className="rounded-control border-line bg-paper text-caption text-ink focus:border-ink border px-2.5 py-1 font-medium focus:outline-hidden"
           >
-            <option value="">All Rooms</option>
-            {filteredRooms.map((r) => (
-              <option key={r.id} value={r.id}>
-                #{r.roomNumber} ({r.roomTypeName})
-              </option>
-            ))}
-          </select>
+            <SelectTrigger aria-label="Filter by room" className="w-[160px]">
+              <SelectValue placeholder="All Rooms" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Rooms</SelectItem>
+              {filteredRooms.map((r) => (
+                <SelectItem key={r.id} value={r.id}>
+                  #{r.roomNumber} ({r.roomTypeName})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Reason */}
-          <select
-            value={reason}
-            onChange={(e) => {
-              setReason(e.target.value as BlockReason | '');
+          <Select
+            items={[
+              { value: 'all', label: 'All Reasons' },
+              { value: 'maintenance', label: 'Maintenance' },
+              { value: 'owner_hold', label: 'Owner Hold' },
+              { value: 'renovation', label: 'Renovation' },
+              { value: 'other', label: 'Other Operations' },
+            ]}
+            value={reason || 'all'}
+            onValueChange={(val) => {
+              setReason(val === 'all' || !val ? '' : (val as BlockReason));
               setPage(1);
             }}
-            aria-label="Filter by reason"
-            className="rounded-control border-line bg-paper text-caption text-ink focus:border-ink border px-2.5 py-1 font-medium focus:outline-hidden"
           >
-            <option value="">All Reasons</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="owner_hold">Owner Hold</option>
-            <option value="renovation">Renovation</option>
-            <option value="other">Other Operations</option>
-          </select>
+            <SelectTrigger aria-label="Filter by reason" className="w-[150px]">
+              <SelectValue placeholder="All Reasons" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Reasons</SelectItem>
+              <SelectItem value="maintenance">Maintenance</SelectItem>
+              <SelectItem value="owner_hold">Owner Hold</SelectItem>
+              <SelectItem value="renovation">Renovation</SelectItem>
+              <SelectItem value="other">Other Operations</SelectItem>
+            </SelectContent>
+          </Select>
 
           {(roomTypeId || roomId || reason || status !== 'all') && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => {
                 setRoomTypeId('');
                 setRoomId('');
@@ -306,27 +366,29 @@ export function BlocksListClient({
                 setStatus('all');
                 setPage(1);
               }}
-              className="text-caption text-muted hover:text-ink underline"
+              className="text-muted-foreground hover:text-ink h-8 px-2 text-xs"
             >
               Clear filters
-            </button>
+            </Button>
           )}
         </div>
 
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={fetchBlocks}
-          className="hover:bg-canvas rounded-control text-muted hover:text-ink p-1.5 focus:outline-hidden"
+          className="px-2"
           title="Refresh list"
         >
           <RefreshCw className="size-4" />
-        </button>
+        </Button>
       </div>
 
       {/* Delete Confirmation Alert */}
       {deletingId && (
-        <div className="rounded-card border-danger/40 bg-danger/10 flex items-center justify-between border p-3.5">
-          <div className="text-small text-danger flex items-center gap-2">
+        <div className="rounded-card border-destructive/40 bg-destructive/10 flex items-center justify-between border p-3.5">
+          <div className="text-small text-destructive flex items-center gap-2">
             <AlertTriangle className="size-4 shrink-0" />
             <span>
               Are you sure you want to remove this block? Dates will become
@@ -357,12 +419,12 @@ export function BlocksListClient({
       {/* Blocks Table */}
       {loading ? (
         <div className="rounded-card border-line bg-paper flex h-64 items-center justify-center border">
-          <Loader2 className="text-muted size-6 animate-spin" />
+          <Loader2 className="text-muted-foreground size-6 animate-spin" />
         </div>
       ) : error ? (
-        <div className="rounded-card border-danger/30 bg-paper flex h-64 flex-col items-center justify-center border p-6 text-center">
-          <AlertCircle className="text-danger size-8" />
-          <p className="text-small text-danger mt-2">{error}</p>
+        <div className="rounded-card border-destructive/30 bg-paper flex h-64 flex-col items-center justify-center border p-6 text-center">
+          <AlertCircle className="text-destructive size-8" />
+          <p className="text-small text-destructive mt-2">{error}</p>
           <Button
             type="button"
             variant="secondary"
@@ -374,11 +436,11 @@ export function BlocksListClient({
         </div>
       ) : !data || data.blocks.length === 0 ? (
         <div className="rounded-card border-line bg-paper flex h-64 flex-col items-center justify-center border p-6 text-center">
-          <ShieldAlert className="text-muted size-8" />
+          <ShieldAlert className="text-muted-foreground size-8" />
           <h3 className="text-small text-ink mt-2 font-semibold">
             No Room Blocks Found
           </h3>
-          <p className="text-caption text-muted mt-1">
+          <p className="text-caption text-muted-foreground mt-1">
             {roomTypeId || roomId || reason || status !== 'all'
               ? 'No room blocks match the selected filter criteria.'
               : 'No administrative room blocks currently exist on this property.'}
@@ -386,129 +448,159 @@ export function BlocksListClient({
         </div>
       ) : (
         <div className="rounded-card border-line bg-paper overflow-hidden border shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="text-small w-full border-collapse text-left">
-              <thead>
-                <tr className="bg-canvas/60 border-line text-caption text-muted border-b font-semibold tracking-wider uppercase">
-                  <th className="px-4 py-2.5">Room</th>
-                  <th className="px-4 py-2.5">Dates & Nights</th>
-                  <th className="px-4 py-2.5">Reason</th>
-                  <th className="px-4 py-2.5">Notes</th>
-                  <th className="px-4 py-2.5">Created By</th>
-                  <th className="px-4 py-2.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-line/60 divide-y">
-                {data.blocks.map((b) => (
-                  <tr
-                    key={b.id}
-                    className="hover:bg-canvas/30 transition-colors"
-                  >
-                    <td className="text-ink px-4 py-3 font-medium">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono font-semibold">
-                          #{b.roomNumber}
-                        </span>
-                        <span className="text-caption text-muted">
-                          ({b.roomTypeName})
-                        </span>
-                      </div>
-                    </td>
-
-                    <td className="text-caption text-ink px-4 py-3 font-mono">
-                      <div>
-                        {formatShort(b.startDate)} → {formatShort(b.endDate)}
-                      </div>
-                      <div className="text-muted text-[11px]">
-                        {b.nights} night(s)
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <span className="rounded-control border-danger/40 bg-danger/10 text-danger border px-2 py-0.5 font-mono text-[11px] font-semibold uppercase">
-                        {b.reason.replace('_', ' ')}
+          <Table className="text-small w-full border-collapse text-left">
+            <TableHeader>
+              <TableRow className="bg-muted/60 border-line text-caption text-muted-foreground border-b font-semibold tracking-wider uppercase hover:bg-transparent">
+                <TableHead className="text-muted-foreground px-4 py-2.5">
+                  Room
+                </TableHead>
+                <TableHead className="text-muted-foreground px-4 py-2.5">
+                  Dates & Nights
+                </TableHead>
+                <TableHead className="text-muted-foreground px-4 py-2.5">
+                  Reason
+                </TableHead>
+                <TableHead className="text-muted-foreground px-4 py-2.5">
+                  Notes
+                </TableHead>
+                <TableHead className="text-muted-foreground px-4 py-2.5">
+                  Created By
+                </TableHead>
+                <TableHead className="text-muted-foreground px-4 py-2.5 text-right">
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-line/60 divide-y">
+              {data.blocks.map((b) => (
+                <TableRow
+                  key={b.id}
+                  className="hover:bg-muted/30 transition-colors"
+                >
+                  <TableCell className="text-ink px-4 py-3 font-medium">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono font-semibold">
+                        #{b.roomNumber}
                       </span>
-                    </td>
+                      <span className="text-caption text-muted-foreground">
+                        ({b.roomTypeName})
+                      </span>
+                    </div>
+                  </TableCell>
 
-                    <td className="text-caption text-muted max-w-xs truncate px-4 py-3">
-                      {b.notes || '—'}
-                    </td>
+                  <TableCell className="text-caption text-ink px-4 py-3 font-mono">
+                    <div>
+                      {formatShort(b.startDate)} → {formatShort(b.endDate)}
+                    </div>
+                    <div className="text-muted-foreground text-caption">
+                      {b.nights} night(s)
+                    </div>
+                  </TableCell>
 
-                    <td className="text-caption text-muted px-4 py-3">
-                      <div>{b.createdByName || 'Staff'}</div>
-                      <div className="font-mono text-[10px]">
-                        {formatShort(b.createdAt.slice(0, 10))}
-                      </div>
-                    </td>
+                  <TableCell className="px-4 py-3">
+                    <Badge
+                      variant="destructive"
+                      className="rounded-control border-destructive/40 bg-destructive/10 text-destructive text-caption border px-2 py-0.5 font-mono font-semibold uppercase"
+                    >
+                      {b.reason.replace('_', ' ')}
+                    </Badge>
+                  </TableCell>
 
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(b)}
-                          title="Edit block"
-                          className="hover:bg-canvas rounded-control text-muted hover:text-ink p-1.5 transition-colors focus:outline-hidden"
-                        >
-                          <Edit2 className="size-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeletingId(b.id)}
-                          title="Remove block"
-                          className="rounded-control text-danger/80 hover:bg-danger/10 hover:text-danger p-1.5 transition-colors focus:outline-hidden"
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  <TableCell className="text-caption text-muted-foreground max-w-xs truncate px-4 py-3">
+                    {b.notes || '—'}
+                  </TableCell>
+
+                  <TableCell className="text-caption text-muted-foreground px-4 py-3">
+                    <div>{b.createdByName || 'Staff'}</div>
+                    <div className="text-caption font-mono">
+                      {formatShort(b.createdAt.slice(0, 10))}
+                    </div>
+                  </TableCell>
+
+                  <TableCell className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={() => handleEdit(b)}
+                        title="Edit block"
+                      >
+                        <Edit2 className="size-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={() => setDeletingId(b.id)}
+                        title="Remove block"
+                        className="text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
 
           {/* Pagination Footer */}
-          <div className="bg-canvas/30 border-line text-caption text-muted flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
+          <div className="bg-muted/30 border-line text-caption text-muted-foreground flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
             <div className="flex items-center gap-3">
               <span>
                 Showing {data.blocks.length} of {data.total} room block(s)
               </span>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setPage(1);
+              <Select
+                items={[
+                  { value: '25', label: '25 / page' },
+                  { value: '50', label: '50 / page' },
+                  { value: '100', label: '100 / page' },
+                ]}
+                value={String(pageSize)}
+                onValueChange={(val) => {
+                  if (val) {
+                    setPageSize(Number(val));
+                    setPage(1);
+                  }
                 }}
-                aria-label="Select rows per page"
-                className="rounded-control border-line bg-paper text-caption text-ink border px-2 py-0.5 font-medium focus:outline-hidden"
               >
-                <option value={25}>25 / page</option>
-                <option value={50}>50 / page</option>
-                <option value={100}>100 / page</option>
-              </select>
+                <SelectTrigger
+                  size="sm"
+                  aria-label="Select rows per page"
+                  className="w-[100px]"
+                >
+                  <SelectValue placeholder="Rows" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="25">25 / page</SelectItem>
+                  <SelectItem value="50">50 / page</SelectItem>
+                  <SelectItem value="100">100 / page</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="rounded-control border-line bg-paper text-muted hover:text-ink border p-1 transition-colors focus:outline-hidden disabled:opacity-40"
-              >
-                <ChevronLeft className="size-4" />
-              </button>
-              <span>
-                Page {data.page} of {Math.max(1, data.totalPages)}
-              </span>
-              <button
-                type="button"
-                disabled={page >= data.totalPages}
-                onClick={() => setPage((p) => p + 1)}
-                className="rounded-control border-line bg-paper text-muted hover:text-ink border p-1 transition-colors focus:outline-hidden disabled:opacity-40"
-              >
-                <ChevronRight className="size-4" />
-              </button>
-            </div>
+            <Pagination className="mx-0 w-auto justify-end">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <span className="text-caption text-muted-foreground px-2 font-medium">
+                    Page {data.page} of {Math.max(1, data.totalPages)}
+                  </span>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={page >= data.totalPages}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         </div>
       )}

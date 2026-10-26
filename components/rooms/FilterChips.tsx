@@ -12,6 +12,7 @@ import {
 } from '@/lib/rooms';
 
 import { spring } from '../motion/variants';
+import { Button } from '../ui/button';
 
 interface Chip {
   id: string;
@@ -89,26 +90,29 @@ export function FilterChips({
             exit={reduced ? undefined : { opacity: 0, scale: 0.85 }}
             transition={spring}
           >
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => onChange(chip.remove(filters))}
               aria-label={`Remove filter: ${chip.label}`}
-              className="border-ink/60 bg-surface text-small hover:bg-ink hover:text-paper inline-flex min-h-11 items-center gap-2 rounded-full border pr-3 pl-4 font-medium transition-colors"
+              className="border-line bg-card hover:bg-primary hover:text-primary-foreground inline-flex min-h-9 items-center gap-2 rounded-full pr-2.5 pl-3.5 font-medium transition-colors"
             >
               {chip.label}
-              <X className="size-4" aria-hidden />
-            </button>
+              <X className="size-3.5" aria-hidden />
+            </Button>
           </motion.li>
         ))}
       </AnimatePresence>
       <li>
-        <button
+        <Button
           type="button"
+          variant="link"
           onClick={onClearAll}
-          className="text-small decoration-accent inline-flex min-h-11 items-center px-3 font-semibold underline decoration-2 underline-offset-4"
+          className="text-small inline-flex min-h-11 items-center px-3 font-semibold underline underline-offset-4"
         >
           Clear all
-        </button>
+        </Button>
       </li>
     </ul>
   );

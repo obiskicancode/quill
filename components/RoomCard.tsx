@@ -14,7 +14,7 @@ import {
   RoomCardListing,
   type RoomCardListingProps,
 } from './rooms/RoomCardListing';
-import { ButtonLink } from './ui/Button';
+import { ButtonLink } from './ui/button';
 import { Photo } from './ui/Photo';
 
 const PHOTO_SIZES =
@@ -63,7 +63,7 @@ function FeatureRoomCard({
   return (
     <article
       aria-labelledby={nameId}
-      className="rounded-card border-line bg-surface shadow-raised focus-within:shadow-float hover:shadow-float flex h-full flex-col overflow-hidden border transition-shadow duration-200"
+      className="rounded-card border-line bg-card shadow-raised focus-within:shadow-float hover:shadow-float flex h-full flex-col overflow-hidden border transition-shadow duration-200"
     >
       {room.images.length > 0 ? (
         <Carousel
@@ -96,7 +96,7 @@ function FeatureRoomCard({
           >
             {room.name}
           </h3>
-          <p className="text-small text-muted mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <p className="text-small text-muted-foreground mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
             <span className="inline-flex items-center gap-1.5">
               <BedDouble className="size-4" aria-hidden />
               {room.bedType}
@@ -115,7 +115,7 @@ function FeatureRoomCard({
           >
             {room.amenities.slice(0, 3).map((key) => (
               <li key={key} className="inline-flex items-center gap-1.5">
-                <AmenityIcon name={key} className="text-accent-ink size-4" />
+                <AmenityIcon name={key} className="text-brand-ink size-4" />
                 {amenityLabels[key]}
               </li>
             ))}
@@ -125,13 +125,13 @@ function FeatureRoomCard({
         <div className="mt-auto pt-2">
           {showPrice ? (
             <p>
-              <span className="text-small text-muted">From </span>
+              <span className="text-small text-muted-foreground">From </span>
               <span className="font-display text-2xl">
                 {formatNaira(room.priceNgn as number)}
               </span>
-              <span className="text-small text-muted"> / night</span>
+              <span className="text-small text-muted-foreground"> / night</span>
               {room.secondaryPrice && (
-                <span className="text-small text-muted ml-2">
+                <span className="text-small text-muted-foreground ml-2">
                   about{' '}
                   {formatSecondary(
                     room.secondaryPrice.currency,
@@ -149,7 +149,7 @@ function FeatureRoomCard({
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
+                className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
               >
                 Contact us for price
                 <span className="sr-only"> (opens WhatsApp in a new tab)</span>

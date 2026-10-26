@@ -18,7 +18,36 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
-import { Button } from '@/components/ui/Button';
+import { Alert } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import { minorToNaira, nairaToMinor } from '@/lib/rate-resolution';
 import type {
   AdminExtra,
@@ -214,19 +243,21 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
             <Check className="size-5 shrink-0" />
             <p>{successMessage}</p>
           </div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setSuccessMessage(null)}
-            className="text-xs hover:underline"
+            className="text-success hover:text-success hover:bg-success/15 h-7 text-xs"
           >
             Dismiss
-          </button>
+          </Button>
         </div>
       )}
 
       {/* Action Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-small text-muted">
+        <p className="text-small text-muted-foreground">
           Showing {extras.length} extras and add-on services. Reorder to change
           appearance in guest booking flow.
         </p>
@@ -255,68 +286,78 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
           breakfast, or spa packages.
         </AdminEmpty>
       ) : (
-        <div className="rounded-card border-line bg-surface overflow-x-auto border">
-          <table className="text-small w-full text-left">
-            <thead className="border-line bg-paper text-muted border-b">
-              <tr>
-                <th className="py-3 pr-2 pl-4 font-medium">Order</th>
-                <th className="px-4 py-3 font-medium">Extra / Add-on</th>
-                <th className="px-4 py-3 font-medium">Price (₦)</th>
-                <th className="px-4 py-3 font-medium">Pricing Unit</th>
-                <th className="px-4 py-3 font-medium">Max Qty</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="py-3 pr-4 pl-3 text-right font-medium">
+        <div className="rounded-card border-line bg-card overflow-hidden border">
+          <Table className="text-small w-full text-left">
+            <TableHeader className="border-line bg-paper text-muted-foreground border-b">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="py-3 pr-2 pl-4 font-medium">
+                  Order
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">
+                  Extra / Add-on
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">
+                  Price (₦)
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">
+                  Pricing Unit
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">Max Qty</TableHead>
+                <TableHead className="px-4 py-3 font-medium">Status</TableHead>
+                <TableHead className="py-3 pr-4 pl-3 text-right font-medium">
                   Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-line divide-y">
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-line divide-y">
               {extras.map((item, idx) => (
-                <tr
+                <TableRow
                   key={item.id}
                   className="hover:bg-paper/40 transition-colors"
                 >
-                  <td className="py-3 pr-2 pl-4">
+                  <TableCell className="py-3 pr-2 pl-4">
                     <div className="flex items-center gap-1">
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon-xs"
                         onClick={() => handleMove(idx, 'up')}
                         disabled={idx === 0}
                         aria-label="Move up"
-                        className="text-muted hover:bg-paper rounded p-1 disabled:opacity-30"
                       >
                         <ArrowUp className="size-3.5" />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon-xs"
                         onClick={() => handleMove(idx, 'down')}
                         disabled={idx === extras.length - 1}
                         aria-label="Move down"
-                        className="text-muted hover:bg-paper rounded p-1 disabled:opacity-30"
                       >
                         <ArrowDown className="size-3.5" />
-                      </button>
+                      </Button>
                     </div>
-                  </td>
+                  </TableCell>
 
-                  <td className="px-4 py-3">
+                  <TableCell className="px-4 py-3">
                     <div>
                       <span className="text-foreground font-semibold">
                         {item.name}
                       </span>
                       {item.description && (
-                        <p className="text-muted line-clamp-1 text-xs">
+                        <p className="text-muted-foreground line-clamp-1 text-xs">
                           {item.description}
                         </p>
                       )}
                     </div>
-                  </td>
+                  </TableCell>
 
-                  <td className="text-foreground px-4 py-3 font-semibold">
+                  <TableCell className="text-foreground px-4 py-3 font-semibold">
                     ₦{minorToNaira(item.priceMinor)}
-                  </td>
+                  </TableCell>
 
-                  <td className="text-muted px-4 py-3">
+                  <TableCell className="text-muted-foreground px-4 py-3">
                     {item.pricingUnit === 'per_stay'
                       ? 'Per stay'
                       : item.pricingUnit === 'per_night'
@@ -324,16 +365,19 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
                         : item.pricingUnit === 'per_guest'
                           ? 'Per guest'
                           : 'Per guest, per night'}
-                  </td>
+                  </TableCell>
 
-                  <td className="text-muted px-4 py-3">{item.maxQuantity}</td>
+                  <TableCell className="text-muted-foreground px-4 py-3">
+                    {item.maxQuantity}
+                  </TableCell>
 
-                  <td className="px-4 py-3">
-                    <span
+                  <TableCell className="px-4 py-3">
+                    <Badge
+                      variant="outline"
                       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                         item.isActive
-                          ? 'bg-success/15 text-success'
-                          : 'bg-muted/20 text-muted'
+                          ? 'border-success/30 bg-success/15 text-success'
+                          : 'border-muted/30 bg-muted/20 text-muted-foreground'
                       }`}
                     >
                       <span
@@ -342,13 +386,13 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
                         }`}
                       />
                       {item.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
+                    </Badge>
+                  </TableCell>
 
-                  <td className="py-3 pr-4 pl-3 text-right">
+                  <TableCell className="py-3 pr-4 pl-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button
-                        size="sm"
+                        size="icon-xs"
                         variant="ghost"
                         onClick={() => openEditDialog(item)}
                         aria-label={`Edit ${item.name}`}
@@ -356,197 +400,210 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
                         <Edit2 className="size-3.5" />
                       </Button>
                       <Button
-                        size="sm"
+                        size="icon-xs"
                         variant="ghost"
                         onClick={() => handleDelete(item)}
-                        className="text-danger hover:bg-danger/10 hover:text-danger"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                         aria-label={`Delete ${item.name}`}
                       >
                         <Trash2 className="size-3.5" />
                       </Button>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 
-      {/* Modal Dialog */}
-      {dialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="rounded-card border-line bg-surface max-h-[90vh] w-full max-w-lg overflow-y-auto border p-6 shadow-2xl">
-            <h3 className="text-foreground text-h3 font-semibold">
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen && !isSaving) setDialogOpen(false);
+        }}
+      >
+        <DialogContent className="rounded-card border-line bg-card max-h-[90vh] max-w-lg gap-0 overflow-y-auto border p-0 shadow-2xl sm:max-w-lg">
+          <DialogHeader className="border-line border-b p-6 pr-14 pb-4">
+            <DialogTitle className="text-h3 text-foreground font-semibold">
               {editingExtra ? 'Edit Extra' : 'New Extra / Add-on'}
-            </h3>
-            <p className="text-small text-muted mt-1">
+            </DialogTitle>
+            <DialogDescription className="text-small text-muted-foreground">
               Configure guest services, pricing calculations, and unit models.
-            </p>
+            </DialogDescription>
+          </DialogHeader>
 
+          <form onSubmit={handleSave} className="text-small space-y-4 p-6">
             {dialogError && (
-              <div
-                role="alert"
-                className="border-danger/40 bg-danger/10 text-danger mt-4 flex items-center gap-2 rounded border p-3 text-xs"
+              <Alert
+                variant="destructive"
+                className="border-destructive/40 bg-destructive/10 text-destructive text-xs"
               >
                 <AlertCircle className="size-4 shrink-0" />
                 <p>{dialogError}</p>
-              </div>
+              </Alert>
             )}
+            <div className="space-y-1.5">
+              <Label htmlFor="extra-name">
+                Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="extra-name"
+                type="text"
+                required
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (!editingExtra) setSlug(slugify(e.target.value));
+                }}
+                placeholder="e.g. Airport Transfer (SUV)"
+              />
+            </div>
 
-            <form onSubmit={handleSave} className="text-small mt-4 space-y-4">
-              <div>
-                <label className="text-foreground block font-medium">
-                  Name <span className="text-danger">*</span>
-                </label>
-                <input
+            <div className="space-y-1.5">
+              <Label htmlFor="extra-slug">
+                Slug <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="extra-slug"
+                type="text"
+                required
+                value={slug}
+                onChange={(e) => setSlug(slugify(e.target.value))}
+                placeholder="e.g. airport-transfer-suv"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="extra-description">Description</Label>
+              <Textarea
+                id="extra-description"
+                rows={2}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g. Chauffeured pickup or drop-off to Murtala Muhammed Airport."
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="extra-price">
+                  Price in Naira (₦) <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="extra-price"
                   type="text"
                   required
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    if (!editingExtra) setSlug(slugify(e.target.value));
-                  }}
-                  placeholder="e.g. Airport Transfer (SUV)"
-                  className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
+                  value={priceNaira}
+                  onChange={(e) => setPriceNaira(e.target.value)}
+                  placeholder="25,000"
                 />
               </div>
 
-              <div>
-                <label className="text-foreground block font-medium">
-                  Slug <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="text"
+              <div className="space-y-1.5">
+                <Label htmlFor="extra-max-qty">Max Quantity per Booking</Label>
+                <Input
+                  id="extra-max-qty"
+                  type="number"
+                  min="1"
+                  max="50"
                   required
-                  value={slug}
-                  onChange={(e) => setSlug(slugify(e.target.value))}
-                  placeholder="e.g. airport-transfer-suv"
-                  className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="text-foreground block font-medium">
-                  Description
-                </label>
-                <textarea
-                  rows={2}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Chauffeured pickup or drop-off to Murtala Muhammed Airport."
-                  className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-foreground block font-medium">
-                    Price in Naira (₦) <span className="text-danger">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={priceNaira}
-                    onChange={(e) => setPriceNaira(e.target.value)}
-                    placeholder="25,000"
-                    className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-foreground block font-medium">
-                    Max Quantity per Booking
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    required
-                    value={maxQuantity}
-                    onChange={(e) =>
-                      setMaxQuantity(parseInt(e.target.value, 10) || 1)
-                    }
-                    className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-foreground block font-medium">
-                  Pricing Unit
-                </label>
-                <select
-                  value={pricingUnit}
+                  value={maxQuantity}
                   onChange={(e) =>
-                    setPricingUnit(e.target.value as ExtraPricingUnit)
+                    setMaxQuantity(parseInt(e.target.value, 10) || 1)
                   }
-                  className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
-                >
-                  <option value="per_stay">
-                    Per stay (flat fee regardless of duration or guests)
-                  </option>
-                  <option value="per_night">
-                    Per night (charged for each night of stay)
-                  </option>
-                  <option value="per_guest">
-                    Per guest (charged once per guest)
-                  </option>
-                  <option value="per_guest_per_night">
-                    Per guest per night (e.g. breakfast buffet)
-                  </option>
-                </select>
-              </div>
-
-              {/* Live Calculation Preview */}
-              <div className="border-line bg-paper rounded border p-3 text-xs">
-                <span className="text-foreground font-semibold">
-                  Live Calculation Example:
-                </span>
-                <p className="text-muted mt-1">
-                  For a 3-night stay with 2 guests, 1 unit of this extra adds:{' '}
-                  <strong className="text-brand">
-                    ₦{minorToNaira(livePreviewTotalMinor)}
-                  </strong>
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <input
-                  type="checkbox"
-                  id="extraActive"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  className="text-brand focus:ring-brand size-4 rounded"
                 />
-                <label
-                  htmlFor="extraActive"
-                  className="text-foreground font-medium"
-                >
-                  Active (offered during checkout)
-                </label>
               </div>
+            </div>
 
-              <div className="border-line flex items-center justify-end gap-2 border-t pt-4">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving
-                    ? 'Saving...'
-                    : editingExtra
-                      ? 'Save Changes'
-                      : 'Create Extra'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="space-y-1.5">
+              <Label htmlFor="extra-pricing-unit">Pricing Unit</Label>
+              <Select
+                items={[
+                  {
+                    value: 'per_stay',
+                    label:
+                      'Per stay (flat fee regardless of duration or guests)',
+                  },
+                  {
+                    value: 'per_night',
+                    label: 'Per night (charged for each night of stay)',
+                  },
+                  {
+                    value: 'per_guest',
+                    label: 'Per guest (charged once per guest)',
+                  },
+                  {
+                    value: 'per_guest_per_night',
+                    label: 'Per guest per night (e.g. breakfast buffet)',
+                  },
+                ]}
+                value={pricingUnit}
+                onValueChange={(val) => {
+                  if (val) setPricingUnit(val as ExtraPricingUnit);
+                }}
+              >
+                <SelectTrigger id="extra-pricing-unit" className="w-full">
+                  <SelectValue placeholder="Select pricing unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="per_stay">
+                    Per stay (flat fee regardless of duration or guests)
+                  </SelectItem>
+                  <SelectItem value="per_night">
+                    Per night (charged for each night of stay)
+                  </SelectItem>
+                  <SelectItem value="per_guest">
+                    Per guest (charged once per guest)
+                  </SelectItem>
+                  <SelectItem value="per_guest_per_night">
+                    Per guest per night (e.g. breakfast buffet)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Live Calculation Preview */}
+            <div className="border-line bg-paper rounded border p-3 text-xs">
+              <span className="text-foreground font-semibold">
+                Live Calculation Example:
+              </span>
+              <p className="text-muted-foreground mt-1">
+                For a 3-night stay with 2 guests, 1 unit of this extra adds:{' '}
+                <strong className="text-primary font-bold">
+                  ₦{minorToNaira(livePreviewTotalMinor)}
+                </strong>
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 pt-2">
+              <Checkbox
+                id="extraActive"
+                checked={isActive}
+                onCheckedChange={(checked) => setIsActive(!!checked)}
+              />
+              <Label htmlFor="extraActive" className="cursor-pointer">
+                Active (offered during checkout)
+              </Label>
+            </div>
+
+            <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setDialogOpen(false)}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" loading={isSaving}>
+                {editingExtra ? 'Save Changes' : 'Create Extra'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

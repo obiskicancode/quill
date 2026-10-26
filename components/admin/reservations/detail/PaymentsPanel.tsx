@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { AdminCard } from '@/components/admin/AdminCard';
 import { AdminEmpty } from '@/components/admin/AdminStates';
+import { Button } from '@/components/ui/button';
 import { formatNaira } from '@/lib/format';
 import type { ReservationPaymentItem } from '@/types/reservation.types';
 
@@ -52,14 +53,14 @@ export function PaymentsPanel({
               <div key={p.id} className="py-3.5 first:pt-0 last:pb-0">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <span className="rounded-control bg-paper text-muted grid size-8 shrink-0 place-items-center">
+                    <span className="rounded-control bg-paper text-muted-foreground grid size-8 shrink-0 place-items-center">
                       <CreditCard className="size-4" aria-hidden="true" />
                     </span>
                     <div>
                       <p className="text-small text-ink font-semibold">
                         {formatNaira(p.amountMinor / 100)}
                       </p>
-                      <p className="text-caption text-muted capitalize">
+                      <p className="text-caption text-muted-foreground capitalize">
                         {p.provider} • {p.type}
                       </p>
                     </div>
@@ -70,15 +71,15 @@ export function PaymentsPanel({
                       p.status === 'paid'
                         ? 'border-success/30 bg-success/10 text-success'
                         : p.status === 'pending'
-                          ? 'border-accent/30 bg-accent/15 text-accent-ink'
-                          : 'border-danger/30 bg-danger/10 text-danger'
+                          ? 'border-primary/30 bg-primary/15 text-brand-ink'
+                          : 'border-destructive/30 bg-destructive/10 text-destructive'
                     }`}
                   >
                     {p.status}
                   </span>
                 </div>
 
-                <div className="text-caption text-muted mt-2.5 flex flex-wrap items-center justify-between gap-2">
+                <div className="text-caption text-muted-foreground mt-2.5 flex flex-wrap items-center justify-between gap-2">
                   <span className="truncate">
                     Ref:{' '}
                     <strong className="text-ink font-mono">
@@ -97,8 +98,10 @@ export function PaymentsPanel({
                 {/* Transfer Proof & Actions */}
                 <div className="mt-2.5 flex flex-wrap items-center gap-2">
                   {p.proofKey && (
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() =>
                         setSelectedProof({
                           key: p.proofKey!,
@@ -106,28 +109,27 @@ export function PaymentsPanel({
                           paymentId: p.id,
                         })
                       }
-                      className="rounded-control border-line bg-paper text-caption text-ink hover:border-ink inline-flex items-center gap-1.5 border px-2.5 py-1 font-semibold transition-colors"
                     >
                       <FileImage
-                        className="text-accent size-3.5"
+                        className="text-primary size-3.5"
                         aria-hidden="true"
                       />
                       <span>View transfer proof</span>
-                    </button>
+                    </Button>
                   )}
 
                   {/* Verify Action Button */}
                   {p.status === 'pending' &&
                     canVerifyTransfer &&
                     onVerifyTransfer && (
-                      <button
+                      <Button
                         type="button"
+                        size="sm"
                         onClick={() => onVerifyTransfer(p)}
-                        className="rounded-control border-accent bg-accent/10 text-caption text-accent-ink hover:bg-accent/20 inline-flex items-center gap-1.5 border px-2.5 py-1 font-semibold transition-colors"
                       >
                         <CheckCircle2 className="size-3.5" aria-hidden="true" />
                         <span>Verify transfer</span>
-                      </button>
+                      </Button>
                     )}
 
                   {/* Refund Action Button */}
@@ -135,14 +137,15 @@ export function PaymentsPanel({
                     p.type !== 'refund' &&
                     canRefund &&
                     onRefund && (
-                      <button
+                      <Button
                         type="button"
+                        variant="destructive"
+                        size="sm"
                         onClick={() => onRefund(p)}
-                        className="rounded-control border-line bg-paper text-caption text-danger hover:border-danger hover:bg-danger/5 inline-flex items-center gap-1.5 border px-2.5 py-1 font-semibold transition-colors"
                       >
                         <RotateCcw className="size-3.5" aria-hidden="true" />
                         <span>Refund</span>
-                      </button>
+                      </Button>
                     )}
                 </div>
               </div>

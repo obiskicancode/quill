@@ -1,5 +1,7 @@
 'use client';
 
+import { ArrowDownLeft, ArrowUpRight, BedDouble, Users } from 'lucide-react';
+
 import { StaggerGroup } from '@/components/motion/StaggerGroup';
 import type { DashboardKpi } from '@/types/dashboard.types';
 
@@ -18,18 +20,24 @@ export function KpiRow({ kpi }: { kpi: DashboardKpi }) {
         <KpiCard
           label="Arrivals today"
           value={kpi.arrivalsToday}
+          subtitle="Scheduled check-ins"
+          icon={<ArrowDownLeft className="text-success size-4" />}
           href="/admin/reservations?filter=arrivals_today"
           ariaLabel={`Arrivals today: ${kpi.arrivalsToday}, view filtered list`}
         />
         <KpiCard
           label="Departures today"
           value={kpi.departuresToday}
+          subtitle="Scheduled check-outs"
+          icon={<ArrowUpRight className="text-muted-foreground size-4" />}
           href="/admin/reservations?filter=departures_today"
           ariaLabel={`Departures today: ${kpi.departuresToday}, view filtered list`}
         />
         <KpiCard
           label="In-house tonight"
           value={kpi.inHouseTonight}
+          subtitle="Staying over"
+          icon={<Users className="text-brand-ink size-4" />}
           href="/admin/reservations?filter=in_house"
           ariaLabel={`In-house tonight: ${kpi.inHouseTonight}, view filtered list`}
         />
@@ -38,6 +46,8 @@ export function KpiRow({ kpi }: { kpi: DashboardKpi }) {
           value={`${kpi.occupancyPercent}%`}
           subtitle={occupancySubtitle}
           tooltip={blockedNote}
+          progressPercent={kpi.occupancyPercent}
+          icon={<BedDouble className="text-primary size-4" />}
           href="/admin/reservations?filter=in_house"
           ariaLabel={`Occupancy tonight: ${kpi.occupancyPercent} percent, ${occupancySubtitle}. ${blockedNote} View filtered list`}
         />

@@ -6,7 +6,7 @@ export default function AdminAuthLayout({ children }: { children: ReactNode }) {
     <div className="grid min-h-dvh lg:grid-cols-[1fr_30rem]">
       <section className="on-dark bg-ink text-paper hidden flex-col justify-between p-10 lg:flex xl:p-14">
         <Link href="/" className="font-display text-h3">
-          Divine <span className="text-accent">Excellent</span>
+          Divine <span className="text-brand">Excellent</span>
         </Link>
         <div className="max-w-md">
           <p className="font-display text-h2">
@@ -28,10 +28,10 @@ export default function AdminAuthLayout({ children }: { children: ReactNode }) {
             href="/"
             className="font-display text-h3 mb-8 inline-block lg:hidden"
           >
-            Divine <span className="text-accent-ink">Excellent</span>
+            Divine <span className="text-brand-ink">Excellent</span>
           </Link>
           {children}
-          <p className="border-line text-caption text-muted mt-8 border-t pt-4">
+          <p className="border-line text-caption text-muted-foreground mt-8 border-t pt-4">
             Need help? Contact the owner or manager. Do not share passwords or
             authenticator codes.
           </p>

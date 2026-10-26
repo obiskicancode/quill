@@ -1,9 +1,18 @@
 'use client';
 
 import Link from 'next/link';
+import { cn } from 'cn';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Check, Copy, CreditCard, Landmark, Upload } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import {
+  Check,
+  Copy,
+  CreditCard,
+  FileCheck,
+  Landmark,
+  Upload,
+  X,
+} from 'lucide-react';
+import { useRef, useState, type ReactNode } from 'react';
 
 import { MAX_PROOF_BYTES } from '@/schemas/checkout.schema';
 import type {
@@ -16,7 +25,20 @@ import type {
 import { formatMinor } from '@/types/stay.types';
 
 import { EASE_OUT } from '../motion/variants';
-import { Field } from './Field';
+import {
+  Attachment,
+  AttachmentAction,
+  AttachmentActions,
+  AttachmentContent,
+  AttachmentDescription,
+  AttachmentMedia,
+  AttachmentTitle,
+} from '../ui/attachment';
+import { Button } from '../ui/button';
+import { Checkbox } from '../ui/checkbox';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 const providerNames: Record<PaymentProvider, string> = {
   paystack: 'Paystack',
@@ -28,8 +50,10 @@ export function CopyButton({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="sm"
         aria-label={`Copy ${label}`}
         onClick={() => {
           void navigator.clipboard?.writeText(value).then(() => {
@@ -37,7 +61,7 @@ export function CopyButton({ value, label }: { value: string; label: string }) {
             window.setTimeout(() => setCopied(false), 2000);
           });
         }}
-        className="rounded-control border-ink/60 text-small hover:bg-ink hover:text-paper inline-flex min-h-11 shrink-0 items-center gap-1.5 border px-3 font-semibold transition-colors"
+        className="min-h-11 shrink-0 gap-1.5 px-3 font-semibold"
       >
         {copied ? (
           <Check className="size-4" aria-hidden />
@@ -45,7 +69,7 @@ export function CopyButton({ value, label }: { value: string; label: string }) {
           <Copy className="size-4" aria-hidden />
         )}
         {copied ? 'Copied' : 'Copy'}
-      </button>
+      </Button>
       <span aria-live="polite" className="sr-only">
         {copied ? `${label} copied` : ''}
       </span>
@@ -87,6 +111,7 @@ export function PaymentStep({
   disabled,
   action,
 }: PaymentStepProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const reduced = useReducedMotion();
   const bankMotion = reduced
     ? {}
@@ -104,25 +129,29 @@ export function PaymentStep({
     title: string,
     text: string,
   ) => (
-    <label
+    <Label
       key={value}
-      className={`rounded-card flex min-h-14 cursor-pointer items-start gap-3 border p-4 transition-colors ${method === value ? 'border-ink bg-paper border-2' : 'border-ink/40 bg-surface hover:bg-paper'} ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
+      htmlFor={`payment-method-${value}`}
+      className={cn(
+        'rounded-card flex min-h-14 cursor-pointer items-start gap-3 border p-4 font-normal transition-colors',
+        method === value
+          ? 'border-ink bg-paper border-2'
+          : 'border-ink/40 bg-card hover:bg-paper',
+        disabled && 'cursor-not-allowed opacity-60',
+      )}
     >
-      <input
-        type="radio"
-        name="payment-method"
+      <RadioGroupItem
         value={value}
-        checked={method === value}
+        id={`payment-method-${value}`}
         disabled={disabled}
-        onChange={() => onMethod(value)}
-        className="accent-ink mt-1 size-5 shrink-0"
+        className="mt-1"
       />
-      <span className="text-accent-ink mt-0.5">{icon}</span>
+      <span className="text-brand-ink mt-0.5">{icon}</span>
       <span>
         <span className="block font-semibold">{title}</span>
-        <span className="text-small text-muted block">{text}</span>
+        <span className="text-small text-muted-foreground block">{text}</span>
       </span>
-    </label>
+    </Label>
   );
 
   return (
@@ -135,13 +164,13 @@ export function PaymentStep({
         Payment
       </h2>
 
-      <div className="rounded-card border-line bg-surface border p-5">
+      <div className="rounded-card border-line bg-card border p-5">
         {atHotel ? (
           <>
             <p className="font-display text-xl">
               Reserve now, pay at the hotel
             </p>
-            <p className="text-small text-muted mt-1">
+            <p className="text-small text-muted-foreground mt-1">
               Nothing to pay today. You pay {formatMinor(payment.totalMinor)}{' '}
               when you arrive.
             </p>
@@ -155,13 +184,15 @@ export function PaymentStep({
               </dd>
             </div>
             <div className="text-small flex items-baseline justify-between gap-4">
-              <dt className="text-muted">Balance, due at the hotel</dt>
+              <dt className="text-muted-foreground">
+                Balance, due at the hotel
+              </dt>
               <dd className="tabular-nums">
                 {formatMinor(payment.balanceAtHotelMinor)}
               </dd>
             </div>
             <div className="border-line text-small flex items-baseline justify-between gap-4 border-t pt-2">
-              <dt className="text-muted">Stay total</dt>
+              <dt className="text-muted-foreground">Stay total</dt>
               <dd className="tabular-nums">
                 {formatMinor(payment.totalMinor)}
               </dd>
@@ -178,25 +209,32 @@ export function PaymentStep({
       </div>
 
       {!atHotel && (
-        <fieldset className="space-y-3">
-          <legend className="mb-2 font-semibold">
+        <div className="space-y-3">
+          <p className="font-semibold">
             {single ? 'Payment method' : 'How would you like to pay?'}
-          </legend>
-          {payment.acceptedMethods.includes('online') &&
-            option(
-              'online',
-              <CreditCard className="size-5" aria-hidden />,
-              'Card or USSD',
-              `You will pay on ${providerNames[payment.provider]}'s secure page. We never see your card details.`,
-            )}
-          {payment.acceptedMethods.includes('bank_transfer') &&
-            option(
-              'bank_transfer',
-              <Landmark className="size-5" aria-hidden />,
-              'Bank transfer',
-              'Transfer to the hotel and upload your receipt. We confirm once the hotel verifies it.',
-            )}
-        </fieldset>
+          </p>
+          <RadioGroup
+            value={method}
+            onValueChange={(val) => onMethod(val as PaymentMethod)}
+            disabled={disabled}
+            className="space-y-3"
+          >
+            {payment.acceptedMethods.includes('online') &&
+              option(
+                'online',
+                <CreditCard className="size-5" aria-hidden />,
+                'Card or USSD',
+                `You will pay on ${providerNames[payment.provider]}'s secure page. We never see your card details.`,
+              )}
+            {payment.acceptedMethods.includes('bank_transfer') &&
+              option(
+                'bank_transfer',
+                <Landmark className="size-5" aria-hidden />,
+                'Bank transfer',
+                'Transfer to the hotel and upload your receipt. We confirm once the hotel verifies it.',
+              )}
+          </RadioGroup>
+        </div>
       )}
 
       {!atHotel && method === 'bank_transfer' && (
@@ -230,8 +268,8 @@ export function PaymentStep({
                     className="flex items-center justify-between gap-3"
                   >
                     <div className="min-w-0">
-                      <dt className="text-muted">{term}</dt>
-                      <dd className="font-semibold break-words tabular-nums">
+                      <dt className="text-muted-foreground">{term}</dt>
+                      <dd className="font-semibold wrap-break-word tabular-nums">
                         {value}
                       </dd>
                     </div>
@@ -245,29 +283,96 @@ export function PaymentStep({
                 ))}
               </dl>
 
-              <Field
-                id="field-proof"
-                label="Upload your receipt"
-                error={proof.error ?? undefined}
-                hint={`JPG, PNG, WebP or PDF, up to ${MAX_PROOF_BYTES / 1024 / 1024} MB.`}
-              >
-                {(a) => (
-                  <input
-                    {...a}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,application/pdf"
-                    disabled={disabled}
-                    onChange={(e) => proof.onFile(e.target.files?.[0] ?? null)}
-                    className="rounded-control border-ink/60 bg-surface text-small file:bg-ink file:text-paper block min-h-12 w-full cursor-pointer border file:mr-4 file:min-h-12 file:cursor-pointer file:border-0 file:px-4 file:font-semibold"
-                  />
+              <div className="space-y-2">
+                <Label htmlFor="field-proof" className="font-semibold">
+                  Upload your receipt
+                </Label>
+                <Input
+                  ref={fileInputRef}
+                  id="field-proof"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  disabled={disabled}
+                  aria-invalid={proof.error ? true : undefined}
+                  aria-describedby={
+                    proof.error ? 'field-proof-error' : 'field-proof-hint'
+                  }
+                  onChange={(e) => proof.onFile(e.target.files?.[0] ?? null)}
+                  className="sr-only"
+                />
+                {proof.file ? (
+                  <Attachment state="done" className="bg-card w-full p-3">
+                    <AttachmentMedia
+                      variant="icon"
+                      className="bg-primary/10 text-brand-ink"
+                    >
+                      <FileCheck className="size-5" aria-hidden />
+                    </AttachmentMedia>
+                    <AttachmentContent>
+                      <AttachmentTitle className="text-small font-semibold">
+                        {proof.file.name}
+                      </AttachmentTitle>
+                      <AttachmentDescription>
+                        {(proof.file.size / (1024 * 1024)).toFixed(2)} MB &bull;
+                        Ready to submit
+                      </AttachmentDescription>
+                    </AttachmentContent>
+                    <AttachmentActions>
+                      <AttachmentAction
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label="Remove receipt"
+                        disabled={disabled}
+                        onClick={() => {
+                          proof.onFile(null);
+                          if (fileInputRef.current)
+                            fileInputRef.current.value = '';
+                        }}
+                      >
+                        <X className="size-3.5" aria-hidden />
+                      </AttachmentAction>
+                    </AttachmentActions>
+                  </Attachment>
+                ) : (
+                  <label
+                    htmlFor="field-proof"
+                    className={cn(
+                      'rounded-control border-line bg-card/60 hover:bg-card focus-within:ring-ring block w-full cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-offset-2',
+                      disabled && 'pointer-events-none opacity-60',
+                    )}
+                  >
+                    <Attachment
+                      state="idle"
+                      className="w-full border-dashed p-4"
+                    >
+                      <AttachmentMedia
+                        variant="icon"
+                        className="bg-primary/10 text-brand-ink"
+                      >
+                        <Upload className="size-5" aria-hidden />
+                      </AttachmentMedia>
+                      <AttachmentContent>
+                        <AttachmentTitle className="text-small font-semibold">
+                          Choose receipt file
+                        </AttachmentTitle>
+                        <AttachmentDescription id="field-proof-hint">
+                          JPG, PNG, WebP or PDF, up to{' '}
+                          {MAX_PROOF_BYTES / 1024 / 1024} MB
+                        </AttachmentDescription>
+                      </AttachmentContent>
+                    </Attachment>
+                  </label>
                 )}
-              </Field>
-              {proof.file && (
-                <p className="text-small flex items-center gap-2">
-                  <Upload className="size-4" aria-hidden />
-                  {proof.file.name}
-                </p>
-              )}
+                {proof.error && (
+                  <p
+                    id="field-proof-error"
+                    className="text-small text-destructive font-medium"
+                  >
+                    {proof.error}
+                  </p>
+                )}
+              </div>
               <p className="text-small text-ink/85">
                 {confirmationMode === 'instant'
                   ? 'Your reservation is confirmed after the hotel verifies your transfer. Until then your room stays held.'
@@ -289,16 +394,18 @@ export function PaymentStep({
       )}
 
       <div>
-        <label className="flex cursor-pointer items-start gap-3 py-1">
-          <input
+        <Label
+          htmlFor="field-terms"
+          className="flex cursor-pointer items-start gap-3 py-1 font-normal"
+        >
+          <Checkbox
             id="field-terms"
-            type="checkbox"
             checked={terms}
             disabled={disabled}
             aria-invalid={termsError ? true : undefined}
             aria-describedby={termsError ? 'field-terms-error' : undefined}
-            onChange={(e) => onTerms(e.target.checked)}
-            className="accent-ink mt-0.5 size-6 shrink-0"
+            onCheckedChange={(checked) => onTerms(!!checked)}
+            className="mt-0.5"
           />
           <span className="text-small">
             I agree to the{' '}
@@ -306,7 +413,7 @@ export function PaymentStep({
               href="/policies/terms"
               target="_blank"
               rel="noopener noreferrer"
-              className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
+              className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
             >
               Terms<span className="sr-only"> (opens in a new tab)</span>
             </Link>
@@ -315,7 +422,7 @@ export function PaymentStep({
               href="/policies/privacy"
               target="_blank"
               rel="noopener noreferrer"
-              className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
+              className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
             >
               Privacy Policy
               <span className="sr-only"> (opens in a new tab)</span>
@@ -325,25 +432,25 @@ export function PaymentStep({
               href="/policies/cancellation-policy"
               target="_blank"
               rel="noopener noreferrer"
-              className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
+              className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
             >
               Cancellation Policy
               <span className="sr-only"> (opens in a new tab)</span>
             </Link>
             .
           </span>
-        </label>
+        </Label>
         {termsError && (
           <p
             id="field-terms-error"
-            className="text-small text-danger mt-1.5 font-medium"
+            className="text-small text-destructive mt-1.5 font-medium"
           >
             {termsError}
           </p>
         )}
       </div>
 
-      <p className="text-caption text-muted">
+      <p className="text-caption text-muted-foreground">
         We use your details only to manage this booking, contact you about your
         stay and meet legal requirements. We do not sell them. Card payments are
         handled by the payment provider; we never store card numbers.

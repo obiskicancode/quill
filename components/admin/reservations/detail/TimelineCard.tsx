@@ -23,7 +23,7 @@ export function TimelineCard({
             return (
               <div key={item.id} className="relative">
                 {/* Timeline node */}
-                <span className="border-surface bg-ink ring-line absolute top-1 -left-6 size-2.5 rounded-full border-2 ring-2" />
+                <span className="border-card bg-ink ring-line absolute top-1 -left-6 size-2.5 rounded-full border-2 ring-2" />
 
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={item.toStatus} />
@@ -34,10 +34,12 @@ export function TimelineCard({
                 </div>
 
                 {item.reason && (
-                  <p className="text-small text-muted mt-1">{item.reason}</p>
+                  <p className="text-small text-muted-foreground mt-1">
+                    {item.reason}
+                  </p>
                 )}
 
-                <p className="text-caption text-muted/75 mt-0.5">
+                <p className="text-caption text-muted-foreground/75 mt-0.5">
                   {formattedTime}
                 </p>
               </div>

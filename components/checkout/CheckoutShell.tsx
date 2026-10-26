@@ -32,7 +32,7 @@ export function CheckoutShell({
         <div className="container-page flex min-h-16 items-center justify-between gap-4">
           <SiteLogo site={site} />
           <p className="text-small inline-flex items-center gap-2 font-semibold">
-            <Lock className="text-accent-ink size-4" aria-hidden />
+            <Lock className="text-brand-ink size-4" aria-hidden />
             {label}
           </p>
           <div className="flex items-center">
@@ -69,7 +69,7 @@ export function CheckoutShell({
       {children}
 
       <footer className="checkout-chrome border-line bg-paper border-t pt-6 pb-28 lg:pb-8">
-        <div className="container-page text-small text-muted flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <div className="container-page text-small text-muted-foreground flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
           <p>
             &copy; {new Date().getFullYear()} {site.name}
           </p>

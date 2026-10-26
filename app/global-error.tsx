@@ -5,7 +5,7 @@ import './globals.css';
 import { Figtree, Young_Serif } from 'next/font/google';
 import { useEffect } from 'react';
 
-import { ButtonLink } from '@/components/ui/Button';
+import { ButtonLink } from '@/components/ui/button';
 
 const display = Young_Serif({
   subsets: ['latin'],

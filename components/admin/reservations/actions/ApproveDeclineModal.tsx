@@ -1,10 +1,12 @@
 'use client';
 
-import { Check, Loader2, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
@@ -81,45 +83,45 @@ export function ApproveDeclineModal({
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Action Toggle */}
         <div className="grid grid-cols-2 gap-2">
-          <button
+          <Button
             type="button"
+            variant={action === 'approve' ? 'default' : 'outline'}
+            size="md"
             onClick={() => setAction('approve')}
-            className={`rounded-control text-small flex items-center justify-center gap-2 border p-3 font-semibold transition-colors ${
+            className={
               action === 'approve'
-                ? 'border-success bg-success/15 text-success ring-success ring-2'
-                : 'border-line text-muted hover:border-ink hover:text-ink'
-            }`}
+                ? 'bg-success hover:bg-success/90 text-white'
+                : ''
+            }
           >
             <Check className="size-4" aria-hidden="true" />
             <span>Approve Booking</span>
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant={action === 'decline' ? 'destructive' : 'outline'}
+            size="md"
             onClick={() => setAction('decline')}
-            className={`rounded-control text-small flex items-center justify-center gap-2 border p-3 font-semibold transition-colors ${
-              action === 'decline'
-                ? 'border-danger bg-danger/15 text-danger ring-danger ring-2'
-                : 'border-line text-muted hover:border-ink hover:text-ink'
-            }`}
           >
             <X className="size-4" aria-hidden="true" />
             <span>Decline Request</span>
-          </button>
+          </Button>
         </div>
 
         {/* Stay Summary */}
-        <div className="bg-canvas rounded-control border-line text-small space-y-1 border p-3">
+        <div className="bg-muted rounded-control border-line text-small space-y-1 border p-3">
           <p>
-            <span className="text-muted">Room:</span> {reservation.roomTypeName}{' '}
-            (Room {reservation.roomNumber})
+            <span className="text-muted-foreground">Room:</span>{' '}
+            {reservation.roomTypeName} (Room {reservation.roomNumber})
           </p>
           <p>
-            <span className="text-muted">Dates:</span> {reservation.checkIn} to{' '}
-            {reservation.checkOut} ({reservation.nights} nights)
+            <span className="text-muted-foreground">Dates:</span>{' '}
+            {reservation.checkIn} to {reservation.checkOut} (
+            {reservation.nights} nights)
           </p>
           <p>
-            <span className="text-muted">Guests:</span> {reservation.adults}{' '}
-            Adults
+            <span className="text-muted-foreground">Guests:</span>{' '}
+            {reservation.adults} Adults
             {reservation.children > 0
               ? `, ${reservation.children} Children`
               : ''}
@@ -127,26 +129,26 @@ export function ApproveDeclineModal({
         </div>
 
         {action === 'approve' ? (
-          <p className="text-small text-muted">
+          <p className="text-small text-muted-foreground">
             Approving moves this reservation to <strong>Confirmed</strong>{' '}
             status and sends confirmation to{' '}
             <strong>{reservation.guestEmail || 'the guest'}</strong> with
             payment instructions.
           </p>
         ) : (
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Decline Reason <span className="text-danger">*</span>
-            </label>
-            <textarea
+          <div className="space-y-1.5">
+            <Label htmlFor="decline-reason">
+              Decline Reason <span className="text-destructive">*</span>
+            </Label>
+            <Textarea
+              id="decline-reason"
               rows={3}
               required
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Hotel fully committed for private event, maintenance shutdown..."
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
             />
-            <p className="text-caption text-muted mt-1">
+            <p className="text-caption text-muted-foreground">
               Declining cancels the booking and frees the assigned room
               immediately.
             </p>
@@ -156,7 +158,8 @@ export function ApproveDeclineModal({
         <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
+            size="sm"
             onClick={onClose}
             disabled={submitting}
           >
@@ -164,22 +167,13 @@ export function ApproveDeclineModal({
           </Button>
           <Button
             type="submit"
-            variant={action === 'approve' ? 'primary' : 'danger'}
-            disabled={submitting}
+            variant={action === 'approve' ? 'default' : 'destructive'}
+            size="sm"
+            loading={submitting}
           >
-            {submitting ? (
-              <>
-                <Loader2
-                  className="mr-2 size-4 animate-spin"
-                  aria-hidden="true"
-                />
-                Processing...
-              </>
-            ) : action === 'approve' ? (
-              'Confirm approval'
-            ) : (
-              'Decline & release room'
-            )}
+            {action === 'approve'
+              ? 'Confirm approval'
+              : 'Decline & release room'}
           </Button>
         </div>
       </form>

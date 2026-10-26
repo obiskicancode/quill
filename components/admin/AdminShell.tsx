@@ -3,22 +3,44 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
+  BadgeDollarSign,
   BedDouble,
   CalendarDays,
+  ClipboardList,
+  ConciergeBell,
   CreditCard,
   FileText,
   History,
   LayoutDashboard,
   LogOut,
-  Menu,
   MessageSquare,
   Settings,
+  ShieldAlert,
+  Sparkles,
   Users,
   X,
 } from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from '@/components/ui/sidebar';
 import {
   ADMIN_NAV,
   ROLE_LABELS,
@@ -28,10 +50,13 @@ import {
 
 const icons = {
   '/admin': LayoutDashboard,
-  '/admin/reservations': CalendarDays,
+  '/admin/reservations': ClipboardList,
   '/admin/calendar': CalendarDays,
   '/admin/enquiries': MessageSquare,
   '/admin/rooms': BedDouble,
+  '/admin/rates': BadgeDollarSign,
+  '/admin/extras': Sparkles,
+  '/admin/amenities': ConciergeBell,
   '/admin/content': FileText,
   '/admin/payments': CreditCard,
   '/admin/settings': Settings,
@@ -43,6 +68,173 @@ interface ShellUser {
   firstName: string;
   lastName: string;
   email: string;
+}
+
+interface AdminSidebarProps {
+  user: ShellUser;
+  role: AdminRole;
+  permissions: readonly Permission[];
+  mfaPending: boolean;
+  signingOut: boolean;
+  onSignOut: () => void;
+}
+
+function AdminSidebar({
+  user,
+  role,
+  permissions,
+  mfaPending,
+  signingOut,
+  onSignOut,
+}: AdminSidebarProps) {
+  const pathname = usePathname();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const groups = mfaPending
+    ? []
+    : ADMIN_NAV.map((group) => ({
+        ...group,
+        items: group.items.filter((item) =>
+          permissions.includes(item.permission),
+        ),
+      })).filter((group) => group.items.length > 0);
+
+  const initials =
+    `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+
+  const closeMobile = () => {
+    if (isMobile) setOpenMobile(false);
+  };
+
+  return (
+    <Sidebar collapsible="offcanvas" className="border-r border-white/10">
+      <div className="on-dark bg-ink text-paper flex h-full min-h-0 flex-col">
+        <SidebarHeader className="h-16 flex-row items-center justify-between border-b border-white/10 px-3 py-0 md:max-lg:justify-center md:max-lg:px-1">
+          <Link
+            href="/admin"
+            onClick={closeMobile}
+            aria-label="Divine admin"
+            className="font-display text-h3"
+          >
+            <span className="md:max-lg:sr-only">
+              Divine <span className="text-brand">admin</span>
+            </span>
+            <span
+              aria-hidden
+              className="bg-primary text-small text-primary-foreground rounded-control hidden size-8 items-center justify-center font-semibold md:max-lg:inline-flex"
+            >
+              D
+            </span>
+          </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={closeMobile}
+            aria-label="Close navigation"
+            className="hover:bg-white/10 md:hidden"
+          >
+            <X className="size-5" aria-hidden />
+          </Button>
+        </SidebarHeader>
+
+        <SidebarContent>
+          {mfaPending && (
+            <div className="p-3 pb-0">
+              <Link
+                href="/admin/account?setup=required"
+                onClick={closeMobile}
+                aria-label="Finish two-factor setup"
+                className="rounded-control border-primary/40 bg-primary/10 text-small text-paper hover:bg-primary/20 block border p-3 md:max-lg:flex md:max-lg:size-10 md:max-lg:items-center md:max-lg:justify-center md:max-lg:p-0"
+              >
+                <ShieldAlert
+                  className="text-primary hidden size-5 shrink-0 md:max-lg:block"
+                  aria-hidden
+                />
+                <span className="md:max-lg:sr-only">
+                  <span className="font-semibold">Finish two-factor setup</span>
+                  <span className="text-caption mt-1 block text-white/70">
+                    Required before the admin opens.
+                  </span>
+                </span>
+              </Link>
+            </div>
+          )}
+          {groups.map((group) => (
+            <SidebarGroup key={group.label} className="pb-1 md:max-lg:px-1">
+              <SidebarGroupLabel className="text-caption tracking-wide text-white/50 uppercase md:max-lg:hidden">
+                {group.label}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => {
+                    const Icon =
+                      icons[item.href as keyof typeof icons] ?? LayoutDashboard;
+                    const active =
+                      item.href === '/admin'
+                        ? pathname === '/admin'
+                        : pathname.startsWith(item.href);
+                    return (
+                      <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                          render={
+                            <Link
+                              href={item.href}
+                              onClick={closeMobile}
+                              aria-current={active ? 'page' : undefined}
+                            />
+                          }
+                          isActive={active}
+                          tooltip={item.label}
+                          className="text-small data-active:bg-primary data-active:text-primary-foreground data-active:hover:bg-brand-hover min-h-10 gap-2.5 px-2.5 text-white/80 hover:bg-white/10 hover:text-white md:max-lg:size-10 md:max-lg:justify-center md:max-lg:gap-0 md:max-lg:p-0"
+                        >
+                          <Icon className="size-4 shrink-0" aria-hidden />
+                          <span className="md:max-lg:sr-only">
+                            {item.label}
+                          </span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
+
+        <SidebarFooter className="gap-2 border-t border-white/10 p-3 md:max-lg:p-1">
+          <Link
+            href="/admin/account"
+            onClick={closeMobile}
+            className="rounded-control flex items-center gap-2.5 px-1 py-1 hover:bg-white/10 md:max-lg:justify-center md:max-lg:gap-0 md:max-lg:px-0"
+          >
+            <Avatar className="size-9">
+              <AvatarFallback className="bg-primary text-small text-primary-foreground font-bold">
+                {initials || 'A'}
+              </AvatarFallback>
+            </Avatar>
+            <span className="min-w-0 md:max-lg:sr-only">
+              <span className="text-small block truncate font-semibold">
+                {user.firstName} {user.lastName}
+              </span>
+              <span className="text-caption block truncate text-white/60">
+                {ROLE_LABELS[role]}
+              </span>
+            </span>
+          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            loading={signingOut}
+            onClick={onSignOut}
+            icon={<LogOut className="size-4" aria-hidden />}
+            className="justify-start text-white/80 hover:bg-white/10 hover:text-white md:max-lg:mx-auto md:max-lg:size-9 md:max-lg:justify-center md:max-lg:px-0"
+          >
+            <span className="md:max-lg:sr-only">Sign out</span>
+          </Button>
+        </SidebarFooter>
+      </div>
+    </Sidebar>
+  );
 }
 
 export function AdminShell({
@@ -58,9 +250,7 @@ export function AdminShell({
   mfaPending?: boolean;
   children: ReactNode;
 }) {
-  const pathname = usePathname();
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
@@ -68,24 +258,6 @@ export function AdminShell({
     window.addEventListener('admin:session-expired', handler);
     return () => window.removeEventListener('admin:session-expired', handler);
   }, [router]);
-
-  useEffect(() => {
-    if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [open]);
-
-  const groups = mfaPending
-    ? []
-    : ADMIN_NAV.map((group) => ({
-        ...group,
-        items: group.items.filter((item) =>
-          permissions.includes(item.permission),
-        ),
-      })).filter((group) => group.items.length > 0);
 
   async function signOut() {
     setSigningOut(true);
@@ -99,154 +271,46 @@ export function AdminShell({
     }
   }
 
-  const initials =
-    `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
-
   return (
-    <div className="bg-paper min-h-dvh md:grid md:grid-cols-[16rem_minmax(0,1fr)]">
-      {open && (
-        <button
-          type="button"
-          aria-label="Close navigation"
-          onClick={() => setOpen(false)}
-          className="bg-ink/50 fixed inset-0 z-40 md:hidden"
-        />
-      )}
-
-      <aside
-        className={`on-dark bg-ink text-paper fixed inset-y-0 left-0 z-50 flex w-[min(18rem,85vw)] flex-col transition-transform duration-200 motion-reduce:transition-none md:static md:w-auto md:translate-x-0 ${
-          open ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <div className="flex h-16 items-center justify-between border-b border-white/10 px-4">
-          <Link
-            href="/admin"
-            onClick={() => setOpen(false)}
-            className="font-display text-h3"
-          >
-            Divine <span className="text-accent">admin</span>
-          </Link>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            aria-label="Close navigation"
-            className="rounded-control grid size-11 place-items-center hover:bg-white/10 md:hidden"
-          >
-            <X className="size-5" aria-hidden />
-          </button>
-        </div>
-
-        <nav aria-label="Admin" className="flex-1 overflow-y-auto p-3">
-          {mfaPending && (
-            <Link
-              href="/admin/account?setup=required"
-              onClick={() => setOpen(false)}
-              className="rounded-control border-accent/40 bg-accent/10 text-small text-paper hover:bg-accent/20 mb-3 block border p-3"
-            >
-              <span className="font-semibold">Finish two-factor setup</span>
-              <span className="text-caption mt-1 block text-white/70">
-                Required before the admin opens.
-              </span>
-            </Link>
-          )}
-          {groups.map((group) => (
-            <div key={group.label} className="mb-5">
-              <p className="text-caption mb-1.5 px-2 font-semibold tracking-wide text-white/50 uppercase">
-                {group.label}
-              </p>
-              <ul className="space-y-0.5">
-                {group.items.map((item) => {
-                  const Icon =
-                    icons[item.href as keyof typeof icons] ?? LayoutDashboard;
-                  const active =
-                    item.href === '/admin'
-                      ? pathname === '/admin'
-                      : pathname.startsWith(item.href);
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        onClick={() => setOpen(false)}
-                        aria-current={active ? 'page' : undefined}
-                        className={`rounded-control text-small flex min-h-10 items-center gap-2.5 px-2.5 font-medium ${
-                          active
-                            ? 'bg-accent text-ink'
-                            : 'text-white/80 hover:bg-white/10 hover:text-white'
-                        }`}
-                      >
-                        <Icon className="size-4 shrink-0" aria-hidden />
-                        {item.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </nav>
-
-        <div className="border-t border-white/10 p-3">
-          <Link
-            href="/admin/account"
-            onClick={() => setOpen(false)}
-            className="rounded-control flex items-center gap-2.5 px-2 py-2 hover:bg-white/10"
-          >
-            <span className="bg-accent text-small text-ink grid size-9 shrink-0 place-items-center rounded-full font-bold">
-              {initials || 'A'}
-            </span>
-            <span className="min-w-0">
-              <span className="text-small block truncate font-semibold">
-                {user.firstName} {user.lastName}
-              </span>
-              <span className="text-caption block truncate text-white/60">
-                {ROLE_LABELS[role]}
-              </span>
-            </span>
-          </Link>
-        </div>
-      </aside>
-
-      <div className="flex min-w-0 flex-col">
-        <header className="border-line bg-surface/95 sticky top-0 z-30 flex h-16 items-center gap-3 border-b px-4 backdrop-blur md:px-6">
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            aria-label="Open navigation"
-            aria-expanded={open}
-            className="rounded-control border-line grid size-11 place-items-center border md:hidden"
-          >
-            <Menu className="size-5" aria-hidden />
-          </button>
-
+    <SidebarProvider
+      className="bg-paper min-h-dvh md:max-lg:[--admin-sidebar-width:var(--sidebar-width-icon)]"
+      style={
+        {
+          '--sidebar-width': 'var(--admin-sidebar-width, 16rem)',
+        } as CSSProperties
+      }
+    >
+      <AdminSidebar
+        user={user}
+        role={role}
+        permissions={permissions}
+        mfaPending={mfaPending}
+        signingOut={signingOut}
+        onSignOut={signOut}
+      />
+      <SidebarInset className="bg-paper min-w-0">
+        <header className="border-line bg-card/95 sticky top-0 z-30 flex h-16 items-center gap-3 border-b px-4 backdrop-blur md:px-6">
+          <SidebarTrigger className="size-11" />
           <div className="min-w-0 flex-1">
             <p className="text-small truncate font-semibold">{user.email}</p>
-            <p className="text-caption text-muted">{ROLE_LABELS[role]}</p>
+            <p className="text-caption text-muted-foreground">
+              {ROLE_LABELS[role]}
+            </p>
           </div>
-
-          <Link
-            href="/admin/account"
-            onClick={() => setOpen(false)}
-            className="rounded-control text-small hover:bg-ink/5 hidden px-3 py-2 font-semibold sm:block"
+          <Button
+            variant="ghost"
+            size="sm"
+            render={<Link href="/admin/account" />}
+            className="hidden font-semibold sm:inline-flex"
           >
             Account
-          </Link>
-          <button
-            type="button"
-            onClick={signOut}
-            disabled={signingOut}
-            className="rounded-control text-small hover:bg-ink/5 flex min-h-10 items-center gap-2 px-3 font-semibold disabled:opacity-50"
-          >
-            <LogOut className="size-4" aria-hidden />
-            <span className="hidden sm:inline">
-              {signingOut ? 'Signing out…' : 'Sign out'}
-            </span>
-          </button>
+          </Button>
         </header>
 
         <main id="main" className="flex-1 px-4 py-5 md:px-6 md:py-7 xl:px-8">
           <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

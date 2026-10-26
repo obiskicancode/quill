@@ -1,10 +1,19 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { formatNaira } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
@@ -88,19 +97,20 @@ export function RecordPaymentModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Outstanding Balance Banner */}
-        <div className="bg-canvas rounded-control border-line text-small flex items-center justify-between border p-3.5">
-          <span className="text-muted">Balance Due:</span>
+        <div className="bg-muted rounded-control border-line text-small flex items-center justify-between border p-3.5">
+          <span className="text-muted-foreground">Balance Due:</span>
           <span className="text-ink font-bold">
             {formatNaira(reservation.balanceMinor / 100)}
           </span>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Amount (₦) <span className="text-danger">*</span>
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="payment-amount">
+              Amount (₦) <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="payment-amount"
               type="number"
               step="any"
               min="1"
@@ -108,94 +118,101 @@ export function RecordPaymentModal({
               required
               value={amountNaira}
               onChange={(e) => setAmountNaira(e.target.value)}
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
             />
           </div>
 
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Payment Allocation
-            </label>
-            <select
+          <div className="space-y-1.5">
+            <Label htmlFor="payment-allocation">Payment Allocation</Label>
+            <Select
+              items={[
+                { value: 'balance', label: 'Balance Payment' },
+                { value: 'deposit', label: 'Deposit Payment' },
+                { value: 'full', label: 'Full Stay Payment' },
+              ]}
               value={type}
-              onChange={(e) =>
-                setType(e.target.value as 'deposit' | 'balance' | 'full')
-              }
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+              onValueChange={(val) => {
+                if (val) setType(val as 'deposit' | 'balance' | 'full');
+              }}
             >
-              <option value="balance">Balance Payment</option>
-              <option value="deposit">Deposit Payment</option>
-              <option value="full">Full Stay Payment</option>
-            </select>
+              <SelectTrigger id="payment-allocation" className="w-full">
+                <SelectValue placeholder="Select allocation" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="balance">Balance Payment</SelectItem>
+                <SelectItem value="deposit">Deposit Payment</SelectItem>
+                <SelectItem value="full">Full Stay Payment</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Payment Method <span className="text-danger">*</span>
-            </label>
-            <select
+          <div className="space-y-1.5">
+            <Label htmlFor="payment-method">
+              Payment Method <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              items={[
+                { value: 'cash', label: 'Cash at Hotel' },
+                { value: 'bank_transfer', label: 'Direct Bank Transfer' },
+                { value: 'card', label: 'Card POS Terminal' },
+              ]}
               value={method}
-              onChange={(e) =>
-                setMethod(e.target.value as 'cash' | 'bank_transfer' | 'card')
-              }
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
+              onValueChange={(val) => {
+                if (val) setMethod(val as 'cash' | 'bank_transfer' | 'card');
+              }}
             >
-              <option value="cash">Cash at Hotel</option>
-              <option value="bank_transfer">Direct Bank Transfer</option>
-              <option value="card">Card POS Terminal</option>
-            </select>
+              <SelectTrigger id="payment-method" className="w-full">
+                <SelectValue placeholder="Select method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">Cash at Hotel</SelectItem>
+                <SelectItem value="bank_transfer">
+                  Direct Bank Transfer
+                </SelectItem>
+                <SelectItem value="card">Card POS Terminal</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div>
-            <label className="text-small text-ink block font-semibold">
-              Payment Reference <span className="text-danger">*</span>
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="payment-reference">
+              Payment Reference <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="payment-reference"
               type="text"
               required
               value={reference}
               onChange={(e) => setReference(e.target.value)}
-              className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 font-mono focus:outline-hidden"
+              className="font-mono"
             />
           </div>
         </div>
 
-        <div>
-          <label className="text-small text-ink block font-semibold">
-            Staff Note / Receipt Info
-          </label>
-          <textarea
+        <div className="space-y-1.5">
+          <Label htmlFor="payment-note">Staff Note / Receipt Info</Label>
+          <Textarea
+            id="payment-note"
             rows={2}
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="e.g. Received at front desk desk receipt #0492..."
-            className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
           />
         </div>
 
         <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
+            size="sm"
             onClick={onClose}
             disabled={submitting}
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={submitting}>
-            {submitting ? (
-              <>
-                <Loader2
-                  className="mr-2 size-4 animate-spin"
-                  aria-hidden="true"
-                />
-                Recording...
-              </>
-            ) : (
-              'Record payment'
-            )}
+          <Button type="submit" size="sm" loading={submitting}>
+            Record payment
           </Button>
         </div>
       </form>

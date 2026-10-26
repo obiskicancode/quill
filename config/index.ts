@@ -59,13 +59,6 @@ export const config = {
   },
 };
 
-/** Call from auth code before signing tokens; throws when secrets are missing. */
-export function assertJwtSecrets(): void {
-  if (!config.JWT.ACCESS_SECRET || !config.JWT.REFRESH_SECRET) {
-    throw new Error(ERROR_MESSAGES.JWT_SECRETS_MISSING);
-  }
-}
-
 export function assertDbUrl(): void {
   if (!config.DB.URL) {
     throw new Error(ERROR_MESSAGES.DATABASE_URL_MISSING);

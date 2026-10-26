@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from 'react';
 
+import { Button } from './ui/button';
+
 interface CarouselProps {
   label: string;
   slides: ReactNode[];
@@ -87,8 +89,6 @@ export function Carousel({
 
   const prevDisabled = index <= 0;
   const nextDisabled = index >= count - 1;
-  const arrow =
-    'grid size-11 place-items-center rounded-full bg-surface text-ink shadow-raised transition-[background-color,opacity,transform] hover:bg-paper active:scale-95 disabled:opacity-40 disabled:hover:bg-surface';
 
   return (
     <div
@@ -105,7 +105,7 @@ export function Carousel({
         ref={trackRef}
         onScroll={onScroll}
         aria-live={playing && !interacting ? 'off' : 'polite'}
-        className="flex snap-x snap-mandatory [scrollbar-width:none] overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory scrollbar-none overflow-x-auto scroll-smooth [&::-webkit-scrollbar]:hidden"
       >
         {slides.map((slide, i) => (
           <div
@@ -122,24 +122,26 @@ export function Carousel({
 
       {count > 1 && controls === 'overlay' && (
         <>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="icon"
             aria-label="Previous photo"
             disabled={prevDisabled}
             onClick={() => goTo(index - 1)}
-            className={`${arrow} absolute top-1/2 left-3 -translate-y-1/2`}
+            className="shadow-raised absolute top-1/2 left-3 -translate-y-1/2 rounded-full disabled:opacity-40"
           >
             <ChevronLeft className="size-5" aria-hidden />
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon"
             aria-label="Next photo"
             disabled={nextDisabled}
             onClick={() => goTo(index + 1)}
-            className={`${arrow} absolute top-1/2 right-3 -translate-y-1/2`}
+            className="shadow-raised absolute top-1/2 right-3 -translate-y-1/2 rounded-full disabled:opacity-40"
           >
             <ChevronRight className="size-5" aria-hidden />
-          </button>
+          </Button>
           <div
             aria-hidden
             className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center gap-1.5"
@@ -156,45 +158,48 @@ export function Carousel({
 
       {count > 1 && controls === 'below' && (
         <div className="mt-8 flex items-center justify-center gap-3">
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="icon"
             aria-label="Previous review"
             disabled={prevDisabled}
             onClick={() => goTo(index - 1)}
-            className={`${arrow} border-line border`}
+            className="shadow-raised rounded-full"
           >
             <ChevronLeft className="size-5" aria-hidden />
-          </button>
+          </Button>
           {autoplayMs && canAutoplay && (
-            <button
-              type="button"
+            <Button
+              variant="outline"
+              size="icon"
               aria-label={
                 userPaused
                   ? 'Play automatic slide show'
                   : 'Pause automatic slide show'
               }
               onClick={() => setUserPaused((p) => !p)}
-              className={`${arrow} border-line border`}
+              className="shadow-raised rounded-full"
             >
               {userPaused ? (
                 <Play className="size-5" aria-hidden />
               ) : (
                 <Pause className="size-5" aria-hidden />
               )}
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="icon"
             aria-label="Next review"
             disabled={nextDisabled}
             onClick={() => goTo(index + 1)}
-            className={`${arrow} border-line border`}
+            className="shadow-raised rounded-full"
           >
             <ChevronRight className="size-5" aria-hidden />
-          </button>
+          </Button>
           <p
             aria-hidden
-            className="text-small text-muted ml-2 min-w-12 tabular-nums"
+            className="text-small text-muted-foreground ml-2 min-w-12 tabular-nums"
           >
             {index + 1} / {count}
           </p>

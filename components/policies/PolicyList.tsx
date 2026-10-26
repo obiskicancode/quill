@@ -19,7 +19,7 @@ export async function PolicyList() {
         Our policies are being updated. Please{' '}
         <Link
           href="/contact"
-          className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
+          className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
         >
           contact us
         </Link>{' '}
@@ -34,9 +34,9 @@ export async function PolicyList() {
         <li key={p.slug}>
           <Link
             href={`/policies/${p.slug}`}
-            className="group rounded-card border-line bg-surface shadow-raised hover:bg-paper flex h-full flex-col border p-6 transition-colors"
+            className="group rounded-card border-line bg-card shadow-raised hover:bg-paper flex h-full flex-col border p-6 transition-colors"
           >
-            <span className="text-accent-ink inline-flex items-center gap-2">
+            <span className="text-brand-ink inline-flex items-center gap-2">
               <FileText className="size-5" aria-hidden />
               <span className="text-small font-semibold tracking-wide uppercase">
                 Policy
@@ -44,7 +44,7 @@ export async function PolicyList() {
             </span>
             <h2 className="font-display text-h3 text-ink mt-3">{p.title}</h2>
             <p className="text-ink/85 mt-2 flex-1">{p.summary}</p>
-            <span className="text-small text-muted mt-4 flex items-center justify-between gap-3">
+            <span className="text-small text-muted-foreground mt-4 flex items-center justify-between gap-3">
               <span>Last updated {formatDate(p.updatedAt)}</span>
               <span className="text-ink inline-flex items-center gap-1 font-semibold transition-transform group-hover:translate-x-0.5">
                 Read

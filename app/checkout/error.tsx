@@ -3,7 +3,7 @@
 import { CheckoutShell } from '@/components/checkout/CheckoutShell';
 import { Banner } from '@/components/checkout/CheckoutStates';
 import { Reveal } from '@/components/motion';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/button';
 
 /** Shown if the server cannot price the stay when the page loads. Retrying never creates a reservation. */
 export default function CheckoutError({

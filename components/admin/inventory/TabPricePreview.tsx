@@ -4,7 +4,10 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { addDays, todayISO } from '@/lib/dates';
 import { minorToNaira } from '@/lib/rate-resolution';
 import type { CheckoutQuoteResponse } from '@/types/checkout.types';
@@ -86,47 +89,49 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
   return (
     <div className="space-y-8">
       {/* 90-Day Resolved Price Calendar */}
-      <section className="rounded-card border-line bg-surface border p-6 shadow-sm">
+      <section className="rounded-card border-line bg-card border p-6 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-foreground text-h3 font-semibold">
               90-Day Nightly Rate Calendar
             </h2>
-            <p className="text-small text-muted">
+            <p className="text-small text-muted-foreground">
               Live resolution of base rates, weekend uplifts, and active rate
               rules.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="icon-sm"
               disabled={currentMonthIndex === 0}
               onClick={() => setCurrentMonthIndex((prev) => prev - 1)}
-              className="border-line text-muted hover:bg-paper rounded border p-1.5 disabled:opacity-30"
               aria-label="Previous 30 days"
             >
               <ChevronLeft className="size-4" />
-            </button>
+            </Button>
             <span className="text-foreground text-xs font-medium">
               Days {currentMonthIndex * 30 + 1}–{(currentMonthIndex + 1) * 30}{' '}
               of 90
             </span>
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="icon-sm"
               disabled={currentMonthIndex === 2}
               onClick={() => setCurrentMonthIndex((prev) => prev + 1)}
-              className="border-line text-muted hover:bg-paper rounded border p-1.5 disabled:opacity-30"
               aria-label="Next 30 days"
             >
               <ChevronRight className="size-4" />
-            </button>
+            </Button>
           </div>
         </div>
 
         {loadingCalendar ? (
           <div className="flex justify-center p-8">
-            <Loader2 className="text-muted size-6 animate-spin" />
+            <Loader2 className="text-muted-foreground size-6 animate-spin" />
           </div>
         ) : (
           <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-5 md:grid-cols-7 lg:grid-cols-10">
@@ -150,7 +155,7 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
                         : 'Standard base rate'
                   }
                 >
-                  <div className="text-muted flex items-center justify-between">
+                  <div className="text-muted-foreground flex items-center justify-between">
                     <span>{day.date.slice(5)}</span>
                     {day.isWeekend && (
                       <span className="text-brand font-semibold">Wknd</span>
@@ -173,7 +178,7 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
           </div>
         )}
 
-        <div className="text-muted mt-4 flex flex-wrap items-center gap-4 text-xs">
+        <div className="text-muted-foreground mt-4 flex flex-wrap items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
             <div className="bg-background border-line size-3 rounded border" />
             <span>Weekday Base</span>
@@ -190,98 +195,96 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
       </section>
 
       {/* Live Stay Calculator */}
-      <section className="rounded-card border-line bg-surface border p-6 shadow-sm">
+      <section className="rounded-card border-line bg-card border p-6 shadow-sm">
         <h2 className="text-foreground text-h3 font-semibold">
           Stay Calculator & Totals Preview
         </h2>
-        <p className="text-small text-muted mt-1">
+        <p className="text-small text-muted-foreground mt-1">
           Simulate a booking quote to verify nightly rates, taxes, and service
           charges via the shared pricing engine.
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div>
-            <label className="text-muted block text-xs font-medium">
-              Check-In
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="preview-checkin">Check-In</Label>
+            <Input
+              id="preview-checkin"
               type="date"
               value={calcCheckIn}
               onChange={(e) => setCalcCheckIn(e.target.value)}
-              className="bg-background text-foreground focus:border-brand border-line text-small mt-1 w-full rounded border px-3 py-1.5 focus:outline-none"
             />
           </div>
 
-          <div>
-            <label className="text-muted block text-xs font-medium">
-              Check-Out
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="preview-checkout">Check-Out</Label>
+            <Input
+              id="preview-checkout"
               type="date"
               value={calcCheckOut}
               onChange={(e) => setCalcCheckOut(e.target.value)}
-              className="bg-background text-foreground focus:border-brand border-line text-small mt-1 w-full rounded border px-3 py-1.5 focus:outline-none"
             />
           </div>
 
-          <div>
-            <label className="text-muted block text-xs font-medium">
-              Adults
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="preview-adults">Adults</Label>
+            <Input
+              id="preview-adults"
               type="number"
               min="1"
               value={calcAdults}
               onChange={(e) => setCalcAdults(parseInt(e.target.value, 10) || 1)}
-              className="bg-background text-foreground focus:border-brand border-line text-small mt-1 w-full rounded border px-3 py-1.5 focus:outline-none"
             />
           </div>
 
-          <div>
-            <label className="text-muted block text-xs font-medium">
-              Children
-            </label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="preview-children">Children</Label>
+            <Input
+              id="preview-children"
               type="number"
               min="0"
               value={calcChildren}
               onChange={(e) =>
                 setCalcChildren(parseInt(e.target.value, 10) || 0)
               }
-              className="bg-background text-foreground focus:border-brand border-line text-small mt-1 w-full rounded border px-3 py-1.5 focus:outline-none"
             />
           </div>
 
-          <div className="flex flex-col justify-end">
-            <label className="text-foreground flex items-center gap-2 pb-2 text-xs font-medium">
-              <input
-                type="checkbox"
+          <div className="flex flex-col justify-end space-y-1.5">
+            <div className="flex items-center gap-2 pb-1.5">
+              <Checkbox
+                id="preview-extra-bed"
                 checked={calcExtraBed}
-                onChange={(e) => setCalcExtraBed(e.target.checked)}
-                className="text-brand focus:ring-brand size-4 rounded"
+                onCheckedChange={(checked) => setCalcExtraBed(!!checked)}
               />
-              Extra Bed
-            </label>
+              <Label
+                htmlFor="preview-extra-bed"
+                className="cursor-pointer text-xs"
+              >
+                Extra Bed
+              </Label>
+            </div>
             <Button
               type="button"
+              size="sm"
               onClick={handleCalculateStay}
               disabled={calculating}
+              loading={calculating}
               className="w-full"
             >
-              {calculating ? 'Calculating...' : 'Calculate Quote'}
+              Calculate Quote
             </Button>
           </div>
         </div>
 
         {calcError && (
-          <p className="text-small text-danger mt-4">{calcError}</p>
+          <p className="text-small text-destructive mt-4">{calcError}</p>
         )}
 
         {quoteResult && quoteResult.status === 'ok' && (
           <div className="rounded-card border-line bg-paper mt-6 border p-5">
             <h4 className="text-foreground font-semibold">Quote Breakdown</h4>
             <div className="text-small mt-4 space-y-2">
-              <div className="text-muted flex justify-between">
+              <div className="text-muted-foreground flex justify-between">
                 <span>
                   Room Subtotal ({quoteResult.breakdown.lines.length} nights)
                 </span>
@@ -292,7 +295,7 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
 
               {quoteResult.breakdown.extraBed &&
                 quoteResult.breakdown.extraBed.totalMinor > 0 && (
-                  <div className="text-muted flex justify-between">
+                  <div className="text-muted-foreground flex justify-between">
                     <span>Extra Bed</span>
                     <span className="text-foreground font-medium">
                       ₦{minorToNaira(quoteResult.breakdown.extraBed.totalMinor)}
@@ -301,7 +304,7 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
                 )}
 
               {quoteResult.breakdown.serviceChargeMinor > 0 && (
-                <div className="text-muted flex justify-between">
+                <div className="text-muted-foreground flex justify-between">
                   <span>Service Charge</span>
                   <span className="text-foreground font-medium">
                     ₦{minorToNaira(quoteResult.breakdown.serviceChargeMinor)}
@@ -309,7 +312,7 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
                 </div>
               )}
 
-              <div className="text-muted flex justify-between">
+              <div className="text-muted-foreground flex justify-between">
                 <span>Taxes & VAT</span>
                 <span className="text-foreground font-medium">
                   ₦{minorToNaira(quoteResult.breakdown.taxMinor)}

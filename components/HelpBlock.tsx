@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 import { telHref, whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 
-import { ButtonLink } from './ui/Button';
+import { ButtonLink } from './ui/button';
 
 /** "Not sure which room fits?" Full-width section by default; `compact` is a card that can fill a gap in the room grid. */
 interface HelpBlockProps {
@@ -55,12 +55,12 @@ export function HelpBlock({
     return (
       <aside
         aria-labelledby="help-compact"
-        className="rounded-card border-line bg-surface flex h-full flex-col justify-center border p-6"
+        className="rounded-card border-line bg-card flex h-full flex-col justify-center border p-6"
       >
         <h2 id="help-compact" className="font-display text-h3">
           Not sure which room fits?
         </h2>
-        <p className="text-muted mt-2 mb-6">
+        <p className="text-muted-foreground mt-2 mb-6">
           Tell us who is travelling and for how long, and we will suggest a
           room.
         </p>
@@ -72,7 +72,7 @@ export function HelpBlock({
   return (
     <section aria-labelledby="help-heading" className="section-y pb-0">
       <div className="container-page">
-        <div className="rounded-card bg-surface shadow-raised flex flex-col items-start justify-between gap-8 p-8 md:flex-row md:items-center md:p-10">
+        <div className="rounded-card bg-card shadow-raised flex flex-col items-start justify-between gap-8 p-8 md:flex-row md:items-center md:p-10">
           <div className="max-w-xl">
             <h2 id="help-heading" className="font-display text-h2">
               {title}

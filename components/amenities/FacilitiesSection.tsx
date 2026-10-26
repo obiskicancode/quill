@@ -9,7 +9,7 @@ import {
 import { getFacilities } from '@/lib/content/data';
 
 import { Badge } from '../rooms/AvailabilityBadge';
-import { ButtonLink } from '../ui/Button';
+import { ButtonLink } from '../ui/button';
 import { Photo } from '../ui/Photo';
 
 /**
@@ -44,7 +44,7 @@ export async function FacilitiesSection() {
                 <StaggerItem key={f.id} as="li" scale className="shrink-0">
                   <a
                     href={`#facility-${f.slug}`}
-                    className="border-ink/50 bg-surface text-small hover:bg-ink hover:text-paper inline-flex min-h-11 items-center rounded-full border px-4 font-semibold transition-colors"
+                    className="border-ink/50 bg-card text-small hover:bg-ink hover:text-paper inline-flex min-h-11 items-center rounded-full border px-4 font-semibold transition-colors"
                   >
                     {f.name}
                   </a>
@@ -78,7 +78,7 @@ export async function FacilitiesSection() {
                   </Badge>
                 </div>
                 {f.priceNote && (
-                  <p className="text-small text-accent-ink mt-1 font-semibold">
+                  <p className="text-small text-brand-ink mt-1 font-semibold">
                     {f.priceNote}
                   </p>
                 )}
@@ -89,7 +89,7 @@ export async function FacilitiesSection() {
                   {f.openingHours && (
                     <li className="flex items-center gap-2">
                       <Clock
-                        className="text-accent-ink size-4 shrink-0"
+                        className="text-brand-ink size-4 shrink-0"
                         aria-hidden
                       />
                       <span>
@@ -101,7 +101,7 @@ export async function FacilitiesSection() {
                   {f.capacity && (
                     <li className="flex items-center gap-2">
                       <Users
-                        className="text-accent-ink size-4 shrink-0"
+                        className="text-brand-ink size-4 shrink-0"
                         aria-hidden
                       />
                       <span>

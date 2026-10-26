@@ -9,7 +9,7 @@ import { useSite } from '@/providers/site.provider';
 import { HeroVideo } from './HeroVideo';
 import { TextReveal } from './motion/TextReveal';
 import { EASE_OUT, fadeUp, stagger } from './motion/variants';
-import { ButtonLink } from './ui/Button';
+import { ButtonLink } from './ui/button';
 import { Photo } from './ui/Photo';
 
 /** Full-width hero. The photo is the poster for the optional video; a dark gradient keeps the text above 4.5:1 on any image. */

@@ -6,7 +6,7 @@ import { formatRange } from '@/lib/rooms';
 import { telHref, whatsappHref } from '@/lib/site';
 
 import { Reveal } from '../motion/Reveal';
-import { ButtonLink } from '../ui/Button';
+import { ButtonLink } from '../ui/button';
 
 export async function AskCard({
   roomName,
@@ -24,7 +24,7 @@ export async function AskCard({
   return (
     <section
       aria-labelledby="ask-title"
-      className="rounded-card bg-surface shadow-raised p-6 md:p-8"
+      className="rounded-card bg-card shadow-raised p-6 md:p-8"
     >
       <Reveal>
         <h2 id="ask-title" className="font-display text-h3">

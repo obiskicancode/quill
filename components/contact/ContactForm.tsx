@@ -21,7 +21,19 @@ import { Banner } from '../checkout/CheckoutStates';
 import { Field, inputClass } from '../checkout/Field';
 import { Reveal } from '../motion';
 import { EASE_OUT } from '../motion/variants';
-import { Button, ButtonLink } from '../ui/Button';
+import { Button, ButtonLink } from '../ui/button';
+import { Checkbox } from '../ui/checkbox';
+import { FieldLegend, FieldSet } from '../ui/field';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import { Textarea } from '../ui/textarea';
 
 type FieldName =
   | 'name'
@@ -193,9 +205,9 @@ export function ContactForm({
   const successPanel = (
     <div
       role="status"
-      className="rounded-card border-line bg-surface shadow-raised space-y-5 border p-8"
+      className="rounded-card border-line bg-card shadow-raised space-y-5 border p-8"
     >
-      <CheckCircle2 className="text-accent-ink size-10" aria-hidden />
+      <CheckCircle2 className="text-brand-ink size-10" aria-hidden />
       <h2 id="form-title" className="font-display text-h2">
         Thanks, we&rsquo;ll reply within {responseHours}{' '}
         {responseHours === 1 ? 'hour' : 'hours'}
@@ -290,7 +302,7 @@ export function ContactForm({
                 <Reveal className="grid gap-5 md:grid-cols-2">
                   <Field id="contact-name" label="Name" error={errors.name}>
                     {(a) => (
-                      <input
+                      <Input
                         {...a}
                         {...bind('name')}
                         type="text"
@@ -301,7 +313,7 @@ export function ContactForm({
                   </Field>
                   <Field id="contact-email" label="Email" error={errors.email}>
                     {(a) => (
-                      <input
+                      <Input
                         {...a}
                         {...bind('email')}
                         type="email"
@@ -323,7 +335,7 @@ export function ContactForm({
                     hint="Add the country code if it is not a Nigerian number."
                   >
                     {(a) => (
-                      <input
+                      <Input
                         {...a}
                         {...bind('phone')}
                         type="tel"
@@ -339,17 +351,32 @@ export function ContactForm({
                     error={errors.topic}
                   >
                     {(a) => (
-                      <select
-                        {...a}
-                        {...bind('topic')}
-                        className={inputClass(errors.topic)}
+                      <Select
+                        items={CONTACT_TOPICS.map((t) => ({
+                          value: t,
+                          label: topicLabels[t],
+                        }))}
+                        value={values.topic}
+                        onValueChange={(val) => {
+                          if (val) set('topic', val);
+                        }}
+                        disabled={status === 'submitting'}
                       >
-                        {CONTACT_TOPICS.map((t) => (
-                          <option key={t} value={t}>
-                            {topicLabels[t]}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger
+                          id={a.id}
+                          aria-describedby={a['aria-describedby']}
+                          className={inputClass(errors.topic)}
+                        >
+                          <SelectValue placeholder="Select topic" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CONTACT_TOPICS.map((t) => (
+                            <SelectItem key={t} value={t}>
+                              {topicLabels[t]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     )}
                   </Field>
                 </Reveal>
@@ -360,7 +387,7 @@ export function ContactForm({
                   error={errors.subject}
                 >
                   {(a) => (
-                    <input
+                    <Input
                       {...a}
                       {...bind('subject')}
                       type="text"
@@ -371,10 +398,10 @@ export function ContactForm({
                 </Field>
 
                 {showStay && (
-                  <fieldset className="rounded-card border-line bg-surface space-y-5 border p-5">
-                    <legend className="px-2 font-semibold">
+                  <FieldSet className="rounded-card border-line bg-card space-y-5 border p-5">
+                    <FieldLegend className="px-2 font-semibold">
                       Your stay (optional)
-                    </legend>
+                    </FieldLegend>
                     <Reveal delay={0.1} className="grid gap-5 md:grid-cols-2">
                       <Field
                         id="contact-checkIn"
@@ -383,7 +410,7 @@ export function ContactForm({
                         error={errors.checkIn}
                       >
                         {(a) => (
-                          <input
+                          <Input
                             {...a}
                             {...bind('checkIn')}
                             type="date"
@@ -399,7 +426,7 @@ export function ContactForm({
                         error={errors.checkOut}
                       >
                         {(a) => (
-                          <input
+                          <Input
                             {...a}
                             {...bind('checkOut')}
                             type="date"
@@ -415,7 +442,7 @@ export function ContactForm({
                         error={errors.guests}
                       >
                         {(a) => (
-                          <input
+                          <Input
                             {...a}
                             {...bind('guests')}
                             type="text"
@@ -432,22 +459,40 @@ export function ContactForm({
                         error={errors.roomType}
                       >
                         {(a) => (
-                          <select
-                            {...a}
-                            {...bind('roomType')}
-                            className={inputClass(errors.roomType)}
+                          <Select
+                            items={[
+                              { value: '', label: 'No preference' },
+                              ...rooms.map((r) => ({
+                                value: r.slug,
+                                label: r.name,
+                              })),
+                            ]}
+                            value={values.roomType}
+                            onValueChange={(val) => {
+                              set('roomType', val ?? '');
+                            }}
+                            disabled={status === 'submitting'}
                           >
-                            <option value="">No preference</option>
-                            {rooms.map((r) => (
-                              <option key={r.slug} value={r.slug}>
-                                {r.name}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger
+                              id={a.id}
+                              aria-describedby={a['aria-describedby']}
+                              className={inputClass(errors.roomType)}
+                            >
+                              <SelectValue placeholder="No preference" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">No preference</SelectItem>
+                              {rooms.map((r) => (
+                                <SelectItem key={r.slug} value={r.slug}>
+                                  {r.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         )}
                       </Field>
                     </Reveal>
-                  </fieldset>
+                  </FieldSet>
                 )}
 
                 <Field
@@ -457,7 +502,7 @@ export function ContactForm({
                   hint={`${values.message.length.toLocaleString('en-NG')} / ${MAX_MESSAGE.toLocaleString('en-NG')} characters`}
                 >
                   {(a) => (
-                    <textarea
+                    <Textarea
                       {...a}
                       {...bind('message')}
                       rows={6}
@@ -473,51 +518,54 @@ export function ContactForm({
                   aria-hidden
                   className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
                 >
-                  <label>
-                    Website
-                    <input
-                      type="text"
-                      name="website"
-                      tabIndex={-1}
-                      autoComplete="off"
-                      value={website}
-                      onChange={(e) => setWebsite(e.target.value)}
-                    />
-                  </label>
+                  <Label htmlFor="contact-website-honeypot">Website</Label>
+                  <Input
+                    id="contact-website-honeypot"
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                  />
                 </div>
 
                 <div>
-                  <label className="flex cursor-pointer items-start gap-3 py-1">
-                    <input
+                  <div className="flex items-start gap-3 py-1">
+                    <Checkbox
                       id="contact-consent"
-                      type="checkbox"
                       checked={values.consent}
                       disabled={status === 'submitting'}
                       aria-invalid={errors.consent ? true : undefined}
                       aria-describedby={
                         errors.consent ? 'contact-consent-error' : undefined
                       }
-                      onChange={(e) => set('consent', e.target.checked)}
-                      className="accent-ink mt-0.5 size-6 shrink-0"
+                      onCheckedChange={(checked) =>
+                        set('consent', checked === true)
+                      }
+                      className="mt-0.5"
                     />
-                    <span className="text-small">
+                    <Label
+                      htmlFor="contact-consent"
+                      className="text-small cursor-pointer leading-relaxed font-normal"
+                    >
                       I agree to the{' '}
                       <Link
                         href="/policies/privacy"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="decoration-accent font-semibold underline decoration-2 underline-offset-4"
+                        className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
                       >
                         Privacy Policy
                         <span className="sr-only"> (opens in a new tab)</span>
                       </Link>{' '}
                       so the hotel can reply to me.
-                    </span>
-                  </label>
+                    </Label>
+                  </div>
                   {errors.consent && (
                     <p
                       id="contact-consent-error"
-                      className="text-small text-danger mt-1.5 font-medium"
+                      className="text-small text-destructive mt-1.5 font-medium"
                     >
                       {errors.consent}
                     </p>

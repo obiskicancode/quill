@@ -11,7 +11,7 @@ export async function RoomAmenitiesSummary() {
   return (
     <section
       aria-labelledby="room-amenities-title"
-      className="section-y bg-surface"
+      className="section-y bg-card"
     >
       <div className="container-page">
         <div className="mb-10 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">

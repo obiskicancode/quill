@@ -7,6 +7,7 @@ import type { GuestReservation } from '@/types/booking.types';
 import { formatMinor } from '@/types/stay.types';
 
 import { StayFacts } from '../checkout/SummaryCard';
+import { Button } from '../ui/button';
 
 /** The stay as booked: room, dates and times, guests, extras, requests and the guest's contact details (masked until verified). */
 /** Pass `contact` (full details) on the manage page: they stay masked until the guest chooses to show them. */
@@ -42,7 +43,7 @@ export function StayDetailsCard({
   return (
     <section
       aria-labelledby="stay-title"
-      className="rounded-card border-line bg-surface shadow-raised space-y-5 border p-5 md:p-6"
+      className="rounded-card border-line bg-card shadow-raised space-y-5 border p-5 md:p-6"
     >
       <h2 id="stay-title" className="sr-only">
         Your stay
@@ -61,7 +62,9 @@ export function StayDetailsCard({
             {extras.map((e) => (
               <li key={e.id} className="flex justify-between gap-4">
                 <span>{e.name}</span>
-                <span className="text-muted tabular-nums">{e.detail}</span>
+                <span className="text-muted-foreground tabular-nums">
+                  {e.detail}
+                </span>
               </li>
             ))}
           </ul>
@@ -81,35 +84,38 @@ export function StayDetailsCard({
         <h3 className="text-small font-semibold">Guest</h3>
         <dl className="text-small mt-2 space-y-1">
           <div className="flex justify-between gap-4">
-            <dt className="text-muted">Name</dt>
+            <dt className="text-muted-foreground">Name</dt>
             <dd className="font-semibold">{v.guest.fullName}</dd>
           </div>
           <div className="flex justify-between gap-4">
-            <dt className="text-muted">Email</dt>
+            <dt className="text-muted-foreground">Email</dt>
             <dd className="break-all">{email}</dd>
           </div>
           <div className="flex justify-between gap-4">
-            <dt className="text-muted">Phone</dt>
+            <dt className="text-muted-foreground">Phone</dt>
             <dd className="tabular-nums">{phone}</dd>
           </div>
         </dl>
         {contact && (
-          <button
+          <Button
             type="button"
+            variant="link"
             aria-pressed={revealed}
             onClick={() => setRevealed((r) => !r)}
-            className="decoration-accent mt-2 inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-2 underline-offset-4 print:hidden"
+            className="decoration-brand mt-2 inline-flex h-auto min-h-11 items-center gap-2 p-0 font-semibold underline decoration-2 underline-offset-4 print:hidden"
+            icon={
+              revealed ? (
+                <EyeOff className="size-4" aria-hidden />
+              ) : (
+                <Eye className="size-4" aria-hidden />
+              )
+            }
           >
-            {revealed ? (
-              <EyeOff className="size-4" aria-hidden />
-            ) : (
-              <Eye className="size-4" aria-hidden />
-            )}
             {revealed ? 'Hide contact details' : 'Show contact details'}
-          </button>
+          </Button>
         )}
         {!v.verified && !contact && (
-          <p className="text-caption text-muted mt-2">
+          <p className="text-caption text-muted-foreground mt-2">
             Contact details are partly hidden for your privacy. Verify your
             booking to see them in full.
           </p>

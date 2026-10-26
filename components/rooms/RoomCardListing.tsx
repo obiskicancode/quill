@@ -16,7 +16,7 @@ import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 
 import { Carousel } from '../Carousel';
-import { Button, ButtonLink } from '../ui/Button';
+import { Button, ButtonLink } from '../ui/button';
 import { Photo } from '../ui/Photo';
 import { TextLink } from '../ui/TextLink';
 import { AvailabilityBadge, Badge } from './AvailabilityBadge';
@@ -148,7 +148,7 @@ export function RoomCardListing({
     <article
       aria-labelledby={nameId}
       className={`rounded-card shadow-raised focus-within:shadow-float hover:shadow-float flex h-full flex-col overflow-hidden border transition-shadow duration-200 ${
-        soldOut ? 'border-line bg-paper' : 'border-line bg-surface'
+        soldOut ? 'border-line bg-paper' : 'border-line bg-card'
       }`}
     >
       <div className={`relative ${soldOut ? 'grayscale' : ''}`}>
@@ -193,26 +193,20 @@ export function RoomCardListing({
 
         <ul className="text-small space-y-2">
           <li className="flex items-center gap-2">
-            <Ruler className="text-accent-ink size-4 shrink-0" aria-hidden />
+            <Ruler className="text-brand-ink size-4 shrink-0" aria-hidden />
             {room.sizeSqm} sqm
           </li>
           <li className="flex items-center gap-2">
-            <BedDouble
-              className="text-accent-ink size-4 shrink-0"
-              aria-hidden
-            />
+            <BedDouble className="text-brand-ink size-4 shrink-0" aria-hidden />
             {room.bedConfig}
           </li>
           <li className="flex items-center gap-2">
-            <Users className="text-accent-ink size-4 shrink-0" aria-hidden />
+            <Users className="text-brand-ink size-4 shrink-0" aria-hidden />
             Up to {room.maxAdults} {room.maxAdults === 1 ? 'adult' : 'adults'},{' '}
             {room.maxChildren} {room.maxChildren === 1 ? 'child' : 'children'}
           </li>
           <li className="flex items-center gap-2">
-            <BedSingle
-              className="text-accent-ink size-4 shrink-0"
-              aria-hidden
-            />
+            <BedSingle className="text-brand-ink size-4 shrink-0" aria-hidden />
             {room.extraBed.available
               ? room.extraBed.feeNgn === 0
                 ? 'Extra bed: free'
@@ -227,7 +221,7 @@ export function RoomCardListing({
         >
           {shown.map((key) => (
             <li key={key} className="inline-flex items-center gap-1.5">
-              <RoomAmenityIcon name={key} className="text-accent-ink size-4" />
+              <RoomAmenityIcon name={key} className="text-brand-ink size-4" />
               {roomAmenityLabels[key]}
             </li>
           ))}
@@ -247,7 +241,7 @@ export function RoomCardListing({
               <p className="font-semibold">Not available for these dates</p>
               {live.status === 'sold-out' && live.suggestions.length > 0 ? (
                 <>
-                  <p className="text-small text-muted mt-1">
+                  <p className="text-small text-muted-foreground mt-1">
                     Nearby dates that are free:
                   </p>
                   <ul className="mt-3 flex flex-wrap gap-2">
@@ -270,7 +264,7 @@ export function RoomCardListing({
                   </ul>
                 </>
               ) : (
-                <p className="text-small text-muted mt-1">
+                <p className="text-small text-muted-foreground mt-1">
                   No nearby dates are free. Message us and we will look for
                   options.
                 </p>
@@ -279,7 +273,7 @@ export function RoomCardListing({
           ) : overCapacity && live.status === 'over-capacity' ? (
             <div className="min-h-[5.5rem]">
               <p className="font-semibold">Too small for your group</p>
-              <p className="text-small text-muted mt-1">
+              <p className="text-small text-muted-foreground mt-1">
                 This room sleeps up to {live.maxAdults} adults and{' '}
                 {live.maxChildren} children. Ask us about two rooms or a larger
                 apartment.
@@ -290,7 +284,7 @@ export function RoomCardListing({
               <p className="font-semibold">
                 Minimum stay: {live.minNights} nights
               </p>
-              <p className="text-small text-muted mt-1">
+              <p className="text-small text-muted-foreground mt-1">
                 Move your check-out to {formatShort(live.suggestedCheckOut)} to
                 book this room.
               </p>

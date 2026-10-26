@@ -1,6 +1,20 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ReservationsPaginationProps {
   page: number;
@@ -27,9 +41,9 @@ export function ReservationsPagination({
   return (
     <div
       aria-label="Pagination Navigation"
-      className="rounded-card border-line bg-surface shadow-raised flex flex-col gap-3 border p-3.5 sm:flex-row sm:items-center sm:justify-between"
+      className="rounded-card border-line bg-card shadow-raised flex flex-col gap-3 border p-3.5 sm:flex-row sm:items-center sm:justify-between"
     >
-      <div className="text-small text-muted flex items-center gap-3">
+      <div className="text-small text-muted-foreground flex items-center gap-3">
         <span>
           Showing <strong className="text-ink">{start}</strong> to{' '}
           <strong className="text-ink">{end}</strong> of{' '}
@@ -37,49 +51,55 @@ export function ReservationsPagination({
         </span>
 
         <div className="border-line flex items-center gap-1.5 border-l pl-2">
-          <label htmlFor="pageSizeSelect" className="text-caption font-medium">
+          <Label htmlFor="pageSizeSelect" className="text-caption font-medium">
             Per page:
-          </label>
-          <select
-            id="pageSizeSelect"
-            value={pageSize}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="rounded-control border-line bg-paper text-caption text-ink focus:border-ink h-8 border px-2 font-semibold focus:outline-none"
+          </Label>
+          <Select
+            items={[
+              { value: '25', label: '25' },
+              { value: '50', label: '50' },
+              { value: '100', label: '100' },
+            ]}
+            value={String(pageSize)}
+            onValueChange={(val) => {
+              if (val) onPageSizeChange(Number(val));
+            }}
           >
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
+            <SelectTrigger id="pageSizeSelect" size="sm" className="w-17.5">
+              <SelectValue placeholder="25" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="25">25</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={() => onPageChange(page - 1)}
-          disabled={page <= 1}
-          aria-label="Go to previous page"
-          className="rounded-control border-line text-small text-ink hover:bg-paper inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 border px-3 font-semibold transition-colors disabled:pointer-events-none disabled:opacity-40"
-        >
-          <ChevronLeft className="size-4" aria-hidden="true" />
-          <span className="hidden sm:inline">Previous</span>
-        </button>
+      <Pagination className="mx-0 w-auto justify-end">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={() => onPageChange(page - 1)}
+              disabled={page <= 1}
+            />
+          </PaginationItem>
 
-        <span className="text-caption text-muted px-2 font-semibold">
-          Page {page} of {totalPages}
-        </span>
+          <PaginationItem>
+            <span className="text-caption text-muted-foreground px-2 font-semibold">
+              Page {page} of {totalPages}
+            </span>
+          </PaginationItem>
 
-        <button
-          type="button"
-          onClick={() => onPageChange(page + 1)}
-          disabled={page >= totalPages}
-          aria-label="Go to next page"
-          className="rounded-control border-line text-small text-ink hover:bg-paper inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 border px-3 font-semibold transition-colors disabled:pointer-events-none disabled:opacity-40"
-        >
-          <span className="hidden sm:inline">Next</span>
-          <ChevronRight className="size-4" aria-hidden="true" />
-        </button>
-      </div>
+          <PaginationItem>
+            <PaginationNext
+              onClick={() => onPageChange(page + 1)}
+              disabled={page >= totalPages}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { Component, useState, type ReactNode } from 'react';
 
 import { Banner } from '../checkout/CheckoutStates';
 import { Reveal } from '../motion';
-import { Button } from '../ui/Button';
+import { Button } from '../ui/button';
 
 interface BoundaryProps {
   label: string;

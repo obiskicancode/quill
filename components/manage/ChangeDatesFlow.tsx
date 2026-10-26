@@ -23,7 +23,7 @@ import { Banner } from '../checkout/CheckoutStates';
 import { DatePicker, type DateRange } from '../DatePicker';
 import { EASE_OUT } from '../motion/variants';
 import { PriceBreakdown } from '../room-detail/PriceBreakdown';
-import { Button, ButtonLink } from '../ui/Button';
+import { Button, ButtonLink } from '../ui/button';
 import { ChangePayment } from './ChangePayment';
 import { FlowDialog } from './FlowDialog';
 
@@ -244,7 +244,7 @@ export function ChangeDatesFlow({
       <div className="space-y-5">
         <div role="status" className="flex items-start gap-4">
           <CheckCircle2
-            className="text-accent-ink size-8 shrink-0"
+            className="text-brand-ink size-8 shrink-0"
             aria-hidden
           />
           <div>
@@ -263,7 +263,7 @@ export function ChangeDatesFlow({
                 {refund.title}. {refund.detail}
               </p>
             )}
-            <p className="text-small text-muted mt-2">
+            <p className="text-small text-muted-foreground mt-2">
               We emailed your updated booking to {v.guest.email}.
             </p>
           </div>
@@ -292,7 +292,7 @@ export function ChangeDatesFlow({
           {v.manage?.allowed.changesRemaining ?? 0} more{' '}
           {v.manage?.allowed.changesRemaining === 1 ? 'time' : 'times'}.
         </p>
-        <div className="rounded-card border-line bg-surface max-w-sm border p-3">
+        <div className="rounded-card border-line bg-card max-w-sm border p-3">
           <DatePicker
             value={range}
             onChange={(r) => {
@@ -350,7 +350,9 @@ export function ChangeDatesFlow({
               {!quoting && quote?.status === 'ok' && (
                 <div className="space-y-4">
                   <div className="rounded-card border-ink border-2 p-4">
-                    <p className="text-small text-muted">New dates</p>
+                    <p className="text-small text-muted-foreground">
+                      New dates
+                    </p>
                     <p className="font-semibold">
                       {formatRange(quote.checkIn, quote.checkOut)} (
                       {quote.nights} {quote.nights === 1 ? 'night' : 'nights'})
@@ -361,7 +363,7 @@ export function ChangeDatesFlow({
                     <p className="text-small text-ink/85 mt-1">
                       {describe(quote.difference).detail}
                     </p>
-                    <p className="text-small text-muted mt-3">
+                    <p className="text-small text-muted-foreground mt-3">
                       New total {formatMinor(quote.newTotalMinor)}, was{' '}
                       {formatMinor(quote.oldTotalMinor)}.
                     </p>
@@ -452,23 +454,23 @@ export function ChangeDatesFlow({
                     <ul className="grid gap-3 sm:grid-cols-3">
                       {quote.suggestions.map((s) => (
                         <li key={s.checkIn}>
-                          <button
-                            type="button"
+                          <Button
+                            variant="outline"
+                            className="h-auto min-h-14 w-full flex-col items-start justify-center px-4 text-left font-normal"
                             onClick={() =>
                               setRange({
                                 checkIn: s.checkIn,
                                 checkOut: s.checkOut,
                               })
                             }
-                            className="rounded-card border-ink/60 bg-surface hover:bg-ink hover:text-paper flex min-h-14 w-full flex-col items-start justify-center border px-4 text-left"
                           >
                             <span className="font-semibold">
                               {formatRange(s.checkIn, s.checkOut)}
                             </span>
-                            <span className="text-small tabular-nums">
+                            <span className="text-small text-muted-foreground tabular-nums">
                               {formatMinor(s.totalMinor)} total
                             </span>
-                          </button>
+                          </Button>
                         </li>
                       ))}
                     </ul>

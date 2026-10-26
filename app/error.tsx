@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/button';
 
 export default function Error({
   error,

@@ -17,7 +17,7 @@ export function Breadcrumb({
   return (
     <nav aria-label="Breadcrumb">
       <ol
-        className={`text-small flex flex-wrap items-center gap-x-2 ${dark ? 'text-white/85' : 'text-muted'}`}
+        className={`text-small flex flex-wrap items-center gap-x-2 ${dark ? 'text-white/85' : 'text-muted-foreground'}`}
       >
         {items.map((item, i) => {
           const last = i === items.length - 1;

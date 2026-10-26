@@ -9,7 +9,7 @@ import type { SiteConfig } from '@/types/site.types';
 
 import { Reveal } from './motion/Reveal';
 import { scaleIn } from './motion/variants';
-import { Button, ButtonLink } from './ui/Button';
+import { Button, ButtonLink } from './ui/button';
 import { Photo } from './ui/Photo';
 
 export interface MapCardData {
@@ -84,7 +84,7 @@ export function MapCard({
           </h2>
           <address className="mt-6 flex gap-3 not-italic">
             <MapPin
-              className="text-accent-ink mt-1 size-5 shrink-0"
+              className="text-brand-ink mt-1 size-5 shrink-0"
               aria-hidden
             />
             <span>
@@ -98,7 +98,7 @@ export function MapCard({
           {d.reception && (
             <p className="mt-4 flex gap-3">
               <Clock
-                className="text-accent-ink mt-1 size-5 shrink-0"
+                className="text-brand-ink mt-1 size-5 shrink-0"
                 aria-hidden
               />
               <span>
@@ -119,7 +119,7 @@ export function MapCard({
           {d.landmarks.length > 0 && (
             <ul
               aria-label="Nearby landmarks"
-              className="text-small text-muted mt-4 space-y-1"
+              className="text-small text-muted-foreground mt-4 space-y-1"
             >
               {d.landmarks.slice(0, 4).map((l) => (
                 <li key={l.name}>

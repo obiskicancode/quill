@@ -20,7 +20,7 @@ export function RoomReviews({ reviews }: { reviews: RoomTestimonial[] }) {
       >
         {reviews.map((r) => (
           <StaggerItem as="li" key={r.id} className="h-full">
-            <figure className="rounded-card border-line bg-surface h-full border p-5">
+            <figure className="rounded-card border-line bg-card h-full border p-5">
               <p
                 role="img"
                 aria-label={`Rated ${r.rating} out of 5`}
@@ -29,7 +29,7 @@ export function RoomReviews({ reviews }: { reviews: RoomTestimonial[] }) {
                 {Array.from({ length: 5 }, (_, i) => (
                   <Star
                     key={i}
-                    className={`size-5 ${i < r.rating ? 'fill-accent text-accent-ink' : 'text-ink/25'}`}
+                    className={`size-5 ${i < r.rating ? 'fill-accent text-brand-ink' : 'text-ink/25'}`}
                     aria-hidden
                   />
                 ))}
@@ -39,7 +39,7 @@ export function RoomReviews({ reviews }: { reviews: RoomTestimonial[] }) {
               </blockquote>
               <figcaption className="text-small mt-3">
                 <span className="font-semibold">{r.guestName}</span>
-                <span className="text-muted">, {r.stayType}</span>
+                <span className="text-muted-foreground">, {r.stayType}</span>
               </figcaption>
             </figure>
           </StaggerItem>

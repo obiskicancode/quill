@@ -1,7 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { format, parseISO } from 'date-fns';
 import {
+  CalendarDays,
   Check,
   ChevronDown,
   Filter,
@@ -11,7 +13,30 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import type {
   BookingSource,
   PaymentState,
@@ -43,7 +68,7 @@ const PAYMENT_OPTIONS: { id: PaymentState; label: string }[] = [
   { id: 'refunded', label: 'Refunded' },
 ];
 
-const PRESET_OPTIONS: { id: QuickFilter; label: string }[] = [
+const FILTER_OPTIONS: { id: QuickFilter; label: string }[] = [
   { id: 'arriving_today', label: 'Arriving today' },
   { id: 'departing_today', label: 'Departing today' },
   { id: 'in_house', label: 'In house' },
@@ -164,10 +189,10 @@ export function ReservationsFilterBar({
         {/* Search Box */}
         <div className="relative min-w-0 flex-1">
           <Search
-            className="text-muted pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
+            className="text-muted-foreground pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
             aria-hidden="true"
           />
-          <input
+          <Input
             key={currentFilters.q ?? ''}
             type="search"
             defaultValue={searchValue}
@@ -175,49 +200,49 @@ export function ReservationsFilterBar({
             onKeyDown={handleSearchKeyDown}
             placeholder="Search reference, guest name, email, phone, room #…"
             aria-label="Search reservations"
-            className="rounded-control border-line bg-surface text-small text-ink placeholder:text-muted focus:border-ink h-11 w-full border pr-10 pl-10 focus:outline-none"
+            className="h-11 pr-10 pl-10 text-sm"
           />
           {searchValue && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-xs"
               onClick={() => {
                 setSearchValue('');
                 onFilterChange({ q: undefined });
               }}
               aria-label="Clear search query"
-              className="rounded-control text-muted hover:text-ink absolute top-1/2 right-3 -translate-y-1/2 p-1 focus:outline-none"
+              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
             >
               <X className="size-4" aria-hidden="true" />
-            </button>
+            </Button>
           )}
         </div>
 
         {/* Filter Toggle Buttons */}
         <div className="flex items-center gap-2">
           {/* Mobile bottom sheet trigger */}
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => setMobileSheetOpen(true)}
             aria-label="Open filter options"
-            className="rounded-control border-line bg-surface text-small text-ink inline-flex min-h-11 items-center gap-2 border px-3.5 font-semibold sm:hidden"
+            className="h-11 gap-2 sm:hidden"
           >
             <Filter className="size-4" aria-hidden="true" />
             <span>Filters</span>
             {hasActiveFilters && (
-              <span className="bg-accent size-2 rounded-full" />
+              <span className="bg-primary size-2 rounded-full" />
             )}
-          </button>
+          </Button>
 
           {/* Desktop expandable filter toggle */}
-          <button
+          <Button
             type="button"
+            variant={filtersOpen || hasActiveFilters ? 'default' : 'outline'}
             onClick={() => setFiltersOpen(!filtersOpen)}
             aria-expanded={filtersOpen}
-            className={`rounded-control text-small hidden min-h-11 items-center gap-2 border px-3.5 font-semibold transition-colors sm:inline-flex ${
-              filtersOpen || hasActiveFilters
-                ? 'border-ink bg-ink text-paper'
-                : 'border-line bg-surface text-ink hover:bg-paper'
-            }`}
+            className="hidden h-11 items-center gap-2 sm:inline-flex"
           >
             <SlidersHorizontal className="size-4" aria-hidden="true" />
             <span>All filters</span>
@@ -225,7 +250,7 @@ export function ReservationsFilterBar({
               className={`size-3.5 transition-transform ${filtersOpen ? 'rotate-180' : ''}`}
               aria-hidden="true"
             />
-          </button>
+          </Button>
 
           {hasActiveFilters && (
             <Button
@@ -242,53 +267,49 @@ export function ReservationsFilterBar({
 
       {/* Quick Filters Bar */}
       <div className="flex flex-wrap items-center gap-1.5 pt-1">
-        <span className="text-caption text-muted mr-1 font-semibold tracking-wider uppercase">
+        <span className="text-caption text-muted-foreground mr-1 font-semibold tracking-wider uppercase">
           Filters:
         </span>
-        {PRESET_OPTIONS.map((p) => {
+        {FILTER_OPTIONS.map((p) => {
           const active = currentFilters.filter === p.id;
           return (
-            <button
+            <Button
               key={p.id}
               type="button"
+              variant={active ? 'default' : 'outline'}
+              size="xs"
               onClick={() => handleFilterToggle(p.id)}
-              className={`rounded-control text-caption min-h-8 border px-2.5 font-semibold transition-all ${
-                active
-                  ? 'border-accent bg-accent text-ink shadow-raised'
-                  : 'border-line bg-surface text-muted hover:border-ink/40 hover:text-ink'
-              }`}
+              className="h-8"
             >
               {p.label}
-            </button>
+            </Button>
           );
         })}
       </div>
 
       {/* Desktop Detailed Filter Panel (Expandable) */}
       {filtersOpen && (
-        <div className="rounded-card border-line bg-surface shadow-raised hidden border p-4 sm:block">
+        <div className="rounded-card border-line bg-card shadow-raised hidden border p-4 sm:block">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {/* Status multi-select */}
             <div>
-              <p className="text-caption text-muted mb-2 font-semibold tracking-wider uppercase">
+              <p className="text-caption text-muted-foreground mb-2 font-semibold tracking-wider uppercase">
                 Status
               </p>
               <div className="max-h-44 space-y-1.5 overflow-y-auto pr-1">
                 {STATUS_OPTIONS.map((s) => {
                   const checked = (currentFilters.status ?? []).includes(s.id);
                   return (
-                    <label
+                    <Label
                       key={s.id}
                       className="text-small text-ink flex cursor-pointer items-center gap-2"
                     >
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={checked}
-                        onChange={() => handleStatusToggle(s.id)}
-                        className="border-line text-accent focus:ring-accent size-4 rounded"
+                        onCheckedChange={() => handleStatusToggle(s.id)}
                       />
                       <span>{s.label}</span>
-                    </label>
+                    </Label>
                   );
                 })}
               </div>
@@ -296,124 +317,230 @@ export function ReservationsFilterBar({
 
             {/* Date field & range */}
             <div>
-              <p className="text-caption text-muted mb-2 font-semibold tracking-wider uppercase">
+              <p className="text-caption text-muted-foreground mb-2 font-semibold tracking-wider uppercase">
                 Date Filter
               </p>
               <div className="space-y-2">
-                <select
+                <Select
+                  items={[
+                    { value: 'check_in', label: 'Check-in date' },
+                    { value: 'check_out', label: 'Check-out date' },
+                    { value: 'created_at', label: 'Booked on date' },
+                  ]}
                   value={currentFilters.dateField ?? 'check_in'}
-                  onChange={(e) =>
-                    onFilterChange({ dateField: e.target.value })
-                  }
-                  className="rounded-control border-line bg-paper text-small text-ink focus:border-ink h-9 w-full border px-2 focus:outline-none"
+                  onValueChange={(val) => {
+                    if (val) onFilterChange({ dateField: val });
+                  }}
                 >
-                  <option value="check_in">Check-in date</option>
-                  <option value="check_out">Check-out date</option>
-                  <option value="created_at">Booked on date</option>
-                </select>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="date"
-                    value={currentFilters.from ?? ''}
-                    onChange={(e) =>
-                      onFilterChange({ from: e.target.value || undefined })
+                  <SelectTrigger aria-label="Date field" className="w-full">
+                    <SelectValue placeholder="Date field" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="check_in">Check-in date</SelectItem>
+                    <SelectItem value="check_out">Check-out date</SelectItem>
+                    <SelectItem value="created_at">Booked on date</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Popover>
+                  <PopoverTrigger
+                    render={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-full justify-start gap-2 text-left text-xs font-normal"
+                      />
                     }
-                    className="rounded-control border-line bg-paper text-caption text-ink focus:border-ink h-8 w-full border px-1.5 focus:outline-none"
-                  />
-                  <span className="text-caption text-muted">to</span>
-                  <input
-                    type="date"
-                    value={currentFilters.to ?? ''}
-                    onChange={(e) =>
-                      onFilterChange({ to: e.target.value || undefined })
-                    }
-                    className="rounded-control border-line bg-paper text-caption text-ink focus:border-ink h-8 w-full border px-1.5 focus:outline-none"
-                  />
-                </div>
+                  >
+                    <CalendarDays className="text-muted-foreground size-3.5 shrink-0" />
+                    <span className="truncate">
+                      {currentFilters.from
+                        ? currentFilters.to
+                          ? `${format(parseISO(currentFilters.from), 'LLL dd, y')} - ${format(parseISO(currentFilters.to), 'LLL dd, y')}`
+                          : `From ${format(parseISO(currentFilters.from), 'LLL dd, y')}`
+                        : 'Select dates'}
+                    </span>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-auto p-0">
+                    <Calendar
+                      mode="range"
+                      selected={{
+                        from: currentFilters.from
+                          ? parseISO(currentFilters.from)
+                          : undefined,
+                        to: currentFilters.to
+                          ? parseISO(currentFilters.to)
+                          : undefined,
+                      }}
+                      onSelect={(range) => {
+                        onFilterChange({
+                          from: range?.from
+                            ? format(range.from, 'yyyy-MM-dd')
+                            : undefined,
+                          to: range?.to
+                            ? format(range.to, 'yyyy-MM-dd')
+                            : undefined,
+                        });
+                      }}
+                      numberOfMonths={1}
+                    />
+                    {(currentFilters.from || currentFilters.to) && (
+                      <div className="border-line flex items-center justify-between border-t p-2">
+                        <span className="text-caption text-muted-foreground">
+                          Date range
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={() =>
+                            onFilterChange({ from: undefined, to: undefined })
+                          }
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
             {/* Room Type & Room */}
             <div>
-              <p className="text-caption text-muted mb-2 font-semibold tracking-wider uppercase">
+              <p className="text-caption text-muted-foreground mb-2 font-semibold tracking-wider uppercase">
                 Room Inventory
               </p>
               <div className="space-y-2">
-                <select
-                  value={currentFilters.roomTypeId ?? ''}
-                  onChange={(e) =>
-                    onFilterChange({ roomTypeId: e.target.value || undefined })
+                <Select
+                  items={[
+                    { value: 'all', label: 'All room types' },
+                    ...options.roomTypes.map((rt) => ({
+                      value: rt.id,
+                      label: rt.name,
+                    })),
+                  ]}
+                  value={currentFilters.roomTypeId ?? 'all'}
+                  onValueChange={(val) =>
+                    onFilterChange({
+                      roomTypeId: val === 'all' || !val ? undefined : val,
+                    })
                   }
-                  className="rounded-control border-line bg-paper text-small text-ink focus:border-ink h-9 w-full border px-2 focus:outline-none"
                 >
-                  <option value="">All room types</option>
-                  {options.roomTypes.map((rt) => (
-                    <option key={rt.id} value={rt.id}>
-                      {rt.name}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  value={currentFilters.roomId ?? ''}
-                  onChange={(e) =>
-                    onFilterChange({ roomId: e.target.value || undefined })
-                  }
-                  className="rounded-control border-line bg-paper text-small text-ink focus:border-ink h-9 w-full border px-2 focus:outline-none"
-                >
-                  <option value="">All room numbers</option>
-                  {options.rooms
-                    .filter(
-                      (r) =>
-                        !currentFilters.roomTypeId ||
-                        r.roomTypeId === currentFilters.roomTypeId,
-                    )
-                    .map((rm) => (
-                      <option key={rm.id} value={rm.id}>
-                        Room #{rm.roomNumber}
-                      </option>
+                  <SelectTrigger aria-label="Room type" className="w-full">
+                    <SelectValue placeholder="All room types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All room types</SelectItem>
+                    {options.roomTypes.map((rt) => (
+                      <SelectItem key={rt.id} value={rt.id}>
+                        {rt.name}
+                      </SelectItem>
                     ))}
-                </select>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  items={[
+                    { value: 'all', label: 'All room numbers' },
+                    ...options.rooms
+                      .filter(
+                        (r) =>
+                          !currentFilters.roomTypeId ||
+                          r.roomTypeId === currentFilters.roomTypeId,
+                      )
+                      .map((rm) => ({
+                        value: rm.id,
+                        label: `Room #${rm.roomNumber}`,
+                      })),
+                  ]}
+                  value={currentFilters.roomId ?? 'all'}
+                  onValueChange={(val) =>
+                    onFilterChange({
+                      roomId: val === 'all' || !val ? undefined : val,
+                    })
+                  }
+                >
+                  <SelectTrigger aria-label="Room number" className="w-full">
+                    <SelectValue placeholder="All room numbers" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All room numbers</SelectItem>
+                    {options.rooms
+                      .filter(
+                        (r) =>
+                          !currentFilters.roomTypeId ||
+                          r.roomTypeId === currentFilters.roomTypeId,
+                      )
+                      .map((rm) => (
+                        <SelectItem key={rm.id} value={rm.id}>
+                          Room #{rm.roomNumber}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             {/* Source & Payment State */}
             <div>
-              <p className="text-caption text-muted mb-2 font-semibold tracking-wider uppercase">
+              <p className="text-caption text-muted-foreground mb-2 font-semibold tracking-wider uppercase">
                 Payment & Source
               </p>
               <div className="space-y-2">
-                <select
-                  value={currentFilters.paymentState ?? ''}
-                  onChange={(e) =>
+                <Select
+                  items={[
+                    { value: 'all', label: 'All payment states' },
+                    ...PAYMENT_OPTIONS.map((p) => ({
+                      value: p.id,
+                      label: p.label,
+                    })),
+                  ]}
+                  value={currentFilters.paymentState ?? 'all'}
+                  onValueChange={(val) =>
                     onFilterChange({
-                      paymentState: e.target.value || undefined,
+                      paymentState: val === 'all' || !val ? undefined : val,
                     })
                   }
-                  className="rounded-control border-line bg-paper text-small text-ink focus:border-ink h-9 w-full border px-2 focus:outline-none"
                 >
-                  <option value="">All payment states</option>
-                  {PAYMENT_OPTIONS.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger aria-label="Payment state" className="w-full">
+                    <SelectValue placeholder="All payment states" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All payment states</SelectItem>
+                    {PAYMENT_OPTIONS.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                <select
-                  value={currentFilters.source ?? ''}
-                  onChange={(e) =>
-                    onFilterChange({ source: e.target.value || undefined })
+                <Select
+                  items={[
+                    { value: 'all', label: 'All booking sources' },
+                    ...SOURCE_OPTIONS.map((src) => ({
+                      value: src.id,
+                      label: src.label,
+                    })),
+                  ]}
+                  value={currentFilters.source ?? 'all'}
+                  onValueChange={(val) =>
+                    onFilterChange({
+                      source: val === 'all' || !val ? undefined : val,
+                    })
                   }
-                  className="rounded-control border-line bg-paper text-small text-ink focus:border-ink h-9 w-full border px-2 focus:outline-none"
                 >
-                  <option value="">All booking sources</option>
-                  {SOURCE_OPTIONS.map((src) => (
-                    <option key={src.id} value={src.id}>
-                      {src.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger aria-label="Booking source" className="w-full">
+                    <SelectValue placeholder="All booking sources" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All booking sources</SelectItem>
+                    {SOURCE_OPTIONS.map((src) => (
+                      <SelectItem key={src.id} value={src.id}>
+                        {src.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -424,243 +551,370 @@ export function ReservationsFilterBar({
       {hasActiveFilters && (
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
           {currentFilters.q && (
-            <span className="border-line bg-surface text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
               <span>Query: {currentFilters.q}</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 onClick={() => onFilterChange({ q: undefined })}
                 aria-label="Remove search filter"
-                className="hover:text-danger"
+                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
               >
                 <X className="size-3" aria-hidden="true" />
-              </button>
+              </Button>
             </span>
           )}
 
           {(currentFilters.status ?? []).map((st) => (
             <span
               key={st}
-              className="border-line bg-surface text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium"
+              className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium"
             >
               <span>Status: {st}</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 onClick={() => handleStatusToggle(st)}
                 aria-label={`Remove status ${st} filter`}
-                className="hover:text-danger"
+                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
               >
                 <X className="size-3" aria-hidden="true" />
-              </button>
+              </Button>
             </span>
           ))}
 
           {currentFilters.filter && (
-            <span className="border-accent bg-accent/20 text-caption text-accent-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-semibold">
+            <span className="border-primary bg-primary/20 text-caption text-brand-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-semibold">
               <span>Filter: {currentFilters.filter.replace('_', ' ')}</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 onClick={() => onFilterChange({ filter: undefined })}
                 aria-label="Remove filter filter"
-                className="hover:text-danger"
+                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
               >
                 <X className="size-3" aria-hidden="true" />
-              </button>
+              </Button>
             </span>
           )}
 
           {currentFilters.from && (
-            <span className="border-line bg-surface text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
               <span>From: {currentFilters.from}</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 onClick={() => onFilterChange({ from: undefined })}
                 aria-label="Remove from date filter"
-                className="hover:text-danger"
+                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
               >
                 <X className="size-3" aria-hidden="true" />
-              </button>
+              </Button>
             </span>
           )}
 
           {currentFilters.to && (
-            <span className="border-line bg-surface text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
               <span>To: {currentFilters.to}</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 onClick={() => onFilterChange({ to: undefined })}
                 aria-label="Remove to date filter"
-                className="hover:text-danger"
+                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
               >
                 <X className="size-3" aria-hidden="true" />
-              </button>
+              </Button>
             </span>
           )}
 
           {currentFilters.roomTypeId && (
-            <span className="border-line bg-surface text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
               <span>
                 Room type:{' '}
                 {options.roomTypes.find(
                   (r) => r.id === currentFilters.roomTypeId,
                 )?.name ?? 'selected'}
               </span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 onClick={() => onFilterChange({ roomTypeId: undefined })}
                 aria-label="Remove room type filter"
-                className="hover:text-danger"
+                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
               >
                 <X className="size-3" aria-hidden="true" />
-              </button>
+              </Button>
             </span>
           )}
 
           {currentFilters.roomId && (
-            <span className="border-line bg-surface text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
               <span>
                 Room:{' '}
                 {options.rooms.find((r) => r.id === currentFilters.roomId)
                   ?.roomNumber ?? 'selected'}
               </span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 onClick={() => onFilterChange({ roomId: undefined })}
                 aria-label="Remove room number filter"
-                className="hover:text-danger"
+                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
               >
                 <X className="size-3" aria-hidden="true" />
-              </button>
+              </Button>
             </span>
           )}
 
           {currentFilters.paymentState && (
-            <span className="border-line bg-surface text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
               <span>Payment: {currentFilters.paymentState}</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 onClick={() => onFilterChange({ paymentState: undefined })}
                 aria-label="Remove payment state filter"
-                className="hover:text-danger"
+                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
               >
                 <X className="size-3" aria-hidden="true" />
-              </button>
+              </Button>
             </span>
           )}
 
           {currentFilters.source && (
-            <span className="border-line bg-surface text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
               <span>Source: {currentFilters.source}</span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon-xs"
                 onClick={() => onFilterChange({ source: undefined })}
                 aria-label="Remove booking source filter"
-                className="hover:text-danger"
+                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
               >
                 <X className="size-3" aria-hidden="true" />
-              </button>
+              </Button>
             </span>
           )}
         </div>
       )}
 
-      {/* Mobile Filter Bottom Sheet Dialog */}
-      {mobileSheetOpen && (
-        <dialog
-          open
-          className="rounded-t-card border-line bg-surface shadow-float fixed inset-0 z-50 m-auto flex h-[85vh] w-full flex-col justify-between border-t p-5 sm:hidden"
+      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+        <SheetContent
+          side="bottom"
+          showCloseButton
+          className="rounded-t-card border-line bg-card h-[85vh] gap-0 border-t p-5 sm:hidden"
         >
-          <div className="border-line flex items-center justify-between border-b pb-3">
-            <h3 className="font-display text-h3 text-ink">
+          <SheetHeader className="border-line border-b px-0 pr-10 pb-3">
+            <SheetTitle className="font-display text-h3 text-ink">
               Filter Reservations
-            </h3>
-            <button
-              type="button"
-              onClick={() => setMobileSheetOpen(false)}
-              aria-label="Close filters"
-              className="rounded-control text-muted hover:text-ink p-1"
-            >
-              <X className="size-5" aria-hidden="true" />
-            </button>
-          </div>
+            </SheetTitle>
+            <SheetDescription className="sr-only">
+              Filter the reservations list by status, room type, and payment
+              state.
+            </SheetDescription>
+          </SheetHeader>
 
           <div className="flex-1 space-y-4 overflow-y-auto py-3">
             {/* Status */}
             <div>
-              <p className="text-caption text-muted mb-2 font-semibold tracking-wider uppercase">
+              <p className="text-caption text-muted-foreground mb-2 font-semibold tracking-wider uppercase">
                 Status
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {STATUS_OPTIONS.map((s) => {
                   const checked = (currentFilters.status ?? []).includes(s.id);
                   return (
-                    <button
+                    <Button
                       key={s.id}
-                      type="button"
+                      variant={checked ? 'secondary' : 'outline'}
+                      size="sm"
+                      className="w-full justify-between"
                       onClick={() => handleStatusToggle(s.id)}
-                      className={`rounded-control text-caption flex min-h-11 items-center justify-between border px-3 font-semibold ${
-                        checked
-                          ? 'border-accent bg-accent/15 text-accent-ink'
-                          : 'border-line bg-paper text-ink'
-                      }`}
                     >
                       <span>{s.label}</span>
                       {checked && (
                         <Check className="size-3.5" aria-hidden="true" />
                       )}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
             </div>
 
+            {/* Date Filter (Mobile) */}
+            <div>
+              <Label
+                htmlFor="mobDateField"
+                className="text-caption text-muted-foreground mb-1.5 block font-semibold uppercase"
+              >
+                Date Filter
+              </Label>
+              <div className="space-y-2">
+                <Select
+                  items={[
+                    { value: 'check_in', label: 'Check-in date' },
+                    { value: 'check_out', label: 'Check-out date' },
+                    { value: 'created_at', label: 'Booked on date' },
+                  ]}
+                  value={currentFilters.dateField ?? 'check_in'}
+                  onValueChange={(val) => {
+                    if (val) onFilterChange({ dateField: val });
+                  }}
+                >
+                  <SelectTrigger id="mobDateField" className="h-11 w-full">
+                    <SelectValue placeholder="Date field" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="check_in">Check-in date</SelectItem>
+                    <SelectItem value="check_out">Check-out date</SelectItem>
+                    <SelectItem value="created_at">Booked on date</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Popover>
+                  <PopoverTrigger
+                    render={
+                      <Button
+                        variant="outline"
+                        size="md"
+                        className="h-11 w-full justify-start gap-2.5 text-left font-normal"
+                      />
+                    }
+                  >
+                    <CalendarDays className="text-muted-foreground size-4 shrink-0" />
+                    <span className="truncate">
+                      {currentFilters.from
+                        ? currentFilters.to
+                          ? `${format(parseISO(currentFilters.from), 'LLL dd, y')} - ${format(parseISO(currentFilters.to), 'LLL dd, y')}`
+                          : `From ${format(parseISO(currentFilters.from), 'LLL dd, y')}`
+                        : 'Select dates'}
+                    </span>
+                  </PopoverTrigger>
+                  <PopoverContent align="center" className="w-auto p-0">
+                    <Calendar
+                      mode="range"
+                      selected={{
+                        from: currentFilters.from
+                          ? parseISO(currentFilters.from)
+                          : undefined,
+                        to: currentFilters.to
+                          ? parseISO(currentFilters.to)
+                          : undefined,
+                      }}
+                      onSelect={(range) => {
+                        onFilterChange({
+                          from: range?.from
+                            ? format(range.from, 'yyyy-MM-dd')
+                            : undefined,
+                          to: range?.to
+                            ? format(range.to, 'yyyy-MM-dd')
+                            : undefined,
+                        });
+                      }}
+                      numberOfMonths={1}
+                    />
+                    {(currentFilters.from || currentFilters.to) && (
+                      <div className="border-line flex items-center justify-between border-t p-2">
+                        <span className="text-caption text-muted-foreground">
+                          Date range
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={() =>
+                            onFilterChange({ from: undefined, to: undefined })
+                          }
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
             {/* Room Type */}
             <div>
-              <label
+              <Label
                 htmlFor="mobRoomType"
-                className="text-caption text-muted mb-1 block font-semibold uppercase"
+                className="text-caption text-muted-foreground mb-1.5 block font-semibold uppercase"
               >
                 Room Type
-              </label>
-              <select
-                id="mobRoomType"
-                value={currentFilters.roomTypeId ?? ''}
-                onChange={(e) =>
-                  onFilterChange({ roomTypeId: e.target.value || undefined })
+              </Label>
+              <Select
+                items={[
+                  { value: 'all', label: 'All room types' },
+                  ...options.roomTypes.map((rt) => ({
+                    value: rt.id,
+                    label: rt.name,
+                  })),
+                ]}
+                value={currentFilters.roomTypeId ?? 'all'}
+                onValueChange={(val) =>
+                  onFilterChange({
+                    roomTypeId: val === 'all' || !val ? undefined : val,
+                  })
                 }
-                className="rounded-control border-line bg-paper text-small text-ink h-11 w-full border px-3"
               >
-                <option value="">All room types</option>
-                {options.roomTypes.map((rt) => (
-                  <option key={rt.id} value={rt.id}>
-                    {rt.name}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="mobRoomType" className="h-11 w-full">
+                  <SelectValue placeholder="All room types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All room types</SelectItem>
+                  {options.roomTypes.map((rt) => (
+                    <SelectItem key={rt.id} value={rt.id}>
+                      {rt.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Payment State */}
             <div>
-              <label
+              <Label
                 htmlFor="mobPaymentState"
-                className="text-caption text-muted mb-1 block font-semibold uppercase"
+                className="text-caption text-muted-foreground mb-1.5 block font-semibold uppercase"
               >
                 Payment State
-              </label>
-              <select
-                id="mobPaymentState"
-                value={currentFilters.paymentState ?? ''}
-                onChange={(e) =>
-                  onFilterChange({ paymentState: e.target.value || undefined })
+              </Label>
+              <Select
+                items={[
+                  { value: 'all', label: 'All payment states' },
+                  ...PAYMENT_OPTIONS.map((p) => ({
+                    value: p.id,
+                    label: p.label,
+                  })),
+                ]}
+                value={currentFilters.paymentState ?? 'all'}
+                onValueChange={(val) =>
+                  onFilterChange({
+                    paymentState: val === 'all' || !val ? undefined : val,
+                  })
                 }
-                className="rounded-control border-line bg-paper text-small text-ink h-11 w-full border px-3"
               >
-                <option value="">All payment states</option>
-                {PAYMENT_OPTIONS.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="mobPaymentState" className="h-11 w-full">
+                  <SelectValue placeholder="All payment states" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All payment states</SelectItem>
+                  {PAYMENT_OPTIONS.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -682,8 +936,8 @@ export function ReservationsFilterBar({
               Apply filters
             </Button>
           </div>
-        </dialog>
-      )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

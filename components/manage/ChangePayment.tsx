@@ -1,7 +1,8 @@
 'use client';
 
+import { cn } from 'cn';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { CreditCard, Landmark, Upload } from 'lucide-react';
+import { CreditCard, FileCheck, Landmark, Upload, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
@@ -15,11 +16,22 @@ import type { PendingChangeView } from '@/types/manage.types';
 import { formatMinor } from '@/types/stay.types';
 
 import { Banner } from '../checkout/CheckoutStates';
-import { Field } from '../checkout/Field';
 import { CopyButton } from '../checkout/PaymentStep';
 import { useHoldCountdown } from '../checkout/useHoldCountdown';
 import { EASE_OUT } from '../motion/variants';
-import { Button } from '../ui/Button';
+import {
+  Attachment,
+  AttachmentAction,
+  AttachmentActions,
+  AttachmentContent,
+  AttachmentDescription,
+  AttachmentMedia,
+  AttachmentTitle,
+} from '../ui/attachment';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 interface ChangePaymentProps {
   reference: string;
@@ -46,6 +58,7 @@ export function ChangePayment({
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const key = useRef(newKey());
@@ -140,7 +153,7 @@ export function ChangePayment({
       </h3>
       <p
         role="status"
-        className={`rounded-control text-small p-3 ${hold.expiring ? 'bg-danger/5 text-danger font-semibold' : 'bg-paper'}`}
+        className={`rounded-control text-small p-3 ${hold.expiring ? 'bg-destructive/5 text-destructive font-semibold' : 'bg-paper'}`}
       >
         {holdLine}
       </p>
@@ -205,8 +218,8 @@ export function ChangePayment({
                     className="flex items-center justify-between gap-3"
                   >
                     <div className="min-w-0">
-                      <dt className="text-muted">{term}</dt>
-                      <dd className="font-semibold break-words tabular-nums">
+                      <dt className="text-muted-foreground">{term}</dt>
+                      <dd className="font-semibold wrap-break-word tabular-nums">
                         {value}
                       </dd>
                     </div>
@@ -214,25 +227,99 @@ export function ChangePayment({
                   </div>
                 ))}
               </dl>
-              <Field
-                id="change-proof"
-                label="Upload your receipt"
-                error={fileError ?? undefined}
-                hint={`JPG, PNG, WebP or PDF, up to ${MAX_PROOF_BYTES / 1024 / 1024} MB.`}
-              >
-                {(a) => (
-                  <input
-                    {...a}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,application/pdf"
-                    onChange={(e) => {
-                      setFile(e.target.files?.[0] ?? null);
-                      setFileError(null);
-                    }}
-                    className="rounded-control border-ink/60 bg-surface text-small file:bg-ink file:text-paper block min-h-12 w-full cursor-pointer border file:mr-4 file:min-h-12 file:cursor-pointer file:border-0 file:px-4 file:font-semibold"
-                  />
+              <div className="space-y-2">
+                <Label htmlFor="change-proof" className="font-semibold">
+                  Upload your receipt
+                </Label>
+                <Input
+                  ref={fileInputRef}
+                  id="change-proof"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
+                  aria-invalid={fileError ? true : undefined}
+                  aria-describedby={
+                    fileError ? 'change-proof-error' : 'change-proof-hint'
+                  }
+                  onChange={(e) => {
+                    setFile(e.target.files?.[0] ?? null);
+                    setFileError(null);
+                  }}
+                  className="sr-only"
+                />
+                {file ? (
+                  <Attachment state="done" className="bg-card w-full p-3">
+                    <AttachmentMedia
+                      variant="icon"
+                      className="bg-primary/10 text-brand-ink"
+                    >
+                      <FileCheck className="size-5" aria-hidden />
+                    </AttachmentMedia>
+                    <AttachmentContent>
+                      <AttachmentTitle className="text-small font-semibold">
+                        {file.name}
+                      </AttachmentTitle>
+                      <AttachmentDescription>
+                        {(file.size / (1024 * 1024)).toFixed(2)} MB &bull; Ready
+                        to submit
+                      </AttachmentDescription>
+                    </AttachmentContent>
+                    <AttachmentActions>
+                      <AttachmentAction
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label="Remove receipt"
+                        disabled={busy}
+                        onClick={() => {
+                          setFile(null);
+                          if (fileInputRef.current)
+                            fileInputRef.current.value = '';
+                        }}
+                      >
+                        <X className="size-3.5" aria-hidden />
+                      </AttachmentAction>
+                    </AttachmentActions>
+                  </Attachment>
+                ) : (
+                  <label
+                    htmlFor="change-proof"
+                    className={cn(
+                      'rounded-control border-line bg-card/60 hover:bg-card focus-within:ring-ring block w-full cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-offset-2',
+                      (busy || hold.expired) &&
+                        'pointer-events-none opacity-60',
+                    )}
+                  >
+                    <Attachment
+                      state="idle"
+                      className="w-full border-dashed p-4"
+                    >
+                      <AttachmentMedia
+                        variant="icon"
+                        className="bg-primary/10 text-brand-ink"
+                      >
+                        <Upload className="size-5" aria-hidden />
+                      </AttachmentMedia>
+                      <AttachmentContent>
+                        <AttachmentTitle className="text-small font-semibold">
+                          Choose receipt file
+                        </AttachmentTitle>
+                        <AttachmentDescription id="change-proof-hint">
+                          JPG, PNG, WebP or PDF, up to{' '}
+                          {MAX_PROOF_BYTES / 1024 / 1024} MB
+                        </AttachmentDescription>
+                      </AttachmentContent>
+                    </Attachment>
+                  </label>
                 )}
-              </Field>
+                {fileError && (
+                  <p
+                    id="change-proof-error"
+                    className="text-small text-destructive font-medium"
+                  >
+                    {fileError}
+                  </p>
+                )}
+              </div>
               <Button
                 loading={busy}
                 icon={<Upload className="size-4" aria-hidden />}
@@ -244,42 +331,50 @@ export function ChangePayment({
             </div>
           ) : (
             <div className="space-y-4">
-              <fieldset className="space-y-3">
-                <legend className="mb-2 font-semibold">
-                  How would you like to pay?
-                </legend>
-                {change.acceptedMethods.map((m) => (
-                  <label
-                    key={m}
-                    className={`rounded-card flex min-h-14 cursor-pointer items-start gap-3 border p-4 ${method === m ? 'border-ink bg-paper border-2' : 'border-ink/40 bg-surface'}`}
-                  >
-                    <input
-                      type="radio"
-                      name="change-method"
-                      checked={method === m}
-                      onChange={() => setMethod(m)}
-                      className="accent-ink mt-1 size-5 shrink-0"
-                    />
-                    <span className="text-accent-ink mt-0.5">
-                      {m === 'online' ? (
-                        <CreditCard className="size-5" aria-hidden />
-                      ) : (
-                        <Landmark className="size-5" aria-hidden />
+              <div className="space-y-3">
+                <p className="font-semibold">How would you like to pay?</p>
+                <RadioGroup
+                  value={method}
+                  onValueChange={(val) => setMethod(val as PaymentMethod)}
+                  className="space-y-3"
+                >
+                  {change.acceptedMethods.map((m) => (
+                    <Label
+                      key={m}
+                      htmlFor={`change-method-${m}`}
+                      className={cn(
+                        'rounded-card flex min-h-14 cursor-pointer items-start gap-3 border p-4 font-normal transition-colors',
+                        method === m
+                          ? 'border-ink bg-paper border-2'
+                          : 'border-ink/40 bg-card hover:bg-paper',
                       )}
-                    </span>
-                    <span>
-                      <span className="block font-semibold">
-                        {m === 'online' ? 'Card or USSD' : 'Bank transfer'}
+                    >
+                      <RadioGroupItem
+                        value={m}
+                        id={`change-method-${m}`}
+                        className="mt-1"
+                      />
+                      <span className="text-brand-ink mt-0.5">
+                        {m === 'online' ? (
+                          <CreditCard className="size-5" aria-hidden />
+                        ) : (
+                          <Landmark className="size-5" aria-hidden />
+                        )}
                       </span>
-                      <span className="text-small text-muted block">
-                        {m === 'online'
-                          ? `Pay on ${change.providerName}'s secure page. We never see your card details.`
-                          : 'Transfer to the hotel and upload your receipt.'}
+                      <span>
+                        <span className="block font-semibold">
+                          {m === 'online' ? 'Card or USSD' : 'Bank transfer'}
+                        </span>
+                        <span className="text-small text-muted-foreground block">
+                          {m === 'online'
+                            ? `Pay on ${change.providerName}'s secure page. We never see your card details.`
+                            : 'Transfer to the hotel and upload your receipt.'}
+                        </span>
                       </span>
-                    </span>
-                  </label>
-                ))}
-              </fieldset>
+                    </Label>
+                  ))}
+                </RadioGroup>
+              </div>
               <Button
                 size="lg"
                 className="w-full"
@@ -289,7 +384,7 @@ export function ChangePayment({
               >
                 {method === 'bank_transfer'
                   ? 'Continue to bank details'
-                  : `Pay ${formatMinor(change.amountDueMinor)} securely`}
+                  : `Pay ${formatMinor(change.amountDueMinor)}`}
               </Button>
             </div>
           )}

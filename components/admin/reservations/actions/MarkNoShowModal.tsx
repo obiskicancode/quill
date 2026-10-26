@@ -1,10 +1,13 @@
 'use client';
 
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { formatNaira } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
@@ -88,7 +91,7 @@ export function MarkNoShowModal({
       onRefresh={onRefresh}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="rounded-control border-danger/30 bg-danger/10 text-small text-danger flex items-start gap-2.5 border p-3">
+        <div className="rounded-control border-destructive/30 bg-destructive/10 text-small text-destructive flex items-start gap-2.5 border p-3">
           <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <span>
             Marking as no-show frees room {reservation.roomNumber} for the
@@ -96,9 +99,9 @@ export function MarkNoShowModal({
           </span>
         </div>
 
-        <div className="bg-canvas rounded-control border-line text-small space-y-1 border p-3.5">
+        <div className="bg-muted rounded-control border-line text-small space-y-1 border p-3.5">
           <p className="text-ink font-semibold">Hotel No-Show Policy:</p>
-          <p className="text-caption text-muted">
+          <p className="text-caption text-muted-foreground">
             Guests who fail to arrive by the scheduled date are considered
             no-shows and forfeit the deposit or paid stay under hotel terms.
           </p>
@@ -106,48 +109,52 @@ export function MarkNoShowModal({
 
         {/* Override refund toggle */}
         {netPaidNaira > 0 && (
-          <div className="border-line space-y-2 border-t pt-3">
-            <label className="text-small text-ink flex cursor-pointer items-center gap-2">
-              <input
-                type="checkbox"
+          <div className="border-line space-y-3 border-t pt-3">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="noshow-override-refund"
                 checked={overrideRefund}
-                onChange={(e) => setOverrideRefund(e.target.checked)}
-                className="border-line text-accent focus:ring-accent size-4 rounded-sm"
+                onCheckedChange={(checked) => setOverrideRefund(!!checked)}
               />
-              <span>Issue goodwill partial refund (Staff override)</span>
-            </label>
+              <Label
+                htmlFor="noshow-override-refund"
+                className="cursor-pointer"
+              >
+                Issue goodwill partial refund (Staff override)
+              </Label>
+            </div>
 
             {overrideRefund && (
               <div className="space-y-3 pl-6">
-                <div>
-                  <label className="text-small text-ink block font-semibold">
+                <div className="space-y-1.5">
+                  <Label htmlFor="noshow-refund-amount">
                     Refund Amount (₦)
-                  </label>
-                  <input
+                  </Label>
+                  <Input
+                    id="noshow-refund-amount"
                     type="number"
                     step="any"
                     min="0"
                     max={netPaidNaira}
                     value={refundNaira}
                     onChange={(e) => setRefundNaira(e.target.value)}
-                    className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
                   />
-                  <p className="text-caption text-muted mt-1">
+                  <p className="text-caption text-muted-foreground">
                     Max refundable: {formatNaira(netPaidNaira)}
                   </p>
                 </div>
 
-                <div>
-                  <label className="text-small text-ink block font-semibold">
-                    Override Reason <span className="text-danger">*</span>
-                  </label>
-                  <input
+                <div className="space-y-1.5">
+                  <Label htmlFor="noshow-override-reason">
+                    Override Reason <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="noshow-override-reason"
                     type="text"
                     required
                     value={overrideReason}
                     onChange={(e) => setOverrideReason(e.target.value)}
                     placeholder="e.g. Guest notified delay, partial refund authorized..."
-                    className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
                   />
                 </div>
               </div>
@@ -155,39 +162,33 @@ export function MarkNoShowModal({
           </div>
         )}
 
-        <div>
-          <label className="text-small text-ink block font-semibold">
-            Note / Reason
-          </label>
-          <input
+        <div className="space-y-1.5">
+          <Label htmlFor="noshow-reason">Note / Reason</Label>
+          <Input
+            id="noshow-reason"
             type="text"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            className="rounded-control border-line bg-paper text-small text-ink focus:border-ink mt-1 w-full border px-3 py-2 focus:outline-hidden"
           />
         </div>
 
         <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
+            size="sm"
             onClick={onClose}
             disabled={submitting}
           >
             Cancel
           </Button>
-          <Button type="submit" variant="danger" disabled={submitting}>
-            {submitting ? (
-              <>
-                <Loader2
-                  className="mr-2 size-4 animate-spin"
-                  aria-hidden="true"
-                />
-                Recording no-show...
-              </>
-            ) : (
-              'Confirm no-show'
-            )}
+          <Button
+            type="submit"
+            variant="destructive"
+            size="sm"
+            loading={submitting}
+          >
+            Confirm no-show
           </Button>
         </div>
       </form>

@@ -11,6 +11,7 @@ import { HoverZoom } from '../motion/HoverZoom';
 import { Magnetic } from '../motion/Magnetic';
 import { EASE_OUT } from '../motion/variants';
 import { LazyPhoto } from '../rooms/LazyPhoto';
+import { Button } from '../ui/button';
 import { Photo } from '../ui/Photo';
 import { Lightbox } from './Lightbox';
 
@@ -58,14 +59,14 @@ export function RoomGallery({
     setOpen(true);
   };
   const viewAll = (
-    <button
-      type="button"
+    <Button
+      variant="secondary"
       onClick={(e) => openAt(0, e.currentTarget)}
-      className="rounded-control bg-surface text-small shadow-raised hover:bg-paper inline-flex min-h-11 items-center gap-2 px-4 font-semibold transition-colors"
+      className="shadow-raised"
     >
       <Images className="size-4" aria-hidden />
       View all {count} {count === 1 ? 'photo' : 'photos'}
-    </button>
+    </Button>
   );
 
   return (
@@ -83,11 +84,11 @@ export function RoomGallery({
               animate={reduced ? undefined : { opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, ease: EASE_OUT, delay: i * 0.07 }}
             >
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 aria-label={`Open photo ${i + 1} of ${count}: ${img.caption}`}
                 onClick={(e) => openAt(i, e.currentTarget)}
-                className="group/media block h-full w-full"
+                className="group/media h-full w-full rounded-none p-0 hover:bg-transparent"
               >
                 <HoverZoom className="h-full w-full">
                   <Photo
@@ -98,7 +99,7 @@ export function RoomGallery({
                     className="h-full w-full"
                   />
                 </HoverZoom>
-              </button>
+              </Button>
             </motion.div>
           ))}
         </div>
@@ -115,12 +116,12 @@ export function RoomGallery({
           <Carousel
             label={`${roomName} photos`}
             slides={images.map((img, i) => (
-              <button
+              <Button
                 key={img.src}
-                type="button"
+                variant="ghost"
                 aria-label={`Open photo ${i + 1} of ${count}: ${img.caption}`}
                 onClick={(e) => openAt(i, e.currentTarget)}
-                className="block w-full"
+                className="h-auto w-full rounded-none p-0 hover:bg-transparent"
               >
                 {i === 0 ? (
                   <Photo
@@ -133,7 +134,7 @@ export function RoomGallery({
                 ) : (
                   <LazyPhoto src={img.src} alt={img.alt} sizes={HERO_SIZES} />
                 )}
-              </button>
+              </Button>
             ))}
           />
         </div>

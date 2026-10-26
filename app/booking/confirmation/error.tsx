@@ -3,7 +3,7 @@
 import { CheckoutShell } from '@/components/checkout/CheckoutShell';
 import { Banner } from '@/components/checkout/CheckoutStates';
 import { Reveal } from '@/components/motion';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/ui/button';
 
 /** Server error while loading the page. Trying again only reads; it never changes the reservation. */
 export default function ConfirmationError({

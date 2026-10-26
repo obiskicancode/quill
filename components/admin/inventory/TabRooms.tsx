@@ -5,7 +5,34 @@ import { AlertCircle, Check, Edit2, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
-import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import type {
   AdminRoomUnit,
   AdminRoomUnitInput,
@@ -148,7 +175,7 @@ export function TabRooms({
       {errorMessage && (
         <div
           role="alert"
-          className="rounded-card border-danger/40 bg-danger/10 text-small text-danger flex items-center gap-3 border p-4"
+          className="rounded-card border-destructive/40 bg-destructive/10 text-small text-destructive flex items-center gap-3 border p-4"
         >
           <AlertCircle className="size-5 shrink-0" />
           <p>{errorMessage}</p>
@@ -171,7 +198,7 @@ export function TabRooms({
           <h2 className="text-foreground text-h3 font-semibold">
             Room Units (Inventory)
           </h2>
-          <p className="text-small text-muted">
+          <p className="text-small text-muted-foreground">
             Manage physical rooms, numbers, floors, and current maintenance
             statuses.
           </p>
@@ -184,42 +211,50 @@ export function TabRooms({
 
       {/* Rooms Table */}
       {rooms.length === 0 ? (
-        <div className="rounded-card border-line bg-paper text-muted border p-8 text-center">
+        <div className="rounded-card border-line bg-paper text-muted-foreground border p-8 text-center">
           No room units assigned yet. Add physical rooms to enable booking
           assignments.
         </div>
       ) : (
-        <div className="rounded-card border-line bg-surface overflow-x-auto border">
-          <table className="text-small w-full text-left">
-            <thead className="border-line bg-paper text-muted border-b">
-              <tr>
-                <th className="py-3 pr-3 pl-4 font-medium">Room Number</th>
-                <th className="px-4 py-3 font-medium">Floor</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">
+        <div className="rounded-card border-line bg-card overflow-x-auto border">
+          <Table className="text-small w-full text-left">
+            <TableHeader className="border-line bg-paper text-muted-foreground border-b">
+              <TableRow className="border-line hover:bg-transparent">
+                <TableHead className="py-3 pr-3 pl-4 font-medium">
+                  Room Number
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">Floor</TableHead>
+                <TableHead className="px-4 py-3 font-medium">Status</TableHead>
+                <TableHead className="px-4 py-3 font-medium">
                   Next Reservation / Block
-                </th>
-                <th className="px-4 py-3 font-medium">Notes</th>
-                <th className="py-3 pr-4 pl-3 text-right font-medium">
+                </TableHead>
+                <TableHead className="px-4 py-3 font-medium">Notes</TableHead>
+                <TableHead className="py-3 pr-4 pl-3 text-right font-medium">
                   Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-line divide-y">
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-line divide-y">
               {rooms.map((u) => (
-                <tr key={u.id} className="hover:bg-paper/40 transition-colors">
-                  <td className="text-foreground py-3 pr-3 pl-4 font-semibold">
+                <TableRow
+                  key={u.id}
+                  className="hover:bg-paper/40 border-line transition-colors"
+                >
+                  <TableCell className="text-foreground py-3 pr-3 pl-4 font-semibold">
                     {u.roomNumber}
-                  </td>
-                  <td className="text-muted px-4 py-3">{u.floor || '—'}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  </TableCell>
+                  <TableCell className="text-muted-foreground px-4 py-3">
+                    {u.floor || '—'}
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
+                    <Badge
+                      variant="outline"
+                      className={`gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                         u.status === 'active'
-                          ? 'bg-success/15 text-success'
+                          ? 'border-success/20 bg-success/15 text-success'
                           : u.status === 'maintenance'
-                            ? 'bg-warning/15 text-warning-contrast'
-                            : 'bg-muted/20 text-muted'
+                            ? 'border-primary/30 bg-primary/15 text-brand-ink'
+                            : 'border-muted/30 bg-muted/20 text-muted-foreground'
                       }`}
                     >
                       <span
@@ -227,7 +262,7 @@ export function TabRooms({
                           u.status === 'active'
                             ? 'bg-success'
                             : u.status === 'maintenance'
-                              ? 'bg-warning'
+                              ? 'bg-primary'
                               : 'bg-muted'
                         }`}
                       />
@@ -236,43 +271,45 @@ export function TabRooms({
                         : u.status === 'maintenance'
                           ? 'Maintenance'
                           : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="px-4 py-3">
                     {u.nextReservation ? (
                       <div className="flex flex-col text-xs">
                         <Link
                           href={`/admin/reservations/${u.nextReservation.id}`}
-                          className="text-brand font-medium hover:underline"
+                          className="text-primary font-medium hover:underline"
                         >
                           {u.nextReservation.reference} (
                           {u.nextReservation.guestName})
                         </Link>
-                        <span className="text-muted">
+                        <span className="text-muted-foreground">
                           {u.nextReservation.checkIn} to{' '}
                           {u.nextReservation.checkOut}
                         </span>
                       </div>
                     ) : u.nextBlock ? (
-                      <div className="text-warning-contrast flex flex-col text-xs">
-                        <span className="font-medium">
+                      <div className="text-muted-foreground flex flex-col text-xs">
+                        <span className="text-brand-ink font-medium">
                           Blocked ({u.nextBlock.reason})
                         </span>
-                        <span className="text-muted">
+                        <span className="text-muted-foreground">
                           {u.nextBlock.startDate} to {u.nextBlock.endDate}
                         </span>
                       </div>
                     ) : (
-                      <span className="text-muted text-xs">None upcoming</span>
+                      <span className="text-muted-foreground text-xs">
+                        None upcoming
+                      </span>
                     )}
-                  </td>
-                  <td className="text-muted max-w-xs truncate px-4 py-3 text-xs">
+                  </TableCell>
+                  <TableCell className="text-muted-foreground max-w-xs truncate px-4 py-3 text-xs">
                     {u.notes || '—'}
-                  </td>
-                  <td className="py-3 pr-4 pl-3 text-right">
+                  </TableCell>
+                  <TableCell className="py-3 pr-4 pl-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Button
-                        size="sm"
+                        size="icon-xs"
                         variant="ghost"
                         onClick={() => openEditDialog(u)}
                         aria-label={`Edit room ${u.roomNumber}`}
@@ -280,194 +317,222 @@ export function TabRooms({
                         <Edit2 className="size-3.5" />
                       </Button>
                       <Button
-                        size="sm"
+                        size="icon-xs"
                         variant="ghost"
                         onClick={() => handleDelete(u)}
-                        className="text-danger hover:bg-danger/10 hover:text-danger"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                         aria-label={`Delete room ${u.roomNumber}`}
                       >
                         <Trash2 className="size-3.5" />
                       </Button>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       )}
 
-      {/* Add / Edit Unit Modal Dialog */}
-      {dialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="rounded-card border-line bg-surface w-full max-w-md border p-6 shadow-xl">
-            <h3 className="text-foreground text-h3 font-semibold">
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen && !isSaving) setDialogOpen(false);
+        }}
+      >
+        <DialogContent className="rounded-card border-line bg-card max-w-md gap-0 border p-0 shadow-xl sm:max-w-md">
+          <DialogHeader className="border-line border-b p-6 pr-14 pb-4">
+            <DialogTitle className="text-h3 text-foreground font-semibold">
               {editingUnit
                 ? `Edit Room ${editingUnit.roomNumber}`
                 : 'Add Room Unit'}
-            </h3>
-            <p className="text-small text-muted mt-1">
+            </DialogTitle>
+            <DialogDescription className="text-small text-muted-foreground">
               Configure room numbering and service availability.
-            </p>
+            </DialogDescription>
+          </DialogHeader>
 
-            <form onSubmit={handleSaveUnit} className="mt-4 space-y-4">
-              <div>
-                <label className="text-foreground text-small block font-medium">
-                  Room Number <span className="text-danger">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={roomNumber}
-                  onChange={(e) => setRoomNumber(e.target.value)}
-                  placeholder="e.g. 101, 204B"
-                  className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
-                />
-              </div>
+          <form onSubmit={handleSaveUnit} className="space-y-4 p-6">
+            <div className="space-y-1.5">
+              <Label htmlFor="unit-room-number">
+                Room Number <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="unit-room-number"
+                type="text"
+                required
+                value={roomNumber}
+                onChange={(e) => setRoomNumber(e.target.value)}
+                placeholder="e.g. 101, 204B"
+              />
+            </div>
 
-              <div>
-                <label className="text-foreground text-small block font-medium">
-                  Floor
-                </label>
-                <input
-                  type="text"
-                  value={floor}
-                  onChange={(e) => setFloor(e.target.value)}
-                  placeholder="e.g. 1st Floor, Ground Floor"
-                  className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="unit-floor">Floor</Label>
+              <Input
+                id="unit-floor"
+                type="text"
+                value={floor}
+                onChange={(e) => setFloor(e.target.value)}
+                placeholder="e.g. 1st Floor, Ground Floor"
+              />
+            </div>
 
-              <div>
-                <label className="text-foreground text-small block font-medium">
-                  Service Status
-                </label>
-                <select
-                  value={status}
-                  onChange={(e) =>
-                    handleStatusSelect(e.target.value as RoomStatus)
-                  }
-                  className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
-                >
-                  <option value="active">
+            <div className="space-y-1.5">
+              <Label htmlFor="unit-status">Service Status</Label>
+              <Select
+                items={[
+                  {
+                    value: 'active',
+                    label: 'Active (Available for guest bookings)',
+                  },
+                  {
+                    value: 'maintenance',
+                    label: 'Maintenance (Out of order)',
+                  },
+                  {
+                    value: 'inactive',
+                    label: 'Inactive (Decommissioned)',
+                  },
+                ]}
+                value={status}
+                onValueChange={(val) => {
+                  if (val) handleStatusSelect(val as RoomStatus);
+                }}
+              >
+                <SelectTrigger id="unit-status" className="w-full">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">
                     Active (Available for guest bookings)
-                  </option>
-                  <option value="maintenance">
+                  </SelectItem>
+                  <SelectItem value="maintenance">
                     Maintenance (Out of order)
-                  </option>
-                  <option value="inactive">Inactive (Decommissioned)</option>
-                </select>
-              </div>
+                  </SelectItem>
+                  <SelectItem value="inactive">
+                    Inactive (Decommissioned)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div>
-                <label className="text-foreground text-small block font-medium">
-                  Internal Notes
-                </label>
-                <textarea
-                  rows={2}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="e.g. Adjoining door to 102, corner window"
-                  className="bg-background text-foreground focus:border-brand border-line mt-1 w-full rounded border px-3 py-2 focus:outline-none"
+            <div className="space-y-1.5">
+              <Label htmlFor="unit-notes">Internal Notes</Label>
+              <Textarea
+                id="unit-notes"
+                rows={2}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="e.g. Adjoining door to 102, corner window"
+              />
+            </div>
+
+            <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setDialogOpen(false)}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" loading={isSaving}>
+                {editingUnit ? 'Save Changes' : 'Add Room'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {impactData && (
+        <Dialog
+          open={impactModalOpen}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) {
+              setImpactModalOpen(false);
+              if (editingUnit) setStatus(editingUnit.status);
+            }
+          }}
+        >
+          <DialogContent className="rounded-card border-destructive/40 bg-card max-w-lg gap-0 border p-0 shadow-2xl sm:max-w-lg">
+            <DialogHeader className="border-line border-b p-6 pr-14 pb-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle
+                  className="text-destructive size-6 shrink-0"
+                  aria-hidden
                 />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving
-                    ? 'Saving...'
-                    : editingUnit
-                      ? 'Save Changes'
-                      : 'Add Room'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Impact Warning Modal */}
-      {impactModalOpen && impactData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="rounded-card border-danger/40 bg-surface w-full max-w-lg border p-6 shadow-2xl">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="text-danger size-6 shrink-0" />
-              <div>
-                <h3 className="text-foreground text-h3 font-semibold">
-                  Status Change Blocked by Active Bookings
-                </h3>
-                <p className="text-small text-muted mt-1">
-                  Cannot change status to <strong>{pendingTargetStatus}</strong>
-                  . This room has active or upcoming reservations that must be
-                  reassigned first.
-                </p>
-
-                {impactData.reservations.length > 0 && (
-                  <div className="border-line bg-paper mt-3 max-h-48 overflow-y-auto rounded border p-3 text-xs">
-                    <p className="text-foreground font-semibold">
-                      Conflicting Reservations:
-                    </p>
-                    <ul className="mt-2 space-y-2">
-                      {impactData.reservations.map((r) => (
-                        <li
-                          key={r.id}
-                          className="flex items-center justify-between"
-                        >
-                          <span>
-                            <strong>{r.reference}</strong> ({r.guestName})
-                            &bull; {r.checkIn} to {r.checkOut}
-                          </span>
-                          <Link
-                            href={`/admin/reservations/${r.id}`}
-                            className="text-brand font-medium hover:underline"
-                            target="_blank"
-                          >
-                            Reassign
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {impactData.blocks.length > 0 && (
-                  <div className="border-line bg-paper mt-3 rounded border p-3 text-xs">
-                    <p className="text-foreground font-semibold">
-                      Conflicting Room Blocks:
-                    </p>
-                    <ul className="mt-1 space-y-1">
-                      {impactData.blocks.map((b) => (
-                        <li key={b.id}>
-                          {b.reason}: {b.startDate} to {b.endDate}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                <div className="mt-5 flex justify-end">
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      setImpactModalOpen(false);
-                      // Revert status to existing unit status
-                      if (editingUnit) setStatus(editingUnit.status);
-                    }}
-                  >
-                    Understood (Keep Active)
-                  </Button>
+                <div>
+                  <DialogTitle className="text-h3 text-foreground font-semibold">
+                    Status Change Blocked by Active Bookings
+                  </DialogTitle>
+                  <DialogDescription className="text-small text-muted-foreground mt-1">
+                    Cannot change status to{' '}
+                    <strong>{pendingTargetStatus}</strong>. This room has active
+                    or upcoming reservations that must be reassigned first.
+                  </DialogDescription>
                 </div>
               </div>
+            </DialogHeader>
+            <div className="text-small p-6">
+              {impactData.reservations.length > 0 && (
+                <div className="border-line bg-paper mt-3 max-h-48 overflow-y-auto rounded border p-3 text-xs">
+                  <p className="text-foreground font-semibold">
+                    Conflicting Reservations:
+                  </p>
+                  <ul className="mt-2 space-y-2">
+                    {impactData.reservations.map((r) => (
+                      <li
+                        key={r.id}
+                        className="flex items-center justify-between"
+                      >
+                        <span>
+                          <strong>{r.reference}</strong> ({r.guestName}) &bull;{' '}
+                          {r.checkIn} to {r.checkOut}
+                        </span>
+                        <Link
+                          href={`/admin/reservations/${r.id}`}
+                          className="text-brand font-medium hover:underline"
+                          target="_blank"
+                        >
+                          Reassign
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {impactData.blocks.length > 0 && (
+                <div className="border-line bg-paper mt-3 rounded border p-3 text-xs">
+                  <p className="text-foreground font-semibold">
+                    Conflicting Room Blocks:
+                  </p>
+                  <ul className="mt-1 space-y-1">
+                    {impactData.blocks.map((b) => (
+                      <li key={b.id}>
+                        {b.reason}: {b.startDate} to {b.endDate}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <DialogFooter className="border-line mt-5 border-t bg-transparent px-0 pb-0">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setImpactModalOpen(false);
+                    if (editingUnit) setStatus(editingUnit.status);
+                  }}
+                >
+                  Understood (Keep Active)
+                </Button>
+              </DialogFooter>
             </div>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
