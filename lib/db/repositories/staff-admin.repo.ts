@@ -1,5 +1,6 @@
 import { and, desc, eq, ilike, or, sql } from 'drizzle-orm';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { db } from '@/db';
 import {
   auditLogs,
@@ -316,12 +317,12 @@ export async function inviteStaffRepo(params: {
     if (errObj?.code === '23505') {
       return {
         ok: false,
-        error: 'That email is already in use by another staff member.',
+        error: ERROR_MESSAGES.EMAIL_ALREADY_IN_USE,
       };
     }
     return {
       ok: false,
-      error: errObj?.message || 'Failed to create staff invitation',
+      error: errObj?.message || ERROR_MESSAGES.FAILED_CREATE_STAFF_INVITATION,
     };
   }
 }
@@ -341,7 +342,7 @@ export async function updateStaffRepo(params: {
     .limit(1);
 
   if (!target) {
-    return { ok: false, error: 'Staff member not found' };
+    return { ok: false, error: ERROR_MESSAGES.STAFF_MEMBER_NOT_FOUND };
   }
 
   if (input.role !== target.role) {
@@ -412,7 +413,7 @@ export async function deactivateStaffRepo(params: {
     .limit(1);
 
   if (!target) {
-    return { ok: false, error: 'Staff member not found' };
+    return { ok: false, error: ERROR_MESSAGES.STAFF_MEMBER_NOT_FOUND };
   }
 
   const ownerCount = await getActiveOwnerCount();
@@ -559,7 +560,7 @@ export async function resetStaffMfaRepo(params: {
     .limit(1);
 
   if (!target) {
-    return { ok: false, error: 'Staff member not found' };
+    return { ok: false, error: ERROR_MESSAGES.STAFF_MEMBER_NOT_FOUND };
   }
 
   const ownerCount = await getActiveOwnerCount();
@@ -618,7 +619,7 @@ export async function sendPasswordResetRepo(params: {
     .limit(1);
 
   if (!target) {
-    return { ok: false, error: 'Staff member not found' };
+    return { ok: false, error: ERROR_MESSAGES.STAFF_MEMBER_NOT_FOUND };
   }
 
   const token = randomToken(32);
@@ -660,7 +661,8 @@ export async function resendInviteRepo(params: {
     .where(eq(staffUsers.id, params.id))
     .limit(1);
 
-  if (!target) return { ok: false, error: 'Staff member not found' };
+  if (!target)
+    return { ok: false, error: ERROR_MESSAGES.STAFF_MEMBER_NOT_FOUND };
 
   // Invalidate existing tokens
   await db

@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import {
   deleteAdminExtra,
@@ -21,7 +23,11 @@ export async function PATCH(
   const body = await request.json().catch(() => null);
   const parsed = AdminExtraInputSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid extra data', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_EXTRA_DATA,
+      parsed.error.flatten(),
+    );
   }
 
   try {
@@ -32,10 +38,12 @@ export async function PATCH(
       actorRole: guard.context.role,
       ipAddress: request.headers.get('x-forwarded-for') || undefined,
     });
-    return apiOk({ success: true, message: 'Extra updated successfully' });
+    return apiOk({ success: true, message: SUCCESS_MESSAGES.EXTRA_UPDATED });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to update extra';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_UPDATE_EXTRA;
     return apiFail(400, message);
   }
 }
@@ -55,10 +63,12 @@ export async function DELETE(
       actorRole: guard.context.role,
       ipAddress: request.headers.get('x-forwarded-for') || undefined,
     });
-    return apiOk({ success: true, message: 'Extra deleted successfully' });
+    return apiOk({ success: true, message: SUCCESS_MESSAGES.EXTRA_DELETED });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to delete extra';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_DELETE_EXTRA;
     return apiFail(400, message);
   }
 }

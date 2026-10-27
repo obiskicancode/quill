@@ -6,6 +6,9 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { manageService } from '@/app/api/services/manage.service';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { headerKind } from '@/lib/booking/status';
 import { formatCountdown } from '@/lib/format';
 import type { GuestReservation } from '@/types/booking.types';
@@ -104,7 +107,10 @@ export function ManageView({
     try {
       applyView((await manageService.get(v.reference)).data);
     } catch (e) {
-      if (e instanceof ServiceError && e.body?.code === 'session_expired')
+      if (
+        e instanceof ServiceError &&
+        e.body?.code === ERROR_CODES.SESSION_EXPIRED
+      )
         setExpired(true);
       else setRefreshError(true);
     } finally {
@@ -144,7 +150,7 @@ export function ManageView({
           next.manage.pendingChange?.status !== pending?.status ||
           Boolean(next.manage.pendingChange) !== Boolean(pending);
         setV(next);
-        if (changed) return setAnnouncement('Your booking has been updated.');
+        if (changed) return setAnnouncement(SUCCESS_MESSAGES.BOOKING_UPDATED);
       } catch {
         /* keep polling until the timeout */
       }
@@ -211,7 +217,7 @@ export function ManageView({
               className={`rounded-control text-small p-3 ${hold.expiring ? 'bg-destructive/5 text-destructive font-semibold' : 'bg-paper text-ink'}`}
             >
               {hold.expired ? (
-                'The hold on your room has ended.'
+                ERROR_MESSAGES.HOLD_ENDED_ROOM
               ) : (
                 <>
                   Your room is held for you:{' '}
@@ -230,7 +236,7 @@ export function ManageView({
               <Banner
                 role="alert"
                 tone="danger"
-                title="We couldn't refresh your booking"
+                title={ERROR_MESSAGES.COULD_NOT_REFRESH_BOOKING}
                 actions={
                   <Button
                     variant="secondary"
@@ -292,7 +298,7 @@ export function ManageView({
                   void refresh();
                 }}
                 onSaved={(next) =>
-                  applyView(next, 'Your details have been saved.')
+                  applyView(next, SUCCESS_MESSAGES.DETAILS_SAVED)
                 }
                 onClose={() => {
                   setEditOpen(false);

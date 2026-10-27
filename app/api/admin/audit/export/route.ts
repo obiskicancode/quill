@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { exportAuditCsvRepo } from '@/lib/db/repositories/audit-admin.repo';
 import { apiFail } from '@/lib/http/envelope';
@@ -15,12 +16,9 @@ export async function GET(request: Request) {
 
   // Owner only CSV export
   if (context.role !== 'owner') {
-    return apiFail(
-      403,
-      'Forbidden: Only owners are permitted to export audit logs',
-      undefined,
-      { noCache: true },
-    );
+    return apiFail(403, ERROR_MESSAGES.OWNERS_ONLY_AUDIT_EXPORT, undefined, {
+      noCache: true,
+    });
   }
 
   const { searchParams } = new URL(request.url);
@@ -28,7 +26,9 @@ export async function GET(request: Request) {
 
   const parsed = AuditQuerySchema.safeParse(rawParams);
   if (!parsed.success) {
-    return apiFail(400, 'Invalid parameters', undefined, { noCache: true });
+    return apiFail(400, ERROR_MESSAGES.INVALID_PARAMETERS, undefined, {
+      noCache: true,
+    });
   }
 
   const stream = await exportAuditCsvRepo(

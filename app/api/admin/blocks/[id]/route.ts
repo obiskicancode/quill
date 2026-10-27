@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { db } from '@/db';
 import { hotelSettings } from '@/db/schema';
 import { guardAdminApi } from '@/lib/auth/guards';
@@ -23,14 +25,14 @@ export async function PATCH(
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
-  if (!id) return apiFail(400, 'Missing block ID');
+  if (!id) return apiFail(400, ERROR_MESSAGES.MISSING_BLOCK_ID);
 
   const body = await request.json().catch(() => null);
   const parsed = adminUpdateBlockSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,
-      'Invalid block update parameters',
+      ERROR_MESSAGES.INVALID_BLOCK_UPDATE_PARAMETERS,
       parsed.error.flatten(),
     );
   }
@@ -50,7 +52,7 @@ export async function PATCH(
     if (guard.context.role !== 'owner' && guard.context.role !== 'manager') {
       return apiFail(
         403,
-        `Only managers and owners can set block reason to "${reason}".`,
+        ERROR_MESSAGES.MANAGERS_ONLY_SET_BLOCK_REASON(reason),
       );
     }
   }
@@ -58,13 +60,10 @@ export async function PATCH(
   // 2. Permission checks on backdated blocks
   if (startDate < today) {
     if (guard.context.role !== 'owner' && guard.context.role !== 'manager') {
-      return apiFail(
-        403,
-        'Only managers and owners can modify blocks to start in the past.',
-      );
+      return apiFail(403, ERROR_MESSAGES.MANAGERS_ONLY_BACKDATE);
     }
     if (!backdateReason || backdateReason.trim().length === 0) {
-      return apiFail(422, 'A reason is required when backdating a room block.');
+      return apiFail(422, ERROR_MESSAGES.BACKDATE_REASON_REQUIRED);
     }
   }
 
@@ -90,14 +89,11 @@ export async function PATCH(
     );
 
     if (result.stale) {
-      return apiFail(
-        409,
-        'This room block was modified by another user. Please refresh and try again.',
-      );
+      return apiFail(409, ERROR_MESSAGES.BLOCK_VERSION_CONFLICT);
     }
 
     if (!result.ok) {
-      return apiFail(409, 'Scheduling conflict detected.', {
+      return apiFail(409, ERROR_MESSAGES.SCHEDULING_CONFLICT, {
         conflicts: result.conflicts,
       });
     }
@@ -106,14 +102,14 @@ export async function PATCH(
   } catch (error: unknown) {
     const errObj = error as { code?: string; message?: string };
     if (errObj.code === '23P01') {
-      return apiFail(
-        409,
-        'Cannot update room block due to an overlapping reservation or existing block.',
-        { sqlState: '23P01' },
-      );
+      return apiFail(409, ERROR_MESSAGES.ROOM_BLOCK_UPDATE_CONFLICT, {
+        sqlState: '23P01',
+      });
     }
     const message =
-      error instanceof Error ? error.message : 'Failed to update room block.';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_UPDATE_BLOCK;
     return apiFail(500, message);
   }
 }
@@ -128,7 +124,7 @@ export async function DELETE(
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
-  if (!id) return apiFail(400, 'Missing block ID');
+  if (!id) return apiFail(400, ERROR_MESSAGES.MISSING_BLOCK_ID);
 
   const ipAddress =
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
@@ -142,15 +138,17 @@ export async function DELETE(
       ipAddress,
     );
     if (!deleted) {
-      return apiFail(404, 'Room block not found.');
+      return apiFail(404, ERROR_MESSAGES.ROOM_BLOCK_NOT_FOUND);
     }
     return apiOk(
-      { success: true, message: 'Room block removed.' },
+      { success: true, message: SUCCESS_MESSAGES.ROOM_BLOCK_REMOVED },
       { noCache: true },
     );
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to delete room block.';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_DELETE_BLOCK;
     return apiFail(500, message);
   }
 }

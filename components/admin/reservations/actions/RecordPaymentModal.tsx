@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatNaira } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
@@ -52,13 +53,11 @@ export function RecordPaymentModal({
     e.preventDefault();
     const num = parseFloat(amountNaira);
     if (isNaN(num) || num <= 0) {
-      setError('Please enter a valid positive payment amount.');
+      setError(ERROR_MESSAGES.POSITIVE_PAYMENT_AMOUNT);
       return;
     }
     if (num > maxNaira + 1) {
-      setError(
-        `Amount cannot exceed the balance due (${formatNaira(maxNaira)}).`,
-      );
+      setError(ERROR_MESSAGES.AMOUNT_EXCEEDS_BALANCE(formatNaira(maxNaira)));
       return;
     }
 
@@ -80,7 +79,11 @@ export function RecordPaymentModal({
       onSuccess(updated.data);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to record payment');
+      setError(
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_RECORD_PAYMENT_UI,
+      );
     } finally {
       setSubmitting(false);
     }

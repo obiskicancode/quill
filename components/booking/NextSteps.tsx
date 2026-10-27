@@ -2,6 +2,7 @@
 
 import { Check } from 'lucide-react';
 
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatMinor } from '@/lib/format';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
@@ -32,7 +33,7 @@ function stepsFor(kind: HeaderKind, v: GuestReservation): Step[] {
     case 'confirmed':
     case 'confirmed-deposit':
       return [
-        { title: 'Confirmation email sent.', state: 'done' },
+        { title: SUCCESS_MESSAGES.CONFIRMATION_EMAIL_SENT, state: 'done' },
         { title: 'We send you a reminder before you arrive.', state: 'next' },
         arrive,
         ...balance,

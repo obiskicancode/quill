@@ -11,6 +11,8 @@ import { StatusBanner } from '@/components/admin/StatusBanner';
 import { FlowDialog } from '@/components/manage/FlowDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatDate } from '@/lib/dates';
 import type { AdminSession } from '@/types/admin.types';
 
@@ -35,7 +37,7 @@ export function SessionsPanel() {
       setError(
         caught instanceof ServiceError
           ? caught.message
-          : 'Could not load your sessions.',
+          : ERROR_MESSAGES.COULD_NOT_LOAD_SESSIONS,
       );
     } finally {
       setLoading(false);
@@ -56,7 +58,7 @@ export function SessionsPanel() {
         setError(
           caught instanceof ServiceError
             ? caught.message
-            : 'Could not load your sessions.',
+            : ERROR_MESSAGES.COULD_NOT_LOAD_SESSIONS,
         );
         setLoading(false);
       });
@@ -75,18 +77,14 @@ export function SessionsPanel() {
           ? await adminService.revokeSession(dialog.session.id)
           : await adminService.revokeOtherSessions();
       const count = result.data.revoked;
-      setNotice(
-        count === 0
-          ? 'There were no other sessions to sign out.'
-          : `${count} ${count === 1 ? 'session was' : 'sessions were'} signed out.`,
-      );
+      setNotice(SUCCESS_MESSAGES.SESSIONS_SIGNED_OUT(count));
       setDialog(null);
       await load();
     } catch (caught) {
       setError(
         caught instanceof ServiceError
           ? caught.message
-          : 'Could not sign out that session.',
+          : ERROR_MESSAGES.COULD_NOT_SIGN_OUT_SESSION,
       );
     } finally {
       setBusy(false);

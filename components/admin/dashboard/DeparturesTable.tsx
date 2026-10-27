@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatNaira } from '@/lib/format';
 import type { DashboardReservationRow } from '@/types/dashboard.types';
 
@@ -49,7 +50,7 @@ export function DeparturesTable({
     if (result.success) {
       setTargetRow(null);
     } else {
-      setDialogError(result.error ?? 'Check-out failed');
+      setDialogError(result.error ?? ERROR_MESSAGES.CHECKOUT_FAILED);
     }
   }
 

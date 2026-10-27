@@ -7,6 +7,7 @@ import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
@@ -36,7 +37,7 @@ export function ApproveDeclineModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (action === 'decline' && (!reason || reason.trim().length < 3)) {
-      setError('Please provide a reason for declining the reservation.');
+      setError(ERROR_MESSAGES.DECLINE_REASON_PROMPT);
       return;
     }
 
@@ -62,7 +63,7 @@ export function ApproveDeclineModal({
       setError(
         err instanceof Error
           ? err.message
-          : 'Failed to process approval action',
+          : ERROR_MESSAGES.FAILED_TO_PROCESS_APPROVAL,
       );
     } finally {
       setSubmitting(false);

@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type {
   AdminRoomTypeDetail,
   AdminRoomTypeInput,
@@ -96,7 +97,11 @@ export function RoomTypeEditorClient({
       await adminService.deleteRoomType(data.id);
       router.push('/admin/rooms');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete room type');
+      alert(
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_DELETE_ROOM_TYPE,
+      );
     }
   }
 

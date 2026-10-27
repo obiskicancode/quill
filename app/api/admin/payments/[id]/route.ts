@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { getPaymentDetailRepo } from '@/lib/db/repositories/payments-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
@@ -17,7 +18,9 @@ export async function GET(
   const detail = await getPaymentDetailRepo(id, isOwner);
 
   if (!detail) {
-    return apiFail(404, 'Payment not found', undefined, { noCache: true });
+    return apiFail(404, ERROR_MESSAGES.PAYMENT_NOT_FOUND, undefined, {
+      noCache: true,
+    });
   }
 
   return apiOk(detail, { noCache: true });

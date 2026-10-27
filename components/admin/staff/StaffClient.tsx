@@ -27,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type {
   StaffDetailResponse,
   StaffListItem,
@@ -87,7 +88,9 @@ export function StaffClient() {
       })
       .catch((err: unknown) => {
         const msg =
-          err instanceof Error ? err.message : 'Failed to load staff members.';
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_LOAD_STAFF_MEMBERS;
         setError(msg);
       })
       .finally(() => {
@@ -107,7 +110,9 @@ export function StaffClient() {
       .catch((err: unknown) => {
         if (!active) return;
         const msg =
-          err instanceof Error ? err.message : 'Failed to load staff members.';
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_LOAD_STAFF_MEMBERS;
         setError(msg);
       })
       .finally(() => {

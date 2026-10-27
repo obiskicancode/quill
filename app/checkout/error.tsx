@@ -4,6 +4,7 @@ import { CheckoutShell } from '@/components/checkout/CheckoutShell';
 import { Banner } from '@/components/checkout/CheckoutStates';
 import { Reveal } from '@/components/motion';
 import { Button, ButtonLink } from '@/components/ui/button';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 
 /** Shown if the server cannot price the stay when the page loads. Retrying never creates a reservation. */
 export default function CheckoutError({
@@ -19,7 +20,7 @@ export default function CheckoutError({
           <Banner
             role="alert"
             tone="danger"
-            title="We couldn't load your booking"
+            title={ERROR_MESSAGES.COULD_NOT_LOAD_BOOKING}
             actions={
               <>
                 <Button onClick={reset}>Try again</Button>

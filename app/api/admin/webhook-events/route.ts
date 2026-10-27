@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { listWebhookEventsRepo } from '@/lib/db/repositories/payments-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
@@ -14,7 +15,9 @@ export async function GET(request: Request) {
 
   const parsed = WebhookEventsQuerySchema.safeParse(rawParams);
   if (!parsed.success) {
-    return apiFail(400, 'Invalid parameters', undefined, { noCache: true });
+    return apiFail(400, ERROR_MESSAGES.INVALID_PARAMETERS, undefined, {
+      noCache: true,
+    });
   }
 
   const result = await listWebhookEventsRepo(parsed.data);

@@ -1,3 +1,5 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { decryptMfaSecret, verifyTotp } from '@/lib/auth/mfa';
 import { verifyPassword } from '@/lib/auth/password';
@@ -18,14 +20,16 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return apiFail(400, 'Invalid JSON request', undefined, { noCache: true });
+    return apiFail(400, ERROR_MESSAGES.INVALID_JSON_REQUEST, undefined, {
+      noCache: true,
+    });
   }
 
   const parsed = StepUpAuthInputSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       400,
-      parsed.error.issues[0]?.message || 'Invalid step-up input',
+      parsed.error.issues[0]?.message || ERROR_MESSAGES.INVALID_STEP_UP_INPUT,
       undefined,
       { noCache: true },
     );
@@ -59,12 +63,9 @@ export async function POST(request: Request) {
       userAgent: userAgent(request),
     }).catch(() => {});
 
-    return apiFail(
-      400,
-      'Invalid password or 2FA verification code',
-      undefined,
-      { noCache: true },
-    );
+    return apiFail(400, ERROR_MESSAGES.INVALID_PASSWORD_OR_2FA, undefined, {
+      noCache: true,
+    });
   }
 
   await markAdminSessionVerified(context.sessionId);
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
     entity: 'staff_session',
     entityId: context.sessionId,
     action: 'step_up',
-    reason: 'Step-up authentication verified',
+    reason: SUCCESS_MESSAGES.STEP_UP_VERIFIED,
     ipAddress: clientIp(request),
     userAgent: userAgent(request),
   }).catch(() => {});

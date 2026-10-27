@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import {
   deleteAdminRateRule,
@@ -21,7 +23,11 @@ export async function PATCH(
   const body = await request.json().catch(() => null);
   const parsed = AdminRateRuleInputSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid rate rule data', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_RATE_RULE_DATA,
+      parsed.error.flatten(),
+    );
   }
 
   try {
@@ -32,10 +38,15 @@ export async function PATCH(
       actorRole: guard.context.role,
       ipAddress: request.headers.get('x-forwarded-for') || undefined,
     });
-    return apiOk({ success: true, message: 'Rate rule updated successfully' });
+    return apiOk({
+      success: true,
+      message: SUCCESS_MESSAGES.RATE_RULE_UPDATED,
+    });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to update rate rule';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_UPDATE_RATE_RULE;
     return apiFail(400, message);
   }
 }
@@ -55,10 +66,15 @@ export async function DELETE(
       actorRole: guard.context.role,
       ipAddress: request.headers.get('x-forwarded-for') || undefined,
     });
-    return apiOk({ success: true, message: 'Rate rule deleted successfully' });
+    return apiOk({
+      success: true,
+      message: SUCCESS_MESSAGES.RATE_RULE_DELETED,
+    });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to delete rate rule';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_DELETE_RATE_RULE;
     return apiFail(400, message);
   }
 }

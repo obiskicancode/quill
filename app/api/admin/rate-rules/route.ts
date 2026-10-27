@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import {
   createAdminRateRule,
@@ -22,7 +23,9 @@ export async function GET(request: NextRequest) {
     return apiOk(list, { noCache: true });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to list rate rules';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_LIST_RATE_RULES;
     return apiFail(500, message);
   }
 }
@@ -34,7 +37,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const parsed = AdminRateRuleInputSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid rate rule data', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_RATE_RULE_DATA,
+      parsed.error.flatten(),
+    );
   }
 
   try {
@@ -47,7 +54,9 @@ export async function POST(request: NextRequest) {
     return apiOk(created);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to create rate rule';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_CREATE_RATE_RULE;
     return apiFail(400, message);
   }
 }

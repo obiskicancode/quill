@@ -10,6 +10,8 @@ import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Field, inputClass } from '@/components/checkout/Field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 
 export function PasswordPanel() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -37,19 +39,13 @@ export function PasswordPanel() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setSuccess(
-        revoked > 0
-          ? `Password changed. ${revoked} other ${
-              revoked === 1 ? 'session was' : 'sessions were'
-            } signed out.`
-          : 'Password changed.',
-      );
+      setSuccess(SUCCESS_MESSAGES.PASSWORD_CHANGED(revoked));
     } catch (caught) {
       if (caught instanceof ServiceError) {
         setError(caught.message);
         setFieldErrors(caught.body?.fieldErrors ?? {});
       } else {
-        setError('Could not change your password. Try again.');
+        setError(ERROR_MESSAGES.COULD_NOT_CHANGE_PASSWORD);
       }
     } finally {
       setBusy(false);

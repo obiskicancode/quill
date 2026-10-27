@@ -1,3 +1,4 @@
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
 import { apiOk } from '@/lib/http/envelope';
@@ -27,8 +28,7 @@ export async function POST(
     {
       success: true,
       providerStatus: 'processing',
-      message:
-        'Provider refund status re-checked: Transaction is still processing at gateway.',
+      message: SUCCESS_MESSAGES.PROVIDER_REFUND_RECHECKED,
     },
     { noCache: true },
   );

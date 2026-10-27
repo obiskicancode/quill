@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AdminError, AdminLoading } from '@/components/admin/AdminStates';
 import { Button } from '@/components/ui/button';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { AdminRole, Permission } from '@/types/auth.types';
 import type {
   ReservationDetail,
@@ -100,7 +101,9 @@ export function ReservationDetailClient({
         }
       } catch (err: unknown) {
         const msg =
-          err instanceof Error ? err.message : 'Failed to load booking';
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_LOAD_BOOKING;
         setError(msg);
       } finally {
         if (!isQuiet) setIsLoading(false);

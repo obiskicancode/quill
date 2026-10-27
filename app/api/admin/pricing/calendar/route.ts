@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { todayISO } from '@/lib/dates';
 import { getPricingCalendar } from '@/lib/db/repositories/inventory-admin.repo';
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
   const days = parseInt(url.searchParams.get('days') || '90', 10);
 
   if (!roomTypeId) {
-    return apiFail(400, 'roomTypeId is required');
+    return apiFail(400, ERROR_MESSAGES.ROOM_TYPE_ID_REQUIRED);
   }
 
   try {
@@ -29,7 +30,9 @@ export async function GET(request: NextRequest) {
     return apiOk(calendar, { noCache: true });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to get price calendar';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_GET_PRICE_CALENDAR;
     return apiFail(500, message);
   }
 }

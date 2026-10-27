@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { hotelClock } from '@/lib/dates';
 import {
@@ -43,10 +44,7 @@ export async function GET(request: NextRequest) {
     60_000,
   );
   if (!rl.allowed) {
-    return apiFail(
-      429,
-      'Export rate limit exceeded. Please wait a minute before exporting again.',
-    );
+    return apiFail(429, ERROR_MESSAGES.EXPORT_RATE_LIMITED);
   }
 
   const url = new URL(request.url);
@@ -71,7 +69,11 @@ export async function GET(request: NextRequest) {
 
   const parsed = reservationsListQuerySchema.safeParse(rawParams);
   if (!parsed.success) {
-    return apiFail(400, 'Invalid export filters.', parsed.error.flatten());
+    return apiFail(
+      400,
+      ERROR_MESSAGES.INVALID_EXPORT_FILTERS,
+      parsed.error.flatten(),
+    );
   }
 
   const settings = await getHotelSettings();
@@ -159,6 +161,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Failed to export reservations CSV:', error);
-    return apiFail(500, 'Unable to generate CSV export.');
+    return apiFail(500, ERROR_MESSAGES.FAILED_TO_GENERATE_CSV);
   }
 }

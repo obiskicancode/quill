@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { bookingService } from '@/app/api/services/booking.service';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatCountdown } from '@/lib/format';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
@@ -59,11 +61,11 @@ export function ResendEmail({
 
   const message =
     state === 'sent'
-      ? 'Email sent.'
+      ? SUCCESS_MESSAGES.EMAIL_SENT
       : state === 'limited'
-        ? 'Please wait before asking for another email.'
+        ? ERROR_MESSAGES.WAIT_FOR_EMAIL
         : state === 'failed'
-          ? "We couldn't send the email. Please try again."
+          ? ERROR_MESSAGES.COULD_NOT_SEND_EMAIL
           : '';
 
   return (

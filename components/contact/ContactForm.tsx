@@ -9,6 +9,7 @@ import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { contentService } from '@/app/api/services/content.service';
 import { CONTACT_TOPICS } from '@/constants/content';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import {
   enquiryFormSchema,
   MAX_MESSAGE,
@@ -159,18 +160,17 @@ export function ContactForm({
         setStatus('idle');
       } else if (err?.status === 429) {
         setServerMessage(
-          err.body?.message ??
-            'Please wait a few minutes before sending another message.',
+          err.body?.message ?? ERROR_MESSAGES.CONTACT_RATE_LIMITED,
         );
         setStatus('ratelimited');
       } else if (err?.network) {
-        setServerMessage("We couldn't reach the server.");
+        setServerMessage(ERROR_MESSAGES.COULD_NOT_REACH_SERVER);
         setStatus('error');
       } else {
         setServerMessage(
           err?.body?.message ??
             err?.message ??
-            "We couldn't send your message.",
+            ERROR_MESSAGES.COULD_NOT_SEND_MESSAGE,
         );
         setStatus('error');
       }
@@ -272,7 +272,7 @@ export function ContactForm({
                   <Banner
                     role="alert"
                     tone="danger"
-                    title="Your message was not sent"
+                    title={ERROR_MESSAGES.MESSAGE_NOT_SENT}
                     actions={
                       <Button
                         variant="secondary"

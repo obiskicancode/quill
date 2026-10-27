@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { addDays, formatShort, nightsBetween } from '@/lib/dates';
 import type { AdminRole } from '@/types/auth.types';
 import type {
@@ -182,27 +183,27 @@ export function BlockModal({
     setError(null);
 
     if (selectedRoomIds.length === 0) {
-      setError('Please select at least one room.');
+      setError(ERROR_MESSAGES.SELECT_AT_LEAST_ONE_ROOM_PLEASE);
       return;
     }
 
     if (lastNight < startDate) {
-      setError('Last blocked night cannot be earlier than start date.');
+      setError(ERROR_MESSAGES.BLOCK_LAST_NIGHT_BEFORE_START);
       return;
     }
 
     if (nightsCount > 365) {
-      setError('Block duration cannot exceed 365 nights.');
+      setError(ERROR_MESSAGES.BLOCK_DURATION_TOO_LONG);
       return;
     }
 
     if (isBackdated) {
       if (!isManagerOrOwner) {
-        setError('Only managers and owners can create backdated room blocks.');
+        setError(ERROR_MESSAGES.MANAGERS_ONLY_BACKDATED_BLOCKS);
         return;
       }
       if (!backdateReason.trim()) {
-        setError('Please provide a reason for backdating this block.');
+        setError(ERROR_MESSAGES.BACKDATE_REASON_PROMPT);
         return;
       }
     }
@@ -211,16 +212,12 @@ export function BlockModal({
       (reason === 'owner_hold' || reason === 'renovation') &&
       !isManagerOrOwner
     ) {
-      setError(
-        `Only managers and owners can select the "${reason}" block reason.`,
-      );
+      setError(ERROR_MESSAGES.MANAGERS_ONLY_BLOCK_REASON(reason));
       return;
     }
 
     if (conflicts.length > 0) {
-      setError(
-        'Cannot save block while there are conflicting reservations or blocks.',
-      );
+      setError(ERROR_MESSAGES.BLOCK_CONFLICT_CANNOT_SAVE);
       return;
     }
 
@@ -253,7 +250,9 @@ export function BlockModal({
       onClose();
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : 'Failed to save room block.';
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_SAVE_ROOM_BLOCK;
       setError(msg);
     } finally {
       setSubmitting(false);
@@ -272,7 +271,9 @@ export function BlockModal({
       onClose();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to delete room block.',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_DELETE_BLOCK,
       );
     } finally {
       setDeleting(false);

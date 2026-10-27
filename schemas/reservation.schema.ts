@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+
 export const reservationsListQuerySchema = z.object({
   q: z.string().trim().optional(),
   status: z
@@ -40,11 +42,15 @@ export type ReservationsListQueryParams = z.infer<
 >;
 
 export const adminCreateReservationSchema = z.object({
-  checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid check-in date'),
-  checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid check-out date'),
-  adults: z.number().int().min(1, 'At least 1 adult is required'),
+  checkIn: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, ERROR_MESSAGES.INVALID_CHECKIN_DATE),
+  checkOut: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, ERROR_MESSAGES.INVALID_CHECKOUT_DATE),
+  adults: z.number().int().min(1, ERROR_MESSAGES.AT_LEAST_ONE_ADULT_REQUIRED),
   children: z.number().int().min(0).default(0),
-  roomTypeId: z.string().uuid('Invalid room type ID'),
+  roomTypeId: z.string().uuid(ERROR_MESSAGES.INVALID_ROOM_TYPE_ID),
   roomId: z.string().uuid().optional(),
   extraBed: z.boolean().default(false),
   extras: z
@@ -56,13 +62,13 @@ export const adminCreateReservationSchema = z.object({
     )
     .default([]),
   guest: z.object({
-    fullName: z.string().min(2, 'Name must be at least 2 characters'),
+    fullName: z.string().min(2, ERROR_MESSAGES.NAME_MIN_TWO),
     email: z
       .string()
-      .email('Invalid email address')
+      .email(ERROR_MESSAGES.INVALID_EMAIL_ADDRESS)
       .optional()
       .or(z.literal('')),
-    phone: z.string().min(6, 'Valid phone number is required'),
+    phone: z.string().min(6, ERROR_MESSAGES.PHONE_INVALID),
     country: z.string().default('NG'),
     arrivalTime: z.string().optional(),
     specialRequests: z.string().optional(),
@@ -74,7 +80,7 @@ export const adminCreateReservationSchema = z.object({
     .object({
       type: z.enum(['fixed', 'percentage']),
       value: z.number().positive(),
-      reason: z.string().min(3, 'Discount reason is required'),
+      reason: z.string().min(3, ERROR_MESSAGES.DISCOUNT_REASON_REQUIRED),
     })
     .optional(),
   paymentChoice: z.discriminatedUnion('mode', [
@@ -94,7 +100,7 @@ export const adminCreateReservationSchema = z.object({
     }),
   ]),
   termsAcceptedByStaff: z.boolean().refine((val) => val === true, {
-    message: 'You must accept the terms on behalf of the guest',
+    message: ERROR_MESSAGES.STAFF_TERMS_REQUIRED,
   }),
   idempotencyKey: z.string().min(8),
 });
@@ -104,36 +110,40 @@ export type AdminCreateReservationInput = z.infer<
 >;
 
 export const adminEditDetailsSchema = z.object({
-  fullName: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address').optional().or(z.literal('')),
-  phone: z.string().min(6, 'Valid phone number is required'),
+  fullName: z.string().min(2, ERROR_MESSAGES.NAME_MIN_TWO),
+  email: z
+    .string()
+    .email(ERROR_MESSAGES.INVALID_EMAIL_ADDRESS)
+    .optional()
+    .or(z.literal('')),
+  phone: z.string().min(6, ERROR_MESSAGES.PHONE_INVALID),
   country: z.string().optional(),
   arrivalTime: z.string().optional(),
   specialRequests: z.string().optional(),
   internalNotes: z.string().optional(),
-  version: z.string().min(1, 'Version is required for concurrency control'),
+  version: z.string().min(1, ERROR_MESSAGES.VERSION_REQUIRED_CONCURRENCY),
   idempotencyKey: z.string().min(8),
 });
 
 export type AdminEditDetailsInput = z.infer<typeof adminEditDetailsSchema>;
 
 export const adminReassignRoomSchema = z.object({
-  roomId: z.string().uuid('Valid room ID is required'),
+  roomId: z.string().uuid(ERROR_MESSAGES.VALID_ROOM_ID_REQUIRED),
   note: z.string().optional(),
-  version: z.string().min(1, 'Version is required'),
+  version: z.string().min(1, ERROR_MESSAGES.VERSION_REQUIRED),
   idempotencyKey: z.string().min(8),
 });
 
 export type AdminReassignRoomInput = z.infer<typeof adminReassignRoomSchema>;
 
 export const adminRecordPaymentSchema = z.object({
-  amountMinor: z.number().int().min(100, 'Minimum payment is ₦1.00'),
+  amountMinor: z.number().int().min(100, ERROR_MESSAGES.MINIMUM_PAYMENT),
   type: z.enum(['deposit', 'balance', 'full']),
   method: z.enum(['cash', 'bank_transfer', 'card']),
-  reference: z.string().min(2, 'Payment reference is required'),
+  reference: z.string().min(2, ERROR_MESSAGES.PAYMENT_REFERENCE_REQUIRED),
   paidAt: z.string().optional(),
   note: z.string().optional(),
-  version: z.string().min(1, 'Version is required'),
+  version: z.string().min(1, ERROR_MESSAGES.VERSION_REQUIRED),
   idempotencyKey: z.string().min(8),
 });
 
@@ -144,7 +154,7 @@ export const adminVerifyTransferSchema = z.object({
   amountMinor: z.number().int().positive().optional(),
   rejectionReason: z.string().optional(),
   note: z.string().optional(),
-  version: z.string().min(1, 'Version is required'),
+  version: z.string().min(1, ERROR_MESSAGES.VERSION_REQUIRED),
   idempotencyKey: z.string().min(8),
 });
 
@@ -155,7 +165,7 @@ export type AdminVerifyTransferInput = z.infer<
 export const adminApproveDeclineSchema = z.object({
   action: z.enum(['approve', 'decline']),
   reason: z.string().optional(),
-  version: z.string().min(1, 'Version is required'),
+  version: z.string().min(1, ERROR_MESSAGES.VERSION_REQUIRED),
   idempotencyKey: z.string().min(8),
 });
 
@@ -179,7 +189,7 @@ export const adminChangeDatesSchema = z.object({
   roomId: z.uuid().optional(),
   overrideRules: z.boolean().default(false),
   overrideReason: z.string().optional(),
-  version: z.string().min(1, 'Version is required'),
+  version: z.string().min(1, ERROR_MESSAGES.VERSION_REQUIRED),
   idempotencyKey: z.string().min(8),
 });
 
@@ -188,23 +198,23 @@ export type AdminChangeDatesInput = z.infer<typeof adminChangeDatesSchema>;
 export const adminCancelSchema = z.object({
   refundAmountMinor: z.number().int().min(0),
   overrideReason: z.string().optional(),
-  reason: z.string().min(2, 'Cancellation reason is required'),
+  reason: z.string().min(2, ERROR_MESSAGES.CANCELLATION_REASON_REQUIRED),
   note: z.string().optional(),
   doNotEmailGuest: z.boolean().default(false),
-  version: z.string().min(1, 'Version is required'),
+  version: z.string().min(1, ERROR_MESSAGES.VERSION_REQUIRED),
   idempotencyKey: z.string().min(8),
 });
 
 export type AdminCancelInput = z.infer<typeof adminCancelSchema>;
 
 export const adminRefundSchema = z.object({
-  paymentId: z.string().uuid('Valid payment ID is required'),
-  amountMinor: z.number().int().positive('Refund amount must be positive'),
-  reason: z.string().min(3, 'Refund reason is required'),
+  paymentId: z.string().uuid(ERROR_MESSAGES.VALID_PAYMENT_ID_REQUIRED),
+  amountMinor: z.number().int().positive(ERROR_MESSAGES.REFUND_AMOUNT_POSITIVE),
+  reason: z.string().min(3, ERROR_MESSAGES.REFUND_REASON_REQUIRED),
   method: z.enum(['provider', 'manual_bank', 'manual_cash']),
   reference: z.string().optional(),
   notes: z.string().optional(),
-  version: z.string().min(1, 'Version is required'),
+  version: z.string().min(1, ERROR_MESSAGES.VERSION_REQUIRED),
   idempotencyKey: z.string().min(8),
 });
 
@@ -214,7 +224,7 @@ export const adminNoShowSchema = z.object({
   refundAmountMinor: z.number().int().min(0).default(0),
   overrideReason: z.string().optional(),
   reason: z.string().optional(),
-  version: z.string().min(1, 'Version is required'),
+  version: z.string().min(1, ERROR_MESSAGES.VERSION_REQUIRED),
   idempotencyKey: z.string().min(8),
 });
 
@@ -226,7 +236,7 @@ export const adminResendConfirmationSchema = z.object({
     'payment_receipt',
     'cancellation_notice',
   ]),
-  recipient: z.email('Valid recipient email is required'),
+  recipient: z.email(ERROR_MESSAGES.VALID_RECIPIENT_EMAIL_REQUIRED),
   idempotencyKey: z.string().min(8),
 });
 

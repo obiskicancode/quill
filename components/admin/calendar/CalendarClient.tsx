@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { AdminRole } from '@/types/auth.types';
 import type {
   CalendarBlockBar,
@@ -112,7 +113,7 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
           setError(
             err instanceof Error
               ? err.message
-              : 'Failed to refresh calendar data.',
+              : ERROR_MESSAGES.FAILED_TO_REFRESH_CALENDAR,
           );
         }
       }
@@ -148,7 +149,9 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
       setData(res.data);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to refresh calendar data.',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_REFRESH_CALENDAR,
       );
     } finally {
       setLoading(false);

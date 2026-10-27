@@ -34,6 +34,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type {
   ManualRefundItem,
   ManualRefundPayoutInput,
@@ -105,12 +106,14 @@ export function ManualRefundsTab({
 
     const amountMinor = Math.round(Number(payoutForm.amountNaira) * 100);
     if (isNaN(amountMinor) || amountMinor <= 0) {
-      setFormError('Please enter a valid payout amount.');
+      setFormError(ERROR_MESSAGES.VALID_PAYOUT_AMOUNT);
       return;
     }
     if (amountMinor > selectedRefund.refundDueMinor) {
       setFormError(
-        `Payout amount cannot exceed refund amount due (${formatNaira(selectedRefund.refundDueMinor)})`,
+        ERROR_MESSAGES.PAYOUT_EXCEEDS_REFUND_DUE_SIMPLE(
+          formatNaira(selectedRefund.refundDueMinor),
+        ),
       );
       return;
     }
@@ -129,7 +132,9 @@ export function ManualRefundsTab({
       setSelectedRefund(null);
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : 'Failed to record refund payout';
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_RECORD_REFUND_PAYOUT;
       setFormError(msg);
     } finally {
       setSubmitting(false);
@@ -143,7 +148,7 @@ export function ManualRefundsTab({
       const msg = await onRecheckProvider(id);
       setRecheckFeedback(msg);
     } catch {
-      setRecheckFeedback('Could not reach gateway status API.');
+      setRecheckFeedback(ERROR_MESSAGES.COULD_NOT_REACH_GATEWAY);
     } finally {
       setRecheckingId(null);
     }

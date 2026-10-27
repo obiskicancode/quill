@@ -1,3 +1,5 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { requireStepUp } from '@/lib/auth/step-up';
 import {
@@ -21,7 +23,9 @@ export async function GET(
   const detail = await getStaffDetailRepo(id);
 
   if (!detail) {
-    return apiFail(404, 'Staff member not found', undefined, { noCache: true });
+    return apiFail(404, ERROR_MESSAGES.STAFF_MEMBER_NOT_FOUND, undefined, {
+      noCache: true,
+    });
   }
 
   return apiOk(detail, { noCache: true });
@@ -41,14 +45,16 @@ export async function PATCH(
   try {
     body = await request.json();
   } catch {
-    return apiFail(400, 'Invalid JSON body', undefined, { noCache: true });
+    return apiFail(400, ERROR_MESSAGES.INVALID_JSON_BODY, undefined, {
+      noCache: true,
+    });
   }
 
   const parsed = StaffUpdateInputSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       400,
-      parsed.error.issues[0]?.message || 'Invalid input',
+      parsed.error.issues[0]?.message || ERROR_MESSAGES.INVALID_INPUT,
       undefined,
       { noCache: true },
     );
@@ -70,14 +76,14 @@ export async function PATCH(
   if (!result.ok) {
     return apiFail(
       400,
-      result.error || 'Failed to update staff member',
+      result.error || ERROR_MESSAGES.FAILED_TO_UPDATE_STAFF,
       undefined,
       { noCache: true },
     );
   }
 
   return apiOk(
-    { success: true, message: 'Staff member updated successfully' },
+    { success: true, message: SUCCESS_MESSAGES.STAFF_UPDATED },
     { noCache: true },
   );
 }

@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type {
   PaymentSummaryDelta,
   PaymentSummaryResponse,
@@ -122,13 +123,16 @@ export function validateManualRefundPayout(params: {
   } = params;
 
   if (payoutAmountMinor <= 0) {
-    return { ok: false, error: 'Payout amount must be greater than zero' };
+    return { ok: false, error: ERROR_MESSAGES.PAYOUT_AMOUNT_POSITIVE };
   }
 
   if (payoutAmountMinor > refundDueMinor) {
     return {
       ok: false,
-      error: `Payout amount (₦${(payoutAmountMinor / 100).toLocaleString()}) cannot exceed the refund amount due (₦${(refundDueMinor / 100).toLocaleString()})`,
+      error: ERROR_MESSAGES.PAYOUT_EXCEEDS_REFUND_DUE(
+        (payoutAmountMinor / 100).toLocaleString(),
+        (refundDueMinor / 100).toLocaleString(),
+      ),
     };
   }
 
@@ -137,7 +141,9 @@ export function validateManualRefundPayout(params: {
   if (payoutAmountMinor > remainingPaid) {
     return {
       ok: false,
-      error: `Payout amount exceeds remaining un-refunded payments on this reservation (₦${(remainingPaid / 100).toLocaleString()})`,
+      error: ERROR_MESSAGES.PAYOUT_EXCEEDS_REMAINING(
+        (remainingPaid / 100).toLocaleString(),
+      ),
     };
   }
 
@@ -197,7 +203,7 @@ export function unreconcilePayment(params: {
   if (params.actorRole !== 'owner') {
     return {
       ok: false,
-      error: 'Only owners are permitted to unreconcile payments',
+      error: ERROR_MESSAGES.OWNERS_ONLY_UNRECONCILE_BARE,
     };
   }
 
@@ -205,7 +211,7 @@ export function unreconcilePayment(params: {
   if (!trimmedReason || trimmedReason.length < 5) {
     return {
       ok: false,
-      error: 'A valid reason (minimum 5 characters) is required to unreconcile',
+      error: ERROR_MESSAGES.UNRECONCILE_REASON_REQUIRED,
     };
   }
 

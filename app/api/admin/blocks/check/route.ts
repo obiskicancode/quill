@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { checkBlockConflicts } from '@/lib/db/repositories/calendar-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return apiFail(
       422,
-      'Invalid block check parameters',
+      ERROR_MESSAGES.INVALID_BLOCK_CHECK_PARAMETERS,
       parsed.error.flatten(),
     );
   }
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     const message =
       error instanceof Error
         ? error.message
-        : 'Failed to check block conflicts.';
+        : ERROR_MESSAGES.FAILED_TO_CHECK_BLOCK_CONFLICTS;
     return apiFail(500, message);
   }
 }

@@ -1,3 +1,5 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
 import { unreconcilePaymentRepo } from '@/lib/db/repositories/payments-admin.repo';
@@ -14,18 +16,15 @@ export async function POST(request: Request) {
 
   // Owner only
   if (context.role !== 'owner') {
-    return apiFail(
-      403,
-      'Forbidden: Only owners are permitted to unreconcile payments',
-      undefined,
-      { noCache: true },
-    );
+    return apiFail(403, ERROR_MESSAGES.OWNERS_ONLY_UNRECONCILE, undefined, {
+      noCache: true,
+    });
   }
 
   const { searchParams } = new URL(request.url);
   const paymentId = searchParams.get('id');
   if (!paymentId) {
-    return apiFail(400, 'Missing payment ID parameter', undefined, {
+    return apiFail(400, ERROR_MESSAGES.MISSING_PAYMENT_ID, undefined, {
       noCache: true,
     });
   }
@@ -34,14 +33,16 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return apiFail(400, 'Invalid JSON body', undefined, { noCache: true });
+    return apiFail(400, ERROR_MESSAGES.INVALID_JSON_BODY, undefined, {
+      noCache: true,
+    });
   }
 
   const parsed = UnreconcileInputSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       400,
-      parsed.error.issues[0]?.message || 'Reason is required',
+      parsed.error.issues[0]?.message || ERROR_MESSAGES.REASON_REQUIRED,
       undefined,
       { noCache: true },
     );
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
   if (!result.ok) {
     return apiFail(
       400,
-      result.error || 'Failed to unreconcile payment',
+      result.error || ERROR_MESSAGES.FAILED_TO_UNRECONCILE_PAYMENT,
       undefined,
       { noCache: true },
     );
@@ -75,7 +76,7 @@ export async function POST(request: Request) {
   }).catch(() => {});
 
   return apiOk(
-    { success: true, message: 'Payment unreconciled successfully' },
+    { success: true, message: SUCCESS_MESSAGES.PAYMENT_UNRECONCILED },
     { noCache: true },
   );
 }

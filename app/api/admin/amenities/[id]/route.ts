@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import {
   deleteAdminAmenity,
@@ -23,7 +25,11 @@ export async function PATCH(
   const body = await request.json().catch(() => null);
   const parsed = AdminAmenityInputSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid amenity data', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_AMENITY_DATA,
+      parsed.error.flatten(),
+    );
   }
 
   try {
@@ -34,10 +40,12 @@ export async function PATCH(
       actorRole: guard.context.role,
       ipAddress: request.headers.get('x-forwarded-for') || undefined,
     });
-    return apiOk({ success: true, message: 'Amenity updated successfully' });
+    return apiOk({ success: true, message: SUCCESS_MESSAGES.AMENITY_UPDATED });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to update amenity';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_UPDATE_AMENITY;
     return apiFail(400, message);
   }
 }
@@ -59,10 +67,12 @@ export async function DELETE(
       actorRole: guard.context.role,
       ipAddress: request.headers.get('x-forwarded-for') || undefined,
     });
-    return apiOk({ success: true, message: 'Amenity deleted successfully' });
+    return apiOk({ success: true, message: SUCCESS_MESSAGES.AMENITY_DELETED });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to delete amenity';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_DELETE_AMENITY;
     return apiFail(400, message);
   }
 }

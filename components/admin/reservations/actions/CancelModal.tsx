@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatNaira } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
@@ -67,7 +68,7 @@ export function CancelModal({
           setError(
             err instanceof Error
               ? err.message
-              : 'Failed to preview cancellation',
+              : ERROR_MESSAGES.FAILED_TO_PREVIEW_CANCELLATION,
           );
         })
         .finally(() => setLoadingPreview(false));
@@ -77,13 +78,13 @@ export function CancelModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!acknowledged) {
-      setError('Please acknowledge that cancellation cannot be undone.');
+      setError(ERROR_MESSAGES.PLEASE_ACKNOWLEDGE_CANCELLATION);
       return;
     }
 
     const num = parseFloat(refundNaira);
     if (isNaN(num) || num < 0) {
-      setError('Invalid refund amount.');
+      setError(ERROR_MESSAGES.INVALID_REFUND_AMOUNT);
       return;
     }
 
@@ -91,9 +92,7 @@ export function CancelModal({
       overrideRefund &&
       (!overrideReason || overrideReason.trim().length < 3)
     ) {
-      setError(
-        'A reason is required when overriding the policy refund amount.',
-      );
+      setError(ERROR_MESSAGES.CANCELLATION_OVERRIDE_REASON);
       return;
     }
 
@@ -115,7 +114,9 @@ export function CancelModal({
       onClose();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to cancel reservation',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_CANCEL_RESERVATION_UI,
       );
     } finally {
       setSubmitting(false);

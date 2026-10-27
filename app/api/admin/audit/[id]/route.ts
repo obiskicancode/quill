@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { getAuditDetailRepo } from '@/lib/db/repositories/audit-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
@@ -16,7 +17,7 @@ export async function GET(
   const detail = await getAuditDetailRepo(id, context.role);
 
   if (!detail) {
-    return apiFail(404, 'Audit entry not found or restricted', undefined, {
+    return apiFail(404, ERROR_MESSAGES.AUDIT_ENTRY_NOT_FOUND, undefined, {
       noCache: true,
     });
   }

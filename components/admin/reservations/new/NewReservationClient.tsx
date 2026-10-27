@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { addDays, nightsBetween } from '@/lib/dates';
 import { formatNaira } from '@/lib/format';
 import type { AdminRole } from '@/types/auth.types';
@@ -229,24 +230,22 @@ export function NewReservationClient({
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!termsAccepted) {
-      setError('You must accept the terms on behalf of the guest to proceed.');
+      setError(ERROR_MESSAGES.ACCEPT_TERMS_FOR_GUEST);
       return;
     }
 
     if (quote?.status !== 'ok') {
-      setError('Please select valid stay dates and an available room.');
+      setError(ERROR_MESSAGES.SELECT_VALID_STAY_AND_ROOM);
       return;
     }
 
     if (!isManagerOrOwner && checkIn < today) {
-      setError(
-        'Only managers and owners can create reservations with past check-in dates.',
-      );
+      setError(ERROR_MESSAGES.MANAGERS_ONLY_PAST_CHECKIN);
       return;
     }
 
     if (hasDiscount && (!discountReason || discountReason.trim().length < 3)) {
-      setError('A reason is required when applying a staff discount.');
+      setError(ERROR_MESSAGES.STAFF_DISCOUNT_REASON_REQUIRED);
       return;
     }
 
@@ -266,7 +265,7 @@ export function NewReservationClient({
       } else if (paymentMode === 'record_payment') {
         const pNum = parseFloat(paidAmountNaira);
         if (isNaN(pNum) || pNum <= 0) {
-          setError('Please specify a valid payment amount.');
+          setError(ERROR_MESSAGES.VALID_PAYMENT_AMOUNT);
           setSubmitting(false);
           return;
         }
@@ -317,7 +316,9 @@ export function NewReservationClient({
       router.push(`/admin/reservations/${res.data.id}`);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to create reservation',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_CREATE_RESERVATION_UI,
       );
       setSubmitting(false);
     }

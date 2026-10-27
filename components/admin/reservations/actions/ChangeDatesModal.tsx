@@ -15,6 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatNaira } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
@@ -62,7 +63,7 @@ export function ChangeDatesModal({
 
   const handleFetchQuote = async () => {
     if (checkOut <= checkIn) {
-      setError('Check-out date must be after check-in date.');
+      setError(ERROR_MESSAGES.CHECKOUT_AFTER_CHECKIN_UI);
       return;
     }
 
@@ -86,7 +87,9 @@ export function ChangeDatesModal({
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to quote stay dates',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_QUOTE_DATES,
       );
     } finally {
       setQuoting(false);
@@ -96,7 +99,7 @@ export function ChangeDatesModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!quoteData) {
-      setError('Please check price and availability first.');
+      setError(ERROR_MESSAGES.CHECK_PRICE_AVAILABILITY_FIRST);
       return;
     }
 
@@ -104,7 +107,7 @@ export function ChangeDatesModal({
       overrideRules &&
       (!overrideReason || overrideReason.trim().length < 3)
     ) {
-      setError('An override reason is required when bypassing hotel rules.');
+      setError(ERROR_MESSAGES.OVERRIDE_REASON_REQUIRED);
       return;
     }
 
@@ -125,7 +128,11 @@ export function ChangeDatesModal({
       onSuccess(updated.data);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to change dates');
+      setError(
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_CHANGE_DATES_UI,
+      );
     } finally {
       setSubmitting(false);
     }

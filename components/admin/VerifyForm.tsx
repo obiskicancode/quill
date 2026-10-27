@@ -17,6 +17,7 @@ import {
   InputOTPSlot,
 } from '@/components/ui/input-otp';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 
 type Mode = 'totp' | 'recovery';
 
@@ -43,7 +44,7 @@ export function VerifyForm({ next }: { next?: string }) {
       setError(
         caught instanceof ServiceError
           ? caught.message
-          : 'Could not verify that code. Try again.',
+          : ERROR_MESSAGES.COULD_NOT_VERIFY_CODE,
       );
     } finally {
       setBusy(false);

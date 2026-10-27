@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { ActionGate } from '@/types/base.types';
 import type { PolicySnapshot } from '@/types/booking.types';
 import type { PolicySummary } from '@/types/checkout.types';
@@ -101,56 +102,41 @@ export function allowedActions(
     : -1;
 
   const cancelReasons: Record<string, string> = {
-    checked_in:
-      "You've already checked in. Please speak to reception if you need to leave early.",
-    checked_out: 'This stay is complete, so there is nothing to cancel.',
-    cancelled: 'This booking is already cancelled.',
-    expired:
-      "This booking expired because it wasn't paid in time, so there is nothing to cancel.",
-    no_show:
-      'This booking was marked as a no-show, so it can no longer be cancelled online.',
-    payment_failed:
-      "The payment didn't go through, so there is nothing to cancel.",
+    checked_in: ERROR_MESSAGES.ALREADY_CHECKED_IN_EARLY_LEAVE,
+    checked_out: ERROR_MESSAGES.STAY_COMPLETE_NOTHING_TO_CANCEL,
+    cancelled: ERROR_MESSAGES.BOOKING_ALREADY_CANCELLED,
+    expired: ERROR_MESSAGES.BOOKING_EXPIRED_CANNOT_CANCEL,
+    no_show: ERROR_MESSAGES.NO_SHOW_CANNOT_CANCEL_ONLINE,
+    payment_failed: ERROR_MESSAGES.PAYMENT_FAILED_NOTHING_TO_CANCEL,
   };
   const canCancel = CANCELLABLE.includes(r.status)
     ? yes
     : no(
-        cancelReasons[r.status] ??
-          'This booking can no longer be cancelled online.',
+        cancelReasons[r.status] ?? ERROR_MESSAGES.BOOKING_CANNOT_CANCEL_ONLINE,
       );
 
   let canChangeDates: ActionGate;
   if (r.pendingChange)
-    canChangeDates = no(
-      'A date change is waiting for payment. Finish it or let it expire first.',
-    );
+    canChangeDates = no(ERROR_MESSAGES.DATE_CHANGE_AWAITING_PAYMENT);
   else if (FINISHED.includes(r.status) || r.status === 'checked_in')
-    canChangeDates = no(
-      "Dates can't be changed online for a booking in this status.",
-    );
+    canChangeDates = no(ERROR_MESSAGES.CANNOT_CHANGE_DATES_ONLINE_STATUS);
   else if (!CHANGEABLE.includes(r.status))
-    canChangeDates = no(
-      "Dates can't be changed while a payment is waiting to be confirmed.",
-    );
-  else if (until <= 0) canChangeDates = no('Check-in has already passed.');
+    canChangeDates = no(ERROR_MESSAGES.CANNOT_CHANGE_DATES_PAYMENT_PENDING);
+  else if (until <= 0) canChangeDates = no(ERROR_MESSAGES.CHECKIN_PASSED);
   else if (until < s.minNoticeHours * 60)
-    canChangeDates = no(
-      `Dates can be changed online up to ${s.minNoticeHours} hours before check-in.`,
-    );
+    canChangeDates = no(ERROR_MESSAGES.CHANGE_WINDOW(s.minNoticeHours));
   else if (r.changeCount >= s.maxChanges)
-    canChangeDates = no(
-      `This booking has already been changed ${r.changeCount} ${r.changeCount === 1 ? 'time' : 'times'}, which is the most we allow online.`,
-    );
+    canChangeDates = no(ERROR_MESSAGES.MAX_DATE_CHANGES(r.changeCount));
   else canChangeDates = yes;
 
   const canEditDetails = FINISHED.includes(r.status)
-    ? no("Details can't be edited for a booking in this status.")
+    ? no(ERROR_MESSAGES.DETAILS_CANNOT_EDIT_STATUS)
     : yes;
   const canAddExtras = !r.snapshot.addExtras.supported
-    ? no('Adding extras after booking is not offered.')
+    ? no(ERROR_MESSAGES.ADD_EXTRAS_NOT_OFFERED)
     : EXTRAS_OK.includes(r.status)
       ? yes
-      : no("Extras can't be added to a booking in this status.");
+      : no(ERROR_MESSAGES.EXTRAS_CANNOT_ADD_STATUS);
 
   return {
     canCancel,

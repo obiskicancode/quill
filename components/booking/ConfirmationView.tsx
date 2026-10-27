@@ -5,6 +5,7 @@ import { Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { bookingService } from '@/app/api/services/booking.service';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { trackBookingConfirmedOnce } from '@/lib/booking/analytics';
 import { headerKind } from '@/lib/booking/status';
 import type { GuestReservation } from '@/types/booking.types';
@@ -69,9 +70,7 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
       const next = (await bookingService.get(v.reference)).data;
       setV((prev) => {
         if (prev.status !== next.status)
-          setAnnouncement(
-            'Your booking status has changed. The page has been updated.',
-          );
+          setAnnouncement(ERROR_MESSAGES.BOOKING_STATUS_CHANGED);
         return next;
       });
     } catch {
@@ -154,7 +153,7 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
               <Banner
                 role="alert"
                 tone="danger"
-                title="We couldn't refresh your booking"
+                title={ERROR_MESSAGES.COULD_NOT_REFRESH_BOOKING}
                 actions={
                   <Button
                     variant="secondary"

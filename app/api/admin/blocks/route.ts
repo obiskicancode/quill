@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { db } from '@/db';
 import { hotelSettings } from '@/db/schema';
 import { guardAdminApi } from '@/lib/auth/guards';
@@ -33,7 +35,11 @@ export async function GET(request: NextRequest) {
   });
 
   if (!parsed.success) {
-    return apiFail(422, 'Invalid query parameters', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_QUERY_PARAMETERS,
+      parsed.error.flatten(),
+    );
   }
 
   const [settings] = await db
@@ -51,7 +57,9 @@ export async function GET(request: NextRequest) {
     return apiOk(list, { noCache: true });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to list room blocks.';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_LIST_BLOCKS;
     return apiFail(500, message);
   }
 }
@@ -65,7 +73,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const parsed = adminCreateBlockSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid block parameters', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_BLOCK_PARAMETERS,
+      parsed.error.flatten(),
+    );
   }
 
   const {
@@ -90,7 +102,7 @@ export async function POST(request: NextRequest) {
     if (guard.context.role !== 'owner' && guard.context.role !== 'manager') {
       return apiFail(
         403,
-        `Only managers and owners can create blocks with reason "${reason}".`,
+        ERROR_MESSAGES.MANAGERS_ONLY_CREATE_BLOCK_REASON(reason),
       );
     }
   }
@@ -98,13 +110,10 @@ export async function POST(request: NextRequest) {
   // 2. Permission checks on backdated blocks
   if (startDate < today) {
     if (guard.context.role !== 'owner' && guard.context.role !== 'manager') {
-      return apiFail(
-        403,
-        'Only managers and owners can create blocks that start in the past.',
-      );
+      return apiFail(403, ERROR_MESSAGES.MANAGERS_ONLY_CREATE_BACKDATE);
     }
     if (!backdateReason || backdateReason.trim().length === 0) {
-      return apiFail(422, 'A reason is required when backdating a room block.');
+      return apiFail(422, ERROR_MESSAGES.BACKDATE_REASON_REQUIRED);
     }
   }
 
@@ -129,7 +138,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!result.ok) {
-      return apiFail(409, 'One or more rooms have scheduling conflicts.', {
+      return apiFail(409, ERROR_MESSAGES.ROOMS_HAVE_CONFLICTS, {
         conflicts: result.conflicts,
       });
     }
@@ -137,7 +146,7 @@ export async function POST(request: NextRequest) {
     return apiOk(
       {
         count: result.count,
-        message: `Successfully created ${result.count} block(s).`,
+        message: SUCCESS_MESSAGES.BLOCKS_CREATED(result.count),
       },
       { status: 201, noCache: true },
     );
@@ -145,14 +154,14 @@ export async function POST(request: NextRequest) {
     // Database exclusion constraint violation check (SQLSTATE 23P01)
     const errObj = error as { code?: string; message?: string };
     if (errObj.code === '23P01') {
-      return apiFail(
-        409,
-        'Cannot create room block due to an overlapping reservation or existing block.',
-        { sqlState: '23P01' },
-      );
+      return apiFail(409, ERROR_MESSAGES.ROOM_BLOCK_CREATE_CONFLICT, {
+        sqlState: '23P01',
+      });
     }
     const message =
-      error instanceof Error ? error.message : 'Failed to create room block.';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_CREATE_BLOCK;
     return apiFail(500, message);
   }
 }

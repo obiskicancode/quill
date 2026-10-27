@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useRef, useState, type ReactNode } from 'react';
 
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatMinor } from '@/lib/format';
 import { MAX_PROOF_BYTES } from '@/schemas/checkout.schema';
 import type {
@@ -68,7 +69,7 @@ export function CopyButton({ value, label }: { value: string; label: string }) {
         ) : (
           <Copy className="size-4" aria-hidden />
         )}
-        {copied ? 'Copied' : 'Copy'}
+        {copied ? SUCCESS_MESSAGES.COPIED : 'Copy'}
       </Button>
       <span aria-live="polite" className="sr-only">
         {copied ? `${label} copied` : ''}

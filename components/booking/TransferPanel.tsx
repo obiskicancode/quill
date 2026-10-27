@@ -7,6 +7,8 @@ import { useRef, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { checkoutService } from '@/app/api/services/checkout.service';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatMinor } from '@/lib/format';
 import { checkProofFile, MAX_PROOF_BYTES } from '@/schemas/checkout.schema';
 import type { GuestReservation } from '@/types/booking.types';
@@ -50,7 +52,7 @@ export function TransferPanel({
   ];
 
   async function submit() {
-    if (!file) return setError('Choose your transfer receipt to upload.');
+    if (!file) return setError(ERROR_MESSAGES.CHOOSE_TRANSFER_RECEIPT);
     const problem = checkProofFile(file);
     if (problem) return setError(problem);
     setError(null);
@@ -62,7 +64,7 @@ export function TransferPanel({
       setError(
         e instanceof ServiceError && e.body?.message
           ? e.body.message
-          : "We couldn't upload the receipt. Please try again.",
+          : ERROR_MESSAGES.COULD_NOT_UPLOAD_RECEIPT,
       );
     } finally {
       setBusy(false);
@@ -95,7 +97,7 @@ export function TransferPanel({
             transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
           >
             <p className="text-small font-medium">
-              We have your receipt. The hotel will verify it and email you.
+              {SUCCESS_MESSAGES.TRANSFER_RECEIPT_RECEIVED}
             </p>
           </motion.div>
         ) : (

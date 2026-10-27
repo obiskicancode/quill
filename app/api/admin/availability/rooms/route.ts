@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { listAvailableRoomsForStay } from '@/lib/db/repositories/reservations-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
@@ -20,10 +21,7 @@ export async function GET(request: NextRequest) {
     url.searchParams.get('excludeReservationId') ?? undefined;
 
   if (!roomTypeId || !checkIn || !checkOut) {
-    return apiFail(
-      400,
-      'Missing required parameters: roomTypeId, checkIn, checkOut',
-    );
+    return apiFail(400, ERROR_MESSAGES.MISSING_AVAILABILITY_PARAMETERS);
   }
 
   try {
@@ -38,7 +36,7 @@ export async function GET(request: NextRequest) {
     const message =
       error instanceof Error
         ? error.message
-        : 'Failed to query room availability.';
+        : ERROR_MESSAGES.FAILED_TO_QUERY_AVAILABILITY;
     return apiFail(400, message);
   }
 }

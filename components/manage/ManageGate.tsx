@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useState } from 'react';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { GuestReservation } from '@/types/booking.types';
 
 import { VerifyForm } from '../booking/VerifyForm';
@@ -37,13 +38,11 @@ export function ManageGate({ initial, reference, notice }: ManageGateProps) {
           <ManageView
             initial={view}
             onSignedOut={() => {
-              setMessage('You have signed out of this booking.');
+              setMessage(ERROR_MESSAGES.SIGNED_OUT_BOOKING);
               setView(null);
             }}
             onExpired={() => {
-              setMessage(
-                'Your session ended for your security. Please look up your booking again.',
-              );
+              setMessage(ERROR_MESSAGES.SECURITY_SESSION_ENDED);
               setView(null);
             }}
           />

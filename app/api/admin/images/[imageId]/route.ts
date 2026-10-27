@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import {
   deleteRoomTypeImage,
@@ -21,15 +23,21 @@ export async function PATCH(
   const body = await request.json().catch(() => null);
   const parsed = AdminImageUpdateSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid image update data', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_IMAGE_UPDATE_DATA,
+      parsed.error.flatten(),
+    );
   }
 
   try {
     await updateImageDetails(imageId, parsed.data);
-    return apiOk({ success: true, message: 'Image updated successfully' });
+    return apiOk({ success: true, message: SUCCESS_MESSAGES.IMAGE_UPDATED });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to update image';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_UPDATE_IMAGE;
     return apiFail(400, message);
   }
 }
@@ -44,10 +52,12 @@ export async function DELETE(
   const { imageId } = await params;
   try {
     await deleteRoomTypeImage(imageId);
-    return apiOk({ success: true, message: 'Image deleted successfully' });
+    return apiOk({ success: true, message: SUCCESS_MESSAGES.IMAGE_DELETED });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to delete image';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_DELETE_IMAGE;
     return apiFail(400, message);
   }
 }

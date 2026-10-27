@@ -18,6 +18,8 @@ import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { AdminRoomImage } from '@/types/inventory.types';
 
 interface TabPhotosProps {
@@ -56,7 +58,7 @@ export function TabPhotos({
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
-      setErrorMessage('File size exceeds 10 MB limit.');
+      setErrorMessage(ERROR_MESSAGES.FILE_TOO_LARGE);
       return;
     }
 
@@ -73,7 +75,7 @@ export function TabPhotos({
   async function handleUpload() {
     if (!pendingFile) return;
     if (!pendingAltText.trim()) {
-      setErrorMessage('Alt text is required for accessibility and publishing.');
+      setErrorMessage(ERROR_MESSAGES.ALT_TEXT_REQUIRED_PUBLISHING);
       return;
     }
 
@@ -93,7 +95,7 @@ export function TabPhotos({
       setUploadProgress(100);
 
       if (res.data) {
-        setSuccessMessage('Photo uploaded successfully');
+        setSuccessMessage(SUCCESS_MESSAGES.PHOTO_UPLOADED);
         setPendingFile(null);
         setPendingAltText('');
         setPendingCaption('');
@@ -101,7 +103,9 @@ export function TabPhotos({
       }
     } catch (err) {
       setErrorMessage(
-        err instanceof Error ? err.message : 'Failed to upload photo',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_UPLOAD_PHOTO,
       );
     } finally {
       setUploading(false);
@@ -127,7 +131,7 @@ export function TabPhotos({
     try {
       await adminService.reorderRoomImages(roomTypeId, items);
     } catch {
-      setErrorMessage('Failed to reorder photos');
+      setErrorMessage(ERROR_MESSAGES.FAILED_TO_REORDER_PHOTOS);
       await onRefresh();
     }
   }
@@ -139,16 +143,16 @@ export function TabPhotos({
         caption: photo.caption,
         isCover: true,
       });
-      setSuccessMessage(`Set as cover photo`);
+      setSuccessMessage(SUCCESS_MESSAGES.COVER_PHOTO_SET);
       await onRefresh();
     } catch {
-      setErrorMessage('Failed to set cover photo');
+      setErrorMessage(ERROR_MESSAGES.FAILED_TO_SET_COVER_PHOTO);
     }
   }
 
   async function handleSaveEdit(photoId: string) {
     if (!editAlt.trim()) {
-      setErrorMessage('Alt text cannot be empty');
+      setErrorMessage(ERROR_MESSAGES.ALT_TEXT_CANNOT_BE_EMPTY);
       return;
     }
 
@@ -161,7 +165,7 @@ export function TabPhotos({
       setEditingId(null);
       await onRefresh();
     } catch {
-      setErrorMessage('Failed to update photo details');
+      setErrorMessage(ERROR_MESSAGES.FAILED_TO_UPDATE_PHOTO_DETAILS);
     } finally {
       setIsUpdating(false);
     }
@@ -173,7 +177,7 @@ export function TabPhotos({
       await adminService.deleteImage(photoId);
       await onRefresh();
     } catch {
-      setErrorMessage('Failed to delete photo');
+      setErrorMessage(ERROR_MESSAGES.FAILED_TO_DELETE_PHOTO);
     }
   }
 

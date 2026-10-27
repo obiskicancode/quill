@@ -10,6 +10,8 @@ import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Field, inputClass } from '@/components/checkout/Field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
@@ -31,7 +33,7 @@ export function ForgotPasswordForm() {
         setError(caught.message);
         setFieldError(caught.body?.fieldErrors?.email);
       } else {
-        setError('Could not send the request. Try again.');
+        setError(ERROR_MESSAGES.COULD_NOT_SEND_REQUEST);
       }
     } finally {
       setBusy(false);
@@ -52,8 +54,7 @@ export function ForgotPasswordForm() {
       {sent ? (
         <div className="mt-5 space-y-4">
           <StatusBanner tone="success">
-            If that email belongs to a staff account, a reset link has been
-            sent. It expires in 60 minutes.
+            {SUCCESS_MESSAGES.ADMIN_RESET_SENT_EXPIRY}
           </StatusBanner>
           <p className="text-small text-muted-foreground">
             Reset email delivery is not connected in this environment. Ask the

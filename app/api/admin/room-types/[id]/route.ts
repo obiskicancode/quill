@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import {
   deleteAdminRoomType,
@@ -22,12 +24,14 @@ export async function GET(
   try {
     const detail = await getAdminRoomTypeById(id);
     if (!detail) {
-      return apiFail(404, 'Room type not found');
+      return apiFail(404, ERROR_MESSAGES.ROOM_TYPE_NOT_FOUND);
     }
     return apiOk(detail, { noCache: true });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to get room type';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_GET_ROOM_TYPE;
     return apiFail(500, message);
   }
 }
@@ -43,7 +47,11 @@ export async function PATCH(
   const body = await request.json().catch(() => null);
   const parsed = AdminRoomTypeInputSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid room type details', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_ROOM_TYPE_DETAILS,
+      parsed.error.flatten(),
+    );
   }
 
   try {
@@ -58,7 +66,9 @@ export async function PATCH(
     return apiOk(updated);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to update room type';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_UPDATE_ROOM_TYPE;
     return apiFail(400, message);
   }
 }
@@ -78,10 +88,15 @@ export async function DELETE(
       actorRole: guard.context.role,
       ipAddress: request.headers.get('x-forwarded-for') || undefined,
     });
-    return apiOk({ success: true, message: 'Room type deleted successfully' });
+    return apiOk({
+      success: true,
+      message: SUCCESS_MESSAGES.ROOM_TYPE_DELETED,
+    });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to delete room type';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_DELETE_ROOM_TYPE;
     return apiFail(400, message);
   }
 }

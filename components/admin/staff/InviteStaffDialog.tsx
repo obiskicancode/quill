@@ -23,6 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { AdminRole } from '@/types/auth.types';
 import type { StaffInviteInput } from '@/types/staff-admin.types';
 
@@ -62,24 +65,26 @@ export function InviteStaffDialog({
       setError(null);
       const res = await adminService.inviteStaff(form);
       if (res.data?.success) {
-        onSuccess(res.data.message || 'Invitation sent successfully');
+        onSuccess(res.data.message || SUCCESS_MESSAGES.INVITATION_SENT);
         onClose();
       } else {
-        setError(res.data?.message || 'Failed to send invitation');
+        setError(res.data?.message || ERROR_MESSAGES.FAILED_TO_SEND_INVITATION);
       }
     } catch (err: unknown) {
       const errorObj = err as {
         response?: { data?: { data?: { code?: string }; message?: string } };
         message?: string;
       };
-      if (errorObj?.response?.data?.data?.code === 'STEP_UP_REQUIRED') {
+      if (
+        errorObj?.response?.data?.data?.code === ERROR_CODES.STEP_UP_REQUIRED
+      ) {
         onRequestStepUp(() => executeInvite());
         return;
       }
       setError(
         errorObj?.response?.data?.message ||
           errorObj?.message ||
-          'Failed to send invitation',
+          ERROR_MESSAGES.FAILED_TO_SEND_INVITATION,
       );
     } finally {
       setSubmitting(false);

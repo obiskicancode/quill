@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
 import { reconcilePaymentsBulkRepo } from '@/lib/db/repositories/payments-admin.repo';
@@ -16,14 +17,16 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return apiFail(400, 'Invalid JSON body', undefined, { noCache: true });
+    return apiFail(400, ERROR_MESSAGES.INVALID_JSON_BODY, undefined, {
+      noCache: true,
+    });
   }
 
   const parsed = ReconcileBulkInputSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       400,
-      parsed.error.issues[0]?.message || 'Invalid input',
+      parsed.error.issues[0]?.message || ERROR_MESSAGES.INVALID_INPUT,
       undefined,
       { noCache: true },
     );

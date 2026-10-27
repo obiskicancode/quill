@@ -11,6 +11,7 @@ import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Field, inputClass } from '@/components/checkout/Field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 
 export function LoginForm({
   next,
@@ -65,7 +66,7 @@ export function LoginForm({
           setLockSeconds(caught.body.retryAfterSeconds);
         }
       } else {
-        setError('Could not sign in. Check your connection and try again.');
+        setError(ERROR_MESSAGES.COULD_NOT_SIGN_IN);
       }
     } finally {
       setBusy(false);

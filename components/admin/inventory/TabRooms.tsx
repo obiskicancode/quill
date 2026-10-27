@@ -33,6 +33,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type {
   AdminRoomUnit,
   AdminRoomUnitInput,
@@ -116,7 +118,7 @@ export function TabRooms({
   async function handleSaveUnit(e: React.FormEvent) {
     e.preventDefault();
     if (!roomNumber.trim()) {
-      setErrorMessage('Room number is required');
+      setErrorMessage(ERROR_MESSAGES.ROOM_NUMBER_REQUIRED);
       return;
     }
 
@@ -134,16 +136,20 @@ export function TabRooms({
     try {
       if (editingUnit) {
         await adminService.updateRoom(editingUnit.id, input);
-        setSuccessMessage(`Room ${roomNumber} updated successfully`);
+        setSuccessMessage(
+          SUCCESS_MESSAGES.ROOM_UPDATED_WITH_NUMBER(roomNumber),
+        );
       } else {
         await adminService.createRoom({ ...input, roomTypeId });
-        setSuccessMessage(`Room ${roomNumber} added successfully`);
+        setSuccessMessage(SUCCESS_MESSAGES.ROOM_ADDED_WITH_NUMBER(roomNumber));
       }
       setDialogOpen(false);
       await onRefresh();
     } catch (err) {
       setErrorMessage(
-        err instanceof Error ? err.message : 'Failed to save room unit',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_SAVE_ROOM_UNIT,
       );
     } finally {
       setIsSaving(false);
@@ -161,11 +167,15 @@ export function TabRooms({
 
     try {
       await adminService.deleteRoom(unit.id);
-      setSuccessMessage(`Room ${unit.roomNumber} deleted successfully`);
+      setSuccessMessage(
+        SUCCESS_MESSAGES.ROOM_DELETED_WITH_NUMBER(unit.roomNumber),
+      );
       await onRefresh();
     } catch (err) {
       setErrorMessage(
-        err instanceof Error ? err.message : 'Failed to delete room',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_DELETE_ROOM_UI,
       );
     }
   }

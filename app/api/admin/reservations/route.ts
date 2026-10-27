@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { can } from '@/lib/auth/permissions';
 import { hotelClock } from '@/lib/dates';
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
   if (!parsed.success) {
     return apiFail(
       400,
-      'Invalid reservation query filters.',
+      ERROR_MESSAGES.INVALID_RESERVATION_QUERY_FILTERS,
       parsed.error.flatten(),
     );
   }
@@ -91,7 +92,7 @@ export async function GET(request: NextRequest) {
     return apiOk(response, { noCache: true });
   } catch (error) {
     console.error('Failed to load reservations list:', error);
-    return apiFail(500, 'Unable to load reservations.');
+    return apiFail(500, ERROR_MESSAGES.FAILED_TO_LOAD_RESERVATIONS);
   }
 }
 
@@ -104,7 +105,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const parsed = adminCreateReservationSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid reservation data', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_RESERVATION_DATA,
+      parsed.error.flatten(),
+    );
   }
 
   const idKey = `admin:res:${parsed.data.idempotencyKey}`;
@@ -129,7 +134,9 @@ export async function POST(request: NextRequest) {
     return apiOk(created, { status: 201, noCache: true });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to create reservation.';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_CREATE_RESERVATION;
     return apiFail(400, message);
   }
 }

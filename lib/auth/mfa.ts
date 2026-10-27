@@ -8,6 +8,7 @@ import { generateSecret, generateURI, verify } from 'otplib';
 import QRCode from 'qrcode';
 
 import { config } from '@/config';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { hashToken } from '@/lib/auth/crypto';
 
 const DEV_MFA_KEY = 'dev-admin-mfa-key-change-me';
@@ -15,7 +16,7 @@ const DEV_MFA_KEY = 'dev-admin-mfa-key-change-me';
 function mfaKey(): Buffer {
   const value =
     config.ADMIN.MFA_ENCRYPTION_KEY ?? (config.isDev ? DEV_MFA_KEY : undefined);
-  if (!value) throw new Error('ADMIN_MFA_ENCRYPTION_KEY must be set');
+  if (!value) throw new Error(ERROR_MESSAGES.MFA_ENCRYPTION_KEY_MISSING);
   return createHash('sha256').update(value).digest();
 }
 
@@ -73,7 +74,8 @@ export function encryptMfaSecret(secret: string): string {
 
 export function decryptMfaSecret(value: string): string {
   const [ivPart, tagPart, dataPart] = value.split('.');
-  if (!ivPart || !tagPart || !dataPart) throw new Error('Invalid MFA secret');
+  if (!ivPart || !tagPart || !dataPart)
+    throw new Error(ERROR_MESSAGES.MFA_SECRET_INVALID);
   const decipher = createDecipheriv(
     'aes-256-gcm',
     mfaKey(),

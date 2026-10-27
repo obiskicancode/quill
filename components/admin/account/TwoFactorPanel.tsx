@@ -13,6 +13,8 @@ import { Field, inputClass } from '@/components/checkout/Field';
 import { FlowDialog } from '@/components/manage/FlowDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { AdminMfaSetupResponse } from '@/types/admin.types';
 import type { AdminRole } from '@/types/auth.types';
 
@@ -57,7 +59,7 @@ export function TwoFactorPanel({
       setSetupError(
         caught instanceof ServiceError
           ? caught.message
-          : 'Could not start setup. Try again.',
+          : ERROR_MESSAGES.COULD_NOT_START_2FA_SETUP,
       );
     } finally {
       setSetupBusy(false);
@@ -80,7 +82,7 @@ export function TwoFactorPanel({
       setConfirmError(
         caught instanceof ServiceError
           ? caught.message
-          : 'Could not confirm the code. Try again.',
+          : ERROR_MESSAGES.COULD_NOT_CONFIRM_CODE,
       );
     } finally {
       setConfirmBusy(false);
@@ -94,7 +96,7 @@ export function TwoFactorPanel({
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      setNotice('Could not copy automatically. Save each code manually.');
+      setNotice(ERROR_MESSAGES.COULD_NOT_COPY_CODES);
     }
   }
 
@@ -132,14 +134,12 @@ export function TwoFactorPanel({
         await adminService.disable2fa({ password });
         setIsEnabled(false);
         setCodes(null);
-        setNotice('Two-factor authentication is now disabled.');
+        setNotice(SUCCESS_MESSAGES.TWO_FACTOR_DISABLED);
         onEnabledChange(false);
       } else {
         const result = await adminService.rotateRecoveryCodes({ password });
         setCodes(result.data.recoveryCodes);
-        setNotice(
-          'New recovery codes generated. The old codes no longer work.',
-        );
+        setNotice(SUCCESS_MESSAGES.RECOVERY_CODES_ROTATED);
       }
       setDialogAction(null);
       setPassword('');
@@ -148,7 +148,7 @@ export function TwoFactorPanel({
       setDialogError(
         caught instanceof ServiceError
           ? caught.message
-          : 'Could not complete that action. Try again.',
+          : ERROR_MESSAGES.COULD_NOT_COMPLETE_ACTION,
       );
     } finally {
       setDialogBusy(false);
@@ -193,7 +193,7 @@ export function TwoFactorPanel({
               )
             }
           >
-            {copied ? 'Copied' : 'Copy codes'}
+            {copied ? SUCCESS_MESSAGES.COPIED : 'Copy codes'}
           </Button>
           <Button
             variant="secondary"

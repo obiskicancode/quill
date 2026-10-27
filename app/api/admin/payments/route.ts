@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { listPaymentsRepo } from '@/lib/db/repositories/payments-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
@@ -16,7 +17,8 @@ export async function GET(request: Request) {
   if (!parsed.success) {
     return apiFail(
       400,
-      parsed.error.issues[0]?.message || 'Invalid query parameters',
+      parsed.error.issues[0]?.message ||
+        ERROR_MESSAGES.INVALID_QUERY_PARAMETERS,
       undefined,
       { noCache: true },
     );

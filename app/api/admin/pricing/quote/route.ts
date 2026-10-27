@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
 import { getAdminRoomTypeById } from '@/lib/db/repositories/inventory-admin.repo';
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return apiFail(
       422,
-      'Invalid quote preview parameters',
+      ERROR_MESSAGES.INVALID_QUOTE_PREVIEW_PARAMETERS,
       parsed.error.flatten(),
     );
   }
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest) {
     parsed.data;
 
   const rt = await getAdminRoomTypeById(roomTypeId);
-  if (!rt) return apiFail(404, 'Room type not found');
+  if (!rt) return apiFail(404, ERROR_MESSAGES.ROOM_TYPE_NOT_FOUND);
 
   try {
     const quote = await buildCheckoutQuote({
@@ -42,7 +43,9 @@ export async function POST(request: NextRequest) {
     return apiOk(quote);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to calculate quote';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.INVALID_QUOTE_OR_PARAMS;
     return apiFail(500, message);
   }
 }

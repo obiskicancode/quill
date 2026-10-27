@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { hotelClock } from '@/lib/dates';
 import { getDashboardRevenue } from '@/lib/db/repositories/dashboard.repo';
@@ -21,7 +22,11 @@ export async function GET(request: NextRequest) {
   });
 
   if (!parsed.success) {
-    return apiFail(400, 'Invalid revenue range.', parsed.error.flatten());
+    return apiFail(
+      400,
+      ERROR_MESSAGES.INVALID_REVENUE_RANGE,
+      parsed.error.flatten(),
+    );
   }
 
   const settings = await getHotelSettings();
@@ -34,6 +39,6 @@ export async function GET(request: NextRequest) {
     return apiOk(response, { noCache: true });
   } catch (error) {
     console.error('Failed to load dashboard revenue:', error);
-    return apiFail(500, 'Unable to load revenue data.');
+    return apiFail(500, ERROR_MESSAGES.FAILED_TO_LOAD_REVENUE);
   }
 }

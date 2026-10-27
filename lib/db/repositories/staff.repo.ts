@@ -1,5 +1,6 @@
 import { and, eq, gt, isNull, ne, sql } from 'drizzle-orm';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { db } from '@/db';
 import {
   passwordResetTokens,
@@ -50,7 +51,7 @@ export async function registerFailedLogin(
       .from(staffUsers)
       .where(eq(staffUsers.id, id))
       .for('update');
-    if (!current) throw new Error('Staff user not found');
+    if (!current) throw new Error(ERROR_MESSAGES.STAFF_USER_NOT_FOUND);
 
     const failedLoginCount = Math.min(current.failedLoginCount + 1, 32767);
     const locked = failedLoginCount >= MAX_FAILED_LOGINS;

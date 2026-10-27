@@ -1,3 +1,4 @@
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { revokeAllSessionsForStaffRepo } from '@/lib/db/repositories/staff-admin.repo';
 import { apiOk } from '@/lib/http/envelope';
@@ -21,7 +22,7 @@ export async function POST(
   });
 
   return apiOk(
-    { success: true, message: 'All active sessions revoked' },
+    { success: true, message: SUCCESS_MESSAGES.SESSIONS_REVOKED },
     { noCache: true },
   );
 }

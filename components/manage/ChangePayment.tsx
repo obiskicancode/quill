@@ -8,6 +8,8 @@ import { useRef, useState } from 'react';
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { manageService } from '@/app/api/services/manage.service';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatCountdown, formatMinor } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import { checkProofFile, MAX_PROOF_BYTES } from '@/schemas/checkout.schema';
@@ -74,14 +76,13 @@ export function ChangePayment({
 
   function fail(e: unknown) {
     const f = e instanceof ServiceError ? e : null;
-    if (f?.body?.code === 'session_expired') return onSessionExpired();
+    if (f?.body?.code === ERROR_CODES.SESSION_EXPIRED)
+      return onSessionExpired();
     if (!f || f.network || f.status >= 500)
-      setError(
-        "We couldn't reach the server. Trying again is safe: it will not take the payment twice.",
-      );
+      setError(ERROR_MESSAGES.COULD_NOT_REACH_SERVER_PAYMENT_UNKNOWN);
     else {
       key.current = newKey();
-      setError(f.body?.message ?? 'Something went wrong.');
+      setError(f.body?.message ?? ERROR_MESSAGES.SOMETHING_WENT_WRONG_SHORT);
     }
   }
 
@@ -111,7 +112,7 @@ export function ChangePayment({
   }
 
   async function sendProof() {
-    if (!file) return setFileError('Choose your transfer receipt to upload.');
+    if (!file) return setFileError(ERROR_MESSAGES.CHOOSE_TRANSFER_RECEIPT);
     const problem = checkProofFile(file);
     if (problem) return setFileError(problem);
     setFileError(null);
@@ -134,7 +135,7 @@ export function ChangePayment({
   const choosing =
     change.method === null && change.status === 'awaiting_payment';
   const holdLine = hold.expired
-    ? 'The hold on your new dates has ended. Your current dates are unchanged.'
+    ? ERROR_MESSAGES.HOLD_ENDED_UNCHANGED
     : `We're holding your new dates (${formatRange(change.checkIn, change.checkOut)}): ${formatCountdown(hold.remainingMs ?? 0)}. Your current dates stay valid until the payment is complete.`;
   const statusKey =
     change.status === 'awaiting_verification'

@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+
 export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 export const MIN_IMAGE_WIDTH = 800;
 export const MIN_IMAGE_HEIGHT = 600;
@@ -25,7 +27,7 @@ export function validateImageMagicBytes(buffer: Buffer): {
   error?: string;
 } {
   if (!buffer || buffer.length < 12) {
-    return { valid: false, error: 'File buffer is too small or empty' };
+    return { valid: false, error: ERROR_MESSAGES.IMAGE_TOO_SMALL };
   }
 
   // JPEG: FF D8 FF
@@ -61,7 +63,7 @@ export function validateImageMagicBytes(buffer: Buffer): {
 
   return {
     valid: false,
-    error: 'Unsupported image format. Allowed formats are JPEG, PNG, and WebP.',
+    error: ERROR_MESSAGES.IMAGE_FORMAT_UNSUPPORTED,
   };
 }
 
@@ -72,24 +74,29 @@ export async function processRoomImage(
   buffer: Buffer,
 ): Promise<ProcessedRoomImage> {
   if (buffer.length > MAX_IMAGE_FILE_SIZE) {
-    throw new Error('Image exceeds maximum allowed size of 10 MB');
+    throw new Error(ERROR_MESSAGES.IMAGE_TOO_LARGE);
   }
 
   const magicCheck = validateImageMagicBytes(buffer);
   if (!magicCheck.valid) {
-    throw new Error(magicCheck.error || 'Invalid image file');
+    throw new Error(magicCheck.error || ERROR_MESSAGES.IMAGE_INVALID);
   }
 
   const image = sharp(buffer);
   const metadata = await image.metadata();
 
   if (!metadata.width || !metadata.height) {
-    throw new Error('Could not read image dimensions');
+    throw new Error(ERROR_MESSAGES.IMAGE_DIMENSIONS_UNREADABLE);
   }
 
   if (metadata.width < MIN_IMAGE_WIDTH || metadata.height < MIN_IMAGE_HEIGHT) {
     throw new Error(
-      `Image dimensions (${metadata.width}x${metadata.height}) are below required minimum (${MIN_IMAGE_WIDTH}x${MIN_IMAGE_HEIGHT} px)`,
+      ERROR_MESSAGES.IMAGE_DIMENSIONS_BELOW_MIN(
+        metadata.width,
+        metadata.height,
+        MIN_IMAGE_WIDTH,
+        MIN_IMAGE_HEIGHT,
+      ),
     );
   }
 

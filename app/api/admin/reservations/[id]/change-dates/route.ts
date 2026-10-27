@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import {
   getIdempotencyRecord,
@@ -21,14 +23,14 @@ export async function POST(
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
-  if (!id) return apiFail(400, 'Missing reservation ID');
+  if (!id) return apiFail(400, ERROR_MESSAGES.MISSING_RESERVATION_ID);
 
   const body = await request.json().catch(() => null);
   const parsed = adminChangeDatesSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,
-      'Invalid date change parameters',
+      ERROR_MESSAGES.INVALID_DATE_CHANGE_PARAMETERS,
       parsed.error.flatten(),
     );
   }
@@ -59,8 +61,8 @@ export async function POST(
     const message =
       error instanceof Error
         ? error.message
-        : 'Failed to change reservation dates.';
-    const status = message.includes('VERSION_CONFLICT') ? 409 : 400;
+        : ERROR_MESSAGES.FAILED_TO_CHANGE_DATES;
+    const status = message.includes(ERROR_CODES.VERSION_CONFLICT) ? 409 : 400;
     return apiFail(status, message);
   }
 }

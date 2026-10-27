@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { can } from '@/lib/auth/permissions';
 import { hotelClock } from '@/lib/dates';
@@ -21,7 +22,7 @@ export async function GET(
 
   const { id } = await params;
   if (!id) {
-    return apiFail(400, 'Missing reservation identifier.');
+    return apiFail(400, ERROR_MESSAGES.MISSING_RESERVATION_IDENTIFIER);
   }
 
   const settings = await getHotelSettings();
@@ -43,12 +44,12 @@ export async function GET(
     );
 
     if (!detail) {
-      return apiFail(404, 'Reservation not found.');
+      return apiFail(404, ERROR_MESSAGES.RESERVATION_NOT_FOUND);
     }
 
     return apiOk<ReservationDetail>(detail, { noCache: true });
   } catch (error) {
     console.error('Failed to load reservation detail:', error);
-    return apiFail(500, 'Unable to load reservation detail.');
+    return apiFail(500, ERROR_MESSAGES.FAILED_TO_LOAD_RESERVATION_DETAIL);
   }
 }

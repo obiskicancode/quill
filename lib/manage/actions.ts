@@ -1,5 +1,6 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { detailsPatchSchema } from '@/schemas/checkout.schema';
 import type { CancelRequest, DetailsRequest } from '@/schemas/manage.schema';
 import type { CheckoutBreakdown } from '@/types/checkout.types';
@@ -106,7 +107,7 @@ export async function cancelBooking(
       'system',
     );
   }
-  notify(r, 'booking_cancelled', 'Your cancellation was confirmed by email.');
+  notify(r, 'booking_cancelled', SUCCESS_MESSAGES.CANCELLATION_CONFIRMED_EMAIL);
   await saveStoredReservation(r);
   return { status: 'cancelled' };
 }
@@ -128,7 +129,7 @@ export async function saveDetails(
   if (!allowed.allowed)
     return {
       status: 'not_allowed',
-      reason: allowed.reason ?? 'Details cannot be edited.',
+      reason: allowed.reason ?? ERROR_MESSAGES.DETAILS_CANNOT_EDIT,
     };
   const parsed = detailsPatchSchema.parse(patch);
   r.guest = { ...r.guest, ...parsed };
@@ -138,7 +139,7 @@ export async function saveDetails(
     'Name, phone, country, arrival time or requests',
     'guest',
   );
-  notify(r, 'details_changed', 'A summary of your changes was emailed to you.');
+  notify(r, 'details_changed', SUCCESS_MESSAGES.DETAILS_CHANGES_EMAILED);
   await saveStoredReservation(r);
   return { status: 'saved' };
 }
@@ -307,7 +308,7 @@ export async function commitChange(
       status: 'stale',
       quote: {
         status: 'not_allowed',
-        reason: 'That quote has expired. Choose your dates again.',
+        reason: ERROR_MESSAGES.QUOTE_EXPIRED,
       },
     };
   }
@@ -372,7 +373,7 @@ export async function commitChange(
       'Difference for your new dates',
     );
   }
-  notify(r, 'dates_changed', 'Your updated booking was emailed to you.');
+  notify(r, 'dates_changed', SUCCESS_MESSAGES.UPDATED_BOOKING_EMAILED);
   await saveStoredReservation(r);
   await deleteStoredQuote(quoteId);
   return { status: 'completed' };

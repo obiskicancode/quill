@@ -1,3 +1,5 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { requireStepUp } from '@/lib/auth/step-up';
 import { resetStaffMfaRepo } from '@/lib/db/repositories/staff-admin.repo';
@@ -28,16 +30,20 @@ export async function POST(
   });
 
   if (!result.ok) {
-    return apiFail(400, result.error || 'Failed to reset 2FA', undefined, {
-      noCache: true,
-    });
+    return apiFail(
+      400,
+      result.error || ERROR_MESSAGES.FAILED_TO_RESET_2FA,
+      undefined,
+      {
+        noCache: true,
+      },
+    );
   }
 
   return apiOk(
     {
       success: true,
-      message:
-        'Two-factor authentication reset. Staff member must enroll again at next login.',
+      message: SUCCESS_MESSAGES.STAFF_2FA_RESET,
     },
     { noCache: true },
   );

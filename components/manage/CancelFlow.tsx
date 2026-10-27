@@ -7,7 +7,10 @@ import { useEffect, useRef, useState } from 'react';
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { manageService } from '@/app/api/services/manage.service';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { CANCEL_REASONS } from '@/constants/manage';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatMinor } from '@/lib/format';
 import type { CancelRequest } from '@/schemas/manage.schema';
 import type { GuestReservation } from '@/types/booking.types';
@@ -147,7 +150,10 @@ export function CancelFlow({
       setPreview((await manageService.cancellationPreview(v.reference)).data);
       setLoadState('ready');
     } catch (e) {
-      if (e instanceof ServiceError && e.body?.code === 'session_expired')
+      if (
+        e instanceof ServiceError &&
+        e.body?.code === ERROR_CODES.SESSION_EXPIRED
+      )
         onSessionExpired();
       setLoadState('error');
     }
@@ -191,27 +197,27 @@ export function CancelFlow({
       ).data;
       setResult(next);
       setStep('done');
-      onUpdated(next, 'Your booking has been cancelled.');
+      onUpdated(next, SUCCESS_MESSAGES.BOOKING_CANCELLED);
     } catch (e) {
       const f = e instanceof ServiceError ? e : null;
-      if (f?.body?.code === 'session_expired') onSessionExpired();
-      else if (f?.body?.code === 'preview_changed' && f.body.preview) {
+      if (f?.body?.code === ERROR_CODES.SESSION_EXPIRED) onSessionExpired();
+      else if (
+        f?.body?.code === ERROR_CODES.PREVIEW_CHANGED &&
+        f.body.preview
+      ) {
         key.current = newKey();
         setPreview(f.body.preview as CancellationPreview);
         setStep('review');
-        setNotice(
-          'The refund amount has changed since you opened this. Please review it before you continue.',
-        );
+        setNotice(ERROR_MESSAGES.REFUND_AMOUNT_CHANGED_REVIEW);
       } else if (!f || f.network || f.status >= 500) {
         setError({
-          message:
-            "We couldn't reach the server, so we don't know if the cancellation went through. Trying again is safe: it will not cancel twice or refund twice.",
+          message: ERROR_MESSAGES.COULD_NOT_REACH_SERVER_CANCEL_UNKNOWN,
           retryable: true,
         });
       } else {
         key.current = newKey();
         setError({
-          message: f.body?.message ?? 'We could not cancel this booking.',
+          message: f.body?.message ?? ERROR_MESSAGES.COULD_NOT_CANCEL_BOOKING,
           retryable: false,
         });
       }
@@ -245,7 +251,7 @@ export function CancelFlow({
               scope="manage"
               variant="verify"
               reference={v.reference}
-              notice="Your session ended. Verify again to continue. Nothing you entered here is lost."
+              notice={ERROR_MESSAGES.SESSION_ENDED_VERIFY_CONTINUE}
               onVerified={onReverified}
             />
           ) : step === 'done' && result ? (
@@ -304,7 +310,7 @@ export function CancelFlow({
             <Banner
               role="alert"
               tone="danger"
-              title="We couldn't work out your refund"
+              title={ERROR_MESSAGES.COULD_NOT_WORK_OUT_REFUND}
               actions={
                 <Button
                   variant="secondary"
@@ -465,7 +471,7 @@ export function CancelFlow({
                 <Banner
                   role="alert"
                   tone="danger"
-                  title="The booking was not cancelled yet"
+                  title={ERROR_MESSAGES.BOOKING_NOT_CANCELLED_YET}
                   actions={
                     error.retryable ? (
                       <Button

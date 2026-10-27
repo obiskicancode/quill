@@ -4,6 +4,7 @@ import { CheckoutShell } from '@/components/checkout/CheckoutShell';
 import { Banner } from '@/components/checkout/CheckoutStates';
 import { Reveal } from '@/components/motion';
 import { Button, ButtonLink } from '@/components/ui/button';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 
 /** Server error while loading the page. Trying again only reads; it never changes the booking. */
 export default function ManageError({
@@ -19,7 +20,7 @@ export default function ManageError({
           <Banner
             role="alert"
             tone="danger"
-            title="We couldn't load this page"
+            title={ERROR_MESSAGES.COULD_NOT_LOAD_PAGE}
             actions={
               <>
                 <Button onClick={reset}>Try again</Button>

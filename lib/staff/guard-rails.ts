@@ -1,3 +1,5 @@
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { AdminRole } from '@/types/auth.types';
 
 export interface GuardRailResult {
@@ -25,9 +27,8 @@ export function validateStaffRoleChange(params: {
   if (actorId === targetUserId) {
     return {
       ok: false,
-      code: 'CANNOT_CHANGE_OWN_ROLE',
-      message:
-        'You cannot change your own role. Contact another owner or manage your account on your profile page.',
+      code: ERROR_CODES.CANNOT_CHANGE_OWN_ROLE,
+      message: ERROR_MESSAGES.CANNOT_CHANGE_OWN_ROLE,
     };
   }
 
@@ -35,9 +36,8 @@ export function validateStaffRoleChange(params: {
     if (activeOwnerCount <= 1) {
       return {
         ok: false,
-        code: 'CANNOT_DEMOTE_LAST_OWNER',
-        message:
-          'The last active owner cannot be demoted. Promote another active staff member to owner first.',
+        code: ERROR_CODES.CANNOT_DEMOTE_LAST_OWNER,
+        message: ERROR_MESSAGES.CANNOT_DEMOTE_LAST_OWNER,
       };
     }
   }
@@ -62,8 +62,8 @@ export function validateStaffDeactivation(params: {
   if (actorId === targetUserId) {
     return {
       ok: false,
-      code: 'CANNOT_DEACTIVATE_SELF',
-      message: 'You cannot deactivate your own account.',
+      code: ERROR_CODES.CANNOT_DEACTIVATE_SELF,
+      message: ERROR_MESSAGES.CANNOT_DEACTIVATE_SELF,
     };
   }
 
@@ -71,9 +71,8 @@ export function validateStaffDeactivation(params: {
     if (activeOwnerCount <= 1) {
       return {
         ok: false,
-        code: 'CANNOT_DEACTIVATE_LAST_OWNER',
-        message:
-          'The last active owner cannot be deactivated. There must always be at least one active owner.',
+        code: ERROR_CODES.CANNOT_DEACTIVATE_LAST_OWNER,
+        message: ERROR_MESSAGES.CANNOT_DEACTIVATE_LAST_OWNER,
       };
     }
   }
@@ -97,9 +96,8 @@ export function validateStaffMfaReset(params: {
   if (targetUserRole === 'owner' && activeOwnerCount <= 1) {
     return {
       ok: false,
-      code: 'CANNOT_RESET_MFA_LAST_OWNER',
-      message:
-        'Cannot reset 2FA for the only active owner without another active owner on record.',
+      code: ERROR_CODES.CANNOT_RESET_MFA_LAST_OWNER,
+      message: ERROR_MESSAGES.CANNOT_RESET_MFA_LAST_OWNER,
     };
   }
 
@@ -121,8 +119,8 @@ export function validateStaffInvite(params: {
   if (exists) {
     return {
       ok: false,
-      code: 'EMAIL_ALREADY_IN_USE',
-      message: 'That email is already in use by another staff member.',
+      code: ERROR_CODES.EMAIL_ALREADY_IN_USE,
+      message: ERROR_MESSAGES.EMAIL_ALREADY_IN_USE,
     };
   }
 

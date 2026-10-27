@@ -6,6 +6,8 @@ import { useState } from 'react';
 import { AdminError } from '@/components/admin/AdminStates';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { Button, ButtonLink } from '@/components/ui/button';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import {
   useDashboardOccupancy,
   useDashboardRevenue,
@@ -121,14 +123,15 @@ export function DashboardClient({
         });
         showToast(
           'success',
-          `Guest ${updated.guestName} successfully checked in.`,
+          SUCCESS_MESSAGES.GUEST_CHECKED_IN(updated.guestName),
         );
         return { success: true };
       }
-      return { success: false, error: 'Check-in response was invalid.' };
+      return { success: false, error: ERROR_MESSAGES.CHECKIN_RESPONSE_INVALID };
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Check-in failed';
-      showToast('error', `Failed to check in: ${msg}`);
+      const msg =
+        err instanceof Error ? err.message : ERROR_MESSAGES.CHECKIN_FAILED;
+      showToast('error', ERROR_MESSAGES.FAILED_TO_CHECK_IN_WITH_REASON(msg));
       return { success: false, error: msg };
     }
   }
@@ -164,14 +167,18 @@ export function DashboardClient({
         });
         showToast(
           'success',
-          `Guest ${updated.guestName} checked out successfully.`,
+          SUCCESS_MESSAGES.GUEST_CHECKED_OUT(updated.guestName),
         );
         return { success: true };
       }
-      return { success: false, error: 'Check-out response was invalid.' };
+      return {
+        success: false,
+        error: ERROR_MESSAGES.CHECKOUT_RESPONSE_INVALID,
+      };
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Check-out failed';
-      showToast('error', `Failed to check out: ${msg}`);
+      const msg =
+        err instanceof Error ? err.message : ERROR_MESSAGES.CHECKOUT_FAILED;
+      showToast('error', ERROR_MESSAGES.FAILED_TO_CHECK_OUT_WITH_REASON(msg));
       return { success: false, error: msg };
     }
   }
@@ -287,7 +294,7 @@ export function DashboardClient({
                 </div>
               ) : occupancyError && !occupancyData ? (
                 <AdminError
-                  message="Failed to load 14-day occupancy data."
+                  message={ERROR_MESSAGES.FAILED_TO_LOAD_14_DAY_OCCUPANCY}
                   action={
                     <Button
                       variant="secondary"

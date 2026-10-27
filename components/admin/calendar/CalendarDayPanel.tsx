@@ -20,6 +20,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatLong, formatShort } from '@/lib/dates';
 import type { CalendarDayResponse } from '@/types/calendar.types';
 import type { AdminReservationStatus } from '@/types/reservation.types';
@@ -49,7 +50,9 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
       } catch (err) {
         if (active) {
           setError(
-            err instanceof Error ? err.message : 'Failed to load day details.',
+            err instanceof Error
+              ? err.message
+              : ERROR_MESSAGES.FAILED_TO_LOAD_DAY_DETAILS,
           );
         }
       } finally {

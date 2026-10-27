@@ -43,13 +43,13 @@ export function normalizeTopic(raw: string | null | undefined): EnquiryTopic {
 
 const isoOrEmpty = z
   .string()
-  .regex(/^(\d{4}-\d{2}-\d{2})?$/, 'Choose a valid date.');
+  .regex(/^(\d{4}-\d{2}-\d{2})?$/, ERROR_MESSAGES.VALID_DATE_REQUIRED);
 
 export const enquiryFields = z.object({
   name: z
     .string()
     .trim()
-    .min(2, 'Enter your name.')
+    .min(2, ERROR_MESSAGES.NAME_REQUIRED)
     .max(100, ERROR_MESSAGES.NAME_TOO_LONG),
   email: z
     .string()

@@ -11,6 +11,7 @@ import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Field, inputClass } from '@/components/checkout/Field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
@@ -41,7 +42,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         setFieldErrors(caught.body?.fieldErrors ?? {});
         if (caught.status === 400) setInvalidToken(true);
       } else {
-        setError('Could not reset your password. Try again.');
+        setError(ERROR_MESSAGES.COULD_NOT_RESET_PASSWORD);
       }
     } finally {
       setBusy(false);

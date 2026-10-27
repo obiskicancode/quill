@@ -18,6 +18,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type {
   AuditDetailResponse,
   AuditListItem,
@@ -60,7 +61,9 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
       })
       .catch((err: unknown) => {
         const msg =
-          err instanceof Error ? err.message : 'Failed to load audit logs.';
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_LOAD_AUDIT_LOGS;
         setError(msg);
       })
       .finally(() => {
@@ -83,7 +86,9 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
       .catch((err: unknown) => {
         if (!active) return;
         const msg =
-          err instanceof Error ? err.message : 'Failed to load audit logs.';
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_LOAD_AUDIT_LOGS;
         setError(msg);
       })
       .finally(() => {

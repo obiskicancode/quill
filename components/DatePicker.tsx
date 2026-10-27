@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import {
   addDays,
   addMonths,
@@ -114,7 +115,7 @@ export function DatePicker({
   }
 
   const guidance = !checkIn
-    ? 'Choose your check-in date.'
+    ? ERROR_MESSAGES.CHECKIN_REQUIRED
     : !checkOut
       ? `Check-in ${formatShort(checkIn)}. Now choose your check-out date.`
       : `${formatShort(checkIn)} to ${formatShort(checkOut)}, ${nightsBetween(checkIn, checkOut)} ${nightsBetween(checkIn, checkOut) === 1 ? 'night' : 'nights'}.`;

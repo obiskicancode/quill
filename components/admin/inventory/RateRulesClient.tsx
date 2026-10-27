@@ -26,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { bpsToPercentage, minorToNaira } from '@/lib/rate-resolution';
 import type {
   AdminRateRule,
@@ -68,7 +69,9 @@ export function RateRulesClient({
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to load rate rules',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_LOAD_RATE_RULES_UI,
       );
     } finally {
       setLoading(false);
@@ -113,7 +116,9 @@ export function RateRulesClient({
       await refresh();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to delete rate rule',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_DELETE_RATE_RULE,
       );
     }
   }

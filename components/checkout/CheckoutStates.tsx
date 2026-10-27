@@ -5,6 +5,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, Clock, Loader2, RefreshCw, WifiOff } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatMinor } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import { telHref, whatsappHref } from '@/lib/site';
@@ -61,7 +63,7 @@ export function PriceUpdatedPanel({
   return (
     <Banner
       tone="warn"
-      title="Price updated"
+      title={SUCCESS_MESSAGES.PRICE_UPDATED}
       actions={
         <>
           <Button onClick={onAccept}>Accept and continue</Button>
@@ -97,7 +99,7 @@ export function NetworkErrorBanner({
     <Banner
       role="alert"
       tone="danger"
-      title="Something went wrong"
+      title={ERROR_MESSAGES.SOMETHING_WENT_WRONG_TITLE}
       actions={
         <Button
           variant="secondary"
@@ -141,7 +143,7 @@ export function ExpiredPanel({
     <Banner
       role="alert"
       tone="danger"
-      title="Your hold on this room has expired"
+      title={ERROR_MESSAGES.HOLD_EXPIRED_TITLE}
       actions={
         <Button loading={busy} onClick={onRestart}>
           Start again

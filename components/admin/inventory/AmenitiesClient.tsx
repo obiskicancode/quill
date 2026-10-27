@@ -40,6 +40,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { AdminAmenity } from '@/types/inventory.types';
 
 import { AmenityDialog } from './AmenityDialog';
@@ -87,7 +89,9 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to reload amenities',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_RELOAD_AMENITIES,
       );
     } finally {
       setLoading(false);
@@ -97,7 +101,10 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
   async function handleDelete(item: AdminAmenity) {
     if (item.usageCount && item.usageCount > 0) {
       alert(
-        `Cannot delete "${item.label}" because it is currently assigned to ${item.usageCount} room type(s). Remove it from those room types first.`,
+        ERROR_MESSAGES.CANNOT_DELETE_ASSIGNED_AMENITY(
+          item.label,
+          item.usageCount,
+        ),
       );
       return;
     }
@@ -108,10 +115,14 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
 
     try {
       await adminService.deleteAmenity(item.id);
-      setSuccessMessage(`Amenity "${item.label}" deleted`);
+      setSuccessMessage(SUCCESS_MESSAGES.AMENITY_DELETED_WITH_NAME(item.label));
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete amenity');
+      setError(
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_DELETE_AMENITY,
+      );
     }
   }
 

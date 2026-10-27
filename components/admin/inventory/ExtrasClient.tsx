@@ -48,6 +48,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { minorToNaira, nairaToMinor } from '@/lib/rate-resolution';
 import type {
   AdminExtra,
@@ -96,7 +98,11 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
         setExtras(res.data);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reload extras');
+      setError(
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_RELOAD_EXTRAS,
+      );
     } finally {
       setLoading(false);
     }
@@ -152,7 +158,7 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) {
-      setDialogError('Extra name is required');
+      setDialogError(ERROR_MESSAGES.EXTRA_NAME_REQUIRED);
       return;
     }
 
@@ -174,16 +180,18 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
     try {
       if (editingExtra) {
         await adminService.updateExtra(editingExtra.id, input);
-        setSuccessMessage(`Extra "${name}" updated successfully`);
+        setSuccessMessage(SUCCESS_MESSAGES.EXTRA_UPDATED_WITH_NAME(name));
       } else {
         await adminService.createExtra(input);
-        setSuccessMessage(`Extra "${name}" created successfully`);
+        setSuccessMessage(SUCCESS_MESSAGES.EXTRA_CREATED_WITH_NAME(name));
       }
       setDialogOpen(false);
       await refresh();
     } catch (err) {
       setDialogError(
-        err instanceof Error ? err.message : 'Failed to save extra',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_SAVE_EXTRA,
       );
     } finally {
       setIsSaving(false);
@@ -201,10 +209,14 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
 
     try {
       await adminService.deleteExtra(item.id);
-      setSuccessMessage(`Extra "${item.name}" deleted`);
+      setSuccessMessage(SUCCESS_MESSAGES.EXTRA_DELETED_WITH_NAME(item.name));
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete extra');
+      setError(
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_DELETE_EXTRA,
+      );
     }
   }
 

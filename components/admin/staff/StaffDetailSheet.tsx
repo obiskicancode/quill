@@ -33,6 +33,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { AdminRole } from '@/types/auth.types';
 import type {
   StaffDetailResponse,
@@ -83,11 +86,13 @@ export function StaffDetailSheet({
         setMessage(null);
         const res = await adminService.updateStaff(staff.id, form);
         if (res.data?.success) {
-          setMessage({ text: 'Staff profile updated successfully.' });
+          setMessage({ text: SUCCESS_MESSAGES.STAFF_PROFILE_UPDATED });
           await onReload();
         } else {
           setMessage({
-            text: res.data?.message || 'Failed to update',
+            text:
+              res.data?.message ||
+              ERROR_MESSAGES.FAILED_TO_UPDATE_STAFF_PROFILE,
             isError: true,
           });
         }
@@ -96,7 +101,9 @@ export function StaffDetailSheet({
           response?: { data?: { data?: { code?: string }; message?: string } };
           message?: string;
         };
-        if (errorObj?.response?.data?.data?.code === 'STEP_UP_REQUIRED') {
+        if (
+          errorObj?.response?.data?.data?.code === ERROR_CODES.STEP_UP_REQUIRED
+        ) {
           onRequestStepUp(() => performSave());
           return;
         }
@@ -104,7 +111,7 @@ export function StaffDetailSheet({
           text:
             errorObj?.response?.data?.message ||
             errorObj?.message ||
-            'Failed to update',
+            ERROR_MESSAGES.FAILED_TO_UPDATE_STAFF_PROFILE,
           isError: true,
         });
       } finally {
@@ -131,12 +138,12 @@ export function StaffDetailSheet({
         const res = await actionFn();
         if (res.data?.success) {
           setMessage({
-            text: res.data.message || 'Action completed successfully.',
+            text: res.data.message || SUCCESS_MESSAGES.ACTION_COMPLETED,
           });
           await onReload();
         } else {
           setMessage({
-            text: res.data?.message || 'Action failed',
+            text: res.data?.message || ERROR_MESSAGES.FAILED_TO_COMPLETE_ACTION,
             isError: true,
           });
         }
@@ -145,7 +152,9 @@ export function StaffDetailSheet({
           response?: { data?: { data?: { code?: string }; message?: string } };
           message?: string;
         };
-        if (errorObj?.response?.data?.data?.code === 'STEP_UP_REQUIRED') {
+        if (
+          errorObj?.response?.data?.data?.code === ERROR_CODES.STEP_UP_REQUIRED
+        ) {
           onRequestStepUp(() => execute());
           return;
         }
@@ -153,7 +162,7 @@ export function StaffDetailSheet({
           text:
             errorObj?.response?.data?.message ||
             errorObj?.message ||
-            'Action failed',
+            ERROR_MESSAGES.FAILED_TO_COMPLETE_ACTION,
           isError: true,
         });
       } finally {

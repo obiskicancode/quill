@@ -16,10 +16,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 
 export function StepUpDialog({
   isOpen,
-  title = 'Security Verification Required',
+  title = ERROR_MESSAGES.SECURITY_VERIFICATION_REQUIRED,
   description = 'This is a sensitive security operation. Please re-enter your password or 2FA code to continue.',
   onClose,
   onSuccess,
@@ -40,7 +41,7 @@ export function StepUpDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!password && !totpCode) {
-      setError('Please enter your password or 6-digit 2FA code.');
+      setError(ERROR_MESSAGES.STEP_UP_PROMPT);
       return;
     }
 
@@ -55,10 +56,11 @@ export function StepUpDialog({
       if (res.data?.success) {
         onSuccess();
       } else {
-        setError('Verification failed. Please check your credentials.');
+        setError(ERROR_MESSAGES.VERIFICATION_FAILED_CREDENTIALS);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Verification failed';
+      const msg =
+        err instanceof Error ? err.message : ERROR_MESSAGES.VERIFICATION_FAILED;
       setError(msg);
     } finally {
       setSubmitting(false);

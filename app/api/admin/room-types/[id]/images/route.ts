@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { addRoomTypeImage } from '@/lib/db/repositories/inventory-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
@@ -25,11 +26,11 @@ export async function POST(
     const isCover = formData.get('isCover') === 'true';
 
     if (!file || !(file instanceof Blob)) {
-      return apiFail(400, 'Image file is required');
+      return apiFail(400, ERROR_MESSAGES.IMAGE_FILE_REQUIRED);
     }
 
     if (!altText.trim()) {
-      return apiFail(422, 'Alt text is required for accessibility');
+      return apiFail(422, ERROR_MESSAGES.ALT_TEXT_REQUIRED_FOR_ACCESSIBILITY);
     }
 
     const arrayBuffer = await file.arrayBuffer();
@@ -59,7 +60,9 @@ export async function POST(
     return apiOk(roomImage);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to upload photo';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_UPLOAD_PHOTO;
     return apiFail(400, message);
   }
 }

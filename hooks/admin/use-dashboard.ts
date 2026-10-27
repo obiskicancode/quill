@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type {
   DashboardOccupancyResponse,
   DashboardRevenueResponse,
@@ -67,7 +68,9 @@ export function useDashboardSummary(initialDate?: string) {
       .catch((err: unknown) => {
         if (!isMounted) return;
         const msg =
-          err instanceof Error ? err.message : 'Failed to load summary';
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_LOAD_SUMMARY;
         setError(msg);
       })
       .finally(() => {
@@ -121,7 +124,9 @@ export function useDashboardSummary(initialDate?: string) {
         }
       } catch (err: unknown) {
         const msg =
-          err instanceof Error ? err.message : 'Failed to load summary';
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_LOAD_SUMMARY;
         if (data) {
           setIsStale(true);
         } else {
@@ -197,7 +202,9 @@ export function useDashboardOccupancy(from?: string, days = 14) {
       .catch((err: unknown) => {
         if (!isMounted) return;
         const msg =
-          err instanceof Error ? err.message : 'Failed to load occupancy';
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_LOAD_OCCUPANCY_UI;
         setError(msg);
       })
       .finally(() => {
@@ -219,7 +226,9 @@ export function useDashboardOccupancy(from?: string, days = 14) {
       }
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : 'Failed to load occupancy';
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_LOAD_OCCUPANCY_UI;
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -253,7 +262,9 @@ export function useDashboardRevenue(range: RevenueRange, enabled: boolean) {
       .catch((err: unknown) => {
         if (!isMounted) return;
         const msg =
-          err instanceof Error ? err.message : 'Failed to load revenue';
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_LOAD_REVENUE_UI;
         setError(msg);
       })
       .finally(() => {
@@ -275,7 +286,10 @@ export function useDashboardRevenue(range: RevenueRange, enabled: boolean) {
         setError(null);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to load revenue';
+      const msg =
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_LOAD_REVENUE_UI;
       setError(msg);
     } finally {
       setIsLoading(false);

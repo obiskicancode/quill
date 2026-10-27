@@ -40,6 +40,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatShort } from '@/lib/dates';
 import type { AdminRole } from '@/types/auth.types';
 import type {
@@ -113,7 +114,9 @@ export function BlocksListClient({
       setData(res.data);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to load room blocks.',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_LOAD_ROOM_BLOCKS,
       );
     } finally {
       setLoading(false);
@@ -154,7 +157,9 @@ export function BlocksListClient({
       } catch (err) {
         if (active) {
           setError(
-            err instanceof Error ? err.message : 'Failed to load room blocks.',
+            err instanceof Error
+              ? err.message
+              : ERROR_MESSAGES.FAILED_TO_LOAD_ROOM_BLOCKS,
           );
         }
       } finally {
@@ -178,7 +183,9 @@ export function BlocksListClient({
       fetchBlocks();
     } catch (err) {
       alert(
-        err instanceof Error ? err.message : 'Failed to delete room block.',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_DELETE_BLOCK,
       );
     } finally {
       setDeleting(false);

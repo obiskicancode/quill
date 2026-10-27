@@ -16,6 +16,7 @@ import { useState } from 'react';
 
 import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
 import { Button } from '@/components/ui/button';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { PaymentBadge } from '../PaymentBadge';
@@ -73,7 +74,7 @@ export function ReservationDetailHeader({
             {copied ? (
               <>
                 <Check className="text-success size-3.5" aria-hidden="true" />
-                <span className="text-success">Copied</span>
+                <span className="text-success">{SUCCESS_MESSAGES.COPIED}</span>
               </>
             ) : (
               <>

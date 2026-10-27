@@ -1,5 +1,6 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { getAccess } from '@/lib/booking/session';
 import { logEvent, saveStoredReservation } from '@/lib/booking/store';
 import { loadReservation } from '@/lib/booking/view';
@@ -52,13 +53,13 @@ export async function POST(
   logEvent(
     found,
     'email_sent',
-    'Confirmation email sent again at your request.',
+    SUCCESS_MESSAGES.CONFIRMATION_EMAIL_RESENT,
     'guest',
   );
   found.notifications ??= [];
   found.notifications.push({
     kind: 'confirmation',
-    detail: 'Confirmation email sent again at your request.',
+    detail: SUCCESS_MESSAGES.CONFIRMATION_EMAIL_RESENT,
   });
   await saveStoredReservation(found);
   return apiOk<ResendResponse>(

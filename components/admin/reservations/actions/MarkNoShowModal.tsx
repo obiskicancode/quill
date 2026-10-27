@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatNaira } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
@@ -44,9 +45,7 @@ export function MarkNoShowModal({
     e.preventDefault();
     const num = overrideRefund ? parseFloat(refundNaira) : 0;
     if (isNaN(num) || num < 0 || num > netPaidNaira) {
-      setError(
-        `Refund amount must be between ₦0 and ${formatNaira(netPaidNaira)}.`,
-      );
+      setError(ERROR_MESSAGES.REFUND_AMOUNT_BETWEEN(formatNaira(netPaidNaira)));
       return;
     }
 
@@ -54,7 +53,7 @@ export function MarkNoShowModal({
       overrideRefund &&
       (!overrideReason || overrideReason.trim().length < 3)
     ) {
-      setError('Please provide a reason for the refund override.');
+      setError(ERROR_MESSAGES.REFUND_OVERRIDE_REASON_PROMPT);
       return;
     }
 
@@ -74,7 +73,9 @@ export function MarkNoShowModal({
       onClose();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to mark as no-show',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_MARK_NO_SHOW_UI,
       );
     } finally {
       setSubmitting(false);

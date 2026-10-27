@@ -1,3 +1,5 @@
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { AdminContext } from '@/lib/auth/session';
 import { apiFail } from '@/lib/http/envelope';
 import { isStepUpRequired } from '@/lib/staff/guard-rails';
@@ -15,8 +17,8 @@ export function requireStepUp(context: AdminContext): StepUpCheckResult {
       ok: false,
       response: apiFail(
         403,
-        'Step-up authentication is required for this sensitive action. Please enter your password or 2FA code.',
-        { code: 'STEP_UP_REQUIRED' },
+        ERROR_MESSAGES.ADMIN_STEP_UP_REQUIRED,
+        { code: ERROR_CODES.STEP_UP_REQUIRED },
         { noCache: true },
       ),
     };

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
 import { getRoomTypeById } from '@/lib/db/repositories/rooms.repo';
@@ -17,7 +18,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const parsed = adminReservationQuoteSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid quote parameters', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_QUOTE_PARAMETERS,
+      parsed.error.flatten(),
+    );
   }
 
   const {
@@ -32,7 +37,7 @@ export async function POST(request: NextRequest) {
   } = parsed.data;
 
   const rt = await getRoomTypeById(roomTypeId);
-  if (!rt) return apiFail(404, 'Room type not found');
+  if (!rt) return apiFail(404, ERROR_MESSAGES.ROOM_TYPE_NOT_FOUND);
 
   try {
     const quote = await buildCheckoutQuote({
@@ -81,7 +86,9 @@ export async function POST(request: NextRequest) {
     return apiOk(modifiedQuote, { noCache: true });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to calculate quote.';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_CALCULATE_QUOTE_PERIOD;
     return apiFail(400, message);
   }
 }

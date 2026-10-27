@@ -14,6 +14,7 @@ import { RoomGallery } from '@/components/room-detail/RoomGallery';
 import { RoomReviews } from '@/components/room-detail/RoomReviews';
 import { SimilarRooms } from '@/components/room-detail/SimilarRooms';
 import { TitleBlock } from '@/components/room-detail/TitleBlock';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { bookingHref, stayParams } from '@/lib/booking/links';
 import { getPublicSite } from '@/lib/content/data';
 import { hotelClock } from '@/lib/dates';
@@ -57,7 +58,7 @@ export async function generateMetadata({
     getRoomDetail(slug),
     getPublicSite(),
   ]);
-  if (!room) return { title: 'Room not found' };
+  if (!room) return { title: ERROR_MESSAGES.ROOM_NOT_FOUND_BARE };
   const description =
     room.metaDescription ??
     (room.description.length > 155

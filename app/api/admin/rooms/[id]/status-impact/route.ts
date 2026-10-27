@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { checkRoomStatusImpact } from '@/lib/db/repositories/inventory-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
@@ -19,7 +20,9 @@ export async function GET(
     return apiOk(impact, { noCache: true });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to check room impact';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_CHECK_ROOM_IMPACT;
     return apiFail(500, message);
   }
 }

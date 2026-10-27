@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { ISODate } from '@/types/dates.types';
 import type {
   BedType,
@@ -92,9 +93,9 @@ export function stayProblem(q: RoomQuery, today: ISODate): string | null {
   if (!q.checkIn && q.checkOut)
     return 'Choose a check-in date to see prices for your stay.';
   if (q.checkIn && q.checkOut && q.checkOut <= q.checkIn)
-    return 'Check-out must be after check-in. Choose new dates.';
+    return ERROR_MESSAGES.CHECKOUT_AFTER_CHECKIN_NEW_DATES;
   if (q.checkIn && q.checkIn < today)
-    return "Check-in can't be in the past. Choose a later date.";
+    return ERROR_MESSAGES.CHECKIN_IN_PAST_LATER_DATE;
   return null;
 }
 

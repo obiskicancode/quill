@@ -34,6 +34,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { AdminAmenity, AdminAmenityInput } from '@/types/inventory.types';
 
 interface AmenityDialogProps {
@@ -88,15 +89,13 @@ export function AmenityDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!label.trim()) {
-      setErrorMessage('Label is required');
+      setErrorMessage(ERROR_MESSAGES.AMENITY_LABEL_REQUIRED);
       return;
     }
 
     const cleanedKey = key.trim() || keyify(label);
     if (!/^[a-z0-9_]+$/.test(cleanedKey)) {
-      setErrorMessage(
-        'Key must consist of lowercase letters, numbers, and underscores',
-      );
+      setErrorMessage(ERROR_MESSAGES.KEY_PATTERN_INVALID_DESCRIPTION);
       return;
     }
 
@@ -122,7 +121,9 @@ export function AmenityDialog({
       onClose();
     } catch (err) {
       setErrorMessage(
-        err instanceof Error ? err.message : 'Failed to save amenity',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_SAVE_AMENITY,
       );
     } finally {
       setIsSaving(false);

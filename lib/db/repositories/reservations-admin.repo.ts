@@ -1,5 +1,6 @@
 import { and, desc, eq, gte, lte, or, sql } from 'drizzle-orm';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { db } from '@/db';
 import {
   auditLogs,
@@ -344,13 +345,11 @@ export function computeAllowedActions(
   let changeDatesAllowed = false;
   let changeDatesReason: string | undefined;
   if (!isManagerOrOwner) {
-    changeDatesReason = 'Only managers and owners can change dates.';
+    changeDatesReason = ERROR_MESSAGES.ONLY_MANAGERS_CHANGE_DATES;
   } else if (!isPending && !isConfirmed) {
-    changeDatesReason =
-      'Dates can only be changed for pending or confirmed reservations.';
+    changeDatesReason = ERROR_MESSAGES.DATES_ONLY_PENDING_CONFIRMED;
   } else if (res.checkIn < today) {
-    changeDatesReason =
-      'Cannot change dates once the check-in date has passed.';
+    changeDatesReason = ERROR_MESSAGES.CANNOT_CHANGE_DATES_PAST;
   } else {
     changeDatesAllowed = true;
   }
@@ -359,11 +358,11 @@ export function computeAllowedActions(
   let cancelAllowed = false;
   let cancelReason: string | undefined;
   if (!isManagerOrOwner) {
-    cancelReason = 'Only managers and owners can cancel reservations.';
+    cancelReason = ERROR_MESSAGES.ONLY_MANAGERS_CANCEL;
   } else if (isCheckedIn) {
-    cancelReason = 'Checked-in stays must be concluded through check-out.';
+    cancelReason = ERROR_MESSAGES.CHECKED_IN_MUST_CHECKOUT;
   } else if (!isPending && !isConfirmed) {
-    cancelReason = 'Only pending or confirmed reservations can be cancelled.';
+    cancelReason = ERROR_MESSAGES.ONLY_PENDING_CONFIRMED_RESERVATIONS_CANCEL;
   } else {
     cancelAllowed = true;
   }
@@ -372,12 +371,11 @@ export function computeAllowedActions(
   let recordPaymentAllowed = false;
   let recordPaymentReason: string | undefined;
   if (!isManagerOrOwner) {
-    recordPaymentReason = 'Only managers and owners can record payments.';
+    recordPaymentReason = ERROR_MESSAGES.ONLY_MANAGERS_RECORD_PAYMENTS;
   } else if (isCancelled || isExpired) {
-    recordPaymentReason =
-      'Cannot record payments for cancelled or expired bookings.';
+    recordPaymentReason = ERROR_MESSAGES.CANNOT_RECORD_PAYMENT_CANCELLED;
   } else if (balanceMinor <= 0 && !isPending) {
-    recordPaymentReason = 'This reservation is already fully paid.';
+    recordPaymentReason = ERROR_MESSAGES.RESERVATION_FULLY_PAID;
   } else {
     recordPaymentAllowed = true;
   }
@@ -386,9 +384,9 @@ export function computeAllowedActions(
   let refundAllowed = false;
   let refundReason: string | undefined;
   if (!isManagerOrOwner) {
-    refundReason = 'Only managers and owners can issue refunds.';
+    refundReason = ERROR_MESSAGES.ONLY_MANAGERS_ISSUE_REFUNDS;
   } else if (res.amountPaidMinor <= res.amountRefundedMinor) {
-    refundReason = 'No refundable balance remains on this reservation.';
+    refundReason = ERROR_MESSAGES.NO_REFUNDABLE_BALANCE;
   } else {
     refundAllowed = true;
   }
@@ -410,9 +408,9 @@ export function computeAllowedActions(
   let approveAllowed = false;
   let approveReason: string | undefined;
   if (!isManagerOrOwner) {
-    approveReason = 'Only managers and owners can approve reservations.';
+    approveReason = ERROR_MESSAGES.ONLY_MANAGERS_APPROVE;
   } else if (!isPending || res.confirmationMode !== 'manual_approval') {
-    approveReason = 'Reservation is not awaiting manual approval.';
+    approveReason = ERROR_MESSAGES.RESERVATION_NOT_AWAITING_APPROVAL;
   } else {
     approveAllowed = true;
   }
@@ -421,9 +419,9 @@ export function computeAllowedActions(
   let declineAllowed = false;
   let declineReason: string | undefined;
   if (!isManagerOrOwner) {
-    declineReason = 'Only managers and owners can decline reservations.';
+    declineReason = ERROR_MESSAGES.ONLY_MANAGERS_DECLINE;
   } else if (!isPending || res.confirmationMode !== 'manual_approval') {
-    declineReason = 'Reservation is not awaiting manual approval.';
+    declineReason = ERROR_MESSAGES.RESERVATION_NOT_AWAITING_APPROVAL;
   } else {
     declineAllowed = true;
   }
@@ -432,9 +430,9 @@ export function computeAllowedActions(
   let noShowAllowed = false;
   let noShowReason: string | undefined;
   if (!isConfirmed) {
-    noShowReason = 'Only confirmed reservations can be marked as no-show.';
+    noShowReason = ERROR_MESSAGES.ONLY_CONFIRMED_RESERVATIONS_NO_SHOW;
   } else if (res.checkIn > today) {
-    noShowReason = 'No-show can only be marked on or after the arrival date.';
+    noShowReason = ERROR_MESSAGES.NO_SHOW_ON_OR_AFTER_ARRIVAL;
   } else {
     noShowAllowed = true;
   }
@@ -443,9 +441,9 @@ export function computeAllowedActions(
   let resendAllowed = false;
   let resendReason: string | undefined;
   if (isPending && res.confirmationMode === 'manual_approval') {
-    resendReason = 'Confirmation cannot be sent while awaiting hotel approval.';
+    resendReason = ERROR_MESSAGES.CONFIRMATION_BLOCKED_APPROVAL;
   } else if (isExpired) {
-    resendReason = 'Cannot resend confirmation for expired holds.';
+    resendReason = ERROR_MESSAGES.CONFIRMATION_EXPIRED_HOLD;
   } else {
     resendAllowed = true;
   }
@@ -454,16 +452,16 @@ export function computeAllowedActions(
   let checkInAllowed = false;
   let checkInReason: string | undefined;
   if (isCheckedIn) {
-    checkInReason = 'Guest is already checked in.';
+    checkInReason = ERROR_MESSAGES.GUEST_ALREADY_CHECKED_IN;
   } else if (isCheckedOut || isCancelled || isExpired || isNoShow) {
-    checkInReason = 'Reservation is completed or cancelled.';
+    checkInReason = ERROR_MESSAGES.RESERVATION_COMPLETED_OR_CANCELLED;
   } else if (
     !isConfirmed &&
     !(isPending && res.confirmationMode === 'manual_approval')
   ) {
-    checkInReason = 'Reservation must be confirmed to check in.';
+    checkInReason = ERROR_MESSAGES.CHECKIN_REQUIRES_CONFIRMATION;
   } else if (res.checkIn > today) {
-    checkInReason = 'Check-in is only allowed on or after arrival date.';
+    checkInReason = ERROR_MESSAGES.CHECKIN_ON_OR_AFTER_ARRIVAL;
   } else {
     checkInAllowed = true;
   }
@@ -472,7 +470,7 @@ export function computeAllowedActions(
   let checkOutAllowed = false;
   let checkOutReason: string | undefined;
   if (!isCheckedIn) {
-    checkOutReason = 'Guest must be checked in to check out.';
+    checkOutReason = ERROR_MESSAGES.CHECKOUT_REQUIRES_CHECKIN;
   } else {
     checkOutAllowed = true;
   }
@@ -482,13 +480,13 @@ export function computeAllowedActions(
       allowed: editDetailsAllowed,
       reason: editDetailsAllowed
         ? undefined
-        : 'Cannot edit details of cancelled or expired bookings.',
+        : ERROR_MESSAGES.CANNOT_EDIT_INACTIVE_BOOKING,
     },
     reassign_room: {
       allowed: reassignRoomAllowed,
       reason: reassignRoomAllowed
         ? undefined
-        : 'Room can only be reassigned for active bookings.',
+        : ERROR_MESSAGES.ROOM_REASSIGN_INACTIVE,
     },
     change_dates: { allowed: changeDatesAllowed, reason: changeDatesReason },
     cancel: { allowed: cancelAllowed, reason: cancelReason },
@@ -948,9 +946,7 @@ function verifyVersion(updatedAt: Date, expectedVersion: string) {
       new Date(currentIso).getTime() - new Date(expectedVersion).getTime(),
     ) > 1000
   ) {
-    throw new Error(
-      'VERSION_CONFLICT: Reservation has been modified elsewhere. Please reload and review the latest details.',
-    );
+    throw new Error(ERROR_MESSAGES.RESERVATION_VERSION_CONFLICT);
   }
 }
 
@@ -1003,11 +999,11 @@ export async function updateReservationDetails(
     .where(eq(reservations.id, id))
     .limit(1);
 
-  if (!res) throw new Error('Reservation not found.');
+  if (!res) throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND);
   verifyVersion(res.updatedAt, version);
 
   if (res.status === 'cancelled' || res.status === 'expired') {
-    throw new Error('Cannot edit details of cancelled or expired bookings.');
+    throw new Error(ERROR_MESSAGES.CANNOT_EDIT_INACTIVE_BOOKING);
   }
 
   const emailChanged = data.email && data.email !== res.guestEmail;
@@ -1081,11 +1077,11 @@ export async function reassignReservationRoom(
       .where(eq(reservations.id, id))
       .limit(1);
 
-    if (!res) throw new Error('Reservation not found.');
+    if (!res) throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND);
     verifyVersion(res.updatedAt, version);
 
     if (!['pending', 'confirmed', 'checked_in'].includes(res.status)) {
-      throw new Error('Room can only be reassigned for active bookings.');
+      throw new Error(ERROR_MESSAGES.ROOM_REASSIGN_INACTIVE);
     }
 
     const [targetRoom] = await tx
@@ -1094,10 +1090,9 @@ export async function reassignReservationRoom(
       .where(and(eq(rooms.id, newRoomId), eq(rooms.isActive, true)))
       .limit(1);
 
-    if (!targetRoom)
-      throw new Error('Selected room does not exist or is inactive.');
+    if (!targetRoom) throw new Error(ERROR_MESSAGES.ROOM_REASSIGN_NOT_FOUND);
     if (targetRoom.roomTypeId !== res.roomTypeId) {
-      throw new Error('Selected room must be of the same room type.');
+      throw new Error(ERROR_MESSAGES.ROOM_REASSIGN_TYPE_MISMATCH);
     }
 
     // Check conflict
@@ -1111,9 +1106,7 @@ export async function reassignReservationRoom(
     `);
 
     if (conflictRes.rows?.length) {
-      throw new Error(
-        'The selected room is already reserved for overlapping dates.',
-      );
+      throw new Error(ERROR_MESSAGES.ROOM_ALREADY_RESERVED);
     }
 
     const conflictBlock = await tx.execute(sql`
@@ -1124,9 +1117,7 @@ export async function reassignReservationRoom(
     `);
 
     if (conflictBlock.rows?.length) {
-      throw new Error(
-        'The selected room is blocked for maintenance or hotel hold during these dates.',
-      );
+      throw new Error(ERROR_MESSAGES.ROOM_BLOCKED_FOR_DATES);
     }
 
     const [updated] = await tx
@@ -1174,13 +1165,11 @@ export async function recordAdminPayment(
       .where(eq(reservations.id, id))
       .limit(1);
 
-    if (!res) throw new Error('Reservation not found.');
+    if (!res) throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND);
     verifyVersion(res.updatedAt, version);
 
     if (res.status === 'cancelled' || res.status === 'expired') {
-      throw new Error(
-        'Cannot record payments for cancelled or expired bookings.',
-      );
+      throw new Error(ERROR_MESSAGES.CANNOT_RECORD_PAYMENT_CANCELLED);
     }
 
     const balanceMinor = Math.max(
@@ -1188,12 +1177,15 @@ export async function recordAdminPayment(
       res.totalMinor - (res.amountPaidMinor - res.amountRefundedMinor),
     );
     if (balanceMinor <= 0 && res.status !== 'pending') {
-      throw new Error('This reservation is already fully paid.');
+      throw new Error(ERROR_MESSAGES.RESERVATION_FULLY_PAID);
     }
 
     if (data.amountMinor > balanceMinor + 100) {
       throw new Error(
-        `Payment amount (₦${(data.amountMinor / 100).toLocaleString()}) cannot exceed the balance due (₦${(balanceMinor / 100).toLocaleString()}).`,
+        ERROR_MESSAGES.PAYMENT_EXCEEDS_BALANCE(
+          (data.amountMinor / 100).toLocaleString(),
+          (balanceMinor / 100).toLocaleString(),
+        ),
       );
     }
 
@@ -1300,11 +1292,9 @@ export async function verifyBankTransfer(
       .where(and(eq(payments.id, paymentId), eq(payments.reservationId, id)))
       .limit(1);
 
-    if (!pay) throw new Error('Payment record not found.');
+    if (!pay) throw new Error(ERROR_MESSAGES.PAYMENT_RECORD_NOT_FOUND);
     if (pay.status !== 'pending') {
-      throw new Error(
-        'Only pending bank transfers can be verified or rejected.',
-      );
+      throw new Error(ERROR_MESSAGES.ONLY_PENDING_BANK_TRANSFERS);
     }
 
     const [res] = await tx
@@ -1312,7 +1302,7 @@ export async function verifyBankTransfer(
       .from(reservations)
       .where(eq(reservations.id, id))
       .limit(1);
-    if (!res) throw new Error('Reservation not found.');
+    if (!res) throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND);
 
     if (action === 'verify') {
       const verifiedMinor = verifiedAmountMinor ?? pay.amountMinor;
@@ -1385,7 +1375,7 @@ export async function verifyBankTransfer(
     } else {
       // Reject
       if (!reason || reason.trim().length < 3) {
-        throw new Error('A rejection reason is required.');
+        throw new Error(ERROR_MESSAGES.REJECTION_REASON_REQUIRED);
       }
 
       await tx
@@ -1439,16 +1429,14 @@ export async function approveOrDeclineBooking(
       .where(eq(reservations.id, id))
       .limit(1);
 
-    if (!res) throw new Error('Reservation not found.');
+    if (!res) throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND);
     verifyVersion(res.updatedAt, version);
 
     if (
       res.status !== 'pending' ||
       res.confirmationMode !== 'manual_approval'
     ) {
-      throw new Error(
-        'Only pending reservations in manual approval mode can be approved or declined.',
-      );
+      throw new Error(ERROR_MESSAGES.ONLY_PENDING_APPROVAL);
     }
 
     if (action === 'approve') {
@@ -1495,7 +1483,7 @@ export async function approveOrDeclineBooking(
       return updated;
     } else {
       if (!reason || reason.trim().length < 3) {
-        throw new Error('A decline reason is required.');
+        throw new Error(ERROR_MESSAGES.DECLINE_REASON_REQUIRED);
       }
 
       const [updated] = await tx
@@ -1561,13 +1549,11 @@ export async function changeReservationDates(
       .where(eq(reservations.id, id))
       .limit(1);
 
-    if (!res) throw new Error('Reservation not found.');
+    if (!res) throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND);
     verifyVersion(res.res.updatedAt, version);
 
     if (!['pending', 'confirmed'].includes(res.res.status)) {
-      throw new Error(
-        'Stay dates can only be changed for pending or confirmed bookings.',
-      );
+      throw new Error(ERROR_MESSAGES.CANNOT_CHANGE_DATES_STATUS);
     }
 
     const targetRoomId = data.roomId ?? res.res.roomId;
@@ -1583,9 +1569,7 @@ export async function changeReservationDates(
     `);
 
     if (conflictRes.rows?.length) {
-      throw new Error(
-        'The room is not available for the requested new dates. Please choose an alternative available room.',
-      );
+      throw new Error(ERROR_MESSAGES.ROOM_NOT_AVAILABLE_NEW_DATES);
     }
 
     // Call server quote helper
@@ -1600,7 +1584,7 @@ export async function changeReservationDates(
     });
 
     if (quote.status !== 'ok') {
-      throw new Error(`Unable to quote new stay dates: ${quote.status}`);
+      throw new Error(ERROR_MESSAGES.QUOTE_NEW_STAY_FAILED(quote.status));
     }
 
     const b = quote.breakdown;
@@ -1682,23 +1666,24 @@ export async function cancelReservationAdmin(
       .where(eq(reservations.id, id))
       .limit(1);
 
-    if (!res) throw new Error('Reservation not found.');
+    if (!res) throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND);
     verifyVersion(res.updatedAt, version);
 
     if (res.status === 'checked_in') {
-      throw new Error(
-        'Checked-in stays cannot be cancelled. They must be concluded via check-out.',
-      );
+      throw new Error(ERROR_MESSAGES.CANNOT_CANCEL_CHECKED_IN);
     }
 
     if (!['pending', 'confirmed'].includes(res.status)) {
-      throw new Error('Only pending or confirmed bookings can be cancelled.');
+      throw new Error(ERROR_MESSAGES.ONLY_PENDING_CONFIRMED_CANCEL);
     }
 
     const netPaid = Math.max(0, res.amountPaidMinor - res.amountRefundedMinor);
     if (data.refundAmountMinor > netPaid) {
       throw new Error(
-        `Refund amount (₦${(data.refundAmountMinor / 100).toLocaleString()}) exceeds the refundable amount (₦${(netPaid / 100).toLocaleString()}).`,
+        ERROR_MESSAGES.REFUND_AMOUNT_EXCEEDS_REFUNDABLE(
+          (data.refundAmountMinor / 100).toLocaleString(),
+          (netPaid / 100).toLocaleString(),
+        ),
       );
     }
 
@@ -1784,7 +1769,7 @@ export async function issueRefundAdmin(
       .where(eq(reservations.id, id))
       .limit(1);
 
-    if (!res) throw new Error('Reservation not found.');
+    if (!res) throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND);
     verifyVersion(res.updatedAt, version);
 
     const [targetPayment] = await tx
@@ -1795,9 +1780,10 @@ export async function issueRefundAdmin(
       )
       .limit(1);
 
-    if (!targetPayment) throw new Error('Target payment not found.');
+    if (!targetPayment)
+      throw new Error(ERROR_MESSAGES.TARGET_PAYMENT_NOT_FOUND);
     if (targetPayment.status !== 'paid') {
-      throw new Error('Refunds can only be issued against paid payments.');
+      throw new Error(ERROR_MESSAGES.REFUND_ONLY_PAID_PAYMENTS);
     }
 
     const [priorRefunds] = await tx
@@ -1815,7 +1801,10 @@ export async function issueRefundAdmin(
 
     if (data.amountMinor > availableForRefund) {
       throw new Error(
-        `Requested refund (₦${(data.amountMinor / 100).toLocaleString()}) exceeds available refundable payment balance (₦${(availableForRefund / 100).toLocaleString()}).`,
+        ERROR_MESSAGES.REFUND_EXCEEDS_AVAILABLE_BALANCE(
+          (data.amountMinor / 100).toLocaleString(),
+          (availableForRefund / 100).toLocaleString(),
+        ),
       );
     }
 
@@ -1888,17 +1877,15 @@ export async function markReservationNoShow(
       .where(eq(reservations.id, id))
       .limit(1);
 
-    if (!res) throw new Error('Reservation not found.');
+    if (!res) throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND);
     verifyVersion(res.updatedAt, version);
 
     if (res.status !== 'confirmed') {
-      throw new Error('Only confirmed bookings can be marked as no-show.');
+      throw new Error(ERROR_MESSAGES.ONLY_CONFIRMED_NO_SHOW);
     }
 
     if (res.checkIn > today) {
-      throw new Error(
-        'No-show cannot be marked before the check-in arrival date has begun.',
-      );
+      throw new Error(ERROR_MESSAGES.NO_SHOW_TOO_EARLY);
     }
 
     const refundAmount = data.refundAmountMinor || 0;
@@ -1908,7 +1895,7 @@ export async function markReservationNoShow(
         res.amountPaidMinor - res.amountRefundedMinor,
       );
       if (refundAmount > netPaid) {
-        throw new Error('Refund amount exceeds net payment balance.');
+        throw new Error(ERROR_MESSAGES.REFUND_EXCEEDS_BALANCE);
       }
 
       await tx.insert(payments).values({
@@ -1975,7 +1962,7 @@ export async function resendReservationConfirmation(
     .where(eq(reservations.id, id))
     .limit(1);
 
-  if (!res) throw new Error('Reservation not found.');
+  if (!res) throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND);
 
   await db.insert(notificationLogs).values({
     reservationId: id,
@@ -2015,8 +2002,7 @@ export async function adminCreateReservation(
       )
       .limit(1);
 
-    if (!rt)
-      throw new Error('Selected room type does not exist or is inactive.');
+    if (!rt) throw new Error(ERROR_MESSAGES.ROOM_TYPE_INACTIVE);
 
     // 2. Select Room
     let assignedRoomId = input.roomId;
@@ -2027,9 +2013,7 @@ export async function adminCreateReservation(
         input.checkOut,
       );
       if (!available) {
-        throw new Error(
-          'No rooms available for the selected dates and room type.',
-        );
+        throw new Error(ERROR_MESSAGES.NO_ROOMS_SELECTED_DATES);
       }
       assignedRoomId = available.id;
     } else {
@@ -2041,9 +2025,7 @@ export async function adminCreateReservation(
         LIMIT 1
       `);
       if (conflictRes.rows?.length) {
-        throw new Error(
-          'The selected room is not available for the requested stay dates.',
-        );
+        throw new Error(ERROR_MESSAGES.SELECTED_ROOM_NOT_AVAILABLE);
       }
     }
 
@@ -2059,7 +2041,9 @@ export async function adminCreateReservation(
     });
 
     if (quote.status !== 'ok') {
-      throw new Error(`Pricing quote calculation failed: ${quote.status}`);
+      throw new Error(
+        ERROR_MESSAGES.PRICING_QUOTE_CALCULATION_FAILED(quote.status),
+      );
     }
 
     const subtotalMinor = quote.breakdown.roomSubtotalMinor;
@@ -2071,7 +2055,7 @@ export async function adminCreateReservation(
     let discountMinor = 0;
     if (input.discount) {
       if (staffRole === 'reception') {
-        throw new Error('Reception role is not permitted to apply discounts.');
+        throw new Error(ERROR_MESSAGES.RECEPTION_CANNOT_DISCOUNT);
       }
       if (input.discount.type === 'percentage') {
         discountMinor = Math.round((totalMinor * input.discount.value) / 100);

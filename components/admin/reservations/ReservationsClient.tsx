@@ -9,6 +9,7 @@ import { AdminEmpty, AdminError } from '@/components/admin/AdminStates';
 import { StaleBanner } from '@/components/admin/dashboard/StaleBanner';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { Button } from '@/components/ui/button';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { AdminRole, Permission } from '@/types/auth.types';
 import type {
   ReservationsListResponse,
@@ -59,7 +60,9 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
         }
       } catch (err: unknown) {
         const msg =
-          err instanceof Error ? err.message : 'Failed to load reservations';
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_LOAD_RESERVATIONS_UI;
         if (data) {
           setIsStale(true);
         } else {
@@ -88,7 +91,9 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
         .catch((err: unknown) => {
           if (!isMounted) return;
           setError(
-            err instanceof Error ? err.message : 'Failed to load reservations',
+            err instanceof Error
+              ? err.message
+              : ERROR_MESSAGES.FAILED_TO_LOAD_RESERVATIONS_UI,
           );
         })
         .finally(() => {
@@ -173,7 +178,7 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
       const exportUrl = `/api/admin/reservations/export?${currentParamsString}`;
       const res = await fetch(exportUrl);
       if (!res.ok) {
-        throw new Error('Export failed or rate limited');
+        throw new Error(ERROR_MESSAGES.FAILED_TO_EXPORT_OR_RATE_LIMITED);
       }
       const blob = await res.blob();
       const downloadUrl = window.URL.createObjectURL(blob);
@@ -186,7 +191,7 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
       window.URL.revokeObjectURL(downloadUrl);
     } catch (err: unknown) {
       alert(
-        err instanceof Error ? err.message : 'Export failed. Please try again.',
+        err instanceof Error ? err.message : ERROR_MESSAGES.FAILED_TO_EXPORT,
       );
     } finally {
       setIsExporting(false);

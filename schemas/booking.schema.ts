@@ -1,13 +1,12 @@
 import { z } from 'zod';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+
 export const referenceSchema = z
   .string()
   .trim()
   .toUpperCase()
-  .regex(
-    /^[A-Z0-9-]{6,30}$/,
-    'Enter the booking reference from your email, like DEA-AB12CD.',
-  );
+  .regex(/^[A-Z0-9-]{6,30}$/, ERROR_MESSAGES.BOOKING_REFERENCE_INVALID);
 
 /** The verify form. Used by the browser and the server. */
 export const verifyRequestSchema = z.object({
@@ -16,8 +15,8 @@ export const verifyRequestSchema = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .min(1, 'Enter the email you booked with.')
-    .email('Enter a valid email address.'),
+    .min(1, ERROR_MESSAGES.BOOKING_EMAIL_REQUIRED)
+    .email(ERROR_MESSAGES.VALID_EMAIL_REQUIRED),
   /** 'manage' opens a 30-minute management session; 'view' is the confirmation page. */
   scope: z.enum(['view', 'manage']).default('view'),
 });

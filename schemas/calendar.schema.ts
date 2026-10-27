@@ -1,22 +1,25 @@
 import { z } from 'zod';
 
 import { BLOCK_REASONS } from '@/constants/calendar';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
 export const adminBlockCheckSchema = z
   .object({
-    roomIds: z.array(z.string().uuid()).min(1, 'Select at least one room.'),
+    roomIds: z
+      .array(z.string().uuid())
+      .min(1, ERROR_MESSAGES.SELECT_AT_LEAST_ONE_ROOM),
     startDate: z
       .string()
-      .regex(dateRegex, 'Invalid start date format (YYYY-MM-DD)'),
+      .regex(dateRegex, ERROR_MESSAGES.INVALID_START_DATE_FORMAT),
     endDate: z
       .string()
-      .regex(dateRegex, 'Invalid end date format (YYYY-MM-DD)'),
+      .regex(dateRegex, ERROR_MESSAGES.INVALID_END_DATE_FORMAT),
     excludeBlockId: z.string().uuid().optional(),
   })
   .refine((data) => data.endDate > data.startDate, {
-    message: 'End date must be after start date.',
+    message: ERROR_MESSAGES.END_DATE_AFTER_START,
     path: ['endDate'],
   });
 
@@ -24,23 +27,22 @@ export type AdminBlockCheckInput = z.infer<typeof adminBlockCheckSchema>;
 
 export const adminCreateBlockSchema = z
   .object({
-    roomIds: z.array(z.string().uuid()).min(1, 'Select at least one room.'),
+    roomIds: z
+      .array(z.string().uuid())
+      .min(1, ERROR_MESSAGES.SELECT_AT_LEAST_ONE_ROOM),
     startDate: z
       .string()
-      .regex(dateRegex, 'Invalid start date format (YYYY-MM-DD)'),
+      .regex(dateRegex, ERROR_MESSAGES.INVALID_START_DATE_FORMAT),
     endDate: z
       .string()
-      .regex(dateRegex, 'Invalid end date format (YYYY-MM-DD)'),
+      .regex(dateRegex, ERROR_MESSAGES.INVALID_END_DATE_FORMAT),
     reason: z.enum(BLOCK_REASONS),
-    notes: z
-      .string()
-      .max(1000, 'Notes must be 1,000 characters or less.')
-      .optional(),
+    notes: z.string().max(1000, ERROR_MESSAGES.NOTES_TOO_LONG).optional(),
     backdateReason: z.string().max(500).optional(),
-    idempotencyKey: z.string().min(1, 'Missing idempotency key.'),
+    idempotencyKey: z.string().min(1, ERROR_MESSAGES.IDEMPOTENCY_KEY_MISSING),
   })
   .refine((data) => data.endDate > data.startDate, {
-    message: 'End date must be after start date.',
+    message: ERROR_MESSAGES.END_DATE_AFTER_START,
     path: ['endDate'],
   });
 
@@ -48,23 +50,20 @@ export type AdminCreateBlockInput = z.infer<typeof adminCreateBlockSchema>;
 
 export const adminUpdateBlockSchema = z
   .object({
-    roomId: z.string().uuid('Invalid room ID.'),
+    roomId: z.string().uuid(ERROR_MESSAGES.INVALID_ROOM_ID),
     startDate: z
       .string()
-      .regex(dateRegex, 'Invalid start date format (YYYY-MM-DD)'),
+      .regex(dateRegex, ERROR_MESSAGES.INVALID_START_DATE_FORMAT),
     endDate: z
       .string()
-      .regex(dateRegex, 'Invalid end date format (YYYY-MM-DD)'),
+      .regex(dateRegex, ERROR_MESSAGES.INVALID_END_DATE_FORMAT),
     reason: z.enum(BLOCK_REASONS),
-    notes: z
-      .string()
-      .max(1000, 'Notes must be 1,000 characters or less.')
-      .optional(),
+    notes: z.string().max(1000, ERROR_MESSAGES.NOTES_TOO_LONG).optional(),
     backdateReason: z.string().max(500).optional(),
-    version: z.string().min(1, 'Missing version token.'),
+    version: z.string().min(1, ERROR_MESSAGES.VERSION_TOKEN_MISSING),
   })
   .refine((data) => data.endDate > data.startDate, {
-    message: 'End date must be after start date.',
+    message: ERROR_MESSAGES.END_DATE_AFTER_START,
     path: ['endDate'],
   });
 
@@ -94,7 +93,7 @@ export const adminCalendarQuerySchema = z.object({
     .number()
     .int()
     .refine((n) => [14, 30, 60].includes(n), {
-      message: 'Days must be 14, 30, or 60.',
+      message: ERROR_MESSAGES.DAYS_OPTIONS_INVALID,
     })
     .default(14),
   roomTypeId: z.string().uuid().optional(),

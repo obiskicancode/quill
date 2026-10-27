@@ -1,5 +1,6 @@
 import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { db } from '@/db';
 import {
   amenities,
@@ -221,7 +222,7 @@ export async function createAdminRoomType(params: {
     .limit(1);
 
   if (existingSlug) {
-    throw new Error(`A room type with slug "${input.slug}" already exists.`);
+    throw new Error(ERROR_MESSAGES.ROOM_TYPE_SLUG_EXISTS(input.slug));
   }
 
   // Get max sort order
@@ -301,7 +302,7 @@ export async function updateAdminRoomTypeDetails(params: {
     .limit(1);
 
   if (!existing) {
-    throw new Error('Room type not found');
+    throw new Error(ERROR_MESSAGES.ROOM_TYPE_NOT_FOUND);
   }
 
   // If slug is changing
@@ -313,15 +314,11 @@ export async function updateAdminRoomTypeDetails(params: {
       .limit(1);
 
     if (slugConflict) {
-      throw new Error(
-        `Slug "${input.slug}" is already in use by another room type.`,
-      );
+      throw new Error(ERROR_MESSAGES.ROOM_TYPE_SLUG_IN_USE(input.slug));
     }
 
     if (existing.isActive && !input.unlockSlugConfirmed) {
-      throw new Error(
-        'Changing the slug of an active room type breaks public URLs. Please confirm slug unlock.',
-      );
+      throw new Error(ERROR_MESSAGES.ROOM_TYPE_SLUG_LOCKED);
     }
   }
 
@@ -335,9 +332,7 @@ export async function updateAdminRoomTypeDetails(params: {
       (p) => !p.altText || p.altText.trim() === '',
     );
     if (photos.length > 0 && missingAlt) {
-      throw new Error(
-        'Every uploaded photo must have descriptive alt text before this room type can be published.',
-      );
+      throw new Error(ERROR_MESSAGES.ROOM_TYPE_ALT_TEXT_REQUIRED);
     }
   }
 
@@ -406,9 +401,7 @@ export async function deleteAdminRoomType(params: {
     .where(eq(reservations.roomTypeId, id));
 
   if (Number(resCount?.count ?? 0) > 0) {
-    throw new Error(
-      'This room type has booking history and cannot be deleted. Deactivate it instead so it is hidden from guests.',
-    );
+    throw new Error(ERROR_MESSAGES.ROOM_TYPE_HAS_BOOKINGS);
   }
 
   // Delete units, image references, amenity links, then room type
@@ -486,7 +479,7 @@ export async function addRoomTypeImage(params: {
     .where(eq(galleryImages.roomTypeId, roomTypeId));
 
   if (Number(imgCount?.count ?? 0) >= 8) {
-    throw new Error('A room type can have a maximum of 8 photos.');
+    throw new Error(ERROR_MESSAGES.ROOM_TYPE_MAX_PHOTOS);
   }
 
   const [maxOrder] = await db
@@ -553,7 +546,7 @@ export async function updateImageDetails(
     .where(eq(galleryImages.id, imageId))
     .limit(1);
 
-  if (!img) throw new Error('Image not found');
+  if (!img) throw new Error(ERROR_MESSAGES.IMAGE_NOT_FOUND);
 
   await db
     .update(galleryImages)
@@ -730,7 +723,7 @@ export async function createAdminRoom(params: {
     .limit(1);
 
   if (existing) {
-    throw new Error(`Room number "${input.roomNumber}" already exists.`);
+    throw new Error(ERROR_MESSAGES.ROOM_NUMBER_EXISTS(input.roomNumber));
   }
 
   const [unit] = await db
@@ -783,7 +776,7 @@ export async function updateAdminRoom(params: {
     .where(eq(rooms.id, id))
     .limit(1);
 
-  if (!existing) throw new Error('Room not found');
+  if (!existing) throw new Error(ERROR_MESSAGES.ROOM_NOT_FOUND_BARE);
 
   // Check room number uniqueness if changing
   if (existing.roomNumber !== input.roomNumber) {
@@ -796,7 +789,7 @@ export async function updateAdminRoom(params: {
       .limit(1);
 
     if (conflict) {
-      throw new Error(`Room number "${input.roomNumber}" is already in use.`);
+      throw new Error(ERROR_MESSAGES.ROOM_NUMBER_IN_USE(input.roomNumber));
     }
   }
 
@@ -810,7 +803,11 @@ export async function updateAdminRoom(params: {
       const resCount = impact.reservations.length;
       const blkCount = impact.blocks.length;
       throw new Error(
-        `Cannot change status to "${input.status}". Room has ${resCount} upcoming reservation(s) and ${blkCount} active block(s). Please reassign bookings or remove blocks first.`,
+        ERROR_MESSAGES.ROOM_STATUS_CHANGE_BLOCKED(
+          input.status,
+          resCount,
+          blkCount,
+        ),
       );
     }
   }
@@ -856,9 +853,7 @@ export async function deleteAdminRoom(params: {
     .where(eq(reservations.roomId, id));
 
   if (Number(resCount?.count ?? 0) > 0) {
-    throw new Error(
-      'This room has past or upcoming reservations and cannot be deleted. Change its status to "inactive" instead.',
-    );
+    throw new Error(ERROR_MESSAGES.ROOM_HAS_RESERVATIONS);
   }
 
   // Delete any blocks on this room
@@ -987,7 +982,7 @@ export async function updateAdminRateRule(params: {
     .where(eq(rateRules.id, id))
     .limit(1);
 
-  if (!existing) throw new Error('Rate rule not found');
+  if (!existing) throw new Error(ERROR_MESSAGES.RATE_RULE_NOT_FOUND);
 
   await db
     .update(rateRules)
@@ -1097,7 +1092,7 @@ export async function getPricingCalendar(params: {
     .where(eq(roomTypes.id, roomTypeId))
     .limit(1);
 
-  if (!rt) throw new Error('Room type not found');
+  if (!rt) throw new Error(ERROR_MESSAGES.ROOM_TYPE_NOT_FOUND);
 
   const activeRulesRaw = await db
     .select()
@@ -1204,7 +1199,7 @@ export async function createAdminExtra(params: {
     .limit(1);
 
   if (existing) {
-    throw new Error(`An extra with slug "${input.slug}" already exists.`);
+    throw new Error(ERROR_MESSAGES.EXTRA_SLUG_EXISTS(input.slug));
   }
 
   const [maxOrder] = await db
@@ -1259,7 +1254,7 @@ export async function updateAdminExtra(params: {
     .where(eq(extras.id, id))
     .limit(1);
 
-  if (!existing) throw new Error('Extra not found');
+  if (!existing) throw new Error(ERROR_MESSAGES.EXTRA_NOT_FOUND);
 
   if (existing.slug !== input.slug) {
     const [conflict] = await db
@@ -1269,9 +1264,7 @@ export async function updateAdminExtra(params: {
       .limit(1);
 
     if (conflict) {
-      throw new Error(
-        `Slug "${input.slug}" is already in use by another extra.`,
-      );
+      throw new Error(ERROR_MESSAGES.EXTRA_SLUG_IN_USE(input.slug));
     }
   }
 
@@ -1316,9 +1309,7 @@ export async function deleteAdminExtra(params: {
     .where(eq(reservationExtras.extraId, id));
 
   if (Number(resCount?.count ?? 0) > 0) {
-    throw new Error(
-      'This extra has been booked in existing reservations and cannot be deleted. Deactivate it instead so it is no longer offered.',
-    );
+    throw new Error(ERROR_MESSAGES.EXTRA_HAS_BOOKINGS);
   }
 
   await db.delete(extras).where(eq(extras.id, id));
@@ -1389,7 +1380,7 @@ export async function createAdminAmenity(params: {
     .limit(1);
 
   if (existing) {
-    throw new Error(`An amenity with key "${input.key}" already exists.`);
+    throw new Error(ERROR_MESSAGES.AMENITY_KEY_EXISTS(input.key));
   }
 
   const [maxOrder] = await db
@@ -1441,7 +1432,7 @@ export async function updateAdminAmenity(params: {
     .where(eq(amenities.id, id))
     .limit(1);
 
-  if (!existing) throw new Error('Amenity not found');
+  if (!existing) throw new Error(ERROR_MESSAGES.AMENITY_NOT_FOUND);
 
   if (existing.key !== input.key) {
     const [conflict] = await db
@@ -1451,7 +1442,7 @@ export async function updateAdminAmenity(params: {
       .limit(1);
 
     if (conflict) {
-      throw new Error(`Amenity key "${input.key}" is already in use.`);
+      throw new Error(ERROR_MESSAGES.AMENITY_KEY_IN_USE(input.key));
     }
   }
 
@@ -1498,9 +1489,7 @@ export async function deleteAdminAmenity(params: {
 
   if (assigned.length > 0) {
     const names = assigned.map((a) => a.roomTypeName).join(', ');
-    throw new Error(
-      `Cannot delete this amenity because it is assigned to: ${names}. Remove it from these room types first.`,
-    );
+    throw new Error(ERROR_MESSAGES.AMENITY_ASSIGNED_ROOM_TYPES(names));
   }
 
   await db.delete(amenities).where(eq(amenities.id, id));

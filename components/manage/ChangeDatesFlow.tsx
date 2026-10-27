@@ -7,6 +7,9 @@ import { useEffect, useRef, useState } from 'react';
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { manageService } from '@/app/api/services/manage.service';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatDeadline, formatMinor } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import { whatsappHref } from '@/lib/site';
@@ -138,7 +141,10 @@ export function ChangeDatesFlow({
         ).data,
       );
     } catch (e) {
-      if (e instanceof ServiceError && e.body?.code === 'session_expired')
+      if (
+        e instanceof ServiceError &&
+        e.body?.code === ERROR_CODES.SESSION_EXPIRED
+      )
         onSessionExpired();
       else setQuoteFailed(true);
     } finally {
@@ -174,8 +180,8 @@ export function ChangeDatesFlow({
       onUpdated(
         res.view,
         res.status === 'completed'
-          ? 'Your dates have been changed.'
-          : 'Your new dates are held while you pay.',
+          ? SUCCESS_MESSAGES.DATES_CHANGED
+          : SUCCESS_MESSAGES.NEW_DATES_HELD,
       );
       setStep(res.status === 'completed' ? 'done' : 'payment');
     } catch (e) {
@@ -183,23 +189,20 @@ export function ChangeDatesFlow({
       const stale = (
         f?.body as unknown as { quote?: ChangeQuoteResponse } | null
       )?.quote;
-      if (f?.body?.code === 'session_expired') onSessionExpired();
-      else if (f?.body?.code === 'quote_stale' && stale) {
+      if (f?.body?.code === ERROR_CODES.SESSION_EXPIRED) onSessionExpired();
+      else if (f?.body?.code === ERROR_CODES.QUOTE_STALE && stale) {
         key.current = newKey();
         setQuote(stale);
-        setNotice(
-          'The price or availability changed while you were deciding. Please review the new details.',
-        );
+        setNotice(ERROR_MESSAGES.QUOTE_CHANGED_REVIEW);
       } else if (!f || f.network || f.status >= 500) {
         setError({
-          message:
-            "We couldn't reach the server, so we don't know if the change went through. Trying again is safe: it will not change your dates twice.",
+          message: ERROR_MESSAGES.COULD_NOT_REACH_SERVER_CHANGE_UNKNOWN,
           retryable: true,
         });
       } else {
         key.current = newKey();
         setError({
-          message: f.body?.message ?? 'We could not change your dates.',
+          message: f.body?.message ?? ERROR_MESSAGES.COULD_NOT_CHANGE_DATES,
           retryable: false,
         });
       }
@@ -231,7 +234,7 @@ export function ChangeDatesFlow({
         scope="manage"
         variant="verify"
         reference={v.reference}
-        notice="Your session ended. Verify again to continue. The dates you picked are kept."
+        notice={ERROR_MESSAGES.SESSION_ENDED_VERIFY_CONTINUE_DATES}
         onVerified={onReverified}
       />
     );
@@ -329,7 +332,7 @@ export function ChangeDatesFlow({
                 <Banner
                   role="alert"
                   tone="danger"
-                  title="We couldn't check those dates"
+                  title={ERROR_MESSAGES.COULD_NOT_CHECK_DATES}
                   actions={
                     <Button
                       variant="secondary"
@@ -395,7 +398,7 @@ export function ChangeDatesFlow({
                     <Banner
                       role="alert"
                       tone="danger"
-                      title="Your dates were not changed yet"
+                      title={ERROR_MESSAGES.DATES_NOT_CHANGED_YET}
                       actions={
                         error.retryable ? (
                           <Button
@@ -435,7 +438,7 @@ export function ChangeDatesFlow({
                 </div>
               )}
 
-              {!quoting && quote?.status === 'unavailable' && (
+              {!quoting && quote?.status === ERROR_CODES.UNAVAILABLE && (
                 <div className="space-y-4">
                   <Banner
                     role="alert"
@@ -490,7 +493,7 @@ export function ChangeDatesFlow({
                 <Banner
                   role="alert"
                   tone="danger"
-                  title="Those dates can't be used"
+                  title={ERROR_MESSAGES.DATES_CANNOT_BE_USED}
                 >
                   <ul className="list-disc space-y-1 pl-5">
                     {quote.violations.map((x) => (
@@ -504,7 +507,7 @@ export function ChangeDatesFlow({
                 <Banner
                   role="alert"
                   tone="warn"
-                  title="Dates can't be changed online"
+                  title={ERROR_MESSAGES.DATES_CANNOT_CHANGE_ONLINE_TITLE}
                   actions={
                     <ButtonLink
                       href={askHotel('Please can you help?')}

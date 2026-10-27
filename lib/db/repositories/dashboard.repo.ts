@@ -1,5 +1,6 @@
 import { and, desc, eq, gte, lte, sql } from 'drizzle-orm';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { db } from '@/db';
 import {
   auditLogs,
@@ -775,13 +776,11 @@ export async function checkInReservation(
     .limit(1);
 
   if (!res) {
-    throw new Error('Reservation not found');
+    throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND_BARE);
   }
 
   if (res.status !== 'confirmed') {
-    throw new Error(
-      `Cannot check in reservation in status '${res.status}'. Reservation must be 'confirmed'.`,
-    );
+    throw new Error(ERROR_MESSAGES.CANNOT_CHECK_IN_STATUS(res.status));
   }
 
   const now = new Date();
@@ -858,13 +857,11 @@ export async function checkOutReservation(
     .limit(1);
 
   if (!res) {
-    throw new Error('Reservation not found');
+    throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND_BARE);
   }
 
   if (res.status !== 'checked_in') {
-    throw new Error(
-      `Cannot check out reservation in status '${res.status}'. Reservation must be 'checked_in'.`,
-    );
+    throw new Error(ERROR_MESSAGES.CANNOT_CHECK_OUT_STATUS(res.status));
   }
 
   const now = new Date();

@@ -30,6 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { MAX_ROOM_TYPES } from '@/constants/inventory';
 import { minorToNaira } from '@/lib/rate-resolution';
 import type { AdminRoomTypeListItem } from '@/types/inventory.types';
@@ -62,7 +63,9 @@ export function RoomTypesListClient({
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to reload room types',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_RELOAD_ROOM_TYPES,
       );
     } finally {
       setLoading(false);
@@ -90,7 +93,7 @@ export function RoomTypesListClient({
     try {
       await adminService.reorderRoomTypes(items);
     } catch {
-      setError('Failed to update sort order. Refreshing list.');
+      setError(ERROR_MESSAGES.FAILED_TO_UPDATE_SORT_ORDER);
       await refresh();
     } finally {
       setReordering(false);
@@ -118,7 +121,7 @@ export function RoomTypesListClient({
                 room types.
                 {isOwner
                   ? ' As an Owner, you may create additional room types if necessary.'
-                  : ' Only an Owner can exceed this limit.'}
+                  : ERROR_MESSAGES.ROOM_TYPE_LIMIT_OWNER_ONLY}
               </p>
             </div>
           </div>

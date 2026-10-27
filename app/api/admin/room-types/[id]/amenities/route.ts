@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { updateRoomTypeAmenities } from '@/lib/db/repositories/inventory-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
@@ -18,15 +20,24 @@ export async function PUT(
   const body = await request.json().catch(() => null);
   const parsed = UpdateRoomTypeAmenitiesSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid amenities list', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_AMENITIES_LIST,
+      parsed.error.flatten(),
+    );
   }
 
   try {
     await updateRoomTypeAmenities(roomTypeId, parsed.data.amenityIds);
-    return apiOk({ success: true, message: 'Amenities updated successfully' });
+    return apiOk({
+      success: true,
+      message: SUCCESS_MESSAGES.AMENITIES_UPDATED,
+    });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to update amenities';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_UPDATE_AMENITIES;
     return apiFail(400, message);
   }
 }

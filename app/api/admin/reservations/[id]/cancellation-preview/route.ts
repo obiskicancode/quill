@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { eq } from 'drizzle-orm';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { db } from '@/db';
 import { reservationNights, reservations } from '@/db/schema';
 import { guardAdminApi } from '@/lib/auth/guards';
@@ -22,7 +23,7 @@ export async function GET(
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
-  if (!id) return apiFail(400, 'Missing reservation ID');
+  if (!id) return apiFail(400, ERROR_MESSAGES.MISSING_RESERVATION_ID);
 
   const [res] = await db
     .select()
@@ -30,7 +31,7 @@ export async function GET(
     .where(eq(reservations.id, id))
     .limit(1);
 
-  if (!res) return apiFail(404, 'Reservation not found');
+  if (!res) return apiFail(404, ERROR_MESSAGES.RESERVATION_NOT_FOUND_BARE);
 
   const [firstNight] = await db
     .select()

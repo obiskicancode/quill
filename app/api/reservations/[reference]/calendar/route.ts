@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { buildIcs } from '@/lib/booking/ics';
 import { getAccess } from '@/lib/booking/session';
 import { loadReservation } from '@/lib/booking/view';
@@ -17,11 +18,11 @@ export async function GET(
   if (!(await rateLimit(`calendar:${client}`, 20, 60_000)).allowed)
     return tooManyRequests(60);
   if (!(await getAccess(reference)))
-    return new NextResponse('Not found', { status: 404 });
+    return new NextResponse(ERROR_MESSAGES.NOT_FOUND_BARE, { status: 404 });
 
   const r = await loadReservation(reference);
   if (!r || !r.stay.checkIn || !r.stay.checkOut)
-    return new NextResponse('Not found', { status: 404 });
+    return new NextResponse(ERROR_MESSAGES.NOT_FOUND_BARE, { status: 404 });
 
   const { hotel, times } = r.snapshot;
   const ics = buildIcs({

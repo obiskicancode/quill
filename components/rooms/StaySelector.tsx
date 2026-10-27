@@ -3,6 +3,7 @@
 import { CalendarDays, Pencil, Users } from 'lucide-react';
 import { useEffect, useId, useRef, useState, type MouseEvent } from 'react';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatShort } from '@/lib/dates';
 import {
   formatRange,
@@ -125,7 +126,7 @@ export function StaySelector({
 
   function applySheet() {
     if (draft.checkIn && !draft.checkOut) {
-      setSheetError('Choose a check-out date, or clear the dates.');
+      setSheetError(ERROR_MESSAGES.CHOOSE_CHECKOUT_OR_CLEAR);
       return;
     }
     onChange({

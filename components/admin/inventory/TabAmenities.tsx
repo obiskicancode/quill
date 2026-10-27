@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { AdminAmenity } from '@/types/inventory.types';
 
 interface TabAmenitiesProps {
@@ -46,7 +48,7 @@ export function TabAmenities({
           setAllAmenities(res.data);
         }
       } catch {
-        setErrorMessage('Failed to load amenities catalog');
+        setErrorMessage(ERROR_MESSAGES.FAILED_TO_LOAD_AMENITIES_CATALOG);
       } finally {
         setLoading(false);
       }
@@ -90,11 +92,13 @@ export function TabAmenities({
         roomTypeId,
         Array.from(selectedIds),
       );
-      setSuccessMessage('Amenities updated successfully');
+      setSuccessMessage(SUCCESS_MESSAGES.AMENITIES_UPDATED);
       await onRefresh();
     } catch (err) {
       setErrorMessage(
-        err instanceof Error ? err.message : 'Failed to save amenities',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_SAVE_AMENITIES,
       );
     } finally {
       setSaving(false);

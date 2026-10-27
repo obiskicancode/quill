@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { AdminRole } from '@/types/auth.types';
 
 import { createAuditLog } from '../db/repositories/audit.repo';
@@ -28,7 +29,7 @@ export async function writeAdminAudit(input: AuditInput): Promise<void> {
       userAgent: input.userAgent ?? null,
     });
   } catch (error) {
-    console.error('Admin audit write failed', {
+    console.error(ERROR_MESSAGES.ADMIN_AUDIT_FAILED, {
       action: input.action,
       entityId: input.entityId,
       error: error instanceof Error ? error.message : 'unknown',

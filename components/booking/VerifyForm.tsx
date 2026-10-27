@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { bookingService } from '@/app/api/services/booking.service';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatCountdown } from '@/lib/format';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
@@ -28,7 +29,7 @@ const copy: Record<VerifyVariant, { title: string; text: string }> = {
     text: 'Enter the booking reference from your confirmation email and the email you booked with.',
   },
   notfound: {
-    title: "We couldn't find that booking",
+    title: ERROR_MESSAGES.COULD_NOT_FIND_BOOKING,
     text: 'Check the reference and the email you used, or message us and we will help. For your privacy we show the same message whether or not a booking exists.',
   },
 };
@@ -97,16 +98,12 @@ export function VerifyForm({
     } catch (err) {
       if (err instanceof ServiceError && err.status === 429) {
         setLockedFor(err.body?.retryAfterSeconds ?? 600);
-        setServerError('Too many attempts. Please wait before trying again.');
+        setServerError(ERROR_MESSAGES.VERIFY_TOO_MANY_ATTEMPTS);
       } else if (err instanceof ServiceError && err.network) {
-        setServerError(
-          "We couldn't reach the server. Check your connection and try again.",
-        );
+        setServerError(ERROR_MESSAGES.COULD_NOT_REACH_SERVER_CONNECTION);
       } else {
         // One generic message for every other failure.
-        setServerError(
-          "We couldn't find a booking with those details. Check the reference and email and try again.",
-        );
+        setServerError(ERROR_MESSAGES.VERIFY_NOT_FOUND);
       }
     } finally {
       setBusy(false);
@@ -174,7 +171,9 @@ export function VerifyForm({
             role="alert"
             tone="danger"
             title={
-              lockedFor > 0 ? 'Please wait' : "We couldn't verify that booking"
+              lockedFor > 0
+                ? 'Please wait'
+                : ERROR_MESSAGES.COULD_NOT_VERIFY_BOOKING
             }
           >
             <p>

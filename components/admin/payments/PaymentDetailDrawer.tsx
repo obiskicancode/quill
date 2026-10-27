@@ -27,6 +27,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { PaymentDetailResponse } from '@/types/payments-admin.types';
 
 function formatNaira(minor: number): string {
@@ -342,7 +343,7 @@ export function PaymentDetailDrawer({
                     ) : (
                       <Copy className="size-3" />
                     )}
-                    {copiedRaw ? 'Copied' : 'Copy'}
+                    {copiedRaw ? SUCCESS_MESSAGES.COPIED : 'Copy'}
                   </Button>
                   <pre>
                     {JSON.stringify(payment.rawGatewayResponse, null, 2)}

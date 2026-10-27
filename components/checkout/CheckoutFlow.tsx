@@ -11,6 +11,8 @@ import {
   loadProviderScript,
   newKey,
 } from '@/app/api/services/checkout.service';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatMinor } from '@/lib/format';
 import {
   checkProofFile,
@@ -49,8 +51,7 @@ import { useHoldCountdown } from './useHoldCountdown';
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 30_000;
-const TERMS_MESSAGE =
-  'Please accept the Terms, Privacy Policy and Cancellation Policy to continue.';
+const TERMS_MESSAGE = ERROR_MESSAGES.TERMS_ACCEPTANCE_REQUIRED;
 
 type Phase =
   | { name: 'form' }
@@ -296,13 +297,11 @@ export function CheckoutFlow({
     const fail = err instanceof ServiceError ? err : null;
     const body = fail?.body;
     if (!fail || fail.network || fail.status >= 500) {
-      setNetError(
-        "We couldn't reach the server, so we don't know if that went through.",
-      );
+      setNetError(ERROR_MESSAGES.COULD_NOT_REACH_SERVER_UNKNOWN_OUTCOME);
       return;
     }
     payKey.current = null;
-    if (body?.code === 'validation' && body.fieldErrors) {
+    if (body?.code === ERROR_CODES.VALIDATION && body.fieldErrors) {
       const next: Partial<Record<GuestField, string>> = {};
       let termsMsg: string | undefined;
       for (const [key, message] of Object.entries(body.fieldErrors)) {
@@ -312,15 +311,15 @@ export function CheckoutFlow({
       }
       setErrors(next);
       setTermsError(termsMsg);
-    } else if (body?.code === 'unavailable' && body.quote) {
+    } else if (body?.code === ERROR_CODES.UNAVAILABLE && body.quote) {
       setQuote(body.quote as CheckoutQuoteResponse);
-    } else if (body?.code === 'price_changed' && body.quote) {
+    } else if (body?.code === ERROR_CODES.PRICE_CHANGED && body.quote) {
       setQuote(body.quote as CheckoutQuoteResponse);
       setAccepted(false);
-    } else if (body?.code === 'hold_expired') {
+    } else if (body?.code === ERROR_CODES.HOLD_EXPIRED) {
       setReservation((r) => (r ? { ...r, holdExpiresAt: Date.now() - 1 } : r));
     } else {
-      setNetError(body?.message ?? 'Something went wrong. Please try again.');
+      setNetError(body?.message ?? ERROR_MESSAGES.SOMETHING_WENT_WRONG);
     }
   }
 
@@ -349,7 +348,7 @@ export function CheckoutFlow({
 
   async function submitProof(reference: string) {
     if (!proofFile) {
-      setProofError('Choose your transfer receipt to upload.');
+      setProofError(ERROR_MESSAGES.CHOOSE_TRANSFER_RECEIPT);
       document.getElementById('field-proof')?.focus();
       return;
     }
@@ -445,7 +444,7 @@ export function CheckoutFlow({
         ).data,
       );
     } catch {
-      setNetError("We couldn't re-check availability. Please try again.");
+      setNetError(ERROR_MESSAGES.COULD_NOT_RECHECK_AVAILABILITY);
     } finally {
       submitting.current = false;
       setBusy(false);
@@ -473,7 +472,7 @@ export function CheckoutFlow({
   }
 
   // --- full-width states ---
-  if (quote.status === 'unavailable') {
+  if (quote.status === ERROR_CODES.UNAVAILABLE) {
     return (
       <div className="container-page py-8 md:py-12">
         <UnavailableState
@@ -489,7 +488,11 @@ export function CheckoutFlow({
   if (!ok) {
     return (
       <div className="container-page py-8 md:py-12">
-        <Banner role="alert" tone="danger" title="We couldn't open checkout">
+        <Banner
+          role="alert"
+          tone="danger"
+          title={ERROR_MESSAGES.COULD_NOT_OPEN_CHECKOUT}
+        >
           <p>{quote.status === 'invalid' ? quote.message : ''}</p>
         </Banner>
       </div>
@@ -674,7 +677,7 @@ export function CheckoutFlow({
               <Banner
                 role="alert"
                 tone="danger"
-                title="We couldn't update your price"
+                title={ERROR_MESSAGES.COULD_NOT_UPDATE_PRICE}
                 actions={
                   <Button
                     variant="secondary"

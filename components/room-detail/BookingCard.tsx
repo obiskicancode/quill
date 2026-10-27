@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { bookingHref, stayParams } from '@/lib/booking/links';
 import { formatShort } from '@/lib/dates';
 import { formatMinor, formatNaira } from '@/lib/format';
@@ -108,11 +109,11 @@ export function BookingCard({
     : available
       ? `Total ${formatMinor(available.quote.totalMinor)} for ${available.quote.nights} ${available.quote.nights === 1 ? 'night' : 'nights'}. ${available.quote.taxIncluded ? 'Taxes included.' : 'Taxes added to the total.'}`
       : soldOut
-        ? 'Not available for these dates.'
+        ? ERROR_MESSAGES.NOT_AVAILABLE_FOR_DATES
         : invalid
           ? invalid.violations.map((v) => v.message).join(' ')
           : failed
-            ? "We couldn't check availability."
+            ? ERROR_MESSAGES.COULD_NOT_CHECK_AVAILABILITY
             : '';
 
   const openDates = () => {
@@ -451,7 +452,7 @@ export function BookingCard({
         : invalid
           ? 'Check your dates'
           : failed
-            ? 'Prices unavailable'
+            ? ERROR_MESSAGES.PRICES_UNAVAILABLE
             : onRequest
               ? 'Contact us for price'
               : `From ${formatNaira(room.basePriceNgn)} / night`;

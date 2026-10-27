@@ -18,6 +18,8 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type {
   ManualRefundItem,
   ManualRefundPayoutInput,
@@ -112,7 +114,9 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
       }
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : 'Failed to load payments.';
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_LOAD_PAYMENTS;
       setError(msg);
     }
   }, [filters]);
@@ -156,7 +160,9 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
       } catch (err: unknown) {
         if (!active) return;
         const msg =
-          err instanceof Error ? err.message : 'Failed to load payments.';
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_LOAD_PAYMENTS;
         setError(msg);
       } finally {
         if (active) setLoading(false);
@@ -268,7 +274,8 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
       if (detailPayment) setDetailPayment(null);
       await Promise.all([loadSummary(), loadPayments()]);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to reconcile';
+      const msg =
+        err instanceof Error ? err.message : ERROR_MESSAGES.FAILED_TO_RECONCILE;
       alert(msg);
     }
   };
@@ -287,7 +294,10 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
       if (detailPayment) setDetailPayment(null);
       await Promise.all([loadSummary(), loadPayments()]);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to unreconcile';
+      const msg =
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_UNRECONCILE;
       alert(msg);
     }
   };
@@ -306,7 +316,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
 
   const handleRecheckProviderRefund = async (id: string) => {
     const res = await adminService.recheckRefundStatus(id);
-    return res.data?.message || 'Status verified';
+    return res.data?.message || SUCCESS_MESSAGES.STATUS_VERIFIED;
   };
 
   const handleReprocessWebhook = async (id: string) => {

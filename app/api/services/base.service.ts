@@ -5,6 +5,7 @@ import {
   AxiosResponse,
 } from 'axios';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { ApiErrorBody, ApiResponse, ApiResult } from '@/types/base.types';
 
 import { apiClient } from '../axiosInstance';
@@ -62,8 +63,7 @@ export default abstract class BaseService {
   }
 
   private toServiceError(error: unknown): ServiceError {
-    const defaultMessage =
-      'An unexpected error occurred. Please try again later.';
+    const defaultMessage = ERROR_MESSAGES.UNEXPECTED_ERROR;
 
     if (error instanceof AxiosError) {
       const envelope = error.response?.data as ApiResponse<unknown> | undefined;

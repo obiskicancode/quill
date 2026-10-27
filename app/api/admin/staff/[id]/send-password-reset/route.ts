@@ -1,3 +1,4 @@
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { sendPasswordResetRepo } from '@/lib/db/repositories/staff-admin.repo';
 import { apiOk } from '@/lib/http/envelope';
@@ -16,7 +17,7 @@ export async function POST(
   await sendPasswordResetRepo({ id, actor: context.user });
 
   return apiOk(
-    { success: true, message: 'Password reset link sent to staff email' },
+    { success: true, message: SUCCESS_MESSAGES.PASSWORD_RESET_LINK_SENT },
     { noCache: true },
   );
 }

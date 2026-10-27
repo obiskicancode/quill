@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatNaira } from '@/lib/format';
 import type {
   ReservationDetail,
@@ -51,7 +52,7 @@ export function VerifyTransferModal({
       if (mode === 'verify') {
         const num = parseFloat(verifiedNaira);
         if (isNaN(num) || num <= 0) {
-          setError('Please specify a valid positive verified amount.');
+          setError(ERROR_MESSAGES.VALID_POSITIVE_VERIFIED_AMOUNT);
           setSubmitting(false);
           return;
         }
@@ -71,9 +72,7 @@ export function VerifyTransferModal({
         onClose();
       } else {
         if (!rejectionReason || rejectionReason.trim().length < 3) {
-          setError(
-            'A detailed rejection reason is required to notify the guest.',
-          );
+          setError(ERROR_MESSAGES.REJECTION_REASON_DETAILED);
           setSubmitting(false);
           return;
         }
@@ -94,7 +93,9 @@ export function VerifyTransferModal({
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Failed to process bank transfer',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_PROCESS_TRANSFER,
       );
     } finally {
       setSubmitting(false);

@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SANITY_PRICE_MINOR } from '@/constants/inventory';
 import { minorToNaira, nairaToMinor } from '@/lib/rate-resolution';
 import type {
@@ -117,7 +118,7 @@ export function TabDetails({
 
     const baseMinor = nairaToMinor(basePriceNaira);
     if (baseMinor <= 0) {
-      setValidationError('Base price must be greater than ₦0.');
+      setValidationError(ERROR_MESSAGES.BASE_PRICE_MUST_BE_POSITIVE);
       return;
     }
 
@@ -159,7 +160,9 @@ export function TabDetails({
       await onSave(payload);
       setSanityConfirmPending(false);
     } catch (err) {
-      setValidationError(err instanceof Error ? err.message : 'Failed to save');
+      setValidationError(
+        err instanceof Error ? err.message : ERROR_MESSAGES.FAILED_TO_SAVE,
+      );
     }
   }
 
@@ -255,9 +258,7 @@ export function TabDetails({
                       setSlugLocked(false);
                       setUnlockSlugConfirmed(true);
                     } else {
-                      alert(
-                        'Only an Owner can unlock and modify published room slugs.',
-                      );
+                      alert(ERROR_MESSAGES.ONLY_OWNER_UNLOCK_SLUG);
                     }
                   }}
                   className="text-primary inline-flex h-auto cursor-pointer items-center gap-1 p-0 text-xs hover:underline"

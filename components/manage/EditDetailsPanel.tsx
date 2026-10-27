@@ -6,6 +6,8 @@ import { useRef, useState } from 'react';
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { manageService } from '@/app/api/services/manage.service';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 import { detailsPatchSchema, type GuestInput } from '@/schemas/checkout.schema';
@@ -110,20 +112,19 @@ export function EditDetailsPanel({
       onSaved(next);
     } catch (e) {
       const f = e instanceof ServiceError ? e : null;
-      if (f?.body?.code === 'session_expired') onSessionExpired();
-      else if (f?.body?.code === 'validation' && f.body.fieldErrors) {
+      if (f?.body?.code === ERROR_CODES.SESSION_EXPIRED) onSessionExpired();
+      else if (f?.body?.code === ERROR_CODES.VALIDATION && f.body.fieldErrors) {
         setErrors(f.body.fieldErrors as Partial<Record<GuestField, string>>);
         key.current = newKey();
       } else if (!f || f.network || f.status >= 500)
         setError({
-          message:
-            "We couldn't reach the server, so we don't know if your changes were saved. Trying again is safe.",
+          message: ERROR_MESSAGES.COULD_NOT_REACH_SERVER_SAVE_UNKNOWN,
           retryable: true,
         });
       else {
         key.current = newKey();
         setError({
-          message: f.body?.message ?? 'We could not save your changes.',
+          message: f.body?.message ?? ERROR_MESSAGES.COULD_NOT_SAVE_CHANGES,
           retryable: false,
         });
       }
@@ -140,7 +141,7 @@ export function EditDetailsPanel({
           scope="manage"
           variant="verify"
           reference={v.reference}
-          notice="Your session ended. Verify again to save. What you typed is kept."
+          notice={ERROR_MESSAGES.SESSION_ENDED_VERIFY_SAVE}
           onVerified={onReverified}
         />
       </section>
@@ -197,7 +198,7 @@ export function EditDetailsPanel({
               <Banner
                 role="alert"
                 tone="danger"
-                title="Your changes were not saved"
+                title={ERROR_MESSAGES.CHANGES_NOT_SAVED}
                 actions={
                   error.retryable ? (
                     <Button

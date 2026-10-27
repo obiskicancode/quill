@@ -8,6 +8,7 @@ import { useRef, useState } from 'react';
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { contentService } from '@/app/api/services/content.service';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { enquiryFormSchema, MAX_MESSAGE } from '@/schemas/content.schema';
 import type { DateRange, ISODate } from '@/types/dates.types';
 import type { RoomType, StayParams } from '@/types/rooms.types';
@@ -188,18 +189,17 @@ export function EnquiryForm({
         setStatus('idle');
       } else if (err?.status === 429) {
         setServerMessage(
-          err.body?.message ??
-            'Please wait a few minutes before sending another enquiry.',
+          err.body?.message ?? ERROR_MESSAGES.ENQUIRY_RATE_LIMITED,
         );
         setStatus('ratelimited');
       } else if (err?.network) {
-        setServerMessage("We couldn't reach the server.");
+        setServerMessage(ERROR_MESSAGES.COULD_NOT_REACH_SERVER);
         setStatus('error');
       } else {
         setServerMessage(
           err?.body?.message ??
             err?.message ??
-            "We couldn't send your enquiry.",
+            ERROR_MESSAGES.COULD_NOT_SEND_ENQUIRY,
         );
         setStatus('error');
       }
@@ -306,7 +306,7 @@ export function EnquiryForm({
                 <Banner
                   role="alert"
                   tone="danger"
-                  title="Your enquiry was not sent"
+                  title={ERROR_MESSAGES.ENQUIRY_NOT_SENT}
                   actions={
                     <Button
                       variant="secondary"

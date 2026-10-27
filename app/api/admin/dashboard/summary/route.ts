@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { hotelClock } from '@/lib/dates';
 import {
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
   if (!parsed.success) {
     return apiFail(
       400,
-      'Invalid date format. Expected YYYY-MM-DD.',
+      ERROR_MESSAGES.INVALID_DATE_FORMAT,
       parsed.error.flatten(),
     );
   }
@@ -62,6 +63,6 @@ export async function GET(request: NextRequest) {
     return apiOk(response, { noCache: true });
   } catch (error) {
     console.error('Failed to load dashboard summary:', error);
-    return apiFail(500, 'Unable to load dashboard summary.');
+    return apiFail(500, ERROR_MESSAGES.FAILED_TO_LOAD_DASHBOARD_SUMMARY);
   }
 }

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
@@ -60,7 +61,11 @@ export function EditDetailsModal({
       onSuccess(updated.data);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update details');
+      setError(
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_UPDATE_DETAILS_UI,
+      );
     } finally {
       setLoading(false);
     }

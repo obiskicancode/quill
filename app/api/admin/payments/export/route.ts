@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
 import { listPaymentsRepo } from '@/lib/db/repositories/payments-admin.repo';
@@ -20,7 +21,9 @@ export async function GET(request: Request) {
 
   const parsed = PaymentsQuerySchema.safeParse(rawParams);
   if (!parsed.success) {
-    return apiFail(400, 'Invalid parameters', undefined, { noCache: true });
+    return apiFail(400, ERROR_MESSAGES.INVALID_PARAMETERS, undefined, {
+      noCache: true,
+    });
   }
 
   const result = await listPaymentsRepo({

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { checkInReservation } from '@/lib/db/repositories/dashboard.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
@@ -18,7 +19,7 @@ export async function POST(
 
   const { id } = await params;
   if (!id) {
-    return apiFail(400, 'Missing reservation ID.');
+    return apiFail(400, ERROR_MESSAGES.MISSING_RESERVATION_ID_PERIOD);
   }
 
   try {
@@ -29,7 +30,7 @@ export async function POST(
     const message =
       error instanceof Error
         ? error.message
-        : 'Failed to check in reservation.';
+        : ERROR_MESSAGES.FAILED_TO_CHECK_IN;
     return apiFail(400, message);
   }
 }

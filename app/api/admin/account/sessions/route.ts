@@ -47,7 +47,7 @@ export async function DELETE(request: Request) {
     if (id === context.sessionId) {
       return apiFail(
         400,
-        'Use sign out to end this session.',
+        ERROR_MESSAGES.SIGN_OUT_TO_END_SESSION,
         { code: ERROR_CODES.REJECTED },
         { noCache: true },
       );

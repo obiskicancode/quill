@@ -1,5 +1,7 @@
 import { and, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { db } from '@/db';
 import {
   payments,
@@ -495,7 +497,7 @@ export async function unreconcilePaymentRepo(params: {
   if (params.actorRole !== 'owner') {
     return {
       ok: false,
-      error: 'Only owners are permitted to unreconcile payments',
+      error: ERROR_MESSAGES.OWNERS_ONLY_UNRECONCILE_BARE,
     };
   }
 
@@ -506,7 +508,7 @@ export async function unreconcilePaymentRepo(params: {
     .limit(1);
 
   if (!p) {
-    return { ok: false, error: 'Payment not found' };
+    return { ok: false, error: ERROR_MESSAGES.PAYMENT_NOT_FOUND };
   }
 
   const helperRes = unreconcilePayment({
@@ -582,7 +584,7 @@ export async function markManualRefundPaidOutRepo(params: {
     .limit(1);
 
   if (!p) {
-    return { ok: false, error: 'Refund payment not found' };
+    return { ok: false, error: ERROR_MESSAGES.REFUND_PAYMENT_NOT_FOUND };
   }
 
   const [r] = await db
@@ -592,7 +594,10 @@ export async function markManualRefundPaidOutRepo(params: {
     .limit(1);
 
   if (!r) {
-    return { ok: false, error: 'Associated reservation not found' };
+    return {
+      ok: false,
+      error: ERROR_MESSAGES.ASSOCIATED_RESERVATION_NOT_FOUND,
+    };
   }
 
   const validation = validateManualRefundPayout({
@@ -707,13 +712,13 @@ export async function reprocessWebhookEventRepo(
     .limit(1);
 
   if (!evt) {
-    return { ok: false, message: 'Webhook event not found' };
+    return { ok: false, message: ERROR_MESSAGES.WEBHOOK_EVENT_NOT_FOUND };
   }
 
   if (evt.processed) {
     return {
       ok: false,
-      message: 'This webhook event has already been successfully processed',
+      message: ERROR_MESSAGES.WEBHOOK_ALREADY_PROCESSED,
     };
   }
 
@@ -731,5 +736,5 @@ export async function reprocessWebhookEventRepo(
     reason: 'Manual reprocess triggered by staff',
   });
 
-  return { ok: true, message: 'Webhook event reprocessed successfully' };
+  return { ok: true, message: SUCCESS_MESSAGES.WEBHOOK_REPROCESSED };
 }

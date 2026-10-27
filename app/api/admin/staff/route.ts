@@ -1,3 +1,5 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { requireStepUp } from '@/lib/auth/step-up';
 import {
@@ -23,7 +25,9 @@ export async function GET(request: Request) {
 
   const parsed = StaffQuerySchema.safeParse(rawParams);
   if (!parsed.success) {
-    return apiFail(400, 'Invalid parameters', undefined, { noCache: true });
+    return apiFail(400, ERROR_MESSAGES.INVALID_PARAMETERS, undefined, {
+      noCache: true,
+    });
   }
 
   const list = await listStaffRepo(parsed.data);
@@ -39,14 +43,17 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return apiFail(400, 'Invalid JSON body', undefined, { noCache: true });
+    return apiFail(400, ERROR_MESSAGES.INVALID_JSON_BODY, undefined, {
+      noCache: true,
+    });
   }
 
   const parsed = StaffInviteInputSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       400,
-      parsed.error.issues[0]?.message || 'Invalid staff invite input',
+      parsed.error.issues[0]?.message ||
+        ERROR_MESSAGES.INVALID_STAFF_INVITE_INPUT,
       undefined,
       { noCache: true },
     );
@@ -69,7 +76,7 @@ export async function POST(request: Request) {
   if (!result.ok) {
     return apiFail(
       400,
-      result.error || 'Failed to invite staff member',
+      result.error || ERROR_MESSAGES.FAILED_TO_INVITE_STAFF,
       undefined,
       { noCache: true },
     );
@@ -78,7 +85,7 @@ export async function POST(request: Request) {
   return apiOk(
     {
       success: true,
-      message: `Invitation sent to ${parsed.data.email}`,
+      message: SUCCESS_MESSAGES.INVITATION_SENT_TO(parsed.data.email),
       staffId: result.staffId,
     },
     { status: 201, noCache: true },

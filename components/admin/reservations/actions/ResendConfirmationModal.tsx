@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
@@ -44,7 +45,7 @@ export function ResendConfirmationModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!recipient || !recipient.includes('@')) {
-      setError('Please provide a valid recipient email address.');
+      setError(ERROR_MESSAGES.VALID_RECIPIENT_EMAIL);
       return;
     }
 
@@ -67,7 +68,7 @@ export function ResendConfirmationModal({
       setError(
         err instanceof Error
           ? err.message
-          : 'Failed to resend confirmation email',
+          : ERROR_MESSAGES.FAILED_TO_RESEND_CONFIRMATION,
       );
     } finally {
       setSubmitting(false);

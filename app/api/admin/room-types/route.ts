@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { MAX_ROOM_TYPES } from '@/constants/inventory';
 import { guardAdminApi } from '@/lib/auth/guards';
 import {
@@ -20,7 +21,9 @@ export async function GET(request: NextRequest) {
     return apiOk(list, { noCache: true });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to list room types';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_LIST_ROOM_TYPES;
     return apiFail(500, message);
   }
 }
@@ -32,7 +35,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const parsed = AdminRoomTypeInputSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid room type data', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_ROOM_TYPE_DATA,
+      parsed.error.flatten(),
+    );
   }
 
   // Soft limit check: MAX_ROOM_TYPES = 8
@@ -42,7 +49,7 @@ export async function POST(request: NextRequest) {
     if (guard.context.role !== 'owner') {
       return apiFail(
         403,
-        `Room type limit (${MAX_ROOM_TYPES}) reached. Only an Owner can exceed this limit.`,
+        ERROR_MESSAGES.ROOM_TYPE_LIMIT_REACHED(MAX_ROOM_TYPES),
       );
     }
   }
@@ -57,7 +64,9 @@ export async function POST(request: NextRequest) {
     return apiOk(created);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to create room type';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_CREATE_ROOM_TYPE;
     return apiFail(400, message);
   }
 }

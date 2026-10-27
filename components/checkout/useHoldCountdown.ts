@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+
 /**
  * Counts down to the hold expiry using the server's clock (skew-corrected).
  * The screen-reader announcement changes only at 5 minutes, 2 minutes and expiry, never every second.
@@ -25,13 +27,13 @@ export function useHoldCountdown(expiresAtMs: number | null, skewMs: number) {
       const s = said.current;
       if (left <= 0 && !s.done) {
         s.done = true;
-        setAnnouncement('Your hold on this room has expired.');
+        setAnnouncement(ERROR_MESSAGES.HOLD_EXPIRED_ROOM);
       } else if (left <= 120_000 && !s.two) {
         s.two = true;
-        setAnnouncement('Two minutes left on your hold.');
+        setAnnouncement(ERROR_MESSAGES.TWO_MINUTES_LEFT);
       } else if (left <= 300_000 && left > 120_000 && !s.five) {
         s.five = true;
-        setAnnouncement('Five minutes left on your hold.');
+        setAnnouncement(ERROR_MESSAGES.FIVE_MINUTES_LEFT);
       }
     };
     tick();

@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ERROR_CODES } from '@/constants/error-codes';
 
 interface ActionModalProps {
   open: boolean;
@@ -42,7 +43,7 @@ export function ActionModal({
   error,
   onRefresh,
 }: ActionModalProps) {
-  const isStaleVersion = error?.includes('VERSION_CONFLICT');
+  const isStaleVersion = error?.includes(ERROR_CODES.VERSION_CONFLICT);
 
   return (
     <Dialog

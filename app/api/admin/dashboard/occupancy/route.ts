@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { hotelClock } from '@/lib/dates';
 import { getDashboardOccupancy } from '@/lib/db/repositories/dashboard.repo';
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
   if (!parsed.success) {
     return apiFail(
       400,
-      'Invalid occupancy parameters.',
+      ERROR_MESSAGES.INVALID_OCCUPANCY_PARAMETERS,
       parsed.error.flatten(),
     );
   }
@@ -39,6 +40,6 @@ export async function GET(request: NextRequest) {
     return apiOk(response, { noCache: true });
   } catch (error) {
     console.error('Failed to load dashboard occupancy:', error);
-    return apiFail(500, 'Unable to load occupancy data.');
+    return apiFail(500, ERROR_MESSAGES.FAILED_TO_LOAD_OCCUPANCY);
   }
 }

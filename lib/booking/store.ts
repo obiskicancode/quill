@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { and, eq, inArray } from 'drizzle-orm';
 
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { db } from '@/db';
 import {
   extras,
@@ -780,7 +781,7 @@ export async function completeOnlinePayment(input: {
         updatedAt: new Date(),
       })
       .where(eq(reservationChanges.id, change.changeId));
-    notify(r, 'dates_changed', 'Your updated booking was emailed to you.');
+    notify(r, 'dates_changed', SUCCESS_MESSAGES.UPDATED_BOOKING_EMAILED);
   } else {
     r.paidMinor = Math.min(
       r.totals.totalMinor,
@@ -794,7 +795,7 @@ export async function completeOnlinePayment(input: {
       r.status = 'confirmed';
       logEvent(r, 'approved');
     }
-    notify(r, 'paid', 'Your payment was received.');
+    notify(r, 'paid', SUCCESS_MESSAGES.PAYMENT_RECEIVED);
   }
   await saveStoredReservation(r);
   return { ok: true };

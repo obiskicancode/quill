@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatNaira } from '@/lib/format';
 import type {
   ReservationDetail,
@@ -62,17 +63,17 @@ export function RefundModal({
     e.preventDefault();
     const num = parseFloat(amountNaira);
     if (isNaN(num) || num <= 0) {
-      setError('Please enter a valid positive refund amount.');
+      setError(ERROR_MESSAGES.POSITIVE_REFUND_AMOUNT);
       return;
     }
     if (num > maxNaira) {
       setError(
-        `Amount cannot exceed payment balance (${formatNaira(maxNaira)}).`,
+        ERROR_MESSAGES.AMOUNT_EXCEEDS_PAYMENT_BALANCE(formatNaira(maxNaira)),
       );
       return;
     }
     if (!reason || reason.trim().length < 3) {
-      setError('Please provide a reason for the refund.');
+      setError(ERROR_MESSAGES.REFUND_REASON_PROMPT);
       return;
     }
 
@@ -94,7 +95,11 @@ export function RefundModal({
       onSuccess(updated.data);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to issue refund');
+      setError(
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_ISSUE_REFUND_UI,
+      );
     } finally {
       setSubmitting(false);
     }

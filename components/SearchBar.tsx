@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatShort, nightsBetween, todayISO } from '@/lib/dates';
 import {
   buildSearchHref,
@@ -113,7 +114,8 @@ export function SearchBar() {
 
   const { checkIn, checkOut } = search;
   const nights = checkIn && checkOut ? nightsBetween(checkIn, checkOut) : 0;
-  const dateError = error !== null && !error.startsWith('At least one adult');
+  const dateError =
+    error !== null && !error.startsWith(ERROR_MESSAGES.SEARCH_ADULT_REQUIRED);
   const summary =
     checkIn && checkOut
       ? `${formatShort(checkIn)} to ${formatShort(checkOut)}, ${guestSummary(search)}`

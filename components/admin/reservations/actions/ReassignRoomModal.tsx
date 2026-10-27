@@ -7,6 +7,7 @@ import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
@@ -55,7 +56,7 @@ export function ReassignRoomModal({
           setError(
             err instanceof Error
               ? err.message
-              : 'Failed to load available rooms',
+              : ERROR_MESSAGES.FAILED_TO_LOAD_AVAILABLE_ROOMS,
           );
         })
         .finally(() => setLoadingRooms(false));
@@ -65,7 +66,7 @@ export function ReassignRoomModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRoomId) {
-      setError('Please select an available room.');
+      setError(ERROR_MESSAGES.SELECT_AVAILABLE_ROOM);
       return;
     }
 
@@ -83,7 +84,11 @@ export function ReassignRoomModal({
       onSuccess(updated.data);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reassign room');
+      setError(
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_REASSIGN_ROOM_UI,
+      );
     } finally {
       setSubmitting(false);
     }

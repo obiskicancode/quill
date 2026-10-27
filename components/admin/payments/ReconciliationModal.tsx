@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 
 export function ReconciliationModal({
   isOpen,
@@ -44,9 +45,7 @@ export function ReconciliationModal({
 
     if (mode === 'unreconcile') {
       if (!noteOrReason.trim() || noteOrReason.trim().length < 5) {
-        setError(
-          'A valid reason (minimum 5 characters) is required to unreconcile.',
-        );
+        setError(ERROR_MESSAGES.UNRECONCILE_REASON_MIN_5_PERIOD);
         return;
       }
       await onConfirmUnreconcile(noteOrReason.trim());

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { createAdminRoom } from '@/lib/db/repositories/inventory-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
@@ -14,7 +15,11 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const parsed = adminCreateRoomPayloadSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid room data', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_ROOM_DATA,
+      parsed.error.flatten(),
+    );
   }
 
   const { roomTypeId, ...unitInput } = parsed.data;
@@ -30,7 +35,9 @@ export async function POST(request: NextRequest) {
     return apiOk(created);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to create room unit';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_CREATE_ROOM_UNIT;
     return apiFail(400, message);
   }
 }

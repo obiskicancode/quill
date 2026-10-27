@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { eq, sql } from 'drizzle-orm';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { db } from '@/db';
 import { reservations, roomTypes } from '@/db/schema';
 import { guardAdminApi } from '@/lib/auth/guards';
@@ -21,12 +22,16 @@ export async function POST(
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
-  if (!id) return apiFail(400, 'Missing reservation ID');
+  if (!id) return apiFail(400, ERROR_MESSAGES.MISSING_RESERVATION_ID);
 
   const body = await request.json().catch(() => null);
   const parsed = adminChangeDatesQuoteSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid date quote request', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_DATE_QUOTE_REQUEST,
+      parsed.error.flatten(),
+    );
   }
 
   const [res] = await db
@@ -39,7 +44,7 @@ export async function POST(
     .where(eq(reservations.id, id))
     .limit(1);
 
-  if (!res) return apiFail(404, 'Reservation not found');
+  if (!res) return apiFail(404, ERROR_MESSAGES.RESERVATION_NOT_FOUND_BARE);
 
   const { checkIn, checkOut, extraBed } = parsed.data;
 
@@ -84,7 +89,7 @@ export async function POST(
     });
 
     if (quote.status !== 'ok') {
-      return apiFail(400, `Pricing quote error: ${quote.status}`);
+      return apiFail(400, ERROR_MESSAGES.PRICING_QUOTE_ERROR(quote.status));
     }
 
     const newTotalMinor = quote.breakdown.totalMinor;
@@ -107,7 +112,9 @@ export async function POST(
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to quote stay change.';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_QUOTE_STAY_CHANGE;
     return apiFail(400, message);
   }
 }

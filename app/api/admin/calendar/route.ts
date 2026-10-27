@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { db } from '@/db';
 import { hotelSettings } from '@/db/schema';
 import { guardAdminApi } from '@/lib/auth/guards';
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
   if (!parsed.success) {
     return apiFail(
       422,
-      'Invalid calendar query parameters',
+      ERROR_MESSAGES.INVALID_CALENDAR_QUERY,
       parsed.error.flatten(),
     );
   }
@@ -52,7 +53,9 @@ export async function GET(request: NextRequest) {
     return apiOk(calendar, { noCache: true });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to load calendar data.';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_LOAD_CALENDAR;
     return apiFail(500, message);
   }
 }

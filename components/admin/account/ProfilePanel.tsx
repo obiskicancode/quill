@@ -11,6 +11,8 @@ import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Field, inputClass } from '@/components/checkout/Field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { AdminStaff } from '@/types/admin.types';
 
 export function ProfilePanel({ staff }: { staff: AdminStaff }) {
@@ -45,7 +47,7 @@ export function ProfilePanel({ staff }: { staff: AdminStaff }) {
         setError(caught.message);
         setFieldErrors(caught.body?.fieldErrors ?? {});
       } else {
-        setError('Could not save your profile. Try again.');
+        setError(ERROR_MESSAGES.COULD_NOT_SAVE_PROFILE);
       }
     } finally {
       setBusy(false);
@@ -59,7 +61,11 @@ export function ProfilePanel({ staff }: { staff: AdminStaff }) {
     >
       <div className="space-y-3">
         {error && <StatusBanner tone="error">{error}</StatusBanner>}
-        {saved && <StatusBanner tone="success">Profile updated.</StatusBanner>}
+        {saved && (
+          <StatusBanner tone="success">
+            {SUCCESS_MESSAGES.PROFILE_UPDATED}
+          </StatusBanner>
+        )}
       </div>
 
       <form onSubmit={submit} className="mt-4 space-y-4" noValidate>

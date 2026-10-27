@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { addDays, todayISO } from '@/lib/dates';
 import { minorToNaira } from '@/lib/rate-resolution';
 import type { CheckoutQuoteResponse } from '@/types/checkout.types';
@@ -71,10 +72,12 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
       if (res.data) {
         setQuoteResult(res.data);
       } else {
-        setCalcError('Failed to calculate quote');
+        setCalcError(ERROR_MESSAGES.INVALID_QUOTE_OR_PARAMS);
       }
     } catch (err) {
-      setCalcError(err instanceof Error ? err.message : 'Calculation error');
+      setCalcError(
+        err instanceof Error ? err.message : ERROR_MESSAGES.CALCULATION_ERROR,
+      );
     } finally {
       setCalculating(false);
     }

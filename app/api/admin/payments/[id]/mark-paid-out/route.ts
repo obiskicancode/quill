@@ -1,3 +1,5 @@
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
 import { markManualRefundPaidOutRepo } from '@/lib/db/repositories/payments-admin.repo';
@@ -21,14 +23,16 @@ export async function POST(
   try {
     body = await request.json();
   } catch {
-    return apiFail(400, 'Invalid JSON body', undefined, { noCache: true });
+    return apiFail(400, ERROR_MESSAGES.INVALID_JSON_BODY, undefined, {
+      noCache: true,
+    });
   }
 
   const parsed = ManualRefundPayoutInputSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       400,
-      parsed.error.issues[0]?.message || 'Invalid payout input',
+      parsed.error.issues[0]?.message || ERROR_MESSAGES.INVALID_PAYOUT_INPUT,
       undefined,
       { noCache: true },
     );
@@ -44,7 +48,7 @@ export async function POST(
   if (!result.ok) {
     return apiFail(
       400,
-      result.error || 'Failed to process refund payout',
+      result.error || ERROR_MESSAGES.FAILED_TO_PROCESS_REFUND_PAYOUT,
       undefined,
       { noCache: true },
     );
@@ -62,7 +66,7 @@ export async function POST(
   }).catch(() => {});
 
   return apiOk(
-    { success: true, message: 'Refund payout marked as paid' },
+    { success: true, message: SUCCESS_MESSAGES.REFUND_PAYOUT_MARKED_PAID },
     { noCache: true },
   );
 }

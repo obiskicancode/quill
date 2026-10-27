@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import {
   bpsToPercentage,
   minorToNaira,
@@ -143,15 +144,15 @@ export function RateRuleDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) {
-      setErrorMessage('Rule name is required');
+      setErrorMessage(ERROR_MESSAGES.RULE_NAME_REQUIRED);
       return;
     }
     if (!startDate || !endDate) {
-      setErrorMessage('Start and end dates are required');
+      setErrorMessage(ERROR_MESSAGES.START_END_DATES_REQUIRED);
       return;
     }
     if (endDate < startDate) {
-      setErrorMessage('End date must be on or after start date');
+      setErrorMessage(ERROR_MESSAGES.END_DATE_ON_OR_AFTER_START);
       return;
     }
 
@@ -159,7 +160,7 @@ export function RateRuleDialog({
     if (adjustmentType === 'percent_markup') {
       const pct = parseFloat(inputValue);
       if (isNaN(pct)) {
-        setErrorMessage('Valid percentage value required');
+        setErrorMessage(ERROR_MESSAGES.INVALID_PERCENTAGE);
         return;
       }
       calculatedAdjustmentValue = percentageToBps(pct);
@@ -194,7 +195,9 @@ export function RateRuleDialog({
       onClose();
     } catch (err) {
       setErrorMessage(
-        err instanceof Error ? err.message : 'Failed to save rate rule',
+        err instanceof Error
+          ? err.message
+          : ERROR_MESSAGES.FAILED_TO_SAVE_RATE_RULE,
       );
     } finally {
       setIsSaving(false);

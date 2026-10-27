@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { ApiResponse } from '@/types/base.types';
 
 export const NO_STORE_HEADERS = { 'Cache-Control': 'no-store' } as const;
@@ -13,7 +14,12 @@ export function apiOk<T>(
     ? { ...NO_STORE_HEADERS, ...(rest.headers ?? {}) }
     : rest.headers;
   return NextResponse.json(
-    { success: true, message: 'OK', status: rest.status ?? 200, data },
+    {
+      success: true,
+      message: SUCCESS_MESSAGES.OK,
+      status: rest.status ?? 200,
+      data,
+    },
     { ...rest, headers },
   );
 }

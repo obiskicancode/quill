@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import {
   getIdempotencyRecord,
@@ -21,12 +23,12 @@ export async function PATCH(
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
-  if (!id) return apiFail(400, 'Missing reservation ID');
+  if (!id) return apiFail(400, ERROR_MESSAGES.MISSING_RESERVATION_ID);
 
   const body = await request.json().catch(() => null);
   const parsed = adminEditDetailsSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid details', parsed.error.flatten());
+    return apiFail(422, ERROR_MESSAGES.INVALID_DETAILS, parsed.error.flatten());
   }
 
   const idKey = `admin:det:${parsed.data.idempotencyKey}`;
@@ -53,8 +55,10 @@ export async function PATCH(
     return apiOk(updated, { noCache: true });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to update details.';
-    const status = message.includes('VERSION_CONFLICT') ? 409 : 400;
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_UPDATE_DETAILS;
+    const status = message.includes(ERROR_CODES.VERSION_CONFLICT) ? 409 : 400;
     return apiFail(status, message);
   }
 }

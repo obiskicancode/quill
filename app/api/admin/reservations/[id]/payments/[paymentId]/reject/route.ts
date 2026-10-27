@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import {
   getIdempotencyRecord,
@@ -22,13 +23,17 @@ export async function POST(
 
   const { id, paymentId } = await params;
   if (!id || !paymentId) {
-    return apiFail(400, 'Missing reservation or payment identifier.');
+    return apiFail(400, ERROR_MESSAGES.MISSING_RESERVATION_PAYMENT_ID);
   }
 
   const body = await request.json().catch(() => null);
   const parsed = adminVerifyTransferSchema.safeParse(body);
   if (!parsed.success) {
-    return apiFail(422, 'Invalid rejection payload', parsed.error.flatten());
+    return apiFail(
+      422,
+      ERROR_MESSAGES.INVALID_REJECTION_PAYLOAD,
+      parsed.error.flatten(),
+    );
   }
 
   const idKey = `admin:reject:${parsed.data.idempotencyKey}`;
@@ -58,7 +63,9 @@ export async function POST(
     return apiOk(updated, { noCache: true });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : 'Failed to reject transfer.';
+      error instanceof Error
+        ? error.message
+        : ERROR_MESSAGES.FAILED_TO_REJECT_TRANSFER;
     return apiFail(400, message);
   }
 }
