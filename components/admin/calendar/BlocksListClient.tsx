@@ -40,7 +40,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatShort } from '@/lib/dates';
 import type { AdminRole } from '@/types/auth.types';
 import type {
@@ -179,14 +181,21 @@ export function BlocksListClient({
     setDeleting(true);
     try {
       await adminService.deleteBlock(id);
+      toast.add({
+        title: SUCCESS_MESSAGES.ROOM_BLOCK_REMOVED,
+        type: 'success',
+      });
       setDeletingId(null);
       fetchBlocks();
     } catch (err) {
-      alert(
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_DELETE_BLOCK,
-      );
+      toast.add({
+        title:
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_DELETE_BLOCK,
+        type: 'error',
+        priority: 'high',
+      });
     } finally {
       setDeleting(false);
     }
@@ -570,7 +579,7 @@ export function BlocksListClient({
                 <SelectTrigger
                   size="sm"
                   aria-label="Select rows per page"
-                  className="w-[6.25rem]"
+                  className="w-25"
                 >
                   <SelectValue placeholder="Rows" />
                 </SelectTrigger>

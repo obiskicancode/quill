@@ -5,7 +5,6 @@ import {
   AlertCircle,
   ArrowDown,
   ArrowUp,
-  Check,
   Image as ImageIcon,
   Loader2,
   Star,
@@ -18,6 +17,7 @@ import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { AdminRoomImage } from '@/types/inventory.types';
@@ -37,7 +37,6 @@ export function TabPhotos({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Upload inputs
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -95,7 +94,7 @@ export function TabPhotos({
       setUploadProgress(100);
 
       if (res.data) {
-        setSuccessMessage(SUCCESS_MESSAGES.PHOTO_UPLOADED);
+        toast.add({ title: SUCCESS_MESSAGES.PHOTO_UPLOADED, type: 'success' });
         setPendingFile(null);
         setPendingAltText('');
         setPendingCaption('');
@@ -130,6 +129,7 @@ export function TabPhotos({
 
     try {
       await adminService.reorderRoomImages(roomTypeId, items);
+      toast.add({ title: SUCCESS_MESSAGES.PHOTOS_REORDERED, type: 'success' });
     } catch {
       setErrorMessage(ERROR_MESSAGES.FAILED_TO_REORDER_PHOTOS);
       await onRefresh();
@@ -143,7 +143,7 @@ export function TabPhotos({
         caption: photo.caption,
         isCover: true,
       });
-      setSuccessMessage(SUCCESS_MESSAGES.COVER_PHOTO_SET);
+      toast.add({ title: SUCCESS_MESSAGES.COVER_PHOTO_SET, type: 'success' });
       await onRefresh();
     } catch {
       setErrorMessage(ERROR_MESSAGES.FAILED_TO_SET_COVER_PHOTO);
@@ -162,6 +162,7 @@ export function TabPhotos({
         altText: editAlt.trim(),
         caption: editCaption.trim() || null,
       });
+      toast.add({ title: SUCCESS_MESSAGES.IMAGE_UPDATED, type: 'success' });
       setEditingId(null);
       await onRefresh();
     } catch {
@@ -175,6 +176,7 @@ export function TabPhotos({
     if (!confirm('Are you sure you want to delete this photo?')) return;
     try {
       await adminService.deleteImage(photoId);
+      toast.add({ title: SUCCESS_MESSAGES.IMAGE_DELETED, type: 'success' });
       await onRefresh();
     } catch {
       setErrorMessage(ERROR_MESSAGES.FAILED_TO_DELETE_PHOTO);
@@ -190,27 +192,6 @@ export function TabPhotos({
         >
           <AlertCircle className="size-5 shrink-0" />
           <p>{errorMessage}</p>
-        </div>
-      )}
-
-      {successMessage && (
-        <div
-          role="status"
-          className="rounded-card border-success/40 bg-success/10 text-small text-success flex items-center justify-between border p-4"
-        >
-          <div className="flex items-center gap-2">
-            <Check className="size-5 shrink-0" />
-            <p>{successMessage}</p>
-          </div>
-          <Button
-            type="button"
-            variant="link"
-            size="xs"
-            onClick={() => setSuccessMessage(null)}
-            className="text-success h-auto p-0 text-xs underline"
-          >
-            Dismiss
-          </Button>
         </div>
       )}
 

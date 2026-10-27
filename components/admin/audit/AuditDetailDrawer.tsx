@@ -1,9 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ExternalLink, ShieldCheck } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
@@ -92,7 +91,7 @@ export function AuditDetailDrawer({
                 </Link>
               ) : (
                 <span className="text-muted-foreground italic">
-                  {audit.entityRef || audit.entityId} (No longer available)
+                  {audit.entityRef || audit.entityId}
                 </span>
               )}
             </div>
@@ -170,21 +169,6 @@ export function AuditDetailDrawer({
               </div>
             )}
           </div>
-
-          {/* Log Immutability note */}
-          <div className="border-line bg-paper text-caption text-muted-foreground flex items-start gap-2 rounded-lg border p-3">
-            <ShieldCheck className="text-success mt-0.5 size-4 shrink-0" />
-            <span>
-              This log entry is permanent and cannot be modified or deleted by
-              any administrative account.
-            </span>
-          </div>
-        </div>
-
-        <div className="border-line bg-paper flex justify-end border-t p-4">
-          <Button variant="outline" size="sm" onClick={onClose}>
-            Close
-          </Button>
         </div>
       </SheetContent>
     </Sheet>

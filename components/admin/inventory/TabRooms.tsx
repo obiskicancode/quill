@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertCircle, Check, Edit2, Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, Edit2, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
@@ -33,6 +33,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type {
@@ -55,7 +56,6 @@ export function TabRooms({
 }: TabRoomsProps) {
   const rooms = initialRooms;
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Dialog State
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -115,7 +115,7 @@ export function TabRooms({
     }
   }
 
-  async function handleSaveUnit(e: React.FormEvent) {
+  async function handleSaveUnit(e: React.SubmitEvent) {
     e.preventDefault();
     if (!roomNumber.trim()) {
       setErrorMessage(ERROR_MESSAGES.ROOM_NUMBER_REQUIRED);
@@ -136,12 +136,16 @@ export function TabRooms({
     try {
       if (editingUnit) {
         await adminService.updateRoom(editingUnit.id, input);
-        setSuccessMessage(
-          SUCCESS_MESSAGES.ROOM_UPDATED_WITH_NUMBER(roomNumber),
-        );
+        toast.add({
+          title: SUCCESS_MESSAGES.ROOM_UPDATED_WITH_NUMBER(roomNumber),
+          type: 'success',
+        });
       } else {
         await adminService.createRoom({ ...input, roomTypeId });
-        setSuccessMessage(SUCCESS_MESSAGES.ROOM_ADDED_WITH_NUMBER(roomNumber));
+        toast.add({
+          title: SUCCESS_MESSAGES.ROOM_ADDED_WITH_NUMBER(roomNumber),
+          type: 'success',
+        });
       }
       setDialogOpen(false);
       await onRefresh();
@@ -167,9 +171,10 @@ export function TabRooms({
 
     try {
       await adminService.deleteRoom(unit.id);
-      setSuccessMessage(
-        SUCCESS_MESSAGES.ROOM_DELETED_WITH_NUMBER(unit.roomNumber),
-      );
+      toast.add({
+        title: SUCCESS_MESSAGES.ROOM_DELETED_WITH_NUMBER(unit.roomNumber),
+        type: 'success',
+      });
       await onRefresh();
     } catch (err) {
       setErrorMessage(
@@ -189,16 +194,6 @@ export function TabRooms({
         >
           <AlertCircle className="size-5 shrink-0" />
           <p>{errorMessage}</p>
-        </div>
-      )}
-
-      {successMessage && (
-        <div
-          role="status"
-          className="rounded-card border-success/40 bg-success/10 text-small text-success flex items-center gap-2 border p-4"
-        >
-          <Check className="size-5 shrink-0" />
-          <p>{successMessage}</p>
         </div>
       )}
 

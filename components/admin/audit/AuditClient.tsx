@@ -28,7 +28,6 @@ import type {
 
 import { AuditDetailDrawer } from './AuditDetailDrawer';
 import { AuditTable } from './AuditTable';
-import { LogIntegrityBadge } from './LogIntegrityBadge';
 
 export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
   const [logs, setLogs] = useState<AuditListItem[]>([]);
@@ -36,6 +35,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
 
+  // TODO:use searchparams where applicable
   const [filters, setFilters] = useState<AuditQueryParams>({
     preset: 'all',
     q: '',
@@ -150,9 +150,6 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
 
   return (
     <div className="space-y-4">
-      {/* Integrity Badge */}
-      <LogIntegrityBadge />
-
       {/* Preset Filters Strip */}
       <div className="border-line flex flex-wrap items-center justify-between gap-1.5 border-b pb-3">
         <div className="flex flex-wrap items-center gap-1.5">
@@ -184,7 +181,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
 
       {/* Search Bar & Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="relative max-w-md min-w-[15rem] flex-1">
+        <div className="relative max-w-md min-w-60 flex-1">
           <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
             type="search"

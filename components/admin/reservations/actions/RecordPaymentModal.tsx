@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatNaira } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
@@ -24,7 +25,7 @@ interface RecordPaymentModalProps {
   open: boolean;
   onClose: () => void;
   reservation: ReservationDetail;
-  onSuccess: (updated: ReservationDetail) => void;
+  onSuccess: (updated: ReservationDetail, message?: string) => void;
   onRefresh: () => void;
 }
 
@@ -49,7 +50,7 @@ export function RecordPaymentModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     const num = parseFloat(amountNaira);
     if (isNaN(num) || num <= 0) {
@@ -76,7 +77,7 @@ export function RecordPaymentModal({
         idempotencyKey: crypto.randomUUID(),
       });
 
-      onSuccess(updated.data);
+      onSuccess(updated.data, SUCCESS_MESSAGES.PAYMENT_RECORDED);
       onClose();
     } catch (err) {
       setError(

@@ -11,6 +11,7 @@ import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Field, inputClass } from '@/components/checkout/Field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { AdminStaff } from '@/types/admin.types';
@@ -22,14 +23,12 @@ export function ProfilePanel({ staff }: { staff: AdminStaff }) {
   const [phone, setPhone] = useState(staff.phone ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError(null);
-    setSaved(false);
     setFieldErrors({});
     try {
       const result = await adminService.updateProfile({
@@ -40,7 +39,7 @@ export function ProfilePanel({ staff }: { staff: AdminStaff }) {
       setFirstName(result.data.staff.firstName);
       setLastName(result.data.staff.lastName);
       setPhone(result.data.staff.phone ?? '');
-      setSaved(true);
+      toast.add({ title: SUCCESS_MESSAGES.PROFILE_UPDATED, type: 'success' });
       router.refresh();
     } catch (caught) {
       if (caught instanceof ServiceError) {
@@ -61,11 +60,6 @@ export function ProfilePanel({ staff }: { staff: AdminStaff }) {
     >
       <div className="space-y-3">
         {error && <StatusBanner tone="error">{error}</StatusBanner>}
-        {saved && (
-          <StatusBanner tone="success">
-            {SUCCESS_MESSAGES.PROFILE_UPDATED}
-          </StatusBanner>
-        )}
       </div>
 
       <form onSubmit={submit} className="mt-4 space-y-4" noValidate>

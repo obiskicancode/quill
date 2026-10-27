@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ChevronDown, ChevronRight, Clock, ShieldAlert, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button, ButtonLink } from '@/components/ui/button';
 import {
   Tooltip,
@@ -193,7 +194,7 @@ export function CalendarGrid({
             {/* Header Row: Dates */}
             <div className="bg-muted border-line sticky top-0 z-30 flex border-b">
               {/* Corner Cell: Sticky top and left */}
-              <div className="bg-muted border-line sticky left-0 z-40 flex w-48 shrink-0 items-center justify-between border-r px-3 py-2 shadow-xs">
+              <div className="bg-muted border-line sticky left-0 z-40 flex w-52 shrink-0 items-center justify-between border-r px-3 py-2 shadow-xs">
                 <span className="text-small text-ink font-serif font-semibold">
                   Rooms
                 </span>
@@ -232,11 +233,7 @@ export function CalendarGrid({
                       <span className="text-small font-mono font-semibold">
                         {date.slice(8)}
                       </span>
-                      {isToday && (
-                        <span className="rounded-control bg-primary text-primary-foreground mt-0.5 px-1 text-[0.5625rem] font-bold">
-                          TODAY
-                        </span>
-                      )}
+                      {isToday && <Badge>TODAY</Badge>}
                     </Button>
                   );
                 })}
@@ -260,23 +257,24 @@ export function CalendarGrid({
                     {/* Collapsible Room Type Header */}
                     <div className="bg-muted/80 border-line text-small sticky left-0 flex w-full border-y font-medium">
                       {/* Left Sticky Label with Accordion Button */}
-                      <div className="bg-muted/95 border-line sticky left-0 z-20 flex w-48 shrink-0 items-center justify-between border-r px-3 py-1.5 shadow-xs">
+                      <div className="bg-muted/95 border-line sticky left-0 z-20 flex w-52 shrink-0 items-center justify-between gap-1.5 border-r px-3 py-1.5 shadow-xs">
                         <Button
                           type="button"
                           variant="ghost"
                           size="xs"
                           onClick={() => toggleGroup(group.id)}
-                          className="h-auto gap-1.5 p-0 font-semibold"
+                          className="h-auto min-w-0 flex-1 justify-start gap-1.5 p-0 text-left font-semibold"
                           aria-expanded={!isCollapsed}
+                          title={group.name}
                         >
                           {isCollapsed ? (
-                            <ChevronRight className="text-muted-foreground size-4" />
+                            <ChevronRight className="text-muted-foreground size-4 shrink-0" />
                           ) : (
-                            <ChevronDown className="text-muted-foreground size-4" />
+                            <ChevronDown className="text-muted-foreground size-4 shrink-0" />
                           )}
-                          <span>{group.name}</span>
+                          <span className="truncate">{group.name}</span>
                         </Button>
-                        <span className="text-caption text-muted-foreground font-mono">
+                        <span className="text-caption text-muted-foreground shrink-0 font-mono">
                           ({group.rooms.length})
                         </span>
                       </div>

@@ -89,7 +89,7 @@ export function PaymentsFilterDrawer({
     <div className="space-y-2">
       {/* Search and primary bar */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[13.75rem] flex-1">
+        <div className="relative min-w-55 flex-1">
           <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
             type="search"
@@ -165,7 +165,7 @@ export function PaymentsFilterDrawer({
           >
             <SelectTrigger
               aria-label="Filter by payment method"
-              className="w-[8.4375rem]"
+              className="w-33.75"
             >
               <SelectValue placeholder="All methods" />
             </SelectTrigger>
@@ -219,7 +219,7 @@ export function PaymentsFilterDrawer({
           >
             <SelectTrigger
               aria-label="Filter by reconciliation status"
-              className="w-[9.375rem]"
+              className="w-37.5"
             >
               <SelectValue placeholder="All reconciliation" />
             </SelectTrigger>

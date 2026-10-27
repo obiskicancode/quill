@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { CheckCircle2, ExternalLink, RefreshCw, X } from 'lucide-react';
+import { CheckCircle2, ExternalLink, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
 import { Alert } from '@/components/ui/alert';
@@ -34,7 +34,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type {
   ManualRefundItem,
   ManualRefundPayoutInput,
@@ -84,7 +86,6 @@ export function ManualRefundsTab({
 
   const [submitting, setSubmitting] = useState(false);
   const [recheckingId, setRecheckingId] = useState<string | null>(null);
-  const [recheckFeedback, setRecheckFeedback] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   const handleOpenPayout = (refund: ManualRefundItem) => {
@@ -100,7 +101,7 @@ export function ManualRefundsTab({
     setFormError(null);
   };
 
-  const handleSubmitPayout = async (e: React.FormEvent) => {
+  const handleSubmitPayout = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!selectedRefund) return;
 
@@ -129,6 +130,10 @@ export function ManualRefundsTab({
         doNotEmailGuest: payoutForm.doNotEmailGuest,
         note: payoutForm.note,
       });
+      toast.add({
+        title: SUCCESS_MESSAGES.REFUND_PAYOUT_MARKED_PAID,
+        type: 'success',
+      });
       setSelectedRefund(null);
     } catch (err: unknown) {
       const msg =
@@ -143,12 +148,15 @@ export function ManualRefundsTab({
 
   const handleRecheck = async (id: string) => {
     setRecheckingId(id);
-    setRecheckFeedback(null);
     try {
       const msg = await onRecheckProvider(id);
-      setRecheckFeedback(msg);
+      toast.add({ title: msg, type: 'success' });
     } catch {
-      setRecheckFeedback(ERROR_MESSAGES.COULD_NOT_REACH_GATEWAY);
+      toast.add({
+        title: ERROR_MESSAGES.COULD_NOT_REACH_GATEWAY,
+        type: 'error',
+        priority: 'high',
+      });
     } finally {
       setRecheckingId(null);
     }
@@ -176,22 +184,6 @@ export function ManualRefundsTab({
 
   return (
     <div className="space-y-4">
-      {recheckFeedback && (
-        <div className="border-line bg-paper text-caption text-ink flex items-center justify-between rounded-md border p-3">
-          <span>{recheckFeedback}</span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setRecheckFeedback(null)}
-            className="text-muted-foreground hover:text-foreground size-6 p-0 hover:bg-transparent"
-            aria-label="Dismiss notice"
-          >
-            <X className="size-4" />
-          </Button>
-        </div>
-      )}
-
       <div className="rounded-card border-line bg-card overflow-x-auto border">
         <Table className="text-small w-full text-left">
           <TableHeader className="border-line bg-paper text-caption text-muted-foreground border-b font-semibold uppercase">

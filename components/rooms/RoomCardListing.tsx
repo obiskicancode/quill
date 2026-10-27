@@ -131,7 +131,7 @@ export function RoomCardListing({
         alt={img.alt}
         sizes={PHOTO_SIZES}
         priority={index < 2}
-        className="aspect-[4/3] w-full"
+        className="aspect-4/3 w-full"
       />
     ) : (
       <LazyPhoto
@@ -216,7 +216,7 @@ export function RoomCardListing({
 
         <ul
           aria-label="Amenities"
-          className="text-small flex min-h-[3.25rem] flex-wrap content-start gap-x-4 gap-y-2"
+          className="text-small flex min-h-13 flex-wrap content-start gap-x-4 gap-y-2"
         >
           {shown.map((key) => (
             <li key={key} className="inline-flex items-center gap-1.5">
@@ -270,7 +270,7 @@ export function RoomCardListing({
               )}
             </div>
           ) : overCapacity && live.status === 'over-capacity' ? (
-            <div className="min-h-[5.5rem]">
+            <div className="min-h-22">
               <p className="font-semibold">Too small for your group</p>
               <p className="text-small text-muted-foreground mt-1">
                 This room sleeps up to {live.maxAdults} adults and{' '}
@@ -279,7 +279,7 @@ export function RoomCardListing({
               </p>
             </div>
           ) : live?.status === 'min-stay' ? (
-            <div className="min-h-[5.5rem]">
+            <div className="min-h-22">
               <p className="font-semibold">
                 Minimum stay: {live.minNights} nights
               </p>

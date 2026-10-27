@@ -18,6 +18,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type {
@@ -273,10 +274,14 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
       setSelectedPaymentIds([]);
       if (detailPayment) setDetailPayment(null);
       await Promise.all([loadSummary(), loadPayments()]);
+      toast.add({
+        title: SUCCESS_MESSAGES.PAYMENTS_RECONCILED,
+        type: 'success',
+      });
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : ERROR_MESSAGES.FAILED_TO_RECONCILE;
-      alert(msg);
+      toast.add({ title: msg, type: 'error', priority: 'high' });
     }
   };
 
@@ -293,12 +298,16 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
       });
       if (detailPayment) setDetailPayment(null);
       await Promise.all([loadSummary(), loadPayments()]);
+      toast.add({
+        title: SUCCESS_MESSAGES.PAYMENT_UNRECONCILED,
+        type: 'success',
+      });
     } catch (err: unknown) {
       const msg =
         err instanceof Error
           ? err.message
           : ERROR_MESSAGES.FAILED_TO_UNRECONCILE;
-      alert(msg);
+      toast.add({ title: msg, type: 'error', priority: 'high' });
     }
   };
 

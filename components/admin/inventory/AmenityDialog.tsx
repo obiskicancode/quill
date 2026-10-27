@@ -34,7 +34,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { AdminAmenity, AdminAmenityInput } from '@/types/inventory.types';
 
 interface AmenityDialogProps {
@@ -86,7 +88,7 @@ export function AmenityDialog({
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     if (!label.trim()) {
       setErrorMessage(ERROR_MESSAGES.AMENITY_LABEL_REQUIRED);
@@ -114,8 +116,10 @@ export function AmenityDialog({
     try {
       if (isEditing && amenity?.id) {
         await adminService.updateAmenity(amenity.id, input);
+        toast.add({ title: SUCCESS_MESSAGES.AMENITY_UPDATED, type: 'success' });
       } else {
         await adminService.createAmenity(input);
+        toast.add({ title: SUCCESS_MESSAGES.AMENITY_CREATED, type: 'success' });
       }
       await onSaved();
       onClose();

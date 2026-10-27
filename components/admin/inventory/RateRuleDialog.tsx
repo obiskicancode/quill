@@ -24,7 +24,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import {
   bpsToPercentage,
   minorToNaira,
@@ -141,7 +143,7 @@ export function RateRuleDialog({
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     if (!name.trim()) {
       setErrorMessage(ERROR_MESSAGES.RULE_NAME_REQUIRED);
@@ -188,8 +190,16 @@ export function RateRuleDialog({
     try {
       if (isEditing && rule?.id) {
         await adminService.updateRateRule(rule.id, payload);
+        toast.add({
+          title: SUCCESS_MESSAGES.RATE_RULE_UPDATED,
+          type: 'success',
+        });
       } else {
         await adminService.createRateRule(payload);
+        toast.add({
+          title: SUCCESS_MESSAGES.RATE_RULE_CREATED,
+          type: 'success',
+        });
       }
       await onSaved();
       onClose();

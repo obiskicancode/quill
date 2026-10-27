@@ -23,7 +23,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   const [invalidToken, setInvalidToken] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError(null);

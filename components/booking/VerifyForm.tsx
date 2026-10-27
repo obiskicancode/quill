@@ -74,7 +74,7 @@ export function VerifyForm({
     return () => window.clearInterval(id);
   }, [lockedFor]);
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: React.SubmitEvent) {
     e.preventDefault();
     if (busy || lockedFor > 0) return;
     const parsed = verifyRequestSchema.safeParse({

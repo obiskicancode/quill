@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatNaira } from '@/lib/format';
 import type {
   ReservationDetail,
@@ -22,7 +23,7 @@ interface VerifyTransferModalProps {
   onClose: () => void;
   reservation: ReservationDetail;
   payment: ReservationPaymentItem;
-  onSuccess: (updated: ReservationDetail) => void;
+  onSuccess: (updated: ReservationDetail, message?: string) => void;
   onRefresh: () => void;
 }
 
@@ -43,7 +44,7 @@ export function VerifyTransferModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
@@ -68,7 +69,7 @@ export function VerifyTransferModal({
             idempotencyKey: crypto.randomUUID(),
           },
         );
-        onSuccess(updated.data);
+        onSuccess(updated.data, SUCCESS_MESSAGES.TRANSFER_VERIFIED);
         onClose();
       } else {
         if (!rejectionReason || rejectionReason.trim().length < 3) {
@@ -88,7 +89,7 @@ export function VerifyTransferModal({
             idempotencyKey: crypto.randomUUID(),
           },
         );
-        onSuccess(updated.data);
+        onSuccess(updated.data, SUCCESS_MESSAGES.TRANSFER_REJECTED);
         onClose();
       }
     } catch (err) {

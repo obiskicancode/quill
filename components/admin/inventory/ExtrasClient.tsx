@@ -4,7 +4,6 @@ import {
   AlertCircle,
   ArrowDown,
   ArrowUp,
-  Check,
   Edit2,
   Plus,
   RotateCcw,
@@ -48,6 +47,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { minorToNaira, nairaToMinor } from '@/lib/rate-resolution';
@@ -74,7 +74,6 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
   const [extras, setExtras] = useState<AdminExtra[]>(initialExtras);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Dialog State
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -150,12 +149,13 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
     setExtras(updated);
     try {
       await adminService.reorderExtras(items);
+      toast.add({ title: SUCCESS_MESSAGES.EXTRAS_REORDERED, type: 'success' });
     } catch {
       await refresh();
     }
   }
 
-  async function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.SubmitEvent) {
     e.preventDefault();
     if (!name.trim()) {
       setDialogError(ERROR_MESSAGES.EXTRA_NAME_REQUIRED);
@@ -180,10 +180,16 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
     try {
       if (editingExtra) {
         await adminService.updateExtra(editingExtra.id, input);
-        setSuccessMessage(SUCCESS_MESSAGES.EXTRA_UPDATED_WITH_NAME(name));
+        toast.add({
+          title: SUCCESS_MESSAGES.EXTRA_UPDATED_WITH_NAME(name),
+          type: 'success',
+        });
       } else {
         await adminService.createExtra(input);
-        setSuccessMessage(SUCCESS_MESSAGES.EXTRA_CREATED_WITH_NAME(name));
+        toast.add({
+          title: SUCCESS_MESSAGES.EXTRA_CREATED_WITH_NAME(name),
+          type: 'success',
+        });
       }
       setDialogOpen(false);
       await refresh();
@@ -209,14 +215,20 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
 
     try {
       await adminService.deleteExtra(item.id);
-      setSuccessMessage(SUCCESS_MESSAGES.EXTRA_DELETED_WITH_NAME(item.name));
+      toast.add({
+        title: SUCCESS_MESSAGES.EXTRA_DELETED_WITH_NAME(item.name),
+        type: 'success',
+      });
       await refresh();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_DELETE_EXTRA,
-      );
+      toast.add({
+        title:
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_DELETE_EXTRA,
+        type: 'error',
+        priority: 'high',
+      });
     }
   }
 
@@ -244,27 +256,6 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
             </Button>
           }
         />
-      )}
-
-      {successMessage && (
-        <div
-          role="status"
-          className="rounded-card border-success/40 bg-success/10 text-small text-success flex items-center justify-between border p-4"
-        >
-          <div className="flex items-center gap-2">
-            <Check className="size-5 shrink-0" />
-            <p>{successMessage}</p>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setSuccessMessage(null)}
-            className="text-success hover:text-success hover:bg-success/15 h-7 text-xs"
-          >
-            Dismiss
-          </Button>
-        </div>
       )}
 
       {/* Action Header */}

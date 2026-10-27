@@ -11,6 +11,8 @@ export const SUCCESS_MESSAGES = {
   ROOM_TYPES_REORDERED: 'Room types reordered.',
   PHOTOS_REORDERED: 'Photos reordered.',
   AMENITIES_UPDATED: 'Amenities updated.',
+  ROOM_TYPE_CREATED: 'Room type created.',
+  ROOM_TYPE_UPDATED: 'Room type updated.',
   ROOM_TYPE_DELETED: 'Room type deleted.',
   PHOTO_UPLOADED: 'Photo uploaded.',
   IMAGE_UPDATED: 'Image updated.',
@@ -28,6 +30,7 @@ export const SUCCESS_MESSAGES = {
 
   // Amenities, extras and rate rules
   AMENITIES_REORDERED: 'Amenities reordered.',
+  AMENITY_CREATED: 'Amenity created.',
   AMENITY_UPDATED: 'Amenity updated.',
   AMENITY_DELETED: 'Amenity deleted.',
   AMENITY_DELETED_WITH_NAME: (name: string) => `Amenity "${name}" deleted.`,
@@ -37,10 +40,13 @@ export const SUCCESS_MESSAGES = {
   EXTRA_CREATED_WITH_NAME: (name: string) => `Extra "${name}" created.`,
   EXTRA_UPDATED_WITH_NAME: (name: string) => `Extra "${name}" updated.`,
   EXTRA_DELETED_WITH_NAME: (name: string) => `Extra "${name}" deleted.`,
+  RATE_RULE_CREATED: 'Rate rule created.',
   RATE_RULE_UPDATED: 'Rate rule updated.',
   RATE_RULE_DELETED: 'Rate rule deleted.',
 
   // Room blocks and calendar
+  ROOM_BLOCK_CREATED: 'Room block created.',
+  ROOM_BLOCK_UPDATED: 'Room block updated.',
   ROOM_BLOCK_REMOVED: 'Room block removed.',
   BLOCKS_CREATED: (count: number) =>
     `Created ${count} room ${count === 1 ? 'block' : 'blocks'}.`,
@@ -80,11 +86,26 @@ export const SUCCESS_MESSAGES = {
       : `${count} ${count === 1 ? 'session was' : 'sessions were'} signed out.`,
 
   // Payments, refunds and reconciliation
+  PAYMENTS_RECONCILED: 'Payments reconciled.',
   PAYMENT_UNRECONCILED: 'Payment marked as unreconciled.',
   REFUND_PAYOUT_MARKED_PAID: 'Refund payout marked as paid.',
   WEBHOOK_REPROCESSED: 'Payment event reprocessed.',
   PROVIDER_REFUND_RECHECKED:
     'Refund status checked. The payment provider is still processing it.',
+
+  // Reservation actions
+  RESERVATION_CREATED: 'Reservation created.',
+  RESERVATION_UPDATED: 'Reservation updated.',
+  RESERVATION_DATES_CHANGED: 'Reservation dates changed.',
+  RESERVATION_CANCELLED: 'Reservation cancelled.',
+  ROOM_REASSIGNED: 'Room reassigned.',
+  PAYMENT_RECORDED: 'Payment recorded.',
+  NO_SHOW_MARKED: 'Reservation marked as a no-show.',
+  TRANSFER_VERIFIED: 'Bank transfer verified.',
+  TRANSFER_REJECTED: 'Bank transfer rejected.',
+  REFUND_ISSUED: 'Refund issued.',
+  RESERVATION_APPROVED: 'Reservation approved.',
+  RESERVATION_DECLINED: 'Reservation declined.',
 
   // Guest bookings and stays
   BOOKING_UPDATED: 'Your booking has been updated.',

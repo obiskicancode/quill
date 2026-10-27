@@ -63,15 +63,15 @@ export function Header() {
       {!overHero && <div aria-hidden className="h-16 lg:h-20" />}
       <header
         className={`fixed inset-x-0 top-0 transition-[background-color,box-shadow,z-index] duration-200 ${
-          open ? 'z-[80]' : 'z-40'
+          open ? 'z-80' : 'z-40'
         } ${
           solid
             ? 'bg-paper/95 text-ink shadow-raised backdrop-blur'
-            : 'on-dark from-ink/70 bg-gradient-to-b to-transparent text-white'
+            : 'on-dark from-ink/70 bg-linear-to-b to-transparent text-white'
         }`}
       >
         <div
-          className={`container-page flex items-center justify-between gap-3 transition-[height] duration-200 ${scrolled ? 'h-16' : 'h-[4.5rem] lg:h-20'}`}
+          className={`container-page flex items-center justify-between gap-3 transition-[height] duration-200 ${scrolled ? 'h-16' : 'h-18 lg:h-20'}`}
         >
           <SiteLogo site={site} />
 
@@ -141,7 +141,7 @@ export function Header() {
             animate={reduced ? undefined : { opacity: 1, scale: 1, y: 0 }}
             exit={reduced ? undefined : { opacity: 0, scale: 0.985, y: 6 }}
             transition={{ duration: reduced ? 0 : 0.32, ease: EASE_OUT }}
-            className="bg-paper/95 text-ink supports-[backdrop-filter]:bg-paper/90 fixed inset-0 z-[70] backdrop-blur lg:hidden"
+            className="bg-paper/95 text-ink supports-backdrop-filter:bg-paper/90 fixed inset-0 z-70 backdrop-blur lg:hidden"
           >
             <div className="flex h-full flex-col items-center justify-center px-6">
               <nav aria-label="Mobile" className="w-full">

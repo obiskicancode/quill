@@ -16,6 +16,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatNaira } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
@@ -25,7 +26,7 @@ interface ChangeDatesModalProps {
   open: boolean;
   onClose: () => void;
   reservation: ReservationDetail;
-  onSuccess: (updated: ReservationDetail) => void;
+  onSuccess: (updated: ReservationDetail, message?: string) => void;
   onRefresh: () => void;
 }
 
@@ -96,7 +97,7 @@ export function ChangeDatesModal({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!quoteData) {
       setError(ERROR_MESSAGES.CHECK_PRICE_AVAILABILITY_FIRST);
@@ -125,7 +126,7 @@ export function ChangeDatesModal({
         idempotencyKey: crypto.randomUUID(),
       });
 
-      onSuccess(updated.data);
+      onSuccess(updated.data, SUCCESS_MESSAGES.RESERVATION_DATES_CHANGED);
       onClose();
     } catch (err) {
       setError(

@@ -13,6 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { toast } from '@/components/ui/toast';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { WebhookEventItem } from '@/types/payments-admin.types';
 
 export function WebhooksTab({
@@ -33,6 +36,19 @@ export function WebhooksTab({
     setReprocessingId(id);
     try {
       await onReprocess(id);
+      toast.add({
+        title: SUCCESS_MESSAGES.WEBHOOK_REPROCESSED,
+        type: 'success',
+      });
+    } catch (err: unknown) {
+      toast.add({
+        title:
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.WEBHOOK_PROCESSING_FAILED,
+        type: 'error',
+        priority: 'high',
+      });
     } finally {
       setReprocessingId(null);
     }

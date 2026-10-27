@@ -22,7 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { addDays, formatShort, nightsBetween } from '@/lib/dates';
 import type { AdminRole } from '@/types/auth.types';
 import type {
@@ -178,7 +180,7 @@ export function BlockModal({
   };
 
   // Submit Handler
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -246,6 +248,12 @@ export function BlockModal({
         });
       }
 
+      toast.add({
+        title: isEditing
+          ? SUCCESS_MESSAGES.ROOM_BLOCK_UPDATED
+          : SUCCESS_MESSAGES.ROOM_BLOCK_CREATED,
+        type: 'success',
+      });
       onSuccess();
       onClose();
     } catch (err: unknown) {
@@ -267,6 +275,10 @@ export function BlockModal({
 
     try {
       await adminService.deleteBlock(blockToEdit.id);
+      toast.add({
+        title: SUCCESS_MESSAGES.ROOM_BLOCK_REMOVED,
+        type: 'success',
+      });
       onSuccess();
       onClose();
     } catch (err) {

@@ -13,6 +13,7 @@ import { Field, inputClass } from '@/components/checkout/Field';
 import { FlowDialog } from '@/components/manage/FlowDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { AdminMfaSetupResponse } from '@/types/admin.types';
@@ -45,12 +46,10 @@ export function TwoFactorPanel({
   const [password, setPassword] = useState('');
   const [dialogBusy, setDialogBusy] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   async function startSetup() {
     setSetupBusy(true);
     setSetupError(null);
-    setNotice(null);
     try {
       const result = await adminService.setup2fa();
       setSetup(result.data);
@@ -66,7 +65,7 @@ export function TwoFactorPanel({
     }
   }
 
-  async function confirmSetup(event: React.FormEvent<HTMLFormElement>) {
+  async function confirmSetup(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setConfirmBusy(true);
     setConfirmError(null);
@@ -96,7 +95,11 @@ export function TwoFactorPanel({
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      setNotice(ERROR_MESSAGES.COULD_NOT_COPY_CODES);
+      toast.add({
+        title: ERROR_MESSAGES.COULD_NOT_COPY_CODES,
+        type: 'error',
+        priority: 'high',
+      });
     }
   }
 
@@ -124,7 +127,7 @@ export function TwoFactorPanel({
     setDialogError(null);
   }
 
-  async function completeDialog(event: React.FormEvent<HTMLFormElement>) {
+  async function completeDialog(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!dialogAction) return;
     setDialogBusy(true);
@@ -134,12 +137,18 @@ export function TwoFactorPanel({
         await adminService.disable2fa({ password });
         setIsEnabled(false);
         setCodes(null);
-        setNotice(SUCCESS_MESSAGES.TWO_FACTOR_DISABLED);
+        toast.add({
+          title: SUCCESS_MESSAGES.TWO_FACTOR_DISABLED,
+          type: 'success',
+        });
         onEnabledChange(false);
       } else {
         const result = await adminService.rotateRecoveryCodes({ password });
         setCodes(result.data.recoveryCodes);
-        setNotice(SUCCESS_MESSAGES.RECOVERY_CODES_ROTATED);
+        toast.add({
+          title: SUCCESS_MESSAGES.RECOVERY_CODES_ROTATED,
+          type: 'success',
+        });
       }
       setDialogAction(null);
       setPassword('');
@@ -175,11 +184,6 @@ export function TwoFactorPanel({
             </li>
           ))}
         </ul>
-        {notice && (
-          <div className="mt-3">
-            <StatusBanner tone="info">{notice}</StatusBanner>
-          </div>
-        )}
         <div className="mt-4 flex flex-wrap gap-2">
           <Button
             variant="secondary"
@@ -207,7 +211,7 @@ export function TwoFactorPanel({
             size="sm"
             onClick={() => {
               setCodes(null);
-              setNotice(null);
+
               if (pending) router.push('/admin');
             }}
           >
@@ -230,11 +234,6 @@ export function TwoFactorPanel({
               Owners must set up two-factor authentication before opening the
               dashboard.
             </StatusBanner>
-          </div>
-        )}
-        {notice && (
-          <div className="mb-4">
-            <StatusBanner tone="success">{notice}</StatusBanner>
           </div>
         )}
         {setupError && (

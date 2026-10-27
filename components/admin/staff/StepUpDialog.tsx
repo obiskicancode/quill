@@ -38,7 +38,7 @@ export function StepUpDialog({
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!password && !totpCode) {
       setError(ERROR_MESSAGES.STEP_UP_PROMPT);

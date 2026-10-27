@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
@@ -17,7 +18,7 @@ interface ApproveDeclineModalProps {
   onClose: () => void;
   reservation: ReservationDetail;
   initialAction?: 'approve' | 'decline';
-  onSuccess: (updated: ReservationDetail) => void;
+  onSuccess: (updated: ReservationDetail, message?: string) => void;
   onRefresh: () => void;
 }
 
@@ -34,7 +35,7 @@ export function ApproveDeclineModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (action === 'decline' && (!reason || reason.trim().length < 3)) {
       setError(ERROR_MESSAGES.DECLINE_REASON_PROMPT);
@@ -57,7 +58,12 @@ export function ApproveDeclineModal({
           ? await adminService.approveReservation(reservation.id, payload)
           : await adminService.declineReservation(reservation.id, payload);
 
-      onSuccess(updated.data);
+      onSuccess(
+        updated.data,
+        action === 'approve'
+          ? SUCCESS_MESSAGES.RESERVATION_APPROVED
+          : SUCCESS_MESSAGES.RESERVATION_DECLINED,
+      );
       onClose();
     } catch (err) {
       setError(

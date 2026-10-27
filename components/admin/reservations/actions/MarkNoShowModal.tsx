@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatNaira } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
@@ -18,7 +19,7 @@ interface MarkNoShowModalProps {
   open: boolean;
   onClose: () => void;
   reservation: ReservationDetail;
-  onSuccess: (updated: ReservationDetail) => void;
+  onSuccess: (updated: ReservationDetail, message?: string) => void;
   onRefresh: () => void;
 }
 
@@ -41,7 +42,7 @@ export function MarkNoShowModal({
   const netPaidNaira =
     (reservation.amountPaidMinor - reservation.amountRefundedMinor) / 100;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     const num = overrideRefund ? parseFloat(refundNaira) : 0;
     if (isNaN(num) || num < 0 || num > netPaidNaira) {
@@ -69,7 +70,7 @@ export function MarkNoShowModal({
         idempotencyKey: crypto.randomUUID(),
       });
 
-      onSuccess(updated.data);
+      onSuccess(updated.data, SUCCESS_MESSAGES.NO_SHOW_MARKED);
       onClose();
     } catch (err) {
       setError(

@@ -1,11 +1,12 @@
 'use client';
 
-import { CheckCircle2, Lock, Plus, XCircle } from 'lucide-react';
+import { Lock, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import { AdminError } from '@/components/admin/AdminStates';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { Button, ButtonLink } from '@/components/ui/button';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import {
@@ -27,11 +28,6 @@ import { RecentActivity } from './RecentActivity';
 import { RevenueSummary } from './RevenueSummary';
 import { StaleBanner } from './StaleBanner';
 
-interface ToastState {
-  type: 'success' | 'error';
-  message: string;
-}
-
 interface DashboardClientProps {
   role: AdminRole;
   permissions: readonly Permission[];
@@ -48,14 +44,6 @@ export function DashboardClient({
   const canViewRevenue = permissions.includes('revenue.view');
 
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('7d');
-  const [toast, setToast] = useState<ToastState | null>(null);
-
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => {
-      setToast(null);
-    }, 5000);
-  };
 
   // 1. Fetch Summary (KPI, attention, arrivals, departures, activity)
   const {
@@ -121,17 +109,16 @@ export function DashboardClient({
             },
           };
         });
-        showToast(
-          'success',
-          SUCCESS_MESSAGES.GUEST_CHECKED_IN(updated.guestName),
-        );
+        toast.add({
+          title: SUCCESS_MESSAGES.GUEST_CHECKED_IN(updated.guestName),
+          type: 'success',
+        });
         return { success: true };
       }
       return { success: false, error: ERROR_MESSAGES.CHECKIN_RESPONSE_INVALID };
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : ERROR_MESSAGES.CHECKIN_FAILED;
-      showToast('error', ERROR_MESSAGES.FAILED_TO_CHECK_IN_WITH_REASON(msg));
       return { success: false, error: msg };
     }
   }
@@ -165,10 +152,10 @@ export function DashboardClient({
             },
           };
         });
-        showToast(
-          'success',
-          SUCCESS_MESSAGES.GUEST_CHECKED_OUT(updated.guestName),
-        );
+        toast.add({
+          title: SUCCESS_MESSAGES.GUEST_CHECKED_OUT(updated.guestName),
+          type: 'success',
+        });
         return { success: true };
       }
       return {
@@ -178,7 +165,6 @@ export function DashboardClient({
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : ERROR_MESSAGES.CHECKOUT_FAILED;
-      showToast('error', ERROR_MESSAGES.FAILED_TO_CHECK_OUT_WITH_REASON(msg));
       return { success: false, error: msg };
     }
   }
@@ -193,25 +179,6 @@ export function DashboardClient({
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         {liveAnnouncement}
       </div>
-
-      {/* Floating Toast Notification */}
-      {toast && (
-        <div
-          role={toast.type === 'error' ? 'alert' : 'status'}
-          className={`rounded-control text-small shadow-float fixed right-5 bottom-5 z-50 flex items-center gap-2.5 px-4 py-3 transition-all ${
-            toast.type === 'success'
-              ? 'border-success/30 bg-card text-success border'
-              : 'border-destructive/30 bg-card text-destructive border'
-          }`}
-        >
-          {toast.type === 'success' ? (
-            <CheckCircle2 className="size-4 shrink-0" aria-hidden="true" />
-          ) : (
-            <XCircle className="size-4 shrink-0" aria-hidden="true" />
-          )}
-          <span className="text-ink font-medium">{toast.message}</span>
-        </div>
-      )}
 
       {/* 1. Page Header */}
       <PageHeader

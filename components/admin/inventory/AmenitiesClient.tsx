@@ -3,7 +3,6 @@
 import {
   Bath,
   Car,
-  Check,
   Coffee,
   DoorClosed,
   Dumbbell,
@@ -40,6 +39,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { AdminAmenity } from '@/types/inventory.types';
@@ -71,7 +71,6 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
   const [amenities, setAmenities] = useState<AdminAmenity[]>(initialAmenities);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Dialog State
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -100,12 +99,14 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
 
   async function handleDelete(item: AdminAmenity) {
     if (item.usageCount && item.usageCount > 0) {
-      alert(
-        ERROR_MESSAGES.CANNOT_DELETE_ASSIGNED_AMENITY(
+      toast.add({
+        title: ERROR_MESSAGES.CANNOT_DELETE_ASSIGNED_AMENITY(
           item.label,
           item.usageCount,
         ),
-      );
+        type: 'error',
+        priority: 'high',
+      });
       return;
     }
 
@@ -115,14 +116,20 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
 
     try {
       await adminService.deleteAmenity(item.id);
-      setSuccessMessage(SUCCESS_MESSAGES.AMENITY_DELETED_WITH_NAME(item.label));
+      toast.add({
+        title: SUCCESS_MESSAGES.AMENITY_DELETED_WITH_NAME(item.label),
+        type: 'success',
+      });
       await refresh();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_DELETE_AMENITY,
-      );
+      toast.add({
+        title:
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_DELETE_AMENITY,
+        type: 'error',
+        priority: 'high',
+      });
     }
   }
 
@@ -144,27 +151,6 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
             </Button>
           }
         />
-      )}
-
-      {successMessage && (
-        <div
-          role="status"
-          className="rounded-card border-success/40 bg-success/10 text-small text-success flex items-center justify-between border p-4"
-        >
-          <div className="flex items-center gap-2">
-            <Check className="size-5 shrink-0" />
-            <p>{successMessage}</p>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setSuccessMessage(null)}
-            className="text-success hover:text-success hover:bg-success/15 h-7 text-xs"
-          >
-            Dismiss
-          </Button>
-        </div>
       )}
 
       {/* Action Header */}

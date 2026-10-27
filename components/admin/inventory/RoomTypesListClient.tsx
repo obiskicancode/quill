@@ -30,8 +30,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { MAX_ROOM_TYPES } from '@/constants/inventory';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { minorToNaira } from '@/lib/rate-resolution';
 import type { AdminRoomTypeListItem } from '@/types/inventory.types';
 
@@ -92,6 +94,10 @@ export function RoomTypesListClient({
 
     try {
       await adminService.reorderRoomTypes(items);
+      toast.add({
+        title: SUCCESS_MESSAGES.ROOM_TYPES_REORDERED,
+        type: 'success',
+      });
     } catch {
       setError(ERROR_MESSAGES.FAILED_TO_UPDATE_SORT_ORDER);
       await refresh();

@@ -11,6 +11,7 @@ import { StatusBanner } from '@/components/admin/StatusBanner';
 import { FlowDialog } from '@/components/manage/FlowDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatDate } from '@/lib/dates';
@@ -23,7 +24,6 @@ export function SessionsPanel() {
   const [sessions, setSessions] = useState<AdminSession[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
   const [dialog, setDialog] = useState<DialogState>(null);
   const [busy, setBusy] = useState(false);
 
@@ -77,7 +77,10 @@ export function SessionsPanel() {
           ? await adminService.revokeSession(dialog.session.id)
           : await adminService.revokeOtherSessions();
       const count = result.data.revoked;
-      setNotice(SUCCESS_MESSAGES.SESSIONS_SIGNED_OUT(count));
+      toast.add({
+        title: SUCCESS_MESSAGES.SESSIONS_SIGNED_OUT(count),
+        type: 'success',
+      });
       setDialog(null);
       await load();
     } catch (caught) {
@@ -125,7 +128,6 @@ export function SessionsPanel() {
       >
         <div className="space-y-3">
           {error && <StatusBanner tone="error">{error}</StatusBanner>}
-          {notice && <StatusBanner tone="success">{notice}</StatusBanner>}
 
           {loading && !sessions ? (
             <AdminLoading label="Loading sessions" />

@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatNaira } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
@@ -25,7 +26,7 @@ interface CancelModalProps {
   open: boolean;
   onClose: () => void;
   reservation: ReservationDetail;
-  onSuccess: (updated: ReservationDetail) => void;
+  onSuccess: (updated: ReservationDetail, message?: string) => void;
   onRefresh: () => void;
 }
 
@@ -75,7 +76,7 @@ export function CancelModal({
     }
   }, [open, reservation]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!acknowledged) {
       setError(ERROR_MESSAGES.PLEASE_ACKNOWLEDGE_CANCELLATION);
@@ -110,7 +111,7 @@ export function CancelModal({
         idempotencyKey: crypto.randomUUID(),
       });
 
-      onSuccess(updated.data);
+      onSuccess(updated.data, SUCCESS_MESSAGES.RESERVATION_CANCELLED);
       onClose();
     } catch (err) {
       setError(

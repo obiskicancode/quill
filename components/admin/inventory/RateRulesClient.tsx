@@ -26,7 +26,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { bpsToPercentage, minorToNaira } from '@/lib/rate-resolution';
 import type {
   AdminRateRule,
@@ -113,6 +115,7 @@ export function RateRulesClient({
 
     try {
       await adminService.deleteRateRule(rule.id);
+      toast.add({ title: SUCCESS_MESSAGES.RATE_RULE_DELETED, type: 'success' });
       await refresh();
     } catch (err) {
       setError(

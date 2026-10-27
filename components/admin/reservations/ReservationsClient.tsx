@@ -9,6 +9,7 @@ import { AdminEmpty, AdminError } from '@/components/admin/AdminStates';
 import { StaleBanner } from '@/components/admin/dashboard/StaleBanner';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { AdminRole, Permission } from '@/types/auth.types';
 import type {
@@ -190,9 +191,12 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(downloadUrl);
     } catch (err: unknown) {
-      alert(
-        err instanceof Error ? err.message : ERROR_MESSAGES.FAILED_TO_EXPORT,
-      );
+      toast.add({
+        title:
+          err instanceof Error ? err.message : ERROR_MESSAGES.FAILED_TO_EXPORT,
+        type: 'error',
+        priority: 'high',
+      });
     } finally {
       setIsExporting(false);
     }

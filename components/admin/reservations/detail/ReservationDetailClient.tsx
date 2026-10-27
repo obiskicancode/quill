@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AdminError, AdminLoading } from '@/components/admin/AdminStates';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { AdminRole, Permission } from '@/types/auth.types';
 import type {
@@ -146,7 +147,13 @@ export function ReservationDetailClient({
     loadDetail(false);
   };
 
-  const handleActionSuccess = (updated?: ReservationDetail) => {
+  const handleActionSuccess = (
+    updated?: ReservationDetail,
+    message?: string,
+  ) => {
+    if (message) {
+      toast.add({ title: message, type: 'success' });
+    }
     if (updated) {
       setDetail(updated);
     } else {

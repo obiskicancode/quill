@@ -192,7 +192,7 @@ export function PaymentsTable({
                         className="text-caption text-muted-foreground hover:text-foreground inline-flex h-auto items-center gap-1 p-0 font-mono"
                         title="Click to copy provider reference"
                       >
-                        <span className="max-w-[6.25rem] truncate">
+                        <span className="max-w-25 truncate">
                           {payment.providerRef}
                         </span>
                         {copiedId === payment.id ? (

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Calendar,
-  Check,
   DoorOpen,
   FileText,
   Image as ImageIcon,
@@ -17,7 +16,9 @@ import { useState } from 'react';
 import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type {
   AdminRoomTypeDetail,
   AdminRoomTypeInput,
@@ -44,7 +45,6 @@ export function RoomTypeEditorClient({
   const [data, setData] = useState<AdminRoomTypeDetail | null>(initialData);
   const [activeTab, setActiveTab] = useState<TabKey>('details');
   const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const isExisting = !!data?.id;
 
@@ -62,22 +62,38 @@ export function RoomTypeEditorClient({
 
   async function handleSaveDetails(input: AdminRoomTypeInput) {
     setIsSaving(true);
-    setSaveSuccess(false);
 
     try {
       if (isExisting && data?.id) {
         const res = await adminService.updateRoomType(data.id, input);
         if (res.data) {
           setData(res.data);
-          setSaveSuccess(true);
-          setTimeout(() => setSaveSuccess(false), 3000);
+          toast.add({
+            title: SUCCESS_MESSAGES.ROOM_TYPE_UPDATED,
+            type: 'success',
+          });
         }
       } else {
         const res = await adminService.createRoomType(input);
         if (res.data) {
+          toast.add({
+            title: SUCCESS_MESSAGES.ROOM_TYPE_CREATED,
+            type: 'success',
+          });
           router.push(`/admin/rooms/${res.data.id}`);
         }
       }
+    } catch (err: unknown) {
+      toast.add({
+        title:
+          err instanceof Error
+            ? err.message
+            : isExisting
+              ? ERROR_MESSAGES.FAILED_TO_UPDATE_ROOM_TYPE
+              : ERROR_MESSAGES.FAILED_TO_CREATE_ROOM_TYPE,
+        type: 'error',
+        priority: 'high',
+      });
     } finally {
       setIsSaving(false);
     }
@@ -95,13 +111,17 @@ export function RoomTypeEditorClient({
 
     try {
       await adminService.deleteRoomType(data.id);
+      toast.add({ title: SUCCESS_MESSAGES.ROOM_TYPE_DELETED, type: 'success' });
       router.push('/admin/rooms');
     } catch (err) {
-      alert(
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_DELETE_ROOM_TYPE,
-      );
+      toast.add({
+        title:
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_DELETE_ROOM_TYPE,
+        type: 'error',
+        priority: 'high',
+      });
     }
   }
 
@@ -129,11 +149,6 @@ export function RoomTypeEditorClient({
                 }`}
               >
                 {data?.isActive ? 'Active' : 'Draft / Inactive'}
-              </span>
-            )}
-            {saveSuccess && (
-              <span className="text-success flex items-center gap-1 text-xs">
-                <Check className="size-4" /> Saved
               </span>
             )}
           </div>

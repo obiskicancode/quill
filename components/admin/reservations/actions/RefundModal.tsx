@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatNaira } from '@/lib/format';
 import type {
   ReservationDetail,
@@ -28,7 +29,7 @@ interface RefundModalProps {
   onClose: () => void;
   reservation: ReservationDetail;
   payment: ReservationPaymentItem;
-  onSuccess: (updated: ReservationDetail) => void;
+  onSuccess: (updated: ReservationDetail, message?: string) => void;
   onRefresh: () => void;
 }
 
@@ -59,7 +60,7 @@ export function RefundModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     const num = parseFloat(amountNaira);
     if (isNaN(num) || num <= 0) {
@@ -92,7 +93,7 @@ export function RefundModal({
         idempotencyKey: crypto.randomUUID(),
       });
 
-      onSuccess(updated.data);
+      onSuccess(updated.data, SUCCESS_MESSAGES.REFUND_ISSUED);
       onClose();
     } catch (err) {
       setError(

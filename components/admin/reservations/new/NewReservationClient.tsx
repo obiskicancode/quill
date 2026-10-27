@@ -33,7 +33,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { addDays, nightsBetween } from '@/lib/dates';
 import { formatNaira } from '@/lib/format';
 import type { AdminRole } from '@/types/auth.types';
@@ -313,6 +315,10 @@ export function NewReservationClient({
         idempotencyKey: crypto.randomUUID(),
       });
 
+      toast.add({
+        title: SUCCESS_MESSAGES.RESERVATION_CREATED,
+        type: 'success',
+      });
       router.push(`/admin/reservations/${res.data.id}`);
     } catch (err) {
       setError(

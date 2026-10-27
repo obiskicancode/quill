@@ -1,6 +1,5 @@
 'use client';
 
-import { MailCheck } from 'lucide-react';
 import { useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
@@ -14,7 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
@@ -39,10 +40,9 @@ export function ResendConfirmationModal({
   >('booking_confirmation');
   const [recipient, setRecipient] = useState(reservation.guestEmail ?? '');
   const [submitting, setSubmitting] = useState(false);
-  const [sentSuccess, setSentSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!recipient || !recipient.includes('@')) {
       setError(ERROR_MESSAGES.VALID_RECIPIENT_EMAIL);
@@ -59,11 +59,12 @@ export function ResendConfirmationModal({
         idempotencyKey: crypto.randomUUID(),
       });
 
-      setSentSuccess(true);
-      setTimeout(() => {
-        onSuccess();
-        onClose();
-      }, 1500);
+      toast.add({
+        title: SUCCESS_MESSAGES.CONFIRMATION_EMAIL_SENT,
+        type: 'success',
+      });
+      onSuccess();
+      onClose();
     } catch (err) {
       setError(
         err instanceof Error
@@ -84,103 +85,90 @@ export function ResendConfirmationModal({
       error={error}
       onRefresh={onRefresh}
     >
-      {sentSuccess ? (
-        <div className="text-success flex flex-col items-center justify-center space-y-2 p-6 text-center">
-          <MailCheck className="size-12" aria-hidden="true" />
-          <h3 className="text-ink text-base font-semibold">
-            Notification Dispatched!
-          </h3>
-          <p className="text-small text-muted-foreground">
-            The notification has been queued for immediate delivery to{' '}
-            {recipient}.
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="resend-template">
+            Template Type <span className="text-destructive">*</span>
+          </Label>
+          <Select
+            items={[
+              {
+                value: 'booking_confirmation',
+                label: 'Booking Confirmation',
+              },
+              {
+                value: 'payment_receipt',
+                label: 'Payment Receipt',
+              },
+              {
+                value: 'cancellation_notice',
+                label: 'Cancellation Notice',
+              },
+            ]}
+            value={templateKey}
+            onValueChange={(val) => {
+              if (val) {
+                setTemplateKey(
+                  val as
+                    | 'booking_confirmation'
+                    | 'payment_receipt'
+                    | 'cancellation_notice',
+                );
+              }
+            }}
+          >
+            <SelectTrigger id="resend-template" className="w-full">
+              <SelectValue placeholder="Select template" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="booking_confirmation">
+                Booking Confirmation
+              </SelectItem>
+              <SelectItem value="payment_receipt">Payment Receipt</SelectItem>
+              <SelectItem value="cancellation_notice">
+                Cancellation Notice
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="resend-recipient">
+            Recipient Email <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="resend-recipient"
+            type="email"
+            required
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+            placeholder="guest@example.com"
+          />
+          <p className="text-caption text-muted-foreground">
+            You can send to the guest&apos;s email or an alternative address.
           </p>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="resend-template">
-              Template Type <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              items={[
-                {
-                  value: 'booking_confirmation',
-                  label: 'Booking Confirmation',
-                },
-                {
-                  value: 'payment_receipt',
-                  label: 'Payment Receipt',
-                },
-                {
-                  value: 'cancellation_notice',
-                  label: 'Cancellation Notice',
-                },
-              ]}
-              value={templateKey}
-              onValueChange={(val) => {
-                if (val) {
-                  setTemplateKey(
-                    val as
-                      | 'booking_confirmation'
-                      | 'payment_receipt'
-                      | 'cancellation_notice',
-                  );
-                }
-              }}
-            >
-              <SelectTrigger id="resend-template" className="w-full">
-                <SelectValue placeholder="Select template" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="booking_confirmation">
-                  Booking Confirmation
-                </SelectItem>
-                <SelectItem value="payment_receipt">Payment Receipt</SelectItem>
-                <SelectItem value="cancellation_notice">
-                  Cancellation Notice
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="resend-recipient">
-              Recipient Email <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="resend-recipient"
-              type="email"
-              required
-              value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
-              placeholder="guest@example.com"
-            />
-            <p className="text-caption text-muted-foreground">
-              You can send to the guest&apos;s email or an alternative address.
-            </p>
-          </div>
+        <div className="bg-muted rounded-control border-line text-caption text-muted-foreground border p-3">
+          Resend cooldown: to prevent mail provider throttling, requests are
+          logged in audit history.
+        </div>
 
-          <div className="bg-muted rounded-control border-line text-caption text-muted-foreground border p-3">
-            Resend cooldown: to prevent mail provider throttling, requests are
-            logged in audit history.
-          </div>
-
-          <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              disabled={submitting}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" size="sm" loading={submitting}>
-              Send notification
-            </Button>
-          </div>
-        </form>
-      )}
+        <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onClose}
+            disabled={submitting}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" size="sm" loading={submitting}>
+            Send notification
+          </Button>
+        </div>
+      </form>
     </ActionModal>
   );
 }

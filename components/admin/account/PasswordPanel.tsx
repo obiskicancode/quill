@@ -10,6 +10,7 @@ import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Field, inputClass } from '@/components/checkout/Field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 
@@ -20,14 +21,12 @@ export function PasswordPanel() {
   const [showNew, setShowNew] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setError(null);
-    setSuccess(null);
     setFieldErrors({});
     try {
       const result = await adminService.changePassword({
@@ -39,7 +38,10 @@ export function PasswordPanel() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setSuccess(SUCCESS_MESSAGES.PASSWORD_CHANGED(revoked));
+      toast.add({
+        title: SUCCESS_MESSAGES.PASSWORD_CHANGED(revoked),
+        type: 'success',
+      });
     } catch (caught) {
       if (caught instanceof ServiceError) {
         setError(caught.message);
@@ -59,7 +61,6 @@ export function PasswordPanel() {
     >
       <div className="space-y-3">
         {error && <StatusBanner tone="error">{error}</StatusBanner>}
-        {success && <StatusBanner tone="success">{success}</StatusBanner>}
       </div>
 
       <form onSubmit={submit} className="mt-4 max-w-xl space-y-4" noValidate>

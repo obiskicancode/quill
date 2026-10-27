@@ -1,13 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  AlertCircle,
-  Check,
-  ExternalLink,
-  Loader2,
-  Search,
-} from 'lucide-react';
+import { AlertCircle, ExternalLink, Loader2, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
@@ -15,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import type { AdminAmenity } from '@/types/inventory.types';
@@ -38,7 +33,6 @@ export function TabAmenities({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -85,14 +79,13 @@ export function TabAmenities({
   async function handleSave() {
     setSaving(true);
     setErrorMessage(null);
-    setSuccessMessage(null);
 
     try {
       await adminService.updateRoomTypeAmenities(
         roomTypeId,
         Array.from(selectedIds),
       );
-      setSuccessMessage(SUCCESS_MESSAGES.AMENITIES_UPDATED);
+      toast.add({ title: SUCCESS_MESSAGES.AMENITIES_UPDATED, type: 'success' });
       await onRefresh();
     } catch (err) {
       setErrorMessage(
@@ -122,16 +115,6 @@ export function TabAmenities({
         >
           <AlertCircle className="size-5 shrink-0" />
           <p>{errorMessage}</p>
-        </div>
-      )}
-
-      {successMessage && (
-        <div
-          role="status"
-          className="rounded-card border-success/40 bg-success/10 text-small text-success flex items-center gap-2 border p-4"
-        >
-          <Check className="size-5 shrink-0" />
-          <p>{successMessage}</p>
         </div>
       )}
 

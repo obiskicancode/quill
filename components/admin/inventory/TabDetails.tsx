@@ -8,6 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SANITY_PRICE_MINOR } from '@/constants/inventory';
 import { minorToNaira, nairaToMinor } from '@/lib/rate-resolution';
@@ -112,7 +113,7 @@ export function TabDetails({
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setValidationError(null);
 
@@ -196,11 +197,7 @@ export function TabDetails({
                 Please confirm if this rate is intentional.
               </p>
               <div className="mt-3 flex items-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={(e) => handleSubmit(e)}
-                >
+                <Button type="submit" size="sm">
                   Yes, confirm this price
                 </Button>
                 <Button
@@ -258,7 +255,11 @@ export function TabDetails({
                       setSlugLocked(false);
                       setUnlockSlugConfirmed(true);
                     } else {
-                      alert(ERROR_MESSAGES.ONLY_OWNER_UNLOCK_SLUG);
+                      toast.add({
+                        title: ERROR_MESSAGES.ONLY_OWNER_UNLOCK_SLUG,
+                        type: 'error',
+                        priority: 'high',
+                      });
                     }
                   }}
                   className="text-primary inline-flex h-auto cursor-pointer items-center gap-1 p-0 text-xs hover:underline"

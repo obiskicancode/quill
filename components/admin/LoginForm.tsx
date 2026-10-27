@@ -39,7 +39,7 @@ export function LoginForm({
     return () => window.clearInterval(timer);
   }, [lockSeconds]);
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy || lockSeconds > 0) return;
     setBusy(true);

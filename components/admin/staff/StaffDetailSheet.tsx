@@ -33,6 +33,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { toast } from '@/components/ui/toast';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
@@ -76,7 +77,7 @@ export function StaffDetailSheet({
 
   if (!staff) return null;
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.SubmitEvent) => {
     e.preventDefault();
     const isRoleChange = form.role !== staff.role;
 
@@ -86,7 +87,10 @@ export function StaffDetailSheet({
         setMessage(null);
         const res = await adminService.updateStaff(staff.id, form);
         if (res.data?.success) {
-          setMessage({ text: SUCCESS_MESSAGES.STAFF_PROFILE_UPDATED });
+          toast.add({
+            title: SUCCESS_MESSAGES.STAFF_PROFILE_UPDATED,
+            type: 'success',
+          });
           await onReload();
         } else {
           setMessage({
@@ -137,8 +141,9 @@ export function StaffDetailSheet({
         setMessage(null);
         const res = await actionFn();
         if (res.data?.success) {
-          setMessage({
-            text: res.data.message || SUCCESS_MESSAGES.ACTION_COMPLETED,
+          toast.add({
+            title: res.data.message || SUCCESS_MESSAGES.ACTION_COMPLETED,
+            type: 'success',
           });
           await onReload();
         } else {
@@ -289,10 +294,6 @@ export function StaffDetailSheet({
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-muted-foreground text-[0.6875rem]">
-                  Role changes require step-up authentication & immediately
-                  revoke active sessions.
-                </p>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="staff-phone">Phone Number</Label>
@@ -407,7 +408,7 @@ export function StaffDetailSheet({
                   className="h-auto justify-start py-2"
                 >
                   <ShieldAlert className="text-destructive size-4" />
-                  <span>Reset 2FA (Requires Step-Up)</span>
+                  <span>Reset 2FA</span>
                 </Button>
               )}
 
@@ -491,8 +492,8 @@ export function StaffDetailSheet({
           <div className="border-line space-y-3 rounded-lg border p-4">
             <div className="flex items-center justify-between">
               <h3 className="text-ink flex items-center gap-1.5 font-semibold">
-                <History className="text-muted-foreground size-4" /> Recent
-                Audit Entries (20)
+                <History className="text-muted-foreground size-4" />
+                Recent Audit Entries
               </h3>
               <Link
                 href={`/admin/audit?q=${encodeURIComponent(staff.email)}`}
@@ -525,12 +526,6 @@ export function StaffDetailSheet({
               </div>
             )}
           </div>
-        </div>
-
-        <div className="border-line bg-paper flex justify-end border-t p-4">
-          <Button variant="outline" size="sm" onClick={onClose}>
-            Close
-          </Button>
         </div>
       </SheetContent>
     </Sheet>

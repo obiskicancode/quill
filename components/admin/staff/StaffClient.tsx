@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, ShieldCheck, UserPlus, X } from 'lucide-react';
+import { Search, ShieldCheck, UserPlus } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
@@ -27,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type {
   StaffDetailResponse,
@@ -57,7 +58,6 @@ export function StaffClient() {
   const [staffList, setStaffList] = useState<StaffListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [banner, setBanner] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<StaffQueryParams>({
     role: 'all',
@@ -160,22 +160,6 @@ export function StaffClient() {
 
   return (
     <div className="space-y-4">
-      {banner && (
-        <div className="border-success/30 bg-success/5 text-caption text-success flex items-center justify-between rounded-md border p-3 font-medium">
-          <span>{banner}</span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setBanner(null)}
-            className="h-6 px-2 text-xs"
-          >
-            <X className="mr-1 size-3" />
-            Dismiss
-          </Button>
-        </div>
-      )}
-
       {/* Filter and action toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-1 flex-wrap items-center gap-2">
@@ -376,7 +360,7 @@ export function StaffClient() {
         isOpen={inviteOpen}
         onClose={() => setInviteOpen(false)}
         onSuccess={(msg) => {
-          setBanner(msg);
+          toast.add({ title: msg, type: 'success' });
           loadStaff();
         }}
         onRequestStepUp={handleTriggerStepUp}

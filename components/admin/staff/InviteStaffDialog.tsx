@@ -91,7 +91,7 @@ export function InviteStaffDialog({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (form.role === 'owner') {
       onRequestStepUp(() => executeInvite());

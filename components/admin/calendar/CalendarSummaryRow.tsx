@@ -19,7 +19,7 @@ export function CalendarSummaryRow({
   return (
     <div className="bg-muted/70 border-line text-caption flex border-b font-mono">
       {/* Sticky Room Column Header Label */}
-      <div className="border-line bg-paper sticky left-0 z-20 flex w-48 shrink-0 flex-col justify-center border-r px-3 py-1.5 shadow-xs">
+      <div className="border-line bg-paper sticky left-0 z-20 flex w-52 shrink-0 flex-col justify-center border-r px-3 py-1.5 shadow-xs">
         <span className="text-ink font-sans font-semibold">Occupancy</span>
         <span className="text-muted-foreground font-sans text-[0.6875rem]">
           Arrivals & Departures
