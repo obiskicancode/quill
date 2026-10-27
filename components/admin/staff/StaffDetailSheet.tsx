@@ -33,7 +33,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import type { AdminRole } from '@/lib/auth/permissions';
+import type { AdminRole } from '@/types/auth.types';
 import type {
   StaffDetailResponse,
   StaffUpdateInput,
@@ -280,7 +280,7 @@ export function StaffDetailSheet({
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-muted-foreground text-[11px]">
+                <p className="text-muted-foreground text-[0.6875rem]">
                   Role changes require step-up authentication & immediately
                   revoke active sessions.
                 </p>
@@ -462,12 +462,12 @@ export function StaffDetailSheet({
                       <div className="text-ink font-medium">
                         {s.deviceLabel}
                       </div>
-                      <div className="text-muted-foreground text-[11px]">
+                      <div className="text-muted-foreground text-[0.6875rem]">
                         IP: {s.ipAddress || 'unknown'} • Created:{' '}
                         {new Date(s.createdAt).toLocaleDateString()}
                       </div>
                     </div>
-                    <span className="text-muted-foreground text-[11px]">
+                    <span className="text-muted-foreground text-[0.6875rem]">
                       {s.lastSeenAt
                         ? `Active ${new Date(s.lastSeenAt).toLocaleTimeString()}`
                         : 'Active'}
@@ -504,11 +504,11 @@ export function StaffDetailSheet({
                       <span className="text-ink font-mono font-medium capitalize">
                         {a.action} ({a.entity})
                       </span>
-                      <span className="text-muted-foreground text-[11px]">
+                      <span className="text-muted-foreground text-[0.6875rem]">
                         {new Date(a.createdAt).toLocaleString('en-GB')}
                       </span>
                     </div>
-                    <div className="text-muted-foreground text-[11px]">
+                    <div className="text-muted-foreground text-[0.6875rem]">
                       {a.summary}
                     </div>
                   </div>

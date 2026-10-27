@@ -82,7 +82,7 @@ export function Header() {
                   <Link
                     href={item.href}
                     aria-current={pathname === item.href ? 'page' : undefined}
-                    className="decoration-brand inline-flex min-h-11 items-center px-3 font-medium decoration-2 underline-offset-[10px] hover:underline aria-[current=page]:underline"
+                    className="decoration-brand inline-flex min-h-11 items-center px-3 font-medium decoration-2 underline-offset-[0.625rem] hover:underline aria-[current=page]:underline"
                   >
                     {item.label}
                   </Link>
@@ -163,7 +163,7 @@ export function Header() {
                           pathname === item.href ? 'page' : undefined
                         }
                         onClick={() => setOpen(false)}
-                        className="decoration-brand aria-[current=page]:text-brand-ink block py-4 text-center text-xl font-medium tracking-tight decoration-2 underline-offset-[10px] transition-colors hover:opacity-80 aria-[current=page]:underline sm:text-2xl"
+                        className="decoration-brand aria-[current=page]:text-brand-ink block py-4 text-center text-xl font-medium tracking-tight decoration-2 underline-offset-[0.625rem] transition-colors hover:opacity-80 aria-[current=page]:underline sm:text-2xl"
                       >
                         {item.label}
                       </Link>

@@ -5,12 +5,13 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, Clock, Loader2, RefreshCw, WifiOff } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 
+import { formatMinor } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import { telHref, whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
-import { formatMinor } from '@/types/stay.types';
+import type { DateRange } from '@/types/dates.types';
 
-import { DatePicker, type DateRange } from '../DatePicker';
+import { DatePicker } from '../DatePicker';
 import { EASE_OUT } from '../motion/variants';
 import { Button, ButtonLink } from '../ui/button';
 

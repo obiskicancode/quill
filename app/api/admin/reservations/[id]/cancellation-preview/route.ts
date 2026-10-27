@@ -4,10 +4,11 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { reservationNights, reservations } from '@/db/schema';
 import { guardAdminApi } from '@/lib/auth/guards';
-import { fromISO, hotelClock, ISODate } from '@/lib/dates';
+import { fromISO, hotelClock } from '@/lib/dates';
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { calculateRefund } from '@/lib/manage/refund';
+import type { ISODate } from '@/types/dates.types';
 
 export const dynamic = 'force-dynamic';
 

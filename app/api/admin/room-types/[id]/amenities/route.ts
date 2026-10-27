@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { updateRoomTypeAmenities } from '@/lib/db/repositories/inventory-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { UpdateRoomTypeAmenitiesSchema } from '@/types/inventory.types';
+import { UpdateRoomTypeAmenitiesSchema } from '@/schemas/inventory.schema';
 
 export const dynamic = 'force-dynamic';
 

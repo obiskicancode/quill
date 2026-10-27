@@ -179,7 +179,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
 
       {/* Search Bar & Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="relative max-w-md min-w-[240px] flex-1">
+        <div className="relative max-w-md min-w-[15rem] flex-1">
           <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
             type="search"

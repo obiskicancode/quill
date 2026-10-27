@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { reorderAmenities } from '@/lib/db/repositories/inventory-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { ReorderItemsInputSchema } from '@/types/inventory.types';
+import { ReorderItemsInputSchema } from '@/schemas/inventory.schema';
 
 export const dynamic = 'force-dynamic';
 

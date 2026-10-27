@@ -1,3 +1,4 @@
+import type { Clock } from '@/types/dates.types';
 import type {
   HistoryEntry,
   HistoryType,
@@ -8,7 +9,6 @@ import type {
 
 import type { StoredReservation } from '../booking/store';
 import { getCheckoutSettings } from '../checkout/settings';
-import type { Clock } from '../dates';
 import { allowedActions, previewCancellation } from './rules';
 import { getManageSettings } from './settings';
 

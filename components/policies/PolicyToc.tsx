@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import type { PolicyHeading } from '@/lib/content/rich';
+import type { PolicyHeading } from '@/types/content.types';
 
 /**
  * On-this-page table of contents. The current section is highlighted as the reader scrolls.

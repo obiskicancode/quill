@@ -1,40 +1,14 @@
-import { addDays, nightsBetween, todayISO, type ISODate } from '../dates';
+import type { ISODate } from '@/types/dates.types';
+import type {
+  AvailabilityMap,
+  DateSuggestion,
+  RoomType,
+  StayParams,
+} from '@/types/rooms.types';
+
+import { addDays, nightsBetween, todayISO } from '../dates';
 import { countAvailableRoomsByType } from '../db/repositories/rooms.repo';
-import {
-  isWeekendNight,
-  maxGuests,
-  nightlyPrice,
-  type RoomType,
-} from './catalog';
-
-export interface StayParams {
-  checkIn: ISODate;
-  checkOut: ISODate;
-  adults: number;
-  children: number;
-}
-
-export interface DateSuggestion {
-  checkIn: ISODate;
-  checkOut: ISODate;
-  totalNgn: number | null;
-}
-
-export type RoomAvailability =
-  | {
-      status: 'available';
-      remaining: number;
-      nights: number;
-      totalNgn: number;
-      averageNgn: number;
-      weekendNights: number;
-    }
-  | { status: 'sold-out'; suggestions: DateSuggestion[] }
-  | { status: 'min-stay'; minNights: number; suggestedCheckOut: ISODate }
-  | { status: 'over-capacity'; maxAdults: number; maxChildren: number }
-  | { status: 'on-request' };
-
-export type AvailabilityMap = Record<string, RoomAvailability>;
+import { isWeekendNight, maxGuests, nightlyPrice } from './catalog';
 
 function totalFor(room: RoomType, checkIn: ISODate, nights: number): number {
   let total = 0;

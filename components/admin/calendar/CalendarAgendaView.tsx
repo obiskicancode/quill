@@ -14,7 +14,7 @@ import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { formatLong, formatShort } from '@/lib/dates';
 import type { CalendarResponse } from '@/types/calendar.types';
-import type { ReservationStatus } from '@/types/dashboard.types';
+import type { AdminReservationStatus } from '@/types/reservation.types';
 
 interface CalendarAgendaViewProps {
   data: CalendarResponse;
@@ -87,7 +87,7 @@ export function CalendarAgendaView({
                       {formatLong(stat.date)}
                     </span>
                     {isToday && (
-                      <span className="rounded-control bg-primary/20 text-brand-ink px-1.5 py-0.5 text-[10px] font-bold">
+                      <span className="rounded-control bg-primary/20 text-brand-ink px-1.5 py-0.5 text-[0.625rem] font-bold">
                         TODAY
                       </span>
                     )}
@@ -117,7 +117,7 @@ export function CalendarAgendaView({
                   return (
                     <span
                       key={rt.id}
-                      className={`rounded-control border px-2 py-0.5 text-[11px] font-medium ${
+                      className={`rounded-control border px-2 py-0.5 text-[0.6875rem] font-medium ${
                         free > 0
                           ? 'bg-muted border-line text-ink'
                           : 'border-destructive/30 bg-destructive/10 text-destructive'
@@ -141,7 +141,7 @@ export function CalendarAgendaView({
                     return (
                       <span
                         key={rt.id}
-                        className="bg-muted rounded-control border-line text-muted-foreground border px-2 py-0.5 text-[11px]"
+                        className="bg-muted rounded-control border-line text-muted-foreground border px-2 py-0.5 text-[0.6875rem]"
                       >
                         {rt.name}:{' '}
                         <strong className="text-ink">
@@ -186,7 +186,7 @@ export function CalendarAgendaView({
                               </span>
                             </div>
                             <StatusBadge
-                              status={res.status as ReservationStatus}
+                              status={res.status as AdminReservationStatus}
                             />
                           </Link>
                         );
@@ -229,7 +229,7 @@ export function CalendarAgendaView({
                               </span>
                             </div>
                             <StatusBadge
-                              status={res.status as ReservationStatus}
+                              status={res.status as AdminReservationStatus}
                             />
                           </Link>
                         );
@@ -266,7 +266,7 @@ export function CalendarAgendaView({
                                 </span>
                               )}
                             </div>
-                            <span className="text-muted-foreground font-mono text-[11px]">
+                            <span className="text-muted-foreground font-mono text-[0.6875rem]">
                               {formatShort(b.startDate)} →{' '}
                               {formatShort(b.endDate)}
                             </span>

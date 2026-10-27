@@ -6,7 +6,7 @@ import {
   updateImageDetails,
 } from '@/lib/db/repositories/inventory-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { AdminImageUpdateSchema } from '@/types/inventory.types';
+import { AdminImageUpdateSchema } from '@/schemas/inventory.schema';
 
 export const dynamic = 'force-dynamic';
 

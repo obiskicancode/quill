@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server';
-import { z } from 'zod';
 
 import { db } from '@/db';
 import { hotelSettings } from '@/db/schema';
@@ -7,15 +6,9 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import { hotelClock } from '@/lib/dates';
 import { getCalendarDayData } from '@/lib/db/repositories/calendar-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
+import { adminCalendarDayQuerySchema } from '@/schemas/calendar.schema';
 
 export const dynamic = 'force-dynamic';
-
-const querySchema = z.object({
-  date: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .optional(),
-});
 
 export async function GET(request: NextRequest) {
   const guard = await guardAdminApi(request, {
@@ -24,7 +17,7 @@ export async function GET(request: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const url = new URL(request.url);
-  const parsed = querySchema.safeParse({
+  const parsed = adminCalendarDayQuerySchema.safeParse({
     date: url.searchParams.get('date') || undefined,
   });
 

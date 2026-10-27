@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 
-import type { RoomAmenityKey } from '@/lib/rooms';
+import type { RoomAmenityKey } from '@/types/rooms.types';
 
 import { fadeUp } from './motion/variants';
 import { RoomAmenityIcon } from './rooms/RoomAmenityIcon';

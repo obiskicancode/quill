@@ -21,7 +21,7 @@ export function CalendarSummaryRow({
       {/* Sticky Room Column Header Label */}
       <div className="border-line bg-paper sticky left-0 z-20 flex w-48 shrink-0 flex-col justify-center border-r px-3 py-1.5 shadow-xs">
         <span className="text-ink font-sans font-semibold">Occupancy</span>
-        <span className="text-muted-foreground font-sans text-[11px]">
+        <span className="text-muted-foreground font-sans text-[0.6875rem]">
           Arrivals & Departures
         </span>
       </div>
@@ -56,13 +56,13 @@ export function CalendarSummaryRow({
                 >
                   {stat.occupancyPercent}%
                 </span>
-                <span className="text-muted-foreground text-[10px]">
+                <span className="text-muted-foreground text-[0.625rem]">
                   ({stat.occupiedRooms}/{stat.sellableRooms})
                 </span>
               </div>
 
               {/* Arrivals and Departures */}
-              <div className="mt-0.5 flex items-center gap-1.5 text-[10px]">
+              <div className="mt-0.5 flex items-center gap-1.5 text-[0.625rem]">
                 {stat.arrivalsCount > 0 ? (
                   <span
                     className="text-success"

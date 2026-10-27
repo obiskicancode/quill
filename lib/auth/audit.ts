@@ -1,5 +1,6 @@
+import type { AdminRole } from '@/types/auth.types';
+
 import { createAuditLog } from '../db/repositories/audit.repo';
-import type { AdminRole } from './permissions';
 
 interface AuditInput {
   actorId?: string | null;

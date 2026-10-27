@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { contentService } from '@/app/api/services/content.service';
+import { CONTACT_TOPICS } from '@/constants/content';
 import {
   enquiryFormSchema,
   MAX_MESSAGE,
@@ -15,7 +16,6 @@ import {
   STAY_TOPICS,
   topicLabels,
 } from '@/schemas/content.schema';
-import { CONTACT_TOPICS } from '@/types/content.types';
 
 import { Banner } from '../checkout/CheckoutStates';
 import { Field, inputClass } from '../checkout/Field';
@@ -516,7 +516,7 @@ export function ContactForm({
                 {/* Honeypot: hidden from people and assistive tech. Bots fill it in. */}
                 <div
                   aria-hidden
-                  className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
+                  className="absolute -left-[624.9375rem] h-0 w-0 overflow-hidden"
                 >
                   <Label htmlFor="contact-website-honeypot">Website</Label>
                   <Input

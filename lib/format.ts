@@ -1,4 +1,6 @@
-import { fromISO, type ISODate } from './dates';
+import type { ISODate } from '@/types/dates.types';
+
+import { fromISO } from './dates';
 
 const naira = new Intl.NumberFormat('en-NG', {
   style: 'currency',
@@ -9,6 +11,9 @@ const naira = new Intl.NumberFormat('en-NG', {
 
 /** 150000 becomes "₦150,000". */
 export const formatNaira = (amount: number): string => naira.format(amount);
+
+/** Formats integer minor units (kobo) as Naira. */
+export const formatMinor = (minor: number): string => formatNaira(minor / 100);
 
 export function formatSecondary(
   currency: 'USD' | 'GBP' | 'EUR',

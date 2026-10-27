@@ -1,6 +1,6 @@
 import { DoorOpen, Utensils } from 'lucide-react';
 
-import type { RoomAmenityKey } from '@/lib/rooms';
+import type { RoomAmenityKey } from '@/types/rooms.types';
 import type { AmenityKey } from '@/types/site.types';
 
 import { AmenityIcon } from '../AmenityIcon';

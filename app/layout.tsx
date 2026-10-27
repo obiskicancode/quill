@@ -8,6 +8,7 @@ import { Footer } from '@/components/Footer';
 import { Header } from '@/components/Header';
 import { HideOnCheckout } from '@/components/HideOnCheckout';
 import { StickyBookBar } from '@/components/StickyBookBar';
+import { Toaster } from '@/components/ui/toast';
 import { WhatsAppFab } from '@/components/WhatsAppFab';
 import {
   getConsentSettings,
@@ -68,7 +69,7 @@ export default async function RootLayout({
   const analytics = settings.analytics;
   return (
     <html lang="en-NG" className={`${display.variable} ${body.variable}`}>
-      <body className="text-body min-w-[250px] font-sans antialiased">
+      <body className="text-body min-w-62.5 font-sans antialiased">
         <SiteProvider site={site}>
           <ConsentProvider>
             <a
@@ -97,6 +98,7 @@ export default async function RootLayout({
             </HideOnCheckout>
           </ConsentProvider>
         </SiteProvider>
+        <Toaster />
       </body>
     </html>
   );

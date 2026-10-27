@@ -191,7 +191,7 @@ export function PaymentDetailDrawer({
               <span className="text-caption text-muted-foreground block">
                 Idempotency Key
               </span>
-              <span className="text-muted-foreground block truncate font-mono text-[11px]">
+              <span className="text-muted-foreground block truncate font-mono text-[0.6875rem]">
                 {payment.idempotencyKey}
               </span>
             </div>
@@ -301,7 +301,7 @@ export function PaymentDetailDrawer({
                       <span className="text-ink font-mono font-medium">
                         {wh.eventType || 'event'}
                       </span>
-                      <div className="text-muted-foreground text-[11px]">
+                      <div className="text-muted-foreground text-[0.6875rem]">
                         {new Date(wh.receivedAt).toLocaleTimeString('en-GB')}
                       </div>
                     </div>
@@ -329,13 +329,13 @@ export function PaymentDetailDrawer({
                 )}
               </Button>
               {!rawCollapsed && (
-                <div className="bg-ink text-paper relative max-h-60 overflow-x-auto p-4 font-mono text-[11px]">
+                <div className="bg-ink text-paper relative max-h-60 overflow-x-auto p-4 font-mono text-[0.6875rem]">
                   <Button
                     type="button"
                     variant="secondary"
                     size="sm"
                     onClick={handleCopyRaw}
-                    className="bg-card/20 text-paper hover:bg-card/40 absolute top-2 right-2 h-7 gap-1 px-2 text-[10px]"
+                    className="bg-card/20 text-paper hover:bg-card/40 absolute top-2 right-2 h-7 gap-1 px-2 text-[0.625rem]"
                   >
                     {copiedRaw ? (
                       <Check className="text-success size-3" />

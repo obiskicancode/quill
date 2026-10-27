@@ -1,15 +1,15 @@
-import type { ISODate } from '@/lib/dates';
 import type {
   BankDetails,
   CheckoutBreakdown,
   ConfirmationMode,
   ExtraItem,
+  GuestReservationStatus,
   PaymentMethod,
   PaymentMode,
   PaymentStatus,
   PolicySummary,
-  ReservationStatus,
 } from '@/types/checkout.types';
+import type { ISODate } from '@/types/dates.types';
 import type {
   ManageData,
   RefundMethod,
@@ -102,9 +102,22 @@ export interface GuestCancellation {
   timeline: string | null;
 }
 
+export interface CalendarEvent {
+  reference: string;
+  hotelName: string;
+  address: string;
+  checkIn: ISODate;
+  checkOut: ISODate;
+  /** "HH:MM", 24-hour, in the hotel's time zone. */
+  checkInTime: string;
+  checkOutTime: string;
+  timeZone: string;
+  guestsLabel?: string;
+}
+
 export interface GuestReservation {
   reference: string;
-  status: ReservationStatus;
+  status: GuestReservationStatus;
   paymentStatus: PaymentStatus;
   confirmationMode: ConfirmationMode;
   mode: PaymentMode;
@@ -161,27 +174,6 @@ export type HeaderKind =
   | 'approval'
   | 'pay-at-hotel'
   | 'ended';
-
-export function headerKind(
-  v: Pick<GuestReservation, 'status' | 'mode'>,
-): HeaderKind {
-  switch (v.status) {
-    case 'confirmed':
-    case 'checked_in':
-      return v.mode === 'deposit' ? 'confirmed-deposit' : 'confirmed';
-    case 'pending_payment':
-      return 'confirming';
-    case 'awaiting_transfer':
-    case 'awaiting_verification':
-      return 'transfer';
-    case 'pending_approval':
-      return 'approval';
-    case 'reserved_pay_at_hotel':
-      return 'pay-at-hotel';
-    default:
-      return 'ended';
-  }
-}
 
 export interface BookingApiError {
   code:

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
+import { formatMinor } from '@/lib/format';
 import type { GuestReservation } from '@/types/booking.types';
-import { formatMinor } from '@/types/stay.types';
 
 import { PriceBreakdown } from '../room-detail/PriceBreakdown';
 import { Badge } from '../rooms/AvailabilityBadge';

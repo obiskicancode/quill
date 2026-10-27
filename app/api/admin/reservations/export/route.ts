@@ -9,7 +9,7 @@ import {
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, NO_STORE_HEADERS } from '@/lib/http/envelope';
 import { rateLimit } from '@/lib/rate-limit';
-import { reservationsListQuerySchema } from '@/types/reservation.types';
+import { reservationsListQuerySchema } from '@/schemas/reservation.schema';
 
 export const dynamic = 'force-dynamic';
 

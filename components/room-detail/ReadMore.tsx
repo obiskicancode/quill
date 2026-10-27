@@ -38,7 +38,7 @@ export function ReadMore({ text }: { text: string }) {
           aria-expanded={expanded}
           aria-controls={id}
           onClick={() => setExpanded((e) => !e)}
-          className="decoration-brand mt-1 inline-flex h-auto min-h-11 items-center p-0 font-semibold underline decoration-2 underline-offset-[6px]"
+          className="decoration-brand mt-1 inline-flex h-auto min-h-11 items-center p-0 font-semibold underline decoration-2 underline-offset-[0.375rem]"
         >
           {expanded ? 'Show less' : 'Read more'}
         </Button>

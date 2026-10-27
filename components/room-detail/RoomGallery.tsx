@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Images } from 'lucide-react';
 import { useState } from 'react';
 
-import type { GalleryImage } from '@/lib/rooms';
+import type { RoomGalleryImage } from '@/types/rooms.types';
 
 import { Carousel } from '../Carousel';
 import { HoverZoom } from '../motion/HoverZoom';
@@ -42,7 +42,7 @@ export function RoomGallery({
   images,
 }: {
   roomName: string;
-  images: GalleryImage[];
+  images: RoomGalleryImage[];
 }) {
   const [open, setOpen] = useState(false);
   const [start, setStart] = useState(0);

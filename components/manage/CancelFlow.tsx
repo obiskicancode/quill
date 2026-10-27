@@ -7,10 +7,11 @@ import { useEffect, useRef, useState } from 'react';
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { manageService } from '@/app/api/services/manage.service';
+import { CANCEL_REASONS } from '@/constants/manage';
+import { formatMinor } from '@/lib/format';
 import type { CancelRequest } from '@/schemas/manage.schema';
 import type { GuestReservation } from '@/types/booking.types';
-import { CANCEL_REASONS, type CancellationPreview } from '@/types/manage.types';
-import { formatMinor } from '@/types/stay.types';
+import type { CancellationPreview } from '@/types/manage.types';
 
 import { VerifyForm } from '../booking/VerifyForm';
 import { Banner } from '../checkout/CheckoutStates';

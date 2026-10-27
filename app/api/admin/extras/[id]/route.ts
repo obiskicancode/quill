@@ -6,7 +6,7 @@ import {
   updateAdminExtra,
 } from '@/lib/db/repositories/inventory-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { AdminExtraInputSchema } from '@/types/inventory.types';
+import { AdminExtraInputSchema } from '@/schemas/inventory.schema';
 
 export const dynamic = 'force-dynamic';
 

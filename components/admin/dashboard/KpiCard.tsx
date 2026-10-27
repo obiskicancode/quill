@@ -32,7 +32,7 @@ export function KpiCard({
       <Link
         href={href}
         aria-label={ariaLabel}
-        className="group rounded-card border-line bg-card shadow-raised hover:border-ink/30 relative flex h-full min-h-[8.5rem] flex-col justify-between border p-4 transition-all duration-150 hover:-translate-y-0.5 sm:p-5"
+        className="group rounded-card border-line bg-card shadow-raised hover:border-ink/30 relative flex h-full min-h-34 flex-col justify-between border p-4 transition-all duration-150 hover:-translate-y-0.5 sm:p-5"
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-1.5">

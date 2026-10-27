@@ -8,15 +8,9 @@ import type {
   PolicySummary,
   QuoteRequest,
 } from '@/types/checkout.types';
+import type { Clock, ISODate } from '@/types/dates.types';
 
-import {
-  fromISO,
-  hotelClock,
-  nightsBetween,
-  toISO,
-  type Clock,
-  type ISODate,
-} from '../dates';
+import { fromISO, hotelClock, nightsBetween, toISO } from '../dates';
 import { unitLabels } from '../format';
 import { getRoomDetail } from '../rooms/detail';
 import { getQuoteResponse, needsExtraBed } from '../rooms/pricing';

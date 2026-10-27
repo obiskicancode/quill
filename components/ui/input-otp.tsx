@@ -62,7 +62,7 @@ function InputOTPSlot({
       {char}
       {hasFakeCaret && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="animate-caret-blink bg-foreground h-4 w-px duration-1000" />
+          <div className="animate-caret-blink bg-foreground h-4 w-[0.0625rem] duration-1000" />
         </div>
       )}
     </div>

@@ -33,32 +33,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import type { AdminRole } from '@/lib/auth/permissions';
 import { addDays, nightsBetween } from '@/lib/dates';
 import { formatNaira } from '@/lib/format';
+import type { AdminRole } from '@/types/auth.types';
 import type { CheckoutQuoteResponse } from '@/types/checkout.types';
+import type {
+  AdminRoomTypeOption,
+  ExtraCatalogItem,
+} from '@/types/inventory.types';
 import type { AdminCreateReservationInput } from '@/types/reservation.types';
 
-interface RoomTypeOption {
-  id: string;
-  name: string;
-  slug: string;
-  maxAdults: number;
-  maxChildren: number;
-  extraBedAvailable: boolean;
-  basePriceMinor: number;
-}
-
-interface ExtraCatalogItem {
-  id: string;
-  name: string;
-  priceMinor: number;
-  unit: string;
-  maxQuantity: number;
-}
-
 interface NewReservationClientProps {
-  roomTypes: RoomTypeOption[];
+  roomTypes: AdminRoomTypeOption[];
   extrasCatalog: ExtraCatalogItem[];
   role: AdminRole;
   today: string;

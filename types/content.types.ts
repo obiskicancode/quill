@@ -18,20 +18,13 @@ export type RichBlock =
   | { type: 'ul' | 'ol'; items: string[] }
   | { type: 'table'; caption?: string; head: string[]; rows: string[][] };
 
-export const ENQUIRY_TOPICS = [
-  'general',
-  'group_booking',
-  'event_conference',
-  'corporate_account',
-  'complaint_feedback',
-  'booking_enquiry',
-] as const;
-export type EnquiryTopic = (typeof ENQUIRY_TOPICS)[number];
-
-/** The topics shown in the contact form's dropdown. The booking enquiry form uses its own topic. */
-export const CONTACT_TOPICS = ENQUIRY_TOPICS.filter(
-  (t): t is Exclude<EnquiryTopic, 'booking_enquiry'> => t !== 'booking_enquiry',
-);
+export type EnquiryTopic =
+  | 'general'
+  | 'group_booking'
+  | 'event_conference'
+  | 'corporate_account'
+  | 'complaint_feedback'
+  | 'booking_enquiry';
 
 export interface PublicPhone {
   label: string;
@@ -47,7 +40,7 @@ export interface SocialLink {
 }
 
 /** Hotel settings used across the content pages. Values in [brackets] are placeholders. */
-export interface HotelSettings {
+export interface HotelContentSettings {
   displayName: string;
   yearEstablished: number | null;
   roomCount: number | null;
@@ -120,15 +113,16 @@ export interface SitePage {
   ogImage: ImageAsset | null;
 }
 
-export const POLICY_SLUGS = [
-  'terms',
-  'privacy',
-  'cancellation-policy',
-  'house-rules',
-] as const;
-export type PolicySlug = (typeof POLICY_SLUGS)[number];
+export type PolicySlug =
+  'terms' | 'privacy' | 'cancellation-policy' | 'house-rules';
 
 /** site_pages rows that are policies. Carries a summary card and an updated_at date. */
+export interface PolicyHeading {
+  id: string;
+  text: string;
+  level: 2 | 3;
+}
+
 export interface PolicyPage {
   slug: PolicySlug;
   title: string;
@@ -209,15 +203,8 @@ export interface Facility {
   sortOrder: number;
 }
 
-export const GALLERY_CATEGORIES = [
-  'rooms',
-  'facilities',
-  'exterior',
-  'dining',
-  'events',
-  'surroundings',
-] as const;
-export type GalleryCategory = (typeof GALLERY_CATEGORIES)[number];
+export type GalleryCategory =
+  'rooms' | 'facilities' | 'exterior' | 'dining' | 'events' | 'surroundings';
 
 export interface GalleryImageRecord {
   id: string;

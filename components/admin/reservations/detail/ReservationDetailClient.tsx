@@ -13,7 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { AdminError, AdminLoading } from '@/components/admin/AdminStates';
 import { Button } from '@/components/ui/button';
-import type { AdminRole, Permission } from '@/lib/auth/permissions';
+import type { AdminRole, Permission } from '@/types/auth.types';
 import type {
   ReservationDetail,
   ReservationNeighbors,

@@ -16,12 +16,18 @@ import {
   roomTypes,
   staffUsers,
 } from '@/db/schema';
-import type { AdminRole } from '@/lib/auth/permissions';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
-import { addDays, fromISO, ISODate, nightsBetween } from '@/lib/dates';
+import { addDays, fromISO, nightsBetween } from '@/lib/dates';
 import { createReference } from '@/lib/db/reference';
 import { findAvailableRoom } from '@/lib/db/repositories/rooms.repo';
+import {
+  computeBalanceDue,
+  computePaymentState,
+} from '@/lib/reservations/payment-state';
+import type { AdminRole } from '@/types/auth.types';
+import type { ISODate } from '@/types/dates.types';
 import type {
+  AdminAllowedActions,
   AdminCancelInput,
   AdminChangeDatesInput,
   AdminCreateReservationInput,
@@ -29,7 +35,6 @@ import type {
   AdminNoShowInput,
   AdminRecordPaymentInput,
   AdminRefundInput,
-  AllowedActions,
   ReservationAlertFlags,
   ReservationAuditEntry,
   ReservationDetail,
@@ -42,10 +47,6 @@ import type {
   ReservationPolicySnapshot,
   ReservationsListQueryParams,
   ReservationStatusHistoryItem,
-} from '@/types/reservation.types';
-import {
-  computeBalanceDue,
-  computePaymentState,
 } from '@/types/reservation.types';
 
 export async function getFilterOptions() {
@@ -323,7 +324,7 @@ export function computeAllowedActions(
   today: ISODate,
   hasPendingProof: boolean,
   balanceMinor: number,
-): AllowedActions {
+): AdminAllowedActions {
   const isManagerOrOwner = role === 'owner' || role === 'manager';
   const isPending = res.status === 'pending';
   const isConfirmed = res.status === 'confirmed';

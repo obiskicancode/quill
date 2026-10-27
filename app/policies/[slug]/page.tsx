@@ -10,9 +10,10 @@ import {
 } from '@/components/policies/PolicySummary';
 import { PolicyToc } from '@/components/policies/PolicyToc';
 import { PrintButton } from '@/components/policies/PrintButton';
+import { POLICY_SLUGS } from '@/constants/content';
 import { getPolicyPage, getPolicySettings } from '@/lib/content/data';
 import { policyHeadings } from '@/lib/content/rich';
-import { POLICY_SLUGS, type PolicySlug } from '@/types/content.types';
+import type { PolicySlug } from '@/types/content.types';
 
 const isPolicySlug = (s: string): s is PolicySlug =>
   (POLICY_SLUGS as readonly string[]).includes(s);

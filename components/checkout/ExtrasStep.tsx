@@ -1,8 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
-import { unitLabels } from '@/lib/format';
+import { formatMinor, unitLabels } from '@/lib/format';
 import type { ExtraItem } from '@/types/checkout.types';
-import { formatMinor } from '@/types/stay.types';
 
 import { GuestStepper } from '../GuestStepper';
 import { EASE_OUT } from '../motion/variants';

@@ -5,10 +5,8 @@ import { hotelClock } from '@/lib/dates';
 import { getDashboardOccupancy } from '@/lib/db/repositories/dashboard.repo';
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import {
-  dashboardOccupancyQuerySchema,
-  type DashboardOccupancyResponse,
-} from '@/types/dashboard.types';
+import { dashboardOccupancyQuerySchema } from '@/schemas/dashboard.schema';
+import type { DashboardOccupancyResponse } from '@/types/dashboard.types';
 
 export const dynamic = 'force-dynamic';
 

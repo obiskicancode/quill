@@ -110,7 +110,7 @@ export function AuditDetailDrawer({
                 <span className="text-muted-foreground block">
                   User Agent (Owner Only)
                 </span>
-                <span className="text-muted-foreground block truncate font-mono text-[11px]">
+                <span className="text-muted-foreground block truncate font-mono text-[0.6875rem]">
                   {audit.userAgent}
                 </span>
               </div>
@@ -153,13 +153,13 @@ export function AuditDetailDrawer({
                     </div>
                     <div className="text-caption grid grid-cols-2 gap-2 font-mono">
                       <div className="bg-destructive/5 border-destructive/20 text-destructive rounded border p-2 wrap-break-word">
-                        <span className="text-muted-foreground mb-0.5 block text-[10px] font-bold uppercase">
+                        <span className="text-muted-foreground mb-0.5 block text-[0.625rem] font-bold uppercase">
                           Before:
                         </span>
                         {diff.before}
                       </div>
                       <div className="bg-success/5 border-success/20 text-success rounded border p-2 wrap-break-word">
-                        <span className="text-muted-foreground mb-0.5 block text-[10px] font-bold uppercase">
+                        <span className="text-muted-foreground mb-0.5 block text-[0.625rem] font-bold uppercase">
                           After:
                         </span>
                         {diff.after}

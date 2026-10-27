@@ -5,10 +5,8 @@ import { hotelClock } from '@/lib/dates';
 import { getReservationNeighbors } from '@/lib/db/repositories/reservations-admin.repo';
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import {
-  reservationsListQuerySchema,
-  type ReservationNeighbors,
-} from '@/types/reservation.types';
+import { reservationsListQuerySchema } from '@/schemas/reservation.schema';
+import type { ReservationNeighbors } from '@/types/reservation.types';
 
 export const dynamic = 'force-dynamic';
 

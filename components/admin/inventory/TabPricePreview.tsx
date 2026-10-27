@@ -167,7 +167,7 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
                       ₦{minorToNaira(day.resolvedRateMinor)}
                     </span>
                     {hasRule && (
-                      <p className="text-brand truncate text-[10px]">
+                      <p className="text-brand truncate text-[0.625rem]">
                         {day.winningRule?.name}
                       </p>
                     )}

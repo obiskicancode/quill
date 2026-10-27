@@ -5,11 +5,11 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
-import type { GalleryImage } from '@/lib/rooms';
+import type { RoomGalleryImage } from '@/types/rooms.types';
 
 interface LightboxProps {
   roomName: string;
-  images: GalleryImage[];
+  images: RoomGalleryImage[];
   open: boolean;
   startIndex: number;
   onClose: () => void;

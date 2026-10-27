@@ -10,10 +10,11 @@ import {
   MAX_ADULTS,
   MAX_CHILDREN,
   totalGuests,
-  type RoomQuery,
 } from '@/lib/rooms';
+import type { DateRange } from '@/types/dates.types';
+import type { RoomQuery } from '@/types/rooms.types';
 
-import { DatePicker, type DateRange } from '../DatePicker';
+import { DatePicker } from '../DatePicker';
 import { GuestStepper } from '../GuestStepper';
 import { Button } from '../ui/button';
 import {
@@ -151,7 +152,7 @@ export function StaySelector({
               aria-expanded={panel === 'dates'}
               aria-controls={ids.dates}
               onClick={(e) => trigger('dates', e)}
-              className={`${field} after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-px ${panel === 'dates' ? 'bg-paper' : ''}`}
+              className={`${field} after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-[0.0625rem] ${panel === 'dates' ? 'bg-paper' : ''}`}
             >
               <CalendarDays className="text-brand-ink size-5" aria-hidden />
               <span>
@@ -170,7 +171,7 @@ export function StaySelector({
               aria-expanded={panel === 'dates'}
               aria-controls={ids.dates}
               onClick={(e) => trigger('dates', e)}
-              className={`${field} after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-px ${panel === 'dates' ? 'bg-paper' : ''}`}
+              className={`${field} after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-[0.0625rem] ${panel === 'dates' ? 'bg-paper' : ''}`}
             >
               <CalendarDays className="text-brand-ink size-5" aria-hidden />
               <span>

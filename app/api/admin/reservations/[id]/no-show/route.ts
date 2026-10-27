@@ -9,7 +9,7 @@ import {
 import { markReservationNoShow } from '@/lib/db/repositories/reservations-admin.repo';
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminNoShowSchema } from '@/types/reservation.types';
+import { adminNoShowSchema } from '@/schemas/reservation.schema';
 
 export const dynamic = 'force-dynamic';
 

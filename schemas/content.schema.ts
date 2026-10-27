@@ -1,9 +1,10 @@
 import { z } from 'zod';
 
+import { ENQUIRY_TOPICS } from '@/constants/content';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { normalizePhone } from '@/schemas/checkout.schema';
-import { ENQUIRY_TOPICS, type EnquiryTopic } from '@/types/content.types';
+import type { EnquiryTopic } from '@/types/content.types';
 
 /** Shared by the contact form (inline validation) and POST /api/enquiries (the real check). */
 

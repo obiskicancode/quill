@@ -1,8 +1,8 @@
 import type { PolicySnapshot } from '@/types/booking.types';
 import type { PaymentMethod, PaymentMode } from '@/types/checkout.types';
+import type { ISODate } from '@/types/dates.types';
 import type { RefundResult } from '@/types/manage.types';
 
-import type { ISODate } from '../dates';
 import { formatDeadline } from '../format';
 
 /**

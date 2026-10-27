@@ -6,7 +6,7 @@ import {
   listAdminAmenitiesWithUsage,
 } from '@/lib/db/repositories/inventory-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { AdminAmenityInputSchema } from '@/types/inventory.types';
+import { AdminAmenityInputSchema } from '@/schemas/inventory.schema';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,5 +1,5 @@
 import { formatNaira } from '@/lib/format';
-import type { RoomAvailability, RoomType } from '@/lib/rooms';
+import type { RoomAvailability, RoomType } from '@/types/rooms.types';
 
 interface PriceBlockProps {
   room: Pick<RoomType, 'showPrice' | 'basePriceNgn' | 'taxesIncluded'>;

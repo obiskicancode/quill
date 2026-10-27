@@ -3,6 +3,7 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { detailsPatchSchema } from '@/schemas/checkout.schema';
 import type { CancelRequest, DetailsRequest } from '@/schemas/manage.schema';
 import type { CheckoutBreakdown } from '@/types/checkout.types';
+import type { Clock, ISODate } from '@/types/dates.types';
 import type {
   CancellationPreview,
   ChangeQuoteResponse,
@@ -25,7 +26,7 @@ import {
   type StoredReservation,
 } from '../booking/store';
 import { buildCheckoutQuote } from '../checkout/quote';
-import { nightsBetween, type Clock, type ISODate } from '../dates';
+import { nightsBetween } from '../dates';
 import { getPaymentProvider, isPaymentProviderId } from '../payments';
 import { formatRange } from '../rooms';
 import { getPricingSettings, getRoomDetail } from '../rooms/detail';

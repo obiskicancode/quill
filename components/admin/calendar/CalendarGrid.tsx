@@ -226,14 +226,14 @@ export function CalendarGrid({
                             : 'bg-muted text-ink'
                       } ${monthBoundary ? 'border-l-ink/40 border-l-2' : ''}`}
                     >
-                      <span className="text-muted-foreground font-sans text-[11px] font-medium tracking-wider uppercase">
+                      <span className="text-muted-foreground font-sans text-[0.6875rem] font-medium tracking-wider uppercase">
                         {getDayOfWeek(date)}
                       </span>
                       <span className="text-small font-mono font-semibold">
                         {date.slice(8)}
                       </span>
                       {isToday && (
-                        <span className="rounded-control bg-primary text-primary-foreground mt-0.5 px-1 text-[9px] font-bold">
+                        <span className="rounded-control bg-primary text-primary-foreground mt-0.5 px-1 text-[0.5625rem] font-bold">
                           TODAY
                         </span>
                       )}
@@ -294,7 +294,7 @@ export function CalendarGrid({
                           return (
                             <div
                               key={date}
-                              className="border-line/40 flex w-24 shrink-0 items-center justify-center border-r px-1 py-1 font-mono text-[11px]"
+                              className="border-line/40 flex w-24 shrink-0 items-center justify-center border-r px-1 py-1 font-mono text-[0.6875rem]"
                             >
                               <span
                                 className={`py-0.2 rounded-control px-1 ${
@@ -336,13 +336,13 @@ export function CalendarGrid({
                                     </span>
                                   )}
                                 </div>
-                                <span className="text-muted-foreground text-[11px]">
+                                <span className="text-muted-foreground text-[0.6875rem]">
                                   {room.roomTypeName}
                                 </span>
                               </div>
 
                               {isOutOfService && (
-                                <span className="rounded-control bg-primary/15 text-brand-ink px-1.5 py-0.5 text-[10px] font-semibold">
+                                <span className="rounded-control bg-primary/15 text-brand-ink px-1.5 py-0.5 text-[0.625rem] font-semibold">
                                   Out of Service
                                 </span>
                               )}
@@ -452,7 +452,7 @@ export function CalendarGrid({
                                             {res.guestName}
                                           </span>
                                           {spanNights >= 2 && (
-                                            <span className="shrink-0 font-mono text-[10px] opacity-80">
+                                            <span className="shrink-0 font-mono text-[0.625rem] opacity-80">
                                               ({res.reference})
                                             </span>
                                           )}
@@ -460,7 +460,7 @@ export function CalendarGrid({
 
                                         {/* Hold expiration warning for pending */}
                                         {res.status === 'pending' && (
-                                          <span className="ml-1 flex shrink-0 items-center gap-0.5 font-mono text-[10px] font-bold">
+                                          <span className="ml-1 flex shrink-0 items-center gap-0.5 font-mono text-[0.625rem] font-bold">
                                             <Clock className="size-3 shrink-0" />
                                             {spanNights >= 2 && (
                                               <span>Held</span>
@@ -478,13 +478,13 @@ export function CalendarGrid({
                                             ({res.reference})
                                           </span>
                                         </p>
-                                        <p className="text-[11px] text-white/80">
+                                        <p className="text-[0.6875rem] text-white/80">
                                           Room #{room.roomNumber} •{' '}
                                           {formatShort(res.checkIn)} →{' '}
                                           {formatShort(res.checkOut)} (
                                           {spanNights}n)
                                         </p>
-                                        <p className="text-primary mt-0.5 text-[10px] capitalize">
+                                        <p className="text-primary mt-0.5 text-[0.625rem] capitalize">
                                           Status: {res.status.replace('_', ' ')}
                                         </p>
                                       </TooltipContent>
@@ -551,7 +551,7 @@ export function CalendarGrid({
                                             {block.reason.replace('_', ' ')}
                                           </span>
                                           {spanNights >= 2 && block.notes && (
-                                            <span className="text-destructive/80 block min-w-0 truncate text-[11px]">
+                                            <span className="text-destructive/80 block min-w-0 truncate text-[0.6875rem]">
                                               • {block.notes}
                                             </span>
                                           )}
@@ -565,13 +565,13 @@ export function CalendarGrid({
                                           Blocked:{' '}
                                           {block.reason.replace('_', ' ')}
                                         </p>
-                                        <p className="text-[11px] text-white/80">
+                                        <p className="text-[0.6875rem] text-white/80">
                                           Room #{room.roomNumber} •{' '}
                                           {formatShort(block.startDate)} →{' '}
                                           {formatShort(block.endDate)}
                                         </p>
                                         {block.notes && (
-                                          <p className="mt-0.5 text-[11px] text-white/70 italic">
+                                          <p className="mt-0.5 text-[0.6875rem] text-white/70 italic">
                                             {block.notes}
                                           </p>
                                         )}
@@ -692,7 +692,7 @@ export function CalendarGrid({
             </div>
           </div>
 
-          <div className="text-muted-foreground font-mono text-[11px]">
+          <div className="text-muted-foreground font-mono text-[0.6875rem]">
             Turnover: Adjacent bars separated by turnover divider • Check-out
             day is free for check-in
           </div>

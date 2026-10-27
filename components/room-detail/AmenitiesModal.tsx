@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 
-import { roomAmenityLabels, type RoomAmenityKey } from '@/lib/rooms';
+import { roomAmenityLabels } from '@/lib/rooms';
+import type { RoomAmenityKey } from '@/types/rooms.types';
 
 import { RoomAmenityIcon } from '../rooms/RoomAmenityIcon';
 import { Button } from '../ui/button';

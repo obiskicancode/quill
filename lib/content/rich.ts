@@ -1,4 +1,4 @@
-import type { RichBlock } from '@/types/content.types';
+import type { PolicyHeading, RichBlock } from '@/types/content.types';
 
 /** A stable id for a heading, so table-of-contents anchors link to it. */
 export function headingId(text: string): string {
@@ -8,12 +8,6 @@ export function headingId(text: string): string {
     .trim()
     .replace(/\s+/g, '-')
     .slice(0, 60);
-}
-
-export interface PolicyHeading {
-  id: string;
-  text: string;
-  level: 2 | 3;
 }
 
 /**

@@ -1,4 +1,4 @@
-import type { AdminRole } from '@/lib/auth/permissions';
+import type { AdminRole } from '@/types/auth.types';
 
 export interface GuardRailResult {
   ok: boolean;

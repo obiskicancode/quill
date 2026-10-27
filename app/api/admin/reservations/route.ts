@@ -17,8 +17,8 @@ import { apiFail, apiOk } from '@/lib/http/envelope';
 import {
   adminCreateReservationSchema,
   reservationsListQuerySchema,
-  type ReservationsListResponse,
-} from '@/types/reservation.types';
+} from '@/schemas/reservation.schema';
+import type { ReservationsListResponse } from '@/types/reservation.types';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,7 +1,6 @@
-import { formatDeadline } from '@/lib/format';
+import { formatDeadline, formatMinor } from '@/lib/format';
 import type { GuestReservation } from '@/types/booking.types';
 import type { CancellationPreview } from '@/types/manage.types';
-import { formatMinor } from '@/types/stay.types';
 
 import { TextLink } from '../ui/TextLink';
 

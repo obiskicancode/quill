@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { CANCEL_REASONS } from '@/constants/manage';
 import { detailsPatchSchema } from '@/schemas/checkout.schema';
-import { CANCEL_REASONS } from '@/types/manage.types';
 
 const key = z.string().min(16).max(64);
 const isoDate = z

@@ -12,7 +12,7 @@ import { apiFail, apiOk } from '@/lib/http/envelope';
 import {
   adminBlocksListQuerySchema,
   adminCreateBlockSchema,
-} from '@/types/calendar.types';
+} from '@/schemas/calendar.schema';
 
 export const dynamic = 'force-dynamic';
 

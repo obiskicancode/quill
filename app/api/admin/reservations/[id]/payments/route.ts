@@ -7,7 +7,7 @@ import {
 } from '@/lib/db/repositories/idempotency.repo';
 import { recordAdminPayment } from '@/lib/db/repositories/reservations-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminRecordPaymentSchema } from '@/types/reservation.types';
+import { adminRecordPaymentSchema } from '@/schemas/reservation.schema';
 
 export const dynamic = 'force-dynamic';
 

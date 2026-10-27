@@ -1,7 +1,7 @@
 import { guardAdminApi } from '@/lib/auth/guards';
 import { listWebhookEventsRepo } from '@/lib/db/repositories/payments-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { WebhookEventsQuerySchema } from '@/types/payments-admin.types';
+import { WebhookEventsQuerySchema } from '@/schemas/payments-admin.schema';
 
 export const dynamic = 'force-dynamic';
 

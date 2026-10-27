@@ -3,6 +3,7 @@ import type {
   CheckoutQuoteResponse,
   CheckoutSettings,
 } from '@/types/checkout.types';
+import type { RoomDetail } from '@/types/rooms.types';
 
 import {
   getHotelSettings,
@@ -10,7 +11,7 @@ import {
   getPolicySettings,
 } from '../content/data';
 import { paymentProviderLabel } from '../payments';
-import { getPricingSettings, type RoomDetail } from '../rooms/detail';
+import { getPricingSettings } from '../rooms/detail';
 
 export async function buildSnapshot(
   room: RoomDetail,

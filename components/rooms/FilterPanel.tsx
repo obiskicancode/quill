@@ -8,10 +8,8 @@ import {
   countActiveFilters,
   emptyFilters,
   filterAmenityOptions,
-  type BedType,
-  type FilterAmenity,
-  type RoomFilters,
 } from '@/lib/rooms';
+import type { BedType, FilterAmenity, RoomFilters } from '@/types/rooms.types';
 
 import { GuestStepper } from '../GuestStepper';
 import { StaggerGroup } from '../motion/StaggerGroup';

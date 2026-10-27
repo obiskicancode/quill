@@ -21,9 +21,10 @@ import {
   MAX_CHILDREN,
   validateSearch,
 } from '@/lib/rooms';
+import type { DateRange } from '@/types/dates.types';
 import type { SearchState } from '@/types/site.types';
 
-import { DatePicker, type DateRange } from './DatePicker';
+import { DatePicker } from './DatePicker';
 import { GuestStepper } from './GuestStepper';
 import { Button } from './ui/button';
 import {
@@ -69,7 +70,7 @@ function FieldButton({
         expanded ? 'bg-paper' : ''
       } ${invalid ? 'ring-destructive ring-2 ring-inset' : ''} ${
         separator
-          ? 'after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-px'
+          ? 'after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-[0.0625rem]'
           : ''
       }`}
     >

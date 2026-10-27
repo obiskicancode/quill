@@ -1,10 +1,9 @@
 'use client';
 
-import { unitLabels } from '@/lib/format';
+import { formatMinor, unitLabels } from '@/lib/format';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 import type { GuestReservation } from '@/types/booking.types';
-import { formatMinor } from '@/types/stay.types';
 
 import { StaggerGroup, StaggerItem } from '../motion';
 import { ButtonLink } from '../ui/button';

@@ -76,7 +76,7 @@ export function ProgressSteps({ steps }: { steps: StepInfo[] }) {
             {i < steps.length - 1 && (
               <span
                 aria-hidden
-                className={`h-px flex-1 transition-colors duration-300 motion-reduce:transition-none ${s.state === 'complete' ? 'bg-ink/40' : 'bg-line'}`}
+                className={`h-[0.0625rem] flex-1 transition-colors duration-300 motion-reduce:transition-none ${s.state === 'complete' ? 'bg-ink/40' : 'bg-line'}`}
               />
             )}
           </li>

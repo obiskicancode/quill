@@ -10,7 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { sortOptions, type SortKey } from '@/lib/rooms';
+import { sortOptions } from '@/lib/rooms';
+import type { SortKey } from '@/types/rooms.types';
 
 export function SortMenu({
   value,
@@ -39,7 +40,7 @@ export function SortMenu({
       >
         <SelectTrigger
           id={id}
-          className="bg-card hover:bg-paper min-h-11 min-w-[170px]"
+          className="bg-card hover:bg-paper min-h-11 min-w-[10.625rem]"
         >
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>

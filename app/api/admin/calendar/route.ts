@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server';
-import { z } from 'zod';
 
 import { db } from '@/db';
 import { hotelSettings } from '@/db/schema';
@@ -7,23 +6,9 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import { hotelClock } from '@/lib/dates';
 import { getCalendarData } from '@/lib/db/repositories/calendar-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
+import { adminCalendarQuerySchema } from '@/schemas/calendar.schema';
 
 export const dynamic = 'force-dynamic';
-
-const querySchema = z.object({
-  from: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .optional(),
-  days: z.coerce
-    .number()
-    .int()
-    .refine((n) => [14, 30, 60].includes(n), {
-      message: 'Days must be 14, 30, or 60.',
-    })
-    .default(14),
-  roomTypeId: z.string().uuid().optional(),
-});
 
 export async function GET(request: NextRequest) {
   const guard = await guardAdminApi(request, {
@@ -32,7 +17,7 @@ export async function GET(request: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const url = new URL(request.url);
-  const parsed = querySchema.safeParse({
+  const parsed = adminCalendarQuerySchema.safeParse({
     from: url.searchParams.get('from') || undefined,
     days: url.searchParams.get('days') || undefined,
     roomTypeId: url.searchParams.get('roomTypeId') || undefined,

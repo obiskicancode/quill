@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { AdminRole } from '@/lib/auth/permissions';
+import type { AdminRole } from '@/types/auth.types';
 import type { StaffInviteInput } from '@/types/staff-admin.types';
 
 const ROLE_OPTIONS = [

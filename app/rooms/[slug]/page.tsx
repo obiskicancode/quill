@@ -6,10 +6,7 @@ import { CtaBand } from '@/components/CtaBand';
 import { Reveal } from '@/components/motion/Reveal';
 import { AmenitiesSection } from '@/components/room-detail/AmenitiesSection';
 import { AskCard } from '@/components/room-detail/AskCard';
-import {
-  BookingCard,
-  type BookingRoom,
-} from '@/components/room-detail/BookingCard';
+import { BookingCard } from '@/components/room-detail/BookingCard';
 import { GoodToKnow } from '@/components/room-detail/GoodToKnow';
 import { KeyFacts } from '@/components/room-detail/KeyFacts';
 import { ReadMore } from '@/components/room-detail/ReadMore';
@@ -17,6 +14,7 @@ import { RoomGallery } from '@/components/room-detail/RoomGallery';
 import { RoomReviews } from '@/components/room-detail/RoomReviews';
 import { SimilarRooms } from '@/components/room-detail/SimilarRooms';
 import { TitleBlock } from '@/components/room-detail/TitleBlock';
+import { bookingHref, stayParams } from '@/lib/booking/links';
 import { getPublicSite } from '@/lib/content/data';
 import { hotelClock } from '@/lib/dates';
 import {
@@ -26,7 +24,6 @@ import {
   parseRoomQuery,
   roomAmenityLabels,
   stayHref,
-  type RoomDetail,
 } from '@/lib/rooms';
 import {
   getPricingSettings,
@@ -34,8 +31,10 @@ import {
   getSimilarRooms,
 } from '@/lib/rooms/detail';
 import { needsExtraBed, priceStay, validateStay } from '@/lib/rooms/pricing';
+import type { RoomBookingSummary } from '@/types/checkout.types';
+import type { RoomDetail } from '@/types/rooms.types';
 import type { SiteConfig } from '@/types/site.types';
-import { bookingHref, stayParams, type StayInput } from '@/types/stay.types';
+import type { StayInput } from '@/types/stay.types';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 interface PageProps {
@@ -143,7 +142,7 @@ export default async function RoomPage({ params, searchParams }: PageProps) {
     extraBed: paramsLike(sp).get('extraBed') === '0' ? false : needs,
   };
 
-  const bookingRoom: BookingRoom = {
+  const bookingRoom: RoomBookingSummary = {
     slug: room.slug,
     name: room.name,
     maxAdults: room.maxAdults,

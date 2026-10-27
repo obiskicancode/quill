@@ -11,6 +11,7 @@ import {
   loadProviderScript,
   newKey,
 } from '@/app/api/services/checkout.service';
+import { formatMinor } from '@/lib/format';
 import {
   checkProofFile,
   guestSchema,
@@ -19,10 +20,11 @@ import {
 } from '@/schemas/checkout.schema';
 import type {
   BankDetails,
+  CheckoutQuoteOk,
   CheckoutQuoteResponse,
   PaymentMethod,
+  ReservationRoomSummary,
 } from '@/types/checkout.types';
-import { formatMinor } from '@/types/stay.types';
 
 import { EASE_OUT } from '../motion/variants';
 import { Button } from '../ui/button';
@@ -42,12 +44,7 @@ import { DetailsStep, type GuestField } from './DetailsStep';
 import { ExtrasStep } from './ExtrasStep';
 import { PaymentStep } from './PaymentStep';
 import { ProgressSteps, type StepInfo } from './ProgressSteps';
-import {
-  MobileSummary,
-  SummaryCard,
-  type OkQuote,
-  type SummaryRoom,
-} from './SummaryCard';
+import { MobileSummary, SummaryCard } from './SummaryCard';
 import { useHoldCountdown } from './useHoldCountdown';
 
 const POLL_INTERVAL_MS = 2000;
@@ -70,7 +67,7 @@ interface ReservationState {
 }
 
 interface CheckoutFlowProps {
-  room: SummaryRoom & { slug: string };
+  room: ReservationRoomSummary & { slug: string };
   stay: { checkIn: string; checkOut: string; adults: number; children: number };
   initialQuote: CheckoutQuoteResponse;
   seenTotalMinor: number | null;
@@ -103,7 +100,7 @@ export function CheckoutFlow({
   // A guest returning from the payment provider has already accepted the price.
   const resumed = resumeReference !== null;
   const [accepted, setAccepted] = useState(resumed);
-  const ok: OkQuote | null = quote.status === 'ok' ? quote : null;
+  const ok: CheckoutQuoteOk | null = quote.status === 'ok' ? quote : null;
   const priceChange = ok?.priceChange && !accepted ? ok.priceChange : null;
 
   // --- form ---

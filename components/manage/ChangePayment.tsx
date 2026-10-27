@@ -8,12 +8,11 @@ import { useRef, useState } from 'react';
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { manageService } from '@/app/api/services/manage.service';
-import { formatCountdown } from '@/lib/format';
+import { formatCountdown, formatMinor } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import { checkProofFile, MAX_PROOF_BYTES } from '@/schemas/checkout.schema';
 import type { PaymentMethod } from '@/types/checkout.types';
 import type { PendingChangeView } from '@/types/manage.types';
-import { formatMinor } from '@/types/stay.types';
 
 import { Banner } from '../checkout/CheckoutStates';
 import { CopyButton } from '../checkout/PaymentStep';

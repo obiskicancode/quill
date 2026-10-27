@@ -1,9 +1,7 @@
-import type { AvailabilityMap } from '@/lib/rooms';
+import type { AvailabilityMap } from '@/types/rooms.types';
 import type { QuoteResponse } from '@/types/stay.types';
 
 import BaseService from './base.service';
-
-const enc = encodeURIComponent;
 
 export interface RoomQuoteParams {
   checkIn: string;
@@ -29,7 +27,7 @@ class StayService extends BaseService {
   }
 
   quote(slug: string, p: RoomQuoteParams) {
-    return this.httpGet<QuoteResponse>(`/${enc(slug)}/quote`, {
+    return this.httpGet<QuoteResponse>(`/${encodeURIComponent(slug)}/quote`, {
       params: {
         checkIn: p.checkIn,
         checkOut: p.checkOut,

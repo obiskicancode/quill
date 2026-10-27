@@ -3,7 +3,7 @@ import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
 import { markManualRefundPaidOutRepo } from '@/lib/db/repositories/payments-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
-import { ManualRefundPayoutInputSchema } from '@/types/payments-admin.types';
+import { ManualRefundPayoutInputSchema } from '@/schemas/payments-admin.schema';
 
 export const dynamic = 'force-dynamic';
 

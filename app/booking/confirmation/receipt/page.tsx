@@ -6,9 +6,9 @@ import { CheckoutShell } from '@/components/checkout/CheckoutShell';
 import { PriceBreakdown } from '@/components/room-detail/PriceBreakdown';
 import { getAccess } from '@/lib/booking/session';
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view';
+import { formatMinor } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import { referenceSchema } from '@/schemas/booking.schema';
-import { formatMinor } from '@/types/stay.types';
 
 import '../print.css';
 

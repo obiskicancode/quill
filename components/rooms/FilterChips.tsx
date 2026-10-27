@@ -4,12 +4,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 
 import { formatNaira } from '@/lib/format';
-import {
-  bedTypeLabels,
-  filterAmenityOptions,
-  type FilterAmenity,
-  type RoomFilters,
-} from '@/lib/rooms';
+import { bedTypeLabels, filterAmenityOptions } from '@/lib/rooms';
+import type { FilterAmenity, RoomFilters } from '@/types/rooms.types';
 
 import { spring } from '../motion/variants';
 import { Button } from '../ui/button';

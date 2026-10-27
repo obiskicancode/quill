@@ -1,5 +1,4 @@
-import type { ISODate } from '@/lib/dates';
-import { formatNaira } from '@/lib/format';
+import type { ISODate } from '@/types/dates.types';
 
 /** Shared by the server (pricing, API route) and the booking card. Money is integer minor units (kobo). */
 
@@ -64,24 +63,3 @@ export type QuoteResponse =
     }
   | { status: 'on-request' }
   | { status: 'invalid'; violations: Violation[] };
-
-export const formatMinor = (minor: number): string => formatNaira(minor / 100);
-
-export function stayParams(s: StayInput): URLSearchParams {
-  const p = new URLSearchParams();
-  if (s.checkIn && s.checkOut) {
-    p.set('checkIn', s.checkIn);
-    p.set('checkOut', s.checkOut);
-  }
-  p.set('adults', String(s.adults));
-  p.set('children', String(s.children));
-  return p;
-}
-
-/** Link into Checkout with the chosen room, dates, guests and extra bed. */
-export function bookingHref(base: string, slug: string, s: StayInput): string {
-  const p = stayParams(s);
-  p.set('room', slug);
-  if (s.extraBed) p.set('extraBed', '1');
-  return `${base}?${p.toString()}`;
-}

@@ -213,7 +213,7 @@ export function AmenityDialog({
                     title={item.label}
                   >
                     <IconComponent className="size-5" />
-                    <span className="mt-1 truncate text-[10px]">
+                    <span className="mt-1 truncate text-[0.625rem]">
                       {item.label}
                     </span>
                   </Button>

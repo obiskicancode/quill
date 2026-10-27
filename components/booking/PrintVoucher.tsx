@@ -1,7 +1,6 @@
-import { formatDeadline } from '@/lib/format';
+import { formatDeadline, formatMinor } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import type { GuestReservation } from '@/types/booking.types';
-import { formatMinor } from '@/types/stay.types';
 
 /**
  * Shown only when printing (see print.css): a clean one-page voucher with the reference, dates, address and policies.

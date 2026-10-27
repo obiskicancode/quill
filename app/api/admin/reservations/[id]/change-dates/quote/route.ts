@@ -7,7 +7,7 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
 import { listAvailableRoomsForStay } from '@/lib/db/repositories/reservations-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminChangeDatesQuoteSchema } from '@/types/reservation.types';
+import { adminChangeDatesQuoteSchema } from '@/schemas/reservation.schema';
 
 export const dynamic = 'force-dynamic';
 

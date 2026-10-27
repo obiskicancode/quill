@@ -15,7 +15,7 @@ import {
 } from '@/db/schema';
 import { addDays, todayISO } from '@/lib/dates';
 import { createAuditLog } from '@/lib/db/repositories/audit.repo';
-import { resolveNightlyRate, type RateRuleLike } from '@/lib/rate-resolution';
+import { resolveNightlyRate } from '@/lib/rate-resolution';
 import type {
   AdminAmenity,
   AdminAmenityInput,
@@ -31,6 +31,7 @@ import type {
   AdminRoomUnit,
   AdminRoomUnitInput,
   PriceCalendarDay,
+  RateRuleInput,
   RoomImpactCheckResponse,
 } from '@/types/inventory.types';
 
@@ -1108,7 +1109,7 @@ export async function getPricingCalendar(params: {
       ),
     );
 
-  const activeRules: RateRuleLike[] = activeRulesRaw.map((r) => ({
+  const activeRules: RateRuleInput[] = activeRulesRaw.map((r) => ({
     id: r.id,
     roomTypeId: r.roomTypeId,
     name: r.name,

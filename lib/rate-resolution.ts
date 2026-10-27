@@ -1,34 +1,8 @@
 import { fromISO } from '@/lib/dates';
-
-export interface RateRuleLike {
-  id: string;
-  roomTypeId: string | null;
-  name: string;
-  startDate: string;
-  endDate: string;
-  minNights: number | null;
-  maxNights: number | null;
-  daysOfWeek: number[] | null;
-  adjustmentType: 'fixed_price' | 'percent_markup' | 'amount_markup';
-  adjustmentValue: number;
-  priority: number;
-  isActive: boolean;
-  createdAt?: string | Date;
-}
-
-export interface NightRateResolution {
-  date: string;
-  resolvedRateMinor: number;
-  baseRateMinor: number;
-  isWeekend: boolean;
-  winningRule: {
-    id: string;
-    name: string;
-    adjustmentType: 'fixed_price' | 'percent_markup' | 'amount_markup';
-    adjustmentValue: number;
-    priority: number;
-  } | null;
-}
+import type {
+  NightRateResolution,
+  RateRuleInput,
+} from '@/types/inventory.types';
 
 /**
  * Converts a Naira string or number (e.g. "85,000" or "85000.50" or 85000) into integer minor units (kobo).
@@ -93,7 +67,7 @@ export function resolveNightlyRate(params: {
   basePriceMinor: number;
   weekendPriceMinor: number | null;
   stayNights?: number;
-  activeRules: RateRuleLike[];
+  activeRules: RateRuleInput[];
 }): NightRateResolution {
   const {
     roomTypeId,

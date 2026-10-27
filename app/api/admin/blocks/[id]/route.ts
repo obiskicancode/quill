@@ -9,7 +9,7 @@ import {
   updateRoomBlockAdmin,
 } from '@/lib/db/repositories/calendar-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminUpdateBlockSchema } from '@/types/calendar.types';
+import { adminUpdateBlockSchema } from '@/schemas/calendar.schema';
 
 export const dynamic = 'force-dynamic';
 

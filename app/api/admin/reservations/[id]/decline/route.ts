@@ -7,7 +7,7 @@ import {
 } from '@/lib/db/repositories/idempotency.repo';
 import { approveOrDeclineBooking } from '@/lib/db/repositories/reservations-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminApproveDeclineSchema } from '@/types/reservation.types';
+import { adminApproveDeclineSchema } from '@/schemas/reservation.schema';
 
 export const dynamic = 'force-dynamic';
 

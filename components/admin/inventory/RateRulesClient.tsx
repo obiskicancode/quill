@@ -137,7 +137,7 @@ export function RateRulesClient({
             >
               <SelectTrigger
                 aria-label="Filter by room type"
-                className="w-[160px]"
+                className="w-[10rem]"
               >
                 <SelectValue placeholder="All Room Types" />
               </SelectTrigger>
@@ -163,7 +163,7 @@ export function RateRulesClient({
               if (val) setStatusFilter(val as 'all' | 'active' | 'inactive');
             }}
           >
-            <SelectTrigger aria-label="Filter by status" className="w-[140px]">
+            <SelectTrigger aria-label="Filter by status" className="w-35">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>

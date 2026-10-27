@@ -1,28 +1,22 @@
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type {
+  CheckoutOverrides,
   CheckoutSettings,
   ExtraItem,
   PaymentMethod,
   PaymentMode,
   PaymentProvider,
 } from '@/types/checkout.types';
+import type { HotelPricingSettings } from '@/types/rooms.types';
 
 import { mapExtra } from '../db/mappers/content.mapper';
 import { getBankAccountRows, getHotelRow } from '../db/queries/content-data';
 import { listExtras } from '../db/repositories/extras.repo';
 import { getActivePaymentProviderId } from '../payments';
-import { getPricingSettings, type HotelSettings } from '../rooms/detail';
-
-type ManageSettings = {
-  paymentMode?: PaymentMode;
-  discountPercent?: number;
-  discountLabel?: string;
-  levyPercent?: number;
-  levyLabel?: string;
-};
+import { getPricingSettings } from '../rooms/detail';
 
 export async function getCheckoutSettings(
-  hotelOverride?: HotelSettings,
+  hotelOverride?: HotelPricingSettings,
 ): Promise<CheckoutSettings> {
   const [hotel, row, extraRows, bankRows] = await Promise.all([
     hotelOverride ? Promise.resolve(hotelOverride) : getPricingSettings(),
@@ -39,7 +33,7 @@ export async function getCheckoutSettings(
   if (row.allowOnlinePayment) methods.push('online');
   if (row.allowBankTransfer) methods.push('bank_transfer');
   const provider: PaymentProvider = getActivePaymentProviderId();
-  const manage = (row.manageSettings ?? {}) as ManageSettings;
+  const manage = (row.manageSettings ?? {}) as CheckoutOverrides;
   const paymentMode: PaymentMode = manage.paymentMode ?? 'full';
 
   return {
@@ -75,5 +69,3 @@ export async function getCheckoutSettings(
     freeCancellationHours: hotel.freeCancellationHours,
   };
 }
-
-export type { ManageSettings };

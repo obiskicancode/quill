@@ -22,8 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { AdminRole } from '@/lib/auth/permissions';
 import { addDays, formatShort, nightsBetween } from '@/lib/dates';
+import type { AdminRole } from '@/types/auth.types';
 import type {
   BlockCheckConflict,
   BlockReason,
@@ -356,7 +356,7 @@ export function BlockModal({
           </div>
 
           {!isEditing && (
-            <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1 text-[11px]">
+            <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1 text-[0.6875rem]">
               <span>Quick select:</span>
               {roomTypes.map((rt) => (
                 <Button
@@ -365,7 +365,7 @@ export function BlockModal({
                   variant="outline"
                   size="sm"
                   onClick={() => handleSelectAllOfType(rt.id)}
-                  className="h-6 px-1.5 py-0.5 text-[11px]"
+                  className="h-6 px-1.5 py-0.5 text-[0.6875rem]"
                 >
                   All {rt.name}
                 </Button>
@@ -563,14 +563,14 @@ export function BlockModal({
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground font-mono text-[11px]">
+                      <span className="text-muted-foreground font-mono text-[0.6875rem]">
                         {formatShort(c.startDate)} → {formatShort(c.endDate)}
                       </span>
                       {c.type === 'reservation' && (
                         <Link
                           href={`/admin/reservations/${c.id}`}
                           target="_blank"
-                          className="text-ink text-[11px] font-medium underline"
+                          className="text-ink text-[0.6875rem] font-medium underline"
                         >
                           View
                         </Link>

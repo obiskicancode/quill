@@ -15,15 +15,10 @@ import {
   startOfMonth,
   sundayIndex,
   todayISO,
-  type ISODate,
 } from '@/lib/dates';
+import type { DateRange, ISODate } from '@/types/dates.types';
 
 import { Button } from './ui/button';
-
-export interface DateRange {
-  checkIn: ISODate | null;
-  checkOut: ISODate | null;
-}
 
 interface DatePickerProps {
   value: DateRange;

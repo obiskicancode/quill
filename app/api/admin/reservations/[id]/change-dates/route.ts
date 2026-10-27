@@ -7,7 +7,7 @@ import {
 } from '@/lib/db/repositories/idempotency.repo';
 import { changeReservationDates } from '@/lib/db/repositories/reservations-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminChangeDatesSchema } from '@/types/reservation.types';
+import { adminChangeDatesSchema } from '@/schemas/reservation.schema';
 
 export const dynamic = 'force-dynamic';
 

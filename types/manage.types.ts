@@ -1,11 +1,11 @@
-import type { ISODate } from '@/lib/dates';
-import type { ApiErrorBody } from '@/types/base.types';
+import type { ActionGate, ApiErrorBody } from '@/types/base.types';
 import type {
   BankDetails,
   CheckoutBreakdown,
   PaymentMethod,
   PolicySummary,
 } from '@/types/checkout.types';
+import type { ISODate } from '@/types/dates.types';
 import type { Violation } from '@/types/stay.types';
 
 /** Manage-booking contract. Money is integer minor units (kobo). The server decides every policy, refund, price and availability. */
@@ -39,17 +39,23 @@ export interface CancellationPreview extends RefundResult {
 }
 
 // ---------- allowed actions ----------
-export interface ActionAllowance {
-  allowed: boolean;
-  /** Plain-language reason when not allowed. */
-  reason?: string;
+/** Hotel rules for managing a booking, read from hotel settings. */
+export interface ManageSettings {
+  /** Dates can be changed online until this many hours before check-in. */
+  minNoticeHours: number;
+  /** How many times a guest may change dates online. */
+  maxChanges: number;
+  refundTimeline: string;
+  manualRefundTimeline: string;
+  quoteTtlMinutes: number;
+  holdSeconds: number;
 }
 
-export interface AllowedActions {
-  canCancel: ActionAllowance;
-  canChangeDates: ActionAllowance;
-  canEditDetails: ActionAllowance;
-  canAddExtras: ActionAllowance;
+export interface GuestAllowedActions {
+  canCancel: ActionGate;
+  canChangeDates: ActionGate;
+  canEditDetails: ActionGate;
+  canAddExtras: ActionGate;
   changesRemaining: number;
 }
 
@@ -145,7 +151,7 @@ export interface ManageData {
   /** Send back as the X-CSRF-Token header on every change. */
   csrfToken: string;
   sessionExpiresAt: string;
-  allowed: AllowedActions;
+  allowed: GuestAllowedActions;
   timeline: TimelineEntry[];
   /** What would happen if the guest cancelled right now. Null when the booking cannot be cancelled. */
   cancellation: CancellationPreview | null;
@@ -178,14 +184,6 @@ export interface ManageApiError extends ApiErrorBody {
   message: string;
   preview?: CancellationPreview;
 }
-
-export const CANCEL_REASONS = [
-  'Change of plans',
-  'Found another place',
-  'Travel disrupted',
-  'Booked by mistake',
-  'Prefer not to say',
-] as const;
 
 export interface ChangeQuoteRequest {
   checkIn: ISODate;

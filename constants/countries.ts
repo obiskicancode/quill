@@ -1,11 +1,5 @@
 /** Sample list. Extend it, or swap in a full ISO list. `dial` is the country calling code without "+". */
-export interface Country {
-  code: string;
-  name: string;
-  dial: string;
-}
-
-export const countries: Country[] = [
+export const countries = [
   { code: 'NG', name: 'Nigeria', dial: '234' },
   { code: 'GH', name: 'Ghana', dial: '233' },
   { code: 'KE', name: 'Kenya', dial: '254' },
@@ -20,7 +14,7 @@ export const countries: Country[] = [
   { code: 'DE', name: 'Germany', dial: '49' },
   { code: 'IN', name: 'India', dial: '91' },
   { code: 'CN', name: 'China', dial: '86' },
-];
+] as const;
 
 export const dialFor = (code: string): string =>
-  countries.find((c) => c.code === code)?.dial ?? '234';
+  countries.find((country) => country.code === code)?.dial ?? '234';

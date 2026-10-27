@@ -1,20 +1,11 @@
-import { z } from 'zod';
+import type {
+  AdminBlockCheckInput as AdminBlockCheckInputSchema,
+  AdminBlocksListQueryInput as AdminBlocksListQueryInputSchema,
+  AdminCreateBlockInput as AdminCreateBlockInputSchema,
+  AdminUpdateBlockInput as AdminUpdateBlockInputSchema,
+} from '@/schemas/calendar.schema';
 
 export type BlockReason = 'maintenance' | 'owner_hold' | 'renovation' | 'other';
-
-export const BLOCK_REASONS: BlockReason[] = [
-  'maintenance',
-  'owner_hold',
-  'renovation',
-  'other',
-];
-
-export const BLOCK_REASON_LABELS: Record<BlockReason, string> = {
-  maintenance: 'Maintenance',
-  owner_hold: 'Owner Hold',
-  renovation: 'Renovation',
-  other: 'Other Block',
-};
 
 export interface CalendarRoom {
   id: string;
@@ -167,99 +158,7 @@ export interface RoomBlocksListResponse {
   totalPages: number;
 }
 
-// ==================== ZOD SCHEMAS ====================
-
-const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-
-export const adminBlockCheckSchema = z
-  .object({
-    roomIds: z.array(z.string().uuid()).min(1, 'Select at least one room.'),
-    startDate: z
-      .string()
-      .regex(dateRegex, 'Invalid start date format (YYYY-MM-DD)'),
-    endDate: z
-      .string()
-      .regex(dateRegex, 'Invalid end date format (YYYY-MM-DD)'),
-    excludeBlockId: z.string().uuid().optional(),
-  })
-  .refine((data) => data.endDate > data.startDate, {
-    message: 'End date must be after start date.',
-    path: ['endDate'],
-  });
-
-export type AdminBlockCheckInput = z.infer<typeof adminBlockCheckSchema>;
-
-export const adminCreateBlockSchema = z
-  .object({
-    roomIds: z.array(z.string().uuid()).min(1, 'Select at least one room.'),
-    startDate: z
-      .string()
-      .regex(dateRegex, 'Invalid start date format (YYYY-MM-DD)'),
-    endDate: z
-      .string()
-      .regex(dateRegex, 'Invalid end date format (YYYY-MM-DD)'),
-    reason: z.enum([
-      'maintenance',
-      'owner_hold',
-      'renovation',
-      'other',
-    ] as const),
-    notes: z
-      .string()
-      .max(1000, 'Notes must be 1,000 characters or less.')
-      .optional(),
-    backdateReason: z.string().max(500).optional(),
-    idempotencyKey: z.string().min(1, 'Missing idempotency key.'),
-  })
-  .refine((data) => data.endDate > data.startDate, {
-    message: 'End date must be after start date.',
-    path: ['endDate'],
-  });
-
-export type AdminCreateBlockInput = z.infer<typeof adminCreateBlockSchema>;
-
-export const adminUpdateBlockSchema = z
-  .object({
-    roomId: z.string().uuid('Invalid room ID.'),
-    startDate: z
-      .string()
-      .regex(dateRegex, 'Invalid start date format (YYYY-MM-DD)'),
-    endDate: z
-      .string()
-      .regex(dateRegex, 'Invalid end date format (YYYY-MM-DD)'),
-    reason: z.enum([
-      'maintenance',
-      'owner_hold',
-      'renovation',
-      'other',
-    ] as const),
-    notes: z
-      .string()
-      .max(1000, 'Notes must be 1,000 characters or less.')
-      .optional(),
-    backdateReason: z.string().max(500).optional(),
-    version: z.string().min(1, 'Missing version token.'),
-  })
-  .refine((data) => data.endDate > data.startDate, {
-    message: 'End date must be after start date.',
-    path: ['endDate'],
-  });
-
-export type AdminUpdateBlockInput = z.infer<typeof adminUpdateBlockSchema>;
-
-export const adminBlocksListQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(10).max(100).default(25),
-  roomTypeId: z.string().uuid().optional(),
-  roomId: z.string().uuid().optional(),
-  reason: z
-    .enum(['maintenance', 'owner_hold', 'renovation', 'other'] as const)
-    .optional(),
-  status: z
-    .enum(['all', 'upcoming', 'current', 'past'] as const)
-    .default('all'),
-});
-
-export type AdminBlocksListQueryInput = z.infer<
-  typeof adminBlocksListQuerySchema
->;
+export type AdminBlockCheckInput = AdminBlockCheckInputSchema;
+export type AdminCreateBlockInput = AdminCreateBlockInputSchema;
+export type AdminUpdateBlockInput = AdminUpdateBlockInputSchema;
+export type AdminBlocksListQueryInput = AdminBlocksListQueryInputSchema;

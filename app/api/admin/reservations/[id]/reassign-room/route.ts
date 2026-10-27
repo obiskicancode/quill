@@ -7,7 +7,7 @@ import {
 } from '@/lib/db/repositories/idempotency.repo';
 import { reassignReservationRoom } from '@/lib/db/repositories/reservations-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminReassignRoomSchema } from '@/types/reservation.types';
+import { adminReassignRoomSchema } from '@/schemas/reservation.schema';
 
 export const dynamic = 'force-dynamic';
 

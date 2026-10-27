@@ -1,7 +1,6 @@
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import type { ISODate } from '@/types/dates.types';
 import type { SearchState } from '@/types/site.types';
-
-import type { ISODate } from '../dates';
 
 export const MAX_ADULTS = 10;
 export const MAX_CHILDREN = 6;

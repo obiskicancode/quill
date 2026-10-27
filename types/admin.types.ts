@@ -1,4 +1,10 @@
-import type { AdminRole, Permission } from '@/lib/auth/permissions';
+import type { AdminRole, Permission } from '@/types/auth.types';
+
+export interface AdminIdentity {
+  firstName: string;
+  lastName: string;
+  email: string;
+}
 
 export interface AdminStaff {
   id: string;

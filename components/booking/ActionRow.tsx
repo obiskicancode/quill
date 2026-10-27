@@ -4,13 +4,9 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { CalendarPlus, MessageCircle, Printer, Settings2 } from 'lucide-react';
 
 import { bookingService } from '@/app/api/services/booking.service';
-import {
-  googleCalendarUrl,
-  whatsappShareUrl,
-  type CalendarEvent,
-} from '@/lib/booking/ics';
+import { googleCalendarUrl, whatsappShareUrl } from '@/lib/booking/ics';
 import { formatRange } from '@/lib/rooms';
-import type { GuestReservation } from '@/types/booking.types';
+import type { CalendarEvent, GuestReservation } from '@/types/booking.types';
 
 import { AnimatedList } from '../motion';
 import { EASE_OUT } from '../motion/variants';

@@ -8,12 +8,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { SANITY_PRICE_MINOR } from '@/constants/inventory';
 import { minorToNaira, nairaToMinor } from '@/lib/rate-resolution';
 import type {
   AdminRoomTypeDetail,
   AdminRoomTypeInput,
 } from '@/types/inventory.types';
-import { SANITY_PRICE_MINOR } from '@/types/inventory.types';
 
 interface TabDetailsProps {
   initialData?: AdminRoomTypeDetail | null;

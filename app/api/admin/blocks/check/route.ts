@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { checkBlockConflicts } from '@/lib/db/repositories/calendar-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminBlockCheckSchema } from '@/types/calendar.types';
+import { adminBlockCheckSchema } from '@/schemas/calendar.schema';
 
 export const dynamic = 'force-dynamic';
 

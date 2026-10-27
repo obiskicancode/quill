@@ -18,7 +18,7 @@ import type {
   Facility,
   Faq,
   GalleryImageRecord,
-  HotelSettings,
+  HotelContentSettings,
   NearbyAttraction,
   PolicyPage,
   PolicySettings,
@@ -43,7 +43,7 @@ export function mapHotelSettings(
   row: DbHotelSettings,
   social: DbSocialLink[],
   roomCount: number,
-): HotelSettings {
+): HotelContentSettings {
   const analytics = (row.analytics as AnalyticsSettings | null) ?? {
     provider: 'none',
     measurementId: null,

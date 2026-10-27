@@ -6,8 +6,6 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
   Edit2,
   Loader2,
   Plus,
@@ -15,7 +13,7 @@ import {
   ShieldAlert,
   Trash2,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
 import { Badge } from '@/components/ui/badge';
@@ -42,8 +40,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { AdminRole } from '@/lib/auth/permissions';
 import { formatShort } from '@/lib/dates';
+import type { AdminRole } from '@/types/auth.types';
 import type {
   BlockReason,
   CalendarBlockBar,
@@ -283,10 +281,7 @@ export function BlocksListClient({
               setPage(1);
             }}
           >
-            <SelectTrigger
-              aria-label="Filter by room type"
-              className="w-[150px]"
-            >
+            <SelectTrigger aria-label="Filter by room type" className="w-37.5">
               <SelectValue placeholder="All Room Types" />
             </SelectTrigger>
             <SelectContent>
@@ -314,7 +309,7 @@ export function BlocksListClient({
               setPage(1);
             }}
           >
-            <SelectTrigger aria-label="Filter by room" className="w-[160px]">
+            <SelectTrigger aria-label="Filter by room" className="w-40">
               <SelectValue placeholder="All Rooms" />
             </SelectTrigger>
             <SelectContent>
@@ -342,7 +337,7 @@ export function BlocksListClient({
               setPage(1);
             }}
           >
-            <SelectTrigger aria-label="Filter by reason" className="w-[150px]">
+            <SelectTrigger aria-label="Filter by reason" className="w-37.5">
               <SelectValue placeholder="All Reasons" />
             </SelectTrigger>
             <SelectContent>
@@ -568,7 +563,7 @@ export function BlocksListClient({
                 <SelectTrigger
                   size="sm"
                   aria-label="Select rows per page"
-                  className="w-[100px]"
+                  className="w-[6.25rem]"
                 >
                   <SelectValue placeholder="Rows" />
                 </SelectTrigger>

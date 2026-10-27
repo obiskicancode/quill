@@ -11,7 +11,6 @@ import {
   setRefreshCookie,
 } from '@/lib/auth/cookies';
 import { hashToken, randomToken } from '@/lib/auth/crypto';
-import type { AdminRole } from '@/lib/auth/permissions';
 import { createAccessToken, readAccessToken } from '@/lib/auth/tokens';
 import {
   findAnySessionByTokenHash,
@@ -24,6 +23,7 @@ import {
   revokeSession,
 } from '@/lib/db/repositories/staff.repo';
 import { clientIp, cookieValue, userAgent } from '@/lib/http/request';
+import type { AdminRole } from '@/types/auth.types';
 
 export interface AdminContext {
   user: StaffUser;

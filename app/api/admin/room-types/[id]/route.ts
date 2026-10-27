@@ -7,7 +7,7 @@ import {
   updateAdminRoomTypeDetails,
 } from '@/lib/db/repositories/inventory-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { AdminRoomTypeInputSchema } from '@/types/inventory.types';
+import { AdminRoomTypeInputSchema } from '@/schemas/inventory.schema';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,8 +1,6 @@
+import { GALLERY_CATEGORIES } from '@/constants/content';
 import { getGalleryImages, getRoomTypeOptions } from '@/lib/content/data';
-import {
-  GALLERY_CATEGORIES,
-  type GalleryCategory,
-} from '@/types/content.types';
+import type { GalleryCategory } from '@/types/content.types';
 
 import { Reveal } from '../motion/Reveal';
 import { EmptyState } from '../rooms/EmptyState';

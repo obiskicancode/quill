@@ -1,16 +1,16 @@
+import type { ActionGate } from '@/types/base.types';
 import type { PolicySnapshot } from '@/types/booking.types';
 import type { PolicySummary } from '@/types/checkout.types';
+import type { Clock, ISODate } from '@/types/dates.types';
 import type {
-  ActionAllowance,
-  AllowedActions,
   CancellationPreview,
+  GuestAllowedActions,
+  ManageSettings,
 } from '@/types/manage.types';
 
 import type { StoredReservation } from '../booking/store';
-import { fromISO, nightsBetween, toISO, type ISODate } from '../dates';
-import type { Clock } from '../dates';
+import { fromISO, nightsBetween, toISO } from '../dates';
 import { calculateRefund } from './refund';
-import type { ManageSettings } from './settings';
 
 /** Server-side rules for what a guest may do to a booking. Every mutation re-checks these. */
 
@@ -37,8 +37,8 @@ const EXTRAS_OK = [
   'checked_in',
 ];
 
-const yes: ActionAllowance = { allowed: true };
-const no = (reason: string): ActionAllowance => ({ allowed: false, reason });
+const yes: ActionGate = { allowed: true };
+const no = (reason: string): ActionGate => ({ allowed: false, reason });
 
 /** Minutes from hotel-local "now" until check-in time. Negative once check-in has passed. */
 export function minutesUntilCheckIn(
@@ -94,7 +94,7 @@ export function allowedActions(
   r: StoredReservation,
   clock: Clock,
   s: ManageSettings,
-): AllowedActions {
+): GuestAllowedActions {
   const checkIn24 = r.snapshot.times.checkIn24;
   const until = r.stay.checkIn
     ? minutesUntilCheckIn(clock, r.stay.checkIn, checkIn24)
@@ -119,7 +119,7 @@ export function allowedActions(
           'This booking can no longer be cancelled online.',
       );
 
-  let canChangeDates: ActionAllowance;
+  let canChangeDates: ActionGate;
   if (r.pendingChange)
     canChangeDates = no(
       'A date change is waiting for payment. Finish it or let it expire first.',

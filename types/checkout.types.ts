@@ -1,4 +1,5 @@
-import type { ISODate } from '@/lib/dates';
+import type { ISODate } from '@/types/dates.types';
+import type { ExtraPricingUnit } from '@/types/inventory.types';
 import type { StayQuote } from '@/types/stay.types';
 
 /**
@@ -10,14 +11,17 @@ export type PaymentMode = 'full' | 'deposit' | 'pay_at_hotel';
 export type PaymentMethod = 'online' | 'bank_transfer';
 export type PaymentProvider = 'paystack' | 'flutterwave' | 'stripe';
 export type ConfirmationMode = 'instant' | 'manual';
-export type ExtraUnit =
-  'per_stay' | 'per_night' | 'per_guest' | 'per_guest_per_night';
+export interface Country {
+  code: string;
+  name: string;
+  dial: string;
+}
 
 export interface ExtraItem {
   id: string;
   name: string;
   description: string;
-  unit: ExtraUnit;
+  unit: ExtraPricingUnit;
   priceMinor: number;
   maxQuantity: number;
 }
@@ -31,6 +35,14 @@ export interface BankDetails {
   bankName: string;
   accountName: string;
   accountNumber: string;
+}
+
+export interface CheckoutOverrides {
+  paymentMode?: PaymentMode;
+  discountPercent?: number;
+  discountLabel?: string;
+  levyPercent?: number;
+  levyLabel?: string;
 }
 
 export interface CheckoutSettings {
@@ -126,7 +138,7 @@ export type CheckoutQuoteResponse =
     }
   | { status: 'invalid'; reason: 'params' | 'rules'; message: string };
 
-export type ReservationStatus =
+export type GuestReservationStatus =
   | 'pending_payment'
   | 'awaiting_transfer'
   | 'awaiting_verification'
@@ -145,7 +157,7 @@ export type PaymentStatus =
 
 export interface ReservationResponse {
   reference: string;
-  status: ReservationStatus;
+  status: GuestReservationStatus;
   holdExpiresAt: string;
   serverTime: string;
   confirmationMode: ConfirmationMode;
@@ -176,7 +188,7 @@ export type PaymentInitResponse =
 
 export interface StatusResponse {
   reference: string;
-  status: ReservationStatus;
+  status: GuestReservationStatus;
   paymentStatus: PaymentStatus;
   holdExpiresAt: string;
   serverTime: string;
@@ -200,3 +212,37 @@ export interface ApiError {
   fieldErrors?: Record<string, string>;
   quote?: CheckoutQuoteResponse;
 }
+
+export type CheckoutQuoteOk = Extract<CheckoutQuoteResponse, { status: 'ok' }>;
+
+export interface ReservationRoomSummary {
+  name: string;
+  bedConfig: string;
+  image: { src: string; alt: string } | null;
+}
+
+export interface RoomBookingSummary {
+  slug: string;
+  name: string;
+  maxAdults: number;
+  maxChildren: number;
+  /** Guests above this need the extra bed. */
+  baseGuests: number;
+  showPrice: boolean;
+  basePriceNgn: number;
+  taxesIncluded: boolean;
+  extraBed: { available: boolean; priceMinor: number | null };
+}
+
+/** The room page passes a plain StayQuote. Checkout adds extras, a discount and another levy. */
+export type PriceBreakdownQuote = Omit<StayQuote, 'freeCancellationUntil'> & {
+  extras?: {
+    id: string;
+    name: string;
+    quantity: number;
+    unitLabel: string;
+    totalMinor: number;
+  }[];
+  discount?: { label: string; amountMinor: number } | null;
+  otherLevy?: { label: string; percent: number; amountMinor: number } | null;
+};

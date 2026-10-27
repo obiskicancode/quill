@@ -7,20 +7,20 @@ import { useEffect, useRef, useState } from 'react';
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { manageService } from '@/app/api/services/manage.service';
-import { formatDeadline } from '@/lib/format';
+import { formatDeadline, formatMinor } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 import type { GuestReservation } from '@/types/booking.types';
+import type { DateRange } from '@/types/dates.types';
 import type {
   ChangeQuoteResponse,
   PriceDifference,
 } from '@/types/manage.types';
-import { formatMinor } from '@/types/stay.types';
 
 import { VerifyForm } from '../booking/VerifyForm';
 import { Banner } from '../checkout/CheckoutStates';
-import { DatePicker, type DateRange } from '../DatePicker';
+import { DatePicker } from '../DatePicker';
 import { EASE_OUT } from '../motion/variants';
 import { PriceBreakdown } from '../room-detail/PriceBreakdown';
 import { Button, ButtonLink } from '../ui/button';

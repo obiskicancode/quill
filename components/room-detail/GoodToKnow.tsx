@@ -1,5 +1,5 @@
-import type { HotelSettings, RoomDetail } from '@/lib/rooms';
-import { formatMinor } from '@/types/stay.types';
+import { formatMinor } from '@/lib/format';
+import type { HotelPricingSettings, RoomDetail } from '@/types/rooms.types';
 
 import { Reveal } from '../motion/Reveal';
 import { StaggerGroup } from '../motion/StaggerGroup';
@@ -11,7 +11,7 @@ export function GoodToKnow({
   hotel,
 }: {
   room: RoomDetail;
-  hotel: HotelSettings;
+  hotel: HotelPricingSettings;
 }) {
   const extraBed = room.extraBed.available
     ? room.extraBedPriceMinor

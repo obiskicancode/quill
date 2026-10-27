@@ -14,8 +14,8 @@ import { SessionsPanel } from '@/components/admin/account/SessionsPanel';
 import { TwoFactorPanel } from '@/components/admin/account/TwoFactorPanel';
 import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { AdminRole } from '@/lib/auth/permissions';
 import type { AdminStaff } from '@/types/admin.types';
+import type { AdminRole } from '@/types/auth.types';
 
 export type AccountTab = 'profile' | 'password' | 'two-factor' | 'sessions';
 

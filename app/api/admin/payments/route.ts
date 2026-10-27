@@ -1,7 +1,7 @@
 import { guardAdminApi } from '@/lib/auth/guards';
 import { listPaymentsRepo } from '@/lib/db/repositories/payments-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { PaymentsQuerySchema } from '@/types/payments-admin.types';
+import { PaymentsQuerySchema } from '@/schemas/payments-admin.schema';
 
 export const dynamic = 'force-dynamic';
 

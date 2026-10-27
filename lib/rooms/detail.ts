@@ -1,4 +1,9 @@
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import type {
+  HotelPricingSettings,
+  RoomDetail,
+  RoomType,
+} from '@/types/rooms.types';
 
 import {
   mapRateRule,
@@ -11,66 +16,8 @@ import {
   getRoomTypesWithDetails,
 } from '../db/queries/content-data';
 import { listRoomRateRules } from '../db/repositories/rooms.repo';
-import type { RoomType } from './catalog';
 
-export interface GalleryImage {
-  src: string;
-  alt: string;
-  caption: string;
-}
-
-export interface RoomTestimonial {
-  id: string;
-  quote: string;
-  guestName: string;
-  stayType: string;
-  rating: number;
-}
-
-export interface RateRule {
-  label: string;
-  /** "MM-DD". A range that wraps the new year (12-15 to 01-05) is supported. */
-  start: string;
-  end: string;
-  upliftPercent: number;
-}
-
-export interface RoomDetail extends RoomType {
-  active: boolean;
-  basePriceMinor: number;
-  weekendPriceMinor: number | null;
-  extraBedPriceMinor: number | null;
-  viewNotes: string;
-  metaTitle: string | null;
-  metaDescription: string | null;
-  gallery: GalleryImage[];
-  testimonials: RoomTestimonial[];
-}
-
-export interface HotelSettings {
-  timeZone: string;
-  checkInTime: string;
-  checkOutTime: string;
-  taxPercent: number;
-  serviceChargePercent: number;
-  minNights: number;
-  maxNights: number;
-  bookingWindowDays: number;
-  /** Same-day bookings close at this local time ("HH:MM"). */
-  sameDayCutoff: string;
-  /** null = no free cancellation. */
-  freeCancellationHours: number | null;
-  cancellationSummary: string;
-  childrenPolicy: string;
-  petsPolicy: string;
-  smokingPolicy: string;
-  idPolicy: string;
-  /** Show "Best price when you book direct" only if the hotel stands behind it. */
-  bestPriceDirect: boolean;
-  rateRules?: RateRule[];
-}
-
-export async function getPricingSettings(): Promise<HotelSettings> {
+export async function getPricingSettings(): Promise<HotelPricingSettings> {
   const [row, rules] = await Promise.all([getHotelRow(), listRoomRateRules()]);
   if (!row) throw new Error(ERROR_MESSAGES.HOTEL_PRICING_SETTINGS_MISSING);
   return mapRoomHotelSettings(row, rules.map(mapRateRule));

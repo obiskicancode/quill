@@ -41,12 +41,9 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
-import {
-  ADMIN_NAV,
-  ROLE_LABELS,
-  type AdminRole,
-  type Permission,
-} from '@/lib/auth/permissions';
+import { ADMIN_NAV, ROLE_LABELS } from '@/lib/auth/permissions';
+import type { AdminIdentity } from '@/types/admin.types';
+import type { AdminRole, Permission } from '@/types/auth.types';
 
 const icons = {
   '/admin': LayoutDashboard,
@@ -64,14 +61,8 @@ const icons = {
   '/admin/audit': History,
 };
 
-interface ShellUser {
-  firstName: string;
-  lastName: string;
-  email: string;
-}
-
 interface AdminSidebarProps {
-  user: ShellUser;
+  user: AdminIdentity;
   role: AdminRole;
   permissions: readonly Permission[];
   mfaPending: boolean;
@@ -244,7 +235,7 @@ export function AdminShell({
   mfaPending = false,
   children,
 }: {
-  user: ShellUser;
+  user: AdminIdentity;
   role: AdminRole;
   permissions: readonly Permission[];
   mfaPending?: boolean;

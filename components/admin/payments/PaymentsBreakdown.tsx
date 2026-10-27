@@ -107,16 +107,16 @@ export function PaymentsBreakdown({
                 className="group relative flex flex-1 flex-col items-center gap-1"
               >
                 {/* Tooltip on hover */}
-                <div className="bg-ink text-paper absolute -top-8 z-10 hidden rounded px-1.5 py-0.5 text-[10px] whitespace-nowrap shadow group-hover:block">
+                <div className="bg-ink text-paper absolute -top-8 z-10 hidden rounded px-1.5 py-0.5 text-[0.625rem] whitespace-nowrap shadow group-hover:block">
                   {formatNaira(day.collectedMinor)} ({day.count})
                 </div>
                 <div className="bg-paper flex h-16 w-full items-end justify-center rounded-t">
                   <div
-                    className="bg-primary/80 group-hover:bg-primary w-full max-w-[20px] rounded-t transition-colors"
+                    className="bg-primary/80 group-hover:bg-primary w-full max-w-[1.25rem] rounded-t transition-colors"
                     style={{ height: `${heightPercent}%` }}
                   />
                 </div>
-                <span className="text-muted-foreground truncate text-[10px]">
+                <span className="text-muted-foreground truncate text-[0.625rem]">
                   {day.label.slice(0, 3)}
                 </span>
               </div>

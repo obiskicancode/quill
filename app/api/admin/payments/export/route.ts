@@ -6,7 +6,7 @@ import { listPaymentsRepo } from '@/lib/db/repositories/payments-admin.repo';
 import { generateCsvStream } from '@/lib/export/csv';
 import { apiFail } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
-import { PaymentsQuerySchema } from '@/types/payments-admin.types';
+import { PaymentsQuerySchema } from '@/schemas/payments-admin.schema';
 
 export const dynamic = 'force-dynamic';
 

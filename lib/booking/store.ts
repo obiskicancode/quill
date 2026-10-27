@@ -28,10 +28,10 @@ import type {
   CheckoutBreakdown,
   ConfirmationMode,
   ExtraSelection,
+  GuestReservationStatus,
   PaymentMethod,
   PaymentProvider,
   PaymentStatus,
-  ReservationStatus,
 } from '@/types/checkout.types';
 import type {
   HistoryEntry,
@@ -63,7 +63,7 @@ export interface StoredReservation {
   mode: 'full' | 'deposit' | 'pay_at_hotel';
   confirmationMode: ConfirmationMode;
   method: PaymentMethod | null;
-  status: ReservationStatus;
+  status: GuestReservationStatus;
   holdExpiresAt: number;
   termsAcceptedAt: string;
   createdAt: number;
@@ -84,7 +84,7 @@ export interface StoredReservation {
 
 export const newId = () => randomUUID();
 
-function dbStatusOf(status: ReservationStatus): Reservation['status'] {
+function dbStatusOf(status: GuestReservationStatus): Reservation['status'] {
   if (
     [
       'confirmed',
@@ -121,7 +121,7 @@ function apiStatus(
   row: Reservation,
   payment: typeof payments.$inferSelect | null,
   proof: boolean,
-): ReservationStatus {
+): GuestReservationStatus {
   if (row.status === 'confirmed') return 'confirmed';
   if (row.status === 'checked_in') return 'checked_in';
   if (row.status === 'checked_out') return 'checked_out';

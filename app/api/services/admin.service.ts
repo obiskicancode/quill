@@ -8,6 +8,14 @@ import type {
   AdminVerify2faInput,
 } from '@/schemas/admin-auth.schema';
 import type {
+  AdminAmenityInput,
+  AdminExtraInput,
+  AdminImageUpdate,
+  AdminRateRuleInput,
+  AdminRoomTypeInput,
+  AdminRoomUnitInput,
+} from '@/schemas/inventory.schema';
+import type {
   AdminAccountResponse,
   AdminAuthResult,
   AdminMfaSetupResponse,
@@ -40,18 +48,12 @@ import type {
 } from '@/types/dashboard.types';
 import type {
   AdminAmenity,
-  AdminAmenityInput,
   AdminExtra,
-  AdminExtraInput,
-  AdminImageUpdate,
   AdminRateRule,
-  AdminRateRuleInput,
   AdminRoomImage,
   AdminRoomTypeDetail,
-  AdminRoomTypeInput,
   AdminRoomTypeListItem,
   AdminRoomUnit,
-  AdminRoomUnitInput,
   PriceCalendarDay,
   RateRuleOverlapResponse,
   RoomImpactCheckResponse,

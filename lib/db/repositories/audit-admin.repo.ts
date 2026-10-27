@@ -13,7 +13,6 @@ import { db } from '@/db';
 import { auditLogs, reservations, staffUsers } from '@/db/schema';
 import type { StaffUser } from '@/db/types';
 import { generateAuditDiff } from '@/lib/audit/masking';
-import type { AdminRole } from '@/lib/auth/permissions';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
 import { generateCsvStream } from '@/lib/export/csv';
 import type {
@@ -21,6 +20,7 @@ import type {
   AuditListItem,
   AuditQueryParams,
 } from '@/types/audit-admin.types';
+import type { AdminRole } from '@/types/auth.types';
 
 const SECURITY_ENTITIES = [
   'staff_user',

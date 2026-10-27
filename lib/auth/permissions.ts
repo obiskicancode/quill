@@ -1,6 +1,10 @@
-export const ADMIN_ROLES = ['owner', 'manager', 'reception'] as const;
+import type { AdminRole, Permission } from '@/types/auth.types';
 
-export type AdminRole = (typeof ADMIN_ROLES)[number];
+export const ADMIN_ROLES = [
+  'owner',
+  'manager',
+  'reception',
+] as const satisfies readonly AdminRole[];
 
 export const PERMISSIONS = [
   'dashboard.view',
@@ -38,9 +42,7 @@ export const PERMISSIONS = [
   'settings.payments.manage',
   'staff.manage',
   'audit.view',
-] as const;
-
-export type Permission = (typeof PERMISSIONS)[number];
+] as const satisfies readonly Permission[];
 
 const ownerPermissions = PERMISSIONS;
 const managerPermissions = PERMISSIONS.filter(

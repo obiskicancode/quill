@@ -6,7 +6,6 @@ import { SlidersHorizontal } from 'lucide-react';
 import { useCallback, useMemo, useState, useTransition } from 'react';
 
 import { todayISO } from '@/lib/dates';
-import type { StayParams } from '@/lib/rooms';
 import {
   countActiveFilters,
   emptyFilters,
@@ -19,9 +18,8 @@ import {
   sortOptions,
   sortRooms,
   stayProblem,
-  type RoomQuery,
-  type RoomType,
 } from '@/lib/rooms';
+import type { RoomQuery, RoomType, StayParams } from '@/types/rooms.types';
 
 import { HelpBlock } from '../HelpBlock';
 import { AnimatedList } from '../motion/AnimatedList';

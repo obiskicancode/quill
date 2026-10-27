@@ -1,10 +1,10 @@
 import { cn } from 'cn';
 
 import { Badge } from '@/components/ui/badge';
-import type { ReservationStatus } from '@/types/dashboard.types';
+import type { AdminReservationStatus } from '@/types/reservation.types';
 
 const statusConfig: Record<
-  ReservationStatus,
+  AdminReservationStatus,
   { label: string; className: string }
 > = {
   confirmed: {
@@ -37,7 +37,7 @@ const statusConfig: Record<
   },
 };
 
-export function StatusBadge({ status }: { status: ReservationStatus }) {
+export function StatusBadge({ status }: { status: AdminReservationStatus }) {
   const config = statusConfig[status] ?? {
     label: status,
     className: 'border-line bg-ink/10 text-ink',

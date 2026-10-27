@@ -3,8 +3,8 @@
 import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
+import { formatMinor } from '@/lib/format';
 import type { GuestReservation } from '@/types/booking.types';
-import { formatMinor } from '@/types/stay.types';
 
 import { StayFacts } from '../checkout/SummaryCard';
 import { Button } from '../ui/button';

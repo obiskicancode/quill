@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
-import type { AdminRole } from '@/lib/auth/permissions';
+import type { AdminRole } from '@/types/auth.types';
 import type {
   CalendarBlockBar,
   CalendarResponse,

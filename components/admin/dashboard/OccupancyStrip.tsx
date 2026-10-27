@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, CalendarDays } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import { AdminCard } from '@/components/admin/AdminCard';
 import { Reveal } from '@/components/motion/Reveal';
@@ -91,7 +91,7 @@ export function OccupancyStrip({ days }: { days: OccupancyDay[] }) {
                       }
                     >
                       {/* Percentage label above bar */}
-                      <span className="text-muted-foreground group-hover:text-ink mb-1 text-[11px] font-semibold">
+                      <span className="text-muted-foreground group-hover:text-ink mb-1 text-[0.6875rem] font-semibold">
                         {day.occupancyPercent}%
                       </span>
 
@@ -109,7 +109,7 @@ export function OccupancyStrip({ days }: { days: OccupancyDay[] }) {
                           {formatDateLabel(day.date)}
                         </span>
                         {isToday && (
-                          <span className="bg-primary/20 py-0.2 text-brand-ink mt-0.5 rounded-full px-1.5 text-[9px] font-bold">
+                          <span className="bg-primary/20 py-0.2 text-brand-ink mt-0.5 rounded-full px-1.5 text-[0.5625rem] font-bold">
                             Today
                           </span>
                         )}
@@ -123,10 +123,10 @@ export function OccupancyStrip({ days }: { days: OccupancyDay[] }) {
                       <p className="text-paper font-semibold">
                         {formatDateLabel(day.date)}: {day.occupancyPercent}%
                       </p>
-                      <p className="text-[11px] text-white/80">
+                      <p className="text-[0.6875rem] text-white/80">
                         {day.occupied} of {day.sellable} rooms occupied
                       </p>
-                      <p className="text-primary mt-0.5 text-[10px]">
+                      <p className="text-primary mt-0.5 text-[0.625rem]">
                         ↓ {day.arrivals} arrivals • ↑ {day.departures}{' '}
                         departures
                       </p>

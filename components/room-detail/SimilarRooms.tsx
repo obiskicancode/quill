@@ -1,5 +1,5 @@
 import { toFeatureRoom } from '@/lib/rooms';
-import type { RoomType } from '@/lib/rooms';
+import type { RoomType } from '@/types/rooms.types';
 
 import { StaggerGroup } from '../motion/StaggerGroup';
 import { StaggerItem } from '../motion/StaggerItem';

@@ -10,15 +10,15 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { formatCountdown, formatDeadline } from '@/lib/format';
+import { formatCountdown, formatDeadline, formatMinor } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 import type {
-  CheckoutQuoteResponse,
+  CheckoutQuoteOk,
   ConfirmationMode,
+  ReservationRoomSummary,
 } from '@/types/checkout.types';
-import { formatMinor } from '@/types/stay.types';
 
 import {
   BreakdownSkeleton,
@@ -34,14 +34,6 @@ import {
   SheetTitle,
 } from '../ui/sheet';
 
-export type OkQuote = Extract<CheckoutQuoteResponse, { status: 'ok' }>;
-
-export interface SummaryRoom {
-  name: string;
-  bedConfig: string;
-  image: { src: string; alt: string } | null;
-}
-
 export interface HoldView {
   remainingMs: number | null;
   expiring: boolean;
@@ -49,10 +41,10 @@ export interface HoldView {
 }
 
 interface SummaryProps {
-  room: SummaryRoom;
+  room: ReservationRoomSummary;
   stay: { checkIn: string; checkOut: string; adults: number; children: number };
   /** null while the quote is loading. */
-  quote: OkQuote | null;
+  quote: CheckoutQuoteOk | null;
   hotelTimes: { checkIn: string; checkOut: string };
   /** null until the reservation (and so the hold) exists. */
   hold: HoldView | null;
@@ -67,7 +59,7 @@ export function StayFacts({
   nights,
   hotelTimes,
 }: {
-  room: SummaryRoom;
+  room: ReservationRoomSummary;
   stay: {
     checkIn: string | null;
     checkOut: string | null;

@@ -1,18 +1,6 @@
 import { formatShort } from '@/lib/dates';
-import { formatMinor, type StayQuote } from '@/types/stay.types';
-
-/** The room page passes a plain StayQuote. Checkout adds extras, a discount and another levy. */
-export type PriceBreakdownQuote = Omit<StayQuote, 'freeCancellationUntil'> & {
-  extras?: {
-    id: string;
-    name: string;
-    quantity: number;
-    unitLabel: string;
-    totalMinor: number;
-  }[];
-  discount?: { label: string; amountMinor: number } | null;
-  otherLevy?: { label: string; percent: number; amountMinor: number } | null;
-};
+import { formatMinor } from '@/lib/format';
+import type { PriceBreakdownQuote } from '@/types/checkout.types';
 
 /** Display only. Every number comes from the server quote. Per-night rates open only when they differ. */
 export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {

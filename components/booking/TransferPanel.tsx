@@ -7,9 +7,9 @@ import { useRef, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { checkoutService } from '@/app/api/services/checkout.service';
+import { formatMinor } from '@/lib/format';
 import { checkProofFile, MAX_PROOF_BYTES } from '@/schemas/checkout.schema';
 import type { GuestReservation } from '@/types/booking.types';
-import { formatMinor } from '@/types/stay.types';
 
 import { CopyButton } from '../checkout/PaymentStep';
 import { EASE_OUT } from '../motion/variants';

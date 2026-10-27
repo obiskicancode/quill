@@ -204,7 +204,7 @@ export function ReservationsTable({
             {/* Reference (Sticky Left on Scroll) */}
             <TableHead
               scope="col"
-              className="bg-paper text-muted-foreground sticky left-0 z-20 py-3.5 pr-3 pl-4 shadow-[1px_0_0_0_rgb(var(--color-line))]"
+              className="bg-paper text-muted-foreground sticky left-0 z-20 py-3.5 pr-3 pl-4 shadow-[0.0625rem_0_0_0_rgb(var(--color-line))]"
             >
               Reference
             </TableHead>
@@ -346,7 +346,7 @@ export function ReservationsTable({
               className="group hover:bg-paper/70 focus:bg-paper/70 border-line cursor-pointer transition-colors focus:outline-none"
             >
               {/* Reference Column (Sticky Left) */}
-              <TableCell className="bg-card text-ink group-hover:bg-paper/70 group-focus:bg-paper/70 sticky left-0 z-10 py-3 pr-3 pl-4 font-semibold shadow-[1px_0_0_0_rgb(var(--color-line))]">
+              <TableCell className="bg-card text-ink group-hover:bg-paper/70 group-focus:bg-paper/70 sticky left-0 z-10 py-3 pr-3 pl-4 font-semibold shadow-[0.0625rem_0_0_0_rgb(var(--color-line))]">
                 <div className="flex items-center gap-1.5">
                   <span className="underline-offset-4 group-hover:underline">
                     {row.reference}

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
+import { countries, dialFor } from '@/constants/countries';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { countries, dialFor } from '@/lib/checkout/countries';
 
 /** Shared by the browser (inline validation) and the server (the real check). */
 

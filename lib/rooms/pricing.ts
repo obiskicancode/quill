@@ -1,32 +1,22 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import {
-  formatMinor,
-  type QuoteLine,
-  type QuoteResponse,
-  type StayInput,
-  type StayQuote,
-  type Violation,
+import { formatMinor } from '@/lib/format';
+import type { Clock, ISODate } from '@/types/dates.types';
+import type { HotelPricingSettings, RoomDetail } from '@/types/rooms.types';
+import type {
+  QuoteLine,
+  QuoteResponse,
+  StayInput,
+  StayQuote,
+  Violation,
 } from '@/types/stay.types';
 
-import {
-  addDays,
-  formatShort,
-  hotelClock,
-  nightsBetween,
-  type Clock,
-  type ISODate,
-} from '../dates';
+import { addDays, formatShort, hotelClock, nightsBetween } from '../dates';
 import { fetchAvailability } from './availability';
 import { isWeekendNight } from './catalog';
-import {
-  baseGuests,
-  getPricingSettings,
-  type HotelSettings,
-  type RoomDetail,
-} from './detail';
+import { baseGuests, getPricingSettings } from './detail';
 
-export { hotelClock, type Clock };
+export { hotelClock };
 
 const toMinutes = (hhmm: string) => {
   const [h, m] = hhmm.split(':').map(Number);
@@ -40,7 +30,7 @@ const roundToNaira = (minor: number) => Math.round(minor / 100) * 100;
 function nightRate(
   room: RoomDetail,
   date: ISODate,
-  hotel: HotelSettings,
+  hotel: HotelPricingSettings,
 ): QuoteLine {
   const weekend = isWeekendNight(date) && room.weekendPriceMinor !== null;
   let rate = weekend ? (room.weekendPriceMinor as number) : room.basePriceMinor;
@@ -68,7 +58,7 @@ export const needsExtraBed = (
 
 export function priceStay(
   room: RoomDetail,
-  hotel: HotelSettings,
+  hotel: HotelPricingSettings,
   checkIn: ISODate,
   checkOut: ISODate,
   extraBedSelected: boolean,
@@ -123,7 +113,7 @@ export function priceStay(
 
 export function validateStay(
   room: RoomDetail,
-  hotel: HotelSettings,
+  hotel: HotelPricingSettings,
   s: StayInput & { checkIn: ISODate; checkOut: ISODate },
   clock: Clock,
 ): Violation[] {

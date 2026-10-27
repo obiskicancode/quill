@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useRef, useState, type ReactNode } from 'react';
 
+import { formatMinor } from '@/lib/format';
 import { MAX_PROOF_BYTES } from '@/schemas/checkout.schema';
 import type {
   BankDetails,
@@ -22,7 +23,6 @@ import type {
   PaymentPlan,
   PaymentProvider,
 } from '@/types/checkout.types';
-import { formatMinor } from '@/types/stay.types';
 
 import { EASE_OUT } from '../motion/variants';
 import {

@@ -9,7 +9,7 @@ import { clientIp } from '@/lib/http/request';
 import {
   StaffInviteInputSchema,
   StaffQuerySchema,
-} from '@/types/staff-admin.types';
+} from '@/schemas/staff-admin.schema';
 
 export const dynamic = 'force-dynamic';
 

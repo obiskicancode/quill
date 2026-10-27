@@ -8,13 +8,13 @@ import { useRef, useState } from 'react';
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
 import { contentService } from '@/app/api/services/content.service';
-import type { ISODate } from '@/lib/dates';
-import type { RoomType, StayParams } from '@/lib/rooms';
 import { enquiryFormSchema, MAX_MESSAGE } from '@/schemas/content.schema';
+import type { DateRange, ISODate } from '@/types/dates.types';
+import type { RoomType, StayParams } from '@/types/rooms.types';
 
 import { Banner } from '../checkout/CheckoutStates';
 import { Field, inputClass } from '../checkout/Field';
-import { DatePicker, type DateRange } from '../DatePicker';
+import { DatePicker } from '../DatePicker';
 import { GuestStepper } from '../GuestStepper';
 import { EASE_OUT } from '../motion/variants';
 import { Button, ButtonLink } from '../ui/button';
@@ -507,7 +507,7 @@ export function EnquiryForm({
               {/* Honeypot: hidden from people and assistive tech. Bots fill it in. */}
               <div
                 aria-hidden
-                className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
+                className="absolute -left-[624.9375rem] h-0 w-0 overflow-hidden"
               >
                 <Label htmlFor="enquiry-website-honeypot">Website</Label>
                 <Input

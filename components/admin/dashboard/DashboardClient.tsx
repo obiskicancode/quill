@@ -11,7 +11,7 @@ import {
   useDashboardRevenue,
   useDashboardSummary,
 } from '@/hooks/admin/use-dashboard';
-import type { AdminRole, Permission } from '@/lib/auth/permissions';
+import type { AdminRole, Permission } from '@/types/auth.types';
 import type { RevenueRange } from '@/types/dashboard.types';
 
 import { ArrivalsTable } from './ArrivalsTable';

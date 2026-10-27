@@ -1,11 +1,4 @@
-/** All dates are local calendar dates as "YYYY-MM-DD". Never use toISOString() for these (it shifts to UTC). */
-export type ISODate = string;
-
-export interface Clock {
-  today: ISODate;
-  /** Minutes since midnight in the hotel's time zone. */
-  minutes: number;
-}
+import type { Clock, ISODate } from '@/types/dates.types';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 

@@ -1,38 +1,12 @@
-import type { AmenityKey, ImageAsset, Room } from '@/types/site.types';
-
-export type RoomAmenityKey = AmenityKey | 'kitchenette' | 'balcony';
-export type BedType = 'queen' | 'king' | 'twin' | 'double';
-
-export interface ExtraBed {
-  available: boolean;
-  /** 0 means free. null when not available. */
-  feeNgn: number | null;
-}
-
-export interface RoomType {
-  id: string;
-  slug: string;
-  name: string;
-  description: string;
-  bedConfig: string;
-  bedType: BedType;
-  sizeSqm: number;
-  maxAdults: number;
-  maxChildren: number;
-  extraBed: ExtraBed;
-  basePriceNgn: number;
-  /** Applied to Friday and Saturday nights. */
-  weekendPriceNgn: number | null;
-  /** false when the hotel hides the price ("Contact us for price"). */
-  showPrice: boolean;
-  breakfastIncluded: boolean;
-  taxesIncluded: boolean;
-  minStayNights: number;
-  popular: boolean;
-  amenities: RoomAmenityKey[];
-  /** 1 to 8 images. */
-  images: ImageAsset[];
-}
+import type {
+  BedType,
+  FilterAmenity,
+  RoomAmenityKey,
+  RoomFilters,
+  RoomType,
+  SortKey,
+} from '@/types/rooms.types';
+import type { AmenityKey, Room } from '@/types/site.types';
 
 export const roomAmenityLabels: Record<RoomAmenityKey, string> = {
   wifi: 'Wi-Fi',
@@ -59,9 +33,6 @@ export const bedTypeLabels: Record<BedType, string> = {
   double: 'Double beds',
 };
 
-export type FilterAmenity =
-  'ac' | 'wifi' | 'kitchenette' | 'balcony' | 'breakfast';
-
 export const filterAmenityOptions: { key: FilterAmenity; label: string }[] = [
   { key: 'ac', label: 'Air conditioning' },
   { key: 'wifi', label: 'Wi-Fi' },
@@ -70,22 +41,12 @@ export const filterAmenityOptions: { key: FilterAmenity; label: string }[] = [
   { key: 'breakfast', label: 'Breakfast included' },
 ];
 
-export type SortKey = 'recommended' | 'price-asc' | 'price-desc' | 'capacity';
-
 export const sortOptions: { key: SortKey; label: string }[] = [
   { key: 'recommended', label: 'Recommended' },
   { key: 'price-asc', label: 'Price low to high' },
   { key: 'price-desc', label: 'Price high to low' },
   { key: 'capacity', label: 'Capacity' },
 ];
-
-export interface RoomFilters {
-  minPrice: number | null;
-  maxPrice: number | null;
-  minGuests: number | null;
-  beds: BedType[];
-  amenities: FilterAmenity[];
-}
 
 export const emptyFilters: RoomFilters = {
   minPrice: null,

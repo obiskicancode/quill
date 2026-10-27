@@ -136,10 +136,10 @@ export function PaymentsTable({
                     </Link>
                   </TableCell>
                   <TableCell className="px-3 py-3">
-                    <div className="text-ink max-w-[140px] truncate font-medium">
+                    <div className="text-ink max-w-35 truncate font-medium">
                       {payment.guestName}
                     </div>
-                    <div className="text-caption text-muted-foreground max-w-[140px] truncate">
+                    <div className="text-caption text-muted-foreground max-w-35 truncate">
                       {payment.guestEmail}
                     </div>
                   </TableCell>
@@ -155,14 +155,14 @@ export function PaymentsTable({
                     <div className="text-ink text-caption font-medium capitalize">
                       {payment.method.replace('_', ' ')}
                     </div>
-                    <div className="text-muted-foreground text-[11px] capitalize">
+                    <div className="text-muted-foreground text-[0.6875rem] capitalize">
                       {payment.provider}
                     </div>
                   </TableCell>
                   <TableCell className="px-3 py-3">
                     <Badge
                       variant="outline"
-                      className={`text-[11px] font-semibold ${
+                      className={`text-[0.6875rem] font-semibold ${
                         payment.status === 'paid'
                           ? 'bg-success/10 text-success border-success/20'
                           : payment.status === 'pending'
@@ -192,7 +192,7 @@ export function PaymentsTable({
                         className="text-caption text-muted-foreground hover:text-foreground inline-flex h-auto items-center gap-1 p-0 font-mono"
                         title="Click to copy provider reference"
                       >
-                        <span className="max-w-[100px] truncate">
+                        <span className="max-w-[6.25rem] truncate">
                           {payment.providerRef}
                         </span>
                         {copiedId === payment.id ? (
@@ -209,13 +209,13 @@ export function PaymentsTable({
                   </TableCell>
                   <TableCell className="px-3 py-3">
                     {payment.reconciled ? (
-                      <span className="text-success inline-flex items-center gap-1 text-[11px] font-medium">
+                      <span className="text-success inline-flex items-center gap-1 text-[0.6875rem] font-medium">
                         <ShieldCheck className="size-3.5" /> Reconciled
                       </span>
                     ) : (
                       <Badge
                         variant="outline"
-                        className="bg-muted/10 text-muted-foreground text-[11px]"
+                        className="bg-muted/10 text-muted-foreground text-[0.6875rem]"
                       >
                         Unreconciled
                       </Badge>

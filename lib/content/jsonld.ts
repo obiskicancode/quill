@@ -2,7 +2,7 @@ import type {
   Facility,
   Faq,
   GalleryImageRecord,
-  HotelSettings,
+  HotelContentSettings,
 } from '@/types/content.types';
 import type { SiteConfig } from '@/types/site.types';
 
@@ -21,7 +21,7 @@ interface HotelOptions {
 }
 
 export function hotelJsonLd(
-  s: HotelSettings,
+  s: HotelContentSettings,
   site: SiteConfig,
   o: HotelOptions = {},
 ): Record<string, unknown> {

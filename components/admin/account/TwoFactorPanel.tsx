@@ -13,8 +13,8 @@ import { Field, inputClass } from '@/components/checkout/Field';
 import { FlowDialog } from '@/components/manage/FlowDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { AdminRole } from '@/lib/auth/permissions';
 import type { AdminMfaSetupResponse } from '@/types/admin.types';
+import type { AdminRole } from '@/types/auth.types';
 
 export function TwoFactorPanel({
   enabled,

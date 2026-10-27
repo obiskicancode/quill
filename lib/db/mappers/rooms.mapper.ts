@@ -6,17 +6,16 @@ import type {
   RoomType as DbRoomType,
   Testimonial as DbTestimonial,
 } from '@/db/types';
-import type { AmenityKey, ImageAsset } from '@/types/site.types';
-
 import type {
   BedType,
-  HotelSettings,
-  RateRule,
+  HotelPricingSettings,
   RoomAmenityKey,
   RoomDetail,
   RoomTestimonial,
   RoomType,
-} from '../../rooms';
+  SeasonalRateRule,
+} from '@/types/rooms.types';
+import type { AmenityKey, ImageAsset } from '@/types/site.types';
 
 function bedType(label: string | null): BedType {
   const value = (label ?? '').toLowerCase();
@@ -110,7 +109,7 @@ export function mapRoomDetail(row: DbRoomType, rel: RoomRelations): RoomDetail {
   };
 }
 
-export function mapRateRule(row: DbRateRule): RateRule {
+export function mapRateRule(row: DbRateRule): SeasonalRateRule {
   return {
     label: row.name,
     start: row.startDate.slice(5),
@@ -126,8 +125,8 @@ export function mapRateRule(row: DbRateRule): RateRule {
 
 export function mapRoomHotelSettings(
   row: DbHotelSettings,
-  rules: RateRule[],
-): HotelSettings {
+  rules: SeasonalRateRule[],
+): HotelPricingSettings {
   return {
     timeZone: row.timezone,
     checkInTime: row.checkInTime,

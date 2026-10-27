@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-import { countries } from '@/lib/checkout/countries';
+import { countries } from '@/constants/countries';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 import {
@@ -242,7 +242,7 @@ export function DetailsStep({
           {/* Honeypot: hidden from people and assistive tech. Bots fill it; the server refuses those requests. */}
           <div
             aria-hidden
-            className="absolute -left-[9999px] h-0 w-0 overflow-hidden"
+            className="absolute -left-[624.9375rem] h-0 w-0 overflow-hidden"
           >
             <Label htmlFor="checkout-website-honeypot">Website</Label>
             <Input

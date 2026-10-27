@@ -1,9 +1,9 @@
 import { MessageCircle, Phone } from 'lucide-react';
 
 import { getPublicSite } from '@/lib/content/data';
-import type { ISODate } from '@/lib/dates';
 import { formatRange } from '@/lib/rooms';
 import { telHref, whatsappHref } from '@/lib/site';
+import type { ISODate } from '@/types/dates.types';
 
 import { Reveal } from '../motion/Reveal';
 import { ButtonLink } from '../ui/button';

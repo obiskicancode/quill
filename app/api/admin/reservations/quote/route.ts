@@ -1,35 +1,12 @@
 import { NextRequest } from 'next/server';
-import { z } from 'zod';
 
 import { guardAdminApi } from '@/lib/auth/guards';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
 import { getRoomTypeById } from '@/lib/db/repositories/rooms.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
+import { adminReservationQuoteSchema } from '@/schemas/quote.schema';
 
 export const dynamic = 'force-dynamic';
-
-const quoteSchema = z.object({
-  roomTypeId: z.string().uuid(),
-  checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  adults: z.number().int().min(1).default(1),
-  children: z.number().int().min(0).default(0),
-  extraBed: z.boolean().default(false),
-  extras: z
-    .array(
-      z.object({
-        id: z.string(),
-        quantity: z.number().int().min(1),
-      }),
-    )
-    .default([]),
-  discount: z
-    .object({
-      type: z.enum(['fixed', 'percentage']),
-      value: z.number().positive(),
-    })
-    .optional(),
-});
 
 export async function POST(request: NextRequest) {
   const guard = await guardAdminApi(request, {
@@ -38,7 +15,7 @@ export async function POST(request: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => null);
-  const parsed = quoteSchema.safeParse(body);
+  const parsed = adminReservationQuoteSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(422, 'Invalid quote parameters', parsed.error.flatten());
   }

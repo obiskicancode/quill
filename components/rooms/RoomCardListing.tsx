@@ -2,18 +2,17 @@
 
 import { BedDouble, BedSingle, Camera, Ruler, Users } from 'lucide-react';
 
-import { formatShort, type ISODate } from '@/lib/dates';
+import { formatShort } from '@/lib/dates';
 import { formatNaira } from '@/lib/format';
-import type { RoomAvailability } from '@/lib/rooms';
-import {
-  formatRange,
-  roomAmenityLabels,
-  stayHref,
-  type RoomQuery,
-  type RoomType,
-} from '@/lib/rooms';
+import { formatRange, roomAmenityLabels, stayHref } from '@/lib/rooms';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
+import type { ISODate } from '@/types/dates.types';
+import type {
+  RoomAvailability,
+  RoomQuery,
+  RoomType,
+} from '@/types/rooms.types';
 
 import { Carousel } from '../Carousel';
 import { Button, ButtonLink } from '../ui/button';

@@ -6,7 +6,7 @@ import {
 } from '@/lib/db/repositories/staff-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp } from '@/lib/http/request';
-import { StaffUpdateInputSchema } from '@/types/staff-admin.types';
+import { StaffUpdateInputSchema } from '@/schemas/staff-admin.schema';
 
 export const dynamic = 'force-dynamic';
 

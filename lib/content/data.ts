@@ -1,6 +1,7 @@
 import { cache } from 'react';
 
 import { config } from '@/config';
+import { POLICY_SLUGS } from '@/constants/content';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import {
   getAmenityRows,
@@ -19,21 +20,20 @@ import {
 } from '@/lib/db/repositories/content.repo';
 import { listExtras } from '@/lib/db/repositories/extras.repo';
 import type { ExtraItem } from '@/types/checkout.types';
-import {
-  POLICY_SLUGS,
-  type AnalyticsSettings,
-  type ConsentSettings,
-  type Facility,
-  type Faq,
-  type GalleryImageRecord,
-  type HotelSettings,
-  type NearbyAttraction,
-  type PolicyPage,
-  type PolicySettings,
-  type PolicySlug,
-  type SitePage,
-  type SocialLink,
-  type TeamMember,
+import type {
+  AnalyticsSettings,
+  ConsentSettings,
+  Facility,
+  Faq,
+  GalleryImageRecord,
+  HotelContentSettings,
+  NearbyAttraction,
+  PolicyPage,
+  PolicySettings,
+  PolicySlug,
+  SitePage,
+  SocialLink,
+  TeamMember,
 } from '@/types/content.types';
 import type {
   AmenityKey,
@@ -68,11 +68,13 @@ async function requireHotel() {
   return row;
 }
 
-export const getHotelSettings = cache(async (): Promise<HotelSettings> => {
-  const row = await requireHotel();
-  const links = await social();
-  return mapHotelSettings(row, links, (await roomTypes()).length);
-});
+export const getHotelSettings = cache(
+  async (): Promise<HotelContentSettings> => {
+    const row = await requireHotel();
+    const links = await social();
+    return mapHotelSettings(row, links, (await roomTypes()).length);
+  },
+);
 
 export const getPublicSite = cache(async (): Promise<SiteConfig> => {
   const [row, links, rooms] = await Promise.all([

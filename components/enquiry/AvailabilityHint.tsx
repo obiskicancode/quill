@@ -4,7 +4,7 @@ import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { formatNaira } from '@/lib/format';
-import type { RoomType, StayParams } from '@/lib/rooms';
+import type { RoomType, StayParams } from '@/types/rooms.types';
 
 import { useAvailability } from '../rooms/useAvailability';
 import { Button } from '../ui/button';
@@ -36,7 +36,7 @@ export function AvailabilityHint({
 
   if (!stay) {
     return (
-      <div className="rounded-card border-line bg-card text-small text-muted-foreground min-h-[3.5rem] border px-4 py-3">
+      <div className="rounded-card border-line bg-card text-small text-muted-foreground min-h-14 border px-4 py-3">
         Choose your dates to see live availability.
       </div>
     );
@@ -45,7 +45,7 @@ export function AvailabilityHint({
   if (status === 'loading' || status === 'idle') {
     return (
       <div
-        className="rounded-card border-line bg-card text-small text-muted-foreground min-h-[3.5rem] border px-4 py-3"
+        className="rounded-card border-line bg-card text-small text-muted-foreground min-h-14 border px-4 py-3"
         role="status"
         aria-live="polite"
       >
@@ -62,7 +62,7 @@ export function AvailabilityHint({
 
   if (status === 'error' || !data) {
     return (
-      <div className="rounded-card border-destructive bg-destructive/5 text-small min-h-[3.5rem] border-2 px-4 py-3">
+      <div className="rounded-card border-destructive bg-destructive/5 text-small min-h-14 border-2 px-4 py-3">
         <p className="text-destructive flex items-center gap-2 font-medium">
           <AlertTriangle className="size-4 shrink-0" aria-hidden />
           Live availability could not be loaded.

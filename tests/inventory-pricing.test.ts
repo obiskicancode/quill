@@ -1,12 +1,13 @@
 import assert from 'node:assert';
 
+import type { RateRuleInput } from '@/types/inventory.types';
+
 import {
   bpsToPercentage,
   minorToNaira,
   nairaToMinor,
   percentageToBps,
   resolveNightlyRate,
-  type RateRuleLike,
 } from '../lib/rate-resolution';
 
 console.log('=== RUNNING SECTION 2 & 3 INVENTORY & PRICING TESTS ===\n');
@@ -60,7 +61,7 @@ assert.strictEqual(fridayRes.winningRule, null);
 
 // Test 3.2: Peak overlapping weekend (Peak +20% on Friday)
 console.log('Test 3.2: Peak season rule (+20%) overlapping weekend Friday');
-const peakRule: RateRuleLike = {
+const peakRule: RateRuleInput = {
   id: 'rule-peak-1',
   roomTypeId: null, // Property-wide
   name: 'December Peak Uplift',
@@ -88,7 +89,7 @@ assert.strictEqual(peakFridayRes.winningRule?.id, 'rule-peak-1');
 
 // Test 3.3: Equal priority (Specific room type beats property-wide)
 console.log('Test 3.3: Equal priority tie-breaker: specific room type wins');
-const globalRule: RateRuleLike = {
+const globalRule: RateRuleInput = {
   id: 'rule-global',
   roomTypeId: null,
   name: 'Global Holiday',
@@ -102,7 +103,7 @@ const globalRule: RateRuleLike = {
   priority: 5,
   isActive: true,
 };
-const specificRule: RateRuleLike = {
+const specificRule: RateRuleInput = {
   id: 'rule-specific',
   roomTypeId: ROOM_TYPE_A,
   name: 'Suite Exclusive Christmas',
@@ -130,7 +131,7 @@ assert.strictEqual(tieRes.resolvedRateMinor, 95_000_00);
 console.log(
   'Test 3.4: Minimum-nights condition not met (requires 3 nights, stay is 2)',
 );
-const minNightsRule: RateRuleLike = {
+const minNightsRule: RateRuleInput = {
   id: 'rule-min-stay',
   roomTypeId: null,
   name: 'Long Stay 10% Discount',
@@ -170,7 +171,7 @@ assert.strictEqual(roomBRes.resolvedRateMinor, 46_000_00); // 40,000 * 1.15
 
 // Test 3.6: Stay crossing rule end (Date inside vs Date outside)
 console.log('Test 3.6: Stay crossing rule end date');
-const promoRule: RateRuleLike = {
+const promoRule: RateRuleInput = {
   id: 'rule-black-friday',
   roomTypeId: null,
   name: 'Black Friday Weekend',

@@ -26,3 +26,9 @@ export interface ApiErrorBody {
 
 /** A returned response is always 2xx — non-2xx throws ServiceError, so data is always present. */
 export type ApiResult<T> = ApiResponse<T> & { data: T };
+
+/** Whether an action is currently allowed, with a plain-language reason when it is not. */
+export interface ActionGate {
+  allowed: boolean;
+  reason?: string;
+}

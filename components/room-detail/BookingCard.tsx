@@ -10,18 +10,14 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
+import { bookingHref, stayParams } from '@/lib/booking/links';
 import { formatShort } from '@/lib/dates';
-import { formatNaira } from '@/lib/format';
+import { formatMinor, formatNaira } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
-import {
-  bookingHref,
-  formatMinor,
-  stayParams,
-  type StayInput,
-  type StayPatch,
-} from '@/types/stay.types';
+import type { RoomBookingSummary } from '@/types/checkout.types';
+import type { StayInput, StayPatch } from '@/types/stay.types';
 
 import { DatePicker } from '../DatePicker';
 import { GuestStepper } from '../GuestStepper';
@@ -40,21 +36,8 @@ import { Switch } from '../ui/switch';
 import { BreakdownSkeleton, PriceBreakdown } from './PriceBreakdown';
 import { useQuote } from './useQuote';
 
-export interface BookingRoom {
-  slug: string;
-  name: string;
-  maxAdults: number;
-  maxChildren: number;
-  /** Guests above this need the extra bed. */
-  baseGuests: number;
-  showPrice: boolean;
-  basePriceNgn: number;
-  taxesIncluded: boolean;
-  extraBed: { available: boolean; priceMinor: number | null };
-}
-
 interface BookingCardProps {
-  room: BookingRoom;
+  room: RoomBookingSummary;
   initial: StayInput;
   bestPriceDirect: boolean;
 }

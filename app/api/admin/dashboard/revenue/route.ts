@@ -5,10 +5,8 @@ import { hotelClock } from '@/lib/dates';
 import { getDashboardRevenue } from '@/lib/db/repositories/dashboard.repo';
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import {
-  dashboardRevenueQuerySchema,
-  type DashboardRevenueResponse,
-} from '@/types/dashboard.types';
+import { dashboardRevenueQuerySchema } from '@/schemas/dashboard.schema';
+import type { DashboardRevenueResponse } from '@/types/dashboard.types';
 
 export const dynamic = 'force-dynamic';
 

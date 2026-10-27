@@ -1,8 +1,5 @@
-import {
-  groupAmenities,
-  roomAmenityLabels,
-  type RoomDetail,
-} from '@/lib/rooms';
+import { groupAmenities, roomAmenityLabels } from '@/lib/rooms';
+import type { RoomDetail } from '@/types/rooms.types';
 
 import { StaggerGroup } from '../motion/StaggerGroup';
 import { StaggerItem } from '../motion/StaggerItem';

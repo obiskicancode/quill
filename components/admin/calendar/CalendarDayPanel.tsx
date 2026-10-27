@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/sheet';
 import { formatLong, formatShort } from '@/lib/dates';
 import type { CalendarDayResponse } from '@/types/calendar.types';
-import type { ReservationStatus } from '@/types/dashboard.types';
+import type { AdminReservationStatus } from '@/types/reservation.types';
 
 interface CalendarDayPanelProps {
   date: string | null;
@@ -131,14 +131,14 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                           {type.availableRooms.map((r) => (
                             <span
                               key={r.id}
-                              className="rounded-control border-line bg-paper text-muted-foreground border px-1.5 py-0.5 font-mono text-[11px]"
+                              className="rounded-control border-line bg-paper text-muted-foreground border px-1.5 py-0.5 font-mono text-[0.6875rem]"
                             >
                               #{r.roomNumber}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-muted-foreground mt-1 text-[11px] italic">
+                        <p className="text-muted-foreground mt-1 text-[0.6875rem] italic">
                           Sold out for this night
                         </p>
                       )}
@@ -174,7 +174,7 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                             <span className="text-small text-ink font-medium">
                               {arr.guestName}
                             </span>
-                            <span className="bg-muted py-0.2 rounded-control text-muted-foreground px-1.5 font-mono text-[11px]">
+                            <span className="bg-muted py-0.2 rounded-control text-muted-foreground px-1.5 font-mono text-[0.6875rem]">
                               #{arr.roomNumber}
                             </span>
                           </div>
@@ -182,7 +182,9 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                             {arr.reference} • Out on {formatShort(arr.checkOut)}
                           </p>
                         </div>
-                        <StatusBadge status={arr.status as ReservationStatus} />
+                        <StatusBadge
+                          status={arr.status as AdminReservationStatus}
+                        />
                       </Link>
                     ))}
                   </div>
@@ -216,7 +218,7 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                             <span className="text-small text-ink font-medium">
                               {dep.guestName}
                             </span>
-                            <span className="bg-muted py-0.2 rounded-control text-muted-foreground px-1.5 font-mono text-[11px]">
+                            <span className="bg-muted py-0.2 rounded-control text-muted-foreground px-1.5 font-mono text-[0.6875rem]">
                               #{dep.roomNumber}
                             </span>
                           </div>
@@ -225,7 +227,9 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                             {formatShort(dep.checkIn)}
                           </p>
                         </div>
-                        <StatusBadge status={dep.status as ReservationStatus} />
+                        <StatusBadge
+                          status={dep.status as AdminReservationStatus}
+                        />
                       </Link>
                     ))}
                   </div>
@@ -259,7 +263,7 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                             <span className="text-small text-ink font-medium">
                               {stay.guestName}
                             </span>
-                            <span className="bg-muted py-0.2 rounded-control text-muted-foreground px-1.5 font-mono text-[11px]">
+                            <span className="bg-muted py-0.2 rounded-control text-muted-foreground px-1.5 font-mono text-[0.6875rem]">
                               #{stay.roomNumber}
                             </span>
                           </div>
@@ -269,7 +273,7 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                           </p>
                         </div>
                         <StatusBadge
-                          status={stay.status as ReservationStatus}
+                          status={stay.status as AdminReservationStatus}
                         />
                       </Link>
                     ))}
@@ -296,7 +300,7 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                           <span className="text-small text-ink font-medium">
                             Room #{b.roomNumber} ({b.roomTypeName})
                           </span>
-                          <span className="rounded-control bg-destructive/10 text-destructive px-2 py-0.5 font-mono text-[11px] font-semibold uppercase">
+                          <span className="rounded-control bg-destructive/10 text-destructive px-2 py-0.5 font-mono text-[0.6875rem] font-semibold uppercase">
                             {b.reason.replace('_', ' ')}
                           </span>
                         </div>
@@ -305,7 +309,7 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                             {b.notes}
                           </p>
                         )}
-                        <p className="text-muted-foreground mt-1 font-mono text-[11px]">
+                        <p className="text-muted-foreground mt-1 font-mono text-[0.6875rem]">
                           {formatShort(b.startDate)} → {formatShort(b.endDate)}
                         </p>
                       </div>

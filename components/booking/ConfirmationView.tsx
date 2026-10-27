@@ -6,7 +6,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { bookingService } from '@/app/api/services/booking.service';
 import { trackBookingConfirmedOnce } from '@/lib/booking/analytics';
-import { headerKind, type GuestReservation } from '@/types/booking.types';
+import { headerKind } from '@/lib/booking/status';
+import type { GuestReservation } from '@/types/booking.types';
 
 import { Banner } from '../checkout/CheckoutStates';
 import { HelpBlock } from '../HelpBlock';

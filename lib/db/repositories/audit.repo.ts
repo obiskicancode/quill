@@ -8,7 +8,7 @@ import type {
   NewSeedRecord,
   SeedRecord,
 } from '@/db/types';
-import type { AdminRole } from '@/lib/auth/permissions';
+import type { AdminRole } from '@/types/auth.types';
 
 export async function createAuditLog(data: NewAuditLog): Promise<AuditLog> {
   const [row] = await db.insert(auditLogs).values(data).returning();

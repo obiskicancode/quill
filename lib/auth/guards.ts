@@ -3,13 +3,14 @@ import { redirect } from 'next/navigation';
 
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { can, ROLE_PERMISSIONS, type Permission } from '@/lib/auth/permissions';
+import { can, ROLE_PERMISSIONS } from '@/lib/auth/permissions';
 import {
   isMfaPending,
   resolveAdminSession,
   type AdminContext,
 } from '@/lib/auth/session';
 import { apiFail } from '@/lib/http/envelope';
+import type { Permission } from '@/types/auth.types';
 
 export type AdminGuardResult =
   | { ok: true; context: AdminContext }

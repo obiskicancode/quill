@@ -1,19 +1,7 @@
-import type { ISODate } from '../dates';
+import type { CalendarEvent } from '@/types/booking.types';
+import type { ISODate } from '@/types/dates.types';
 
 /** Pure helpers: build a downloadable .ics file, a Google Calendar link and the WhatsApp share text. */
-
-export interface CalendarEvent {
-  reference: string;
-  hotelName: string;
-  address: string;
-  checkIn: ISODate;
-  checkOut: ISODate;
-  /** "HH:MM", 24-hour, in the hotel's time zone. */
-  checkInTime: string;
-  checkOutTime: string;
-  timeZone: string;
-  guestsLabel?: string;
-}
 
 const stamp = (date: ISODate, time: string) =>
   `${date.replace(/-/g, '')}T${time.replace(':', '')}00`;

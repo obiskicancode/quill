@@ -149,7 +149,7 @@ export function Carousel({
             {slides.map((_, i) => (
               <span
                 key={i}
-                className={`size-2 rounded-full shadow-[0_0_0_1px_rgb(0_0_0/0.25)] ${i === index ? 'bg-white' : 'bg-white/55'}`}
+                className={`size-2 rounded-full shadow-[0_0_0_0.0625rem_rgb(0_0_0/0.25)] ${i === index ? 'bg-white' : 'bg-white/55'}`}
               />
             ))}
           </div>

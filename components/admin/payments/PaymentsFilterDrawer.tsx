@@ -89,7 +89,7 @@ export function PaymentsFilterDrawer({
     <div className="space-y-2">
       {/* Search and primary bar */}
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-[220px] flex-1">
+        <div className="relative min-w-[13.75rem] flex-1">
           <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
             type="search"
@@ -138,7 +138,7 @@ export function PaymentsFilterDrawer({
           >
             <SelectTrigger
               aria-label="Filter by payment status"
-              className="w-[130px]"
+              className="w-32.5"
             >
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
@@ -165,7 +165,7 @@ export function PaymentsFilterDrawer({
           >
             <SelectTrigger
               aria-label="Filter by payment method"
-              className="w-[135px]"
+              className="w-[8.4375rem]"
             >
               <SelectValue placeholder="All methods" />
             </SelectTrigger>
@@ -192,7 +192,7 @@ export function PaymentsFilterDrawer({
           >
             <SelectTrigger
               aria-label="Filter by payment provider"
-              className="w-[140px]"
+              className="w-35"
             >
               <SelectValue placeholder="All providers" />
             </SelectTrigger>
@@ -219,7 +219,7 @@ export function PaymentsFilterDrawer({
           >
             <SelectTrigger
               aria-label="Filter by reconciliation status"
-              className="w-[150px]"
+              className="w-[9.375rem]"
             >
               <SelectValue placeholder="All reconciliation" />
             </SelectTrigger>

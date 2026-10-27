@@ -30,9 +30,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { MAX_ROOM_TYPES } from '@/constants/inventory';
 import { minorToNaira } from '@/lib/rate-resolution';
 import type { AdminRoomTypeListItem } from '@/types/inventory.types';
-import { MAX_ROOM_TYPES } from '@/types/inventory.types';
 
 interface RoomTypesListClientProps {
   initialRoomTypes: AdminRoomTypeListItem[];

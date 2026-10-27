@@ -4,10 +4,10 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Expand } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import {
-  GALLERY_CATEGORIES,
-  type GalleryCategory,
-  type GalleryImageRecord,
+import { GALLERY_CATEGORIES } from '@/constants/content';
+import type {
+  GalleryCategory,
+  GalleryImageRecord,
 } from '@/types/content.types';
 
 import { HoverZoom } from '../motion/HoverZoom';

@@ -10,8 +10,8 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { formatMinor } from '@/lib/format';
 import type { GuestReservation, HeaderKind } from '@/types/booking.types';
-import { formatMinor } from '@/types/stay.types';
 
 import { EASE_OUT } from '../motion/variants';
 import { ButtonLink } from '../ui/button';

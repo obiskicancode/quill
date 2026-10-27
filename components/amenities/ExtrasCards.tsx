@@ -1,7 +1,6 @@
 import { StaggerGroup, StaggerItem, TextReveal } from '@/components/motion';
 import { getExtras } from '@/lib/content/data';
-import { unitLabels } from '@/lib/format';
-import { formatMinor } from '@/types/stay.types';
+import { formatMinor, unitLabels } from '@/lib/format';
 
 /** The hotel's active paid extras. Prices come as kobo and are shown in naira. */
 export async function ExtrasCards() {

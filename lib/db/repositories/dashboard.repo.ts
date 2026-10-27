@@ -13,7 +13,7 @@ import {
   rooms,
   roomTypes,
 } from '@/db/schema';
-import { addDays, fromISO, ISODate } from '@/lib/dates';
+import { addDays, fromISO } from '@/lib/dates';
 import type {
   ActivityEvent,
   AttentionItem,
@@ -24,6 +24,7 @@ import type {
   RevenuePeriod,
   RevenueRange,
 } from '@/types/dashboard.types';
+import type { ISODate } from '@/types/dates.types';
 
 function formatRelativeTime(date: Date, now: Date = new Date()): string {
   const diffSec = Math.floor((now.getTime() - date.getTime()) / 1000);

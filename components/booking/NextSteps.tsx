@@ -2,10 +2,10 @@
 
 import { Check } from 'lucide-react';
 
+import { formatMinor } from '@/lib/format';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 import type { GuestReservation, HeaderKind } from '@/types/booking.types';
-import { formatMinor } from '@/types/stay.types';
 
 import { StaggerGroup, StaggerItem } from '../motion';
 

@@ -163,9 +163,9 @@ export function WebhooksTab({
 
       {/* Expanded payload drawer/block for owner */}
       {expandedId && (
-        <div className="rounded-card border-line bg-ink text-paper overflow-x-auto border p-4 font-mono text-[11px]">
+        <div className="rounded-card border-line bg-ink text-paper overflow-x-auto border p-4 font-mono text-[0.6875rem]">
           <div className="border-paper/20 mb-2 flex items-center justify-between border-b pb-2">
-            <span className="text-muted-foreground text-[10px] font-semibold uppercase">
+            <span className="text-muted-foreground text-[0.625rem] font-semibold uppercase">
               Masked Webhook Payload
             </span>
             <Button

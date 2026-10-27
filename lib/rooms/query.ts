@@ -1,25 +1,14 @@
-import { fromISO, toISO, type ISODate } from '../dates';
-import {
-  emptyFilters,
-  filterAmenityOptions,
-  sortOptions,
-  type BedType,
-  type FilterAmenity,
-  type RoomFilters,
-  type SortKey,
-} from './catalog';
-import { MAX_ADULTS, MAX_CHILDREN } from './search';
+import type { ISODate } from '@/types/dates.types';
+import type {
+  BedType,
+  FilterAmenity,
+  RoomQuery,
+  SortKey,
+} from '@/types/rooms.types';
 
-/** Everything the page needs lives in the URL, so views can be shared, bookmarked and carried into detail and checkout links. */
-export interface RoomQuery {
-  checkIn: ISODate | null;
-  checkOut: ISODate | null;
-  adults: number;
-  children: number;
-  sort: SortKey;
-  filters: RoomFilters;
-  count: number | null;
-}
+import { fromISO, toISO } from '../dates';
+import { emptyFilters, filterAmenityOptions, sortOptions } from './catalog';
+import { MAX_ADULTS, MAX_CHILDREN } from './search';
 
 interface ParamsLike {
   get(name: string): string | null;

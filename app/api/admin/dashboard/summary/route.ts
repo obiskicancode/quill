@@ -11,10 +11,8 @@ import {
 } from '@/lib/db/repositories/dashboard.repo';
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import {
-  dashboardSummaryQuerySchema,
-  type DashboardSummaryResponse,
-} from '@/types/dashboard.types';
+import { dashboardSummaryQuerySchema } from '@/schemas/dashboard.schema';
+import type { DashboardSummaryResponse } from '@/types/dashboard.types';
 
 export const dynamic = 'force-dynamic';
 

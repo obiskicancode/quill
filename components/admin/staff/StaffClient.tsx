@@ -174,7 +174,7 @@ export function StaffClient() {
       {/* Filter and action toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-1 flex-wrap items-center gap-2">
-          <div className="relative max-w-sm min-w-[220px] flex-1">
+          <div className="relative max-w-sm min-w-55 flex-1">
             <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
             <Input
               type="search"
@@ -197,10 +197,7 @@ export function StaffClient() {
               }
             }}
           >
-            <SelectTrigger
-              aria-label="Filter by staff role"
-              className="w-[130px]"
-            >
+            <SelectTrigger aria-label="Filter by staff role" className="w-32.5">
               <SelectValue placeholder="All roles" />
             </SelectTrigger>
             <SelectContent>
@@ -224,10 +221,7 @@ export function StaffClient() {
               }
             }}
           >
-            <SelectTrigger
-              aria-label="Filter by staff status"
-              className="w-[140px]"
-            >
+            <SelectTrigger aria-label="Filter by staff status" className="w-35">
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>

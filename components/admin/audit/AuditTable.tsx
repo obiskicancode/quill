@@ -179,7 +179,7 @@ export function AuditTable({
               {entry.summary}
             </p>
 
-            <div className="border-line/60 text-muted-foreground flex items-center justify-between border-t pt-2 text-[11px]">
+            <div className="border-line/60 text-muted-foreground flex items-center justify-between border-t pt-2 text-[0.6875rem]">
               <span>Entity: {entry.entity}</span>
               <span className="font-mono">
                 {entry.entityRef || entry.entityId}
