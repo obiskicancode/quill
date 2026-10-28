@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { format, parseISO } from 'date-fns';
 import {
   AlertCircle,
@@ -11,13 +12,15 @@ import {
   DollarSign,
   Loader2,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { AdminCard } from '@/components/admin/AdminCard';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
+import { inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -36,15 +39,26 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useAvailableRooms,
+  useCreateReservation,
+  useReservationQuote,
+  type AvailableRoomsInput,
+  type ReservationQuoteInput,
+} from '@/hooks/services/admin/use-reservations-data';
+import { useFormDraft } from '@/hooks/use-form-draft';
 import { addDays, nightsBetween } from '@/lib/dates';
 import { formatNaira } from '@/lib/format';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import {
+  adminCreateReservationSchema,
+  type AdminCreateReservationInput,
+} from '@/schemas/reservation.schema';
 import type { AdminRole } from '@/types/auth.types';
-import type { CheckoutQuoteResponse } from '@/types/checkout.types';
 import type {
   AdminRoomTypeOption,
   ExtraCatalogItem,
 } from '@/types/inventory.types';
-import type { AdminCreateReservationInput } from '@/types/reservation.types';
 
 interface NewReservationClientProps {
   roomTypes: AdminRoomTypeOption[];
@@ -52,6 +66,62 @@ interface NewReservationClientProps {
   role: AdminRole;
   today: string;
 }
+
+const newReservationFormSchema = adminCreateReservationSchema
+  .omit({
+    idempotencyKey: true,
+    paymentChoice: true,
+    termsAcceptedByStaff: true,
+  })
+  .extend({
+    discount: z
+      .object({
+        type: z.enum(['fixed', 'percentage']),
+        value: z.number().positive(ERROR_MESSAGES.AMOUNT_POSITIVE),
+        reason: z
+          .string()
+          .min(3, ERROR_MESSAGES.STAFF_DISCOUNT_REASON_REQUIRED),
+      })
+      .optional(),
+    paymentMode: z
+      .enum(['hold', 'record_payment', 'pay_at_hotel'])
+      .default('hold'),
+    holdHours: z.number().int().min(1).max(72).default(24),
+    paidAmountNaira: z.string().default(''),
+    paymentMethod: z.enum(['cash', 'bank_transfer', 'card']).default('cash'),
+    paymentReference: z.string().default(''),
+    paymentNote: z.string().default(''),
+    termsAccepted: z.boolean().refine((val) => val === true, {
+      message: ERROR_MESSAGES.ACCEPT_TERMS_FOR_GUEST,
+    }),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.noEmail && !data.guest.email?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['guest', 'email'],
+        message: ERROR_MESSAGES.EMAIL_REQUIRED,
+      });
+    }
+
+    if (data.paymentMode === 'record_payment') {
+      const amount = Number.parseFloat(data.paidAmountNaira);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['paidAmountNaira'],
+          message: ERROR_MESSAGES.VALID_PAYMENT_AMOUNT,
+        });
+      }
+    }
+  });
+
+type NewReservationFormInput = z.input<typeof newReservationFormSchema>;
+type NewReservationFormOutput = z.output<typeof newReservationFormSchema>;
+
+const NEW_RESERVATION_DRAFT_EXCLUDE = [
+  'termsAccepted',
+] as const satisfies readonly (keyof NewReservationFormInput)[];
 
 export function NewReservationClient({
   roomTypes,
@@ -62,151 +132,132 @@ export function NewReservationClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const isManagerOrOwner = role === 'owner' || role === 'manager';
+  const createReservation = useCreateReservation();
 
   const prefillCheckIn = searchParams.get('checkIn');
   const prefillCheckOut = searchParams.get('checkOut');
-  const prefillRoomTypeId = searchParams.get('roomTypeId');
-  const prefillRoomId = searchParams.get('roomId');
+  const roomTypeParam = searchParams.get('roomTypeId');
+  const prefillRoomTypeId = roomTypes.some((rt) => rt.id === roomTypeParam)
+    ? roomTypeParam
+    : undefined;
+  const prefillRoomId = prefillRoomTypeId ? searchParams.get('roomId') : null;
 
-  // 1. Stay State
-  const [checkIn, setCheckIn] = useState(() =>
-    prefillCheckIn && /^\d{4}-\d{2}-\d{2}$/.test(prefillCheckIn)
-      ? prefillCheckIn
-      : today,
-  );
-  const [checkOut, setCheckOut] = useState(() =>
-    prefillCheckOut && /^\d{4}-\d{2}-\d{2}$/.test(prefillCheckOut)
-      ? prefillCheckOut
-      : addDays(today, 1),
-  );
-  const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-  const [selectedRoomTypeId, setSelectedRoomTypeId] = useState(
-    () => prefillRoomTypeId || roomTypes[0]?.id || '',
-  );
-  const [selectedRoomId, setSelectedRoomId] = useState<string>(
-    () => prefillRoomId || '',
-  ); // empty = auto-assign
-  const [extraBed, setExtraBed] = useState(false);
+  const form = useForm<
+    NewReservationFormInput,
+    unknown,
+    NewReservationFormOutput
+  >({
+    resolver: zodResolver(newReservationFormSchema),
+    defaultValues: {
+      checkIn:
+        prefillCheckIn && /^\d{4}-\d{2}-\d{2}$/.test(prefillCheckIn)
+          ? prefillCheckIn
+          : today,
+      checkOut:
+        prefillCheckOut && /^\d{4}-\d{2}-\d{2}$/.test(prefillCheckOut)
+          ? prefillCheckOut
+          : addDays(today, 1),
+      adults: 1,
+      children: 0,
+      roomTypeId: prefillRoomTypeId || roomTypes[0]?.id || '',
+      roomId: prefillRoomId || undefined,
+      extraBed: false,
+      extras: [],
+      guest: {
+        fullName: '',
+        email: '',
+        phone: '',
+        country: 'NG',
+        arrivalTime: '',
+        specialRequests: '',
+      },
+      noEmail: false,
+      internalNotes: '',
+      source: 'phone',
+      discount: undefined,
+      paymentMode: 'hold',
+      holdHours: 24,
+      paidAmountNaira: '',
+      paymentMethod: 'cash',
+      paymentReference: `PAY-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+      paymentNote: '',
+      termsAccepted: false,
+    },
+    mode: 'onBlur',
+  });
+  const { clearDraft } = useFormDraft(form, 'admin-reservation-new', {
+    exclude: NEW_RESERVATION_DRAFT_EXCLUDE,
+  });
+  const {
+    control,
+    formState: { errors, isSubmitted, isSubmitting },
+    getValues,
+    handleSubmit,
+    register,
+    setValue,
+    watch,
+  } = form;
 
-  // Available candidate rooms
-  const [availableRooms, setAvailableRooms] = useState<
-    { id: string; roomNumber: string; floor: number | null }[]
-  >([]);
-  const [loadingRooms, setLoadingRooms] = useState(false);
-
-  // 2. Extras State
-  const [extraSelections, setExtraSelections] = useState<
-    Record<string, number>
-  >({});
-
-  // 3. Discount State (Manager/Owner only)
-  const [hasDiscount, setHasDiscount] = useState(false);
-  const [discountType, setDiscountType] = useState<'fixed' | 'percentage'>(
-    'percentage',
-  );
-  const [discountValue, setDiscountValue] = useState<string>('10');
-  const [discountReason, setDiscountReason] = useState('');
-
-  // 4. Live Quote
-  const [quote, setQuote] = useState<CheckoutQuoteResponse | null>(null);
-  const [quoting, setQuoting] = useState(false);
-
-  // 5. Guest Details
-  const [guestName, setGuestName] = useState('');
-  const [guestPhone, setGuestPhone] = useState('');
-  const [guestEmail, setGuestEmail] = useState('');
-  const [noEmail, setNoEmail] = useState(false);
-  const [guestCountry, setGuestCountry] = useState('NG');
-  const [arrivalTime, setArrivalTime] = useState('');
-  const [specialRequests, setSpecialRequests] = useState('');
-  const [internalNotes, setInternalNotes] = useState('');
-
-  // 6. Source
-  const [source, setSource] = useState<'phone' | 'walk_in' | 'admin'>('phone');
-
-  // 7. Payment Choice
-  const [paymentMode, setPaymentMode] = useState<
-    'hold' | 'record_payment' | 'pay_at_hotel'
-  >('hold');
-  const [holdHours, setHoldHours] = useState(24);
-  const [paidAmountNaira, setPaidAmountNaira] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<
-    'cash' | 'bank_transfer' | 'card'
-  >('cash');
-  const [paymentReference, setPaymentReference] = useState(
-    () => `PAY-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-  );
-  const [paymentNote, setPaymentNote] = useState('');
-
-  // 8. Review & Submission
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const values = watch();
+  const checkIn = values.checkIn;
+  const checkOut = values.checkOut;
+  const adults = values.adults ?? 0;
+  const children = values.children ?? 0;
+  const selectedRoomTypeId = values.roomTypeId;
+  const extraBed = values.extraBed ?? false;
+  const noEmail = values.noEmail ?? false;
+  const paymentMode = values.paymentMode ?? 'hold';
+  const holdHours = values.holdHours ?? 24;
+  const termsAccepted = values.termsAccepted ?? false;
+  const hasDiscount = values.discount !== undefined;
+  const discountType = values.discount?.type ?? 'percentage';
+  const extras = values.extras ?? [];
 
   const activeRoomType = roomTypes.find((t) => t.id === selectedRoomTypeId);
 
-  // Fetch rooms when roomType or dates change
-  useEffect(() => {
-    if (selectedRoomTypeId && checkIn && checkOut && checkOut > checkIn) {
-      adminService
-        .getAvailableRooms({
-          roomTypeId: selectedRoomTypeId,
-          checkIn,
-          checkOut,
-        })
-        .then((res) => {
-          setAvailableRooms(res.data.rooms);
-          setSelectedRoomId(''); // reset to auto-assign
-        })
-        .catch(() => {})
-        .finally(() => setLoadingRooms(false));
+  const roomsInput = useMemo<AvailableRoomsInput | null>(() => {
+    if (!selectedRoomTypeId || !checkIn || !checkOut || checkOut <= checkIn) {
+      return null;
     }
+    return { roomTypeId: selectedRoomTypeId, checkIn, checkOut };
   }, [selectedRoomTypeId, checkIn, checkOut]);
 
-  // Debounced Live Quote calculation
+  const availableRoomsQuery = useAvailableRooms(roomsInput);
+  const availableRooms = useMemo(
+    () => availableRoomsQuery.data ?? [],
+    [availableRoomsQuery.data],
+  );
+  const loadingRooms = availableRoomsQuery.isFetching;
+
   useEffect(() => {
+    if (availableRoomsQuery.data) {
+      setValue('roomId', undefined);
+    }
+  }, [availableRoomsQuery.data, setValue]);
+
+  const quoteCandidate = useMemo<ReservationQuoteInput | null>(() => {
     if (!selectedRoomTypeId || !checkIn || !checkOut || checkOut <= checkIn) {
-      return;
+      return null;
     }
 
-    const timer = setTimeout(() => {
-      setQuoting(true);
+    const discountPayload =
+      isManagerOrOwner &&
+      values.discount &&
+      Number.isFinite(values.discount.value) &&
+      values.discount.value > 0
+        ? { type: values.discount.type, value: values.discount.value }
+        : undefined;
 
-      const extrasArray = Object.entries(extraSelections)
-        .filter(([, qty]) => qty > 0)
-        .map(([id, quantity]) => ({ id, quantity }));
-
-      const numVal = parseFloat(discountValue);
-      const discountPayload =
-        isManagerOrOwner && hasDiscount && !isNaN(numVal) && numVal > 0
-          ? { type: discountType, value: numVal }
-          : undefined;
-
-      adminService
-        .quoteReservation({
-          roomTypeId: selectedRoomTypeId,
-          checkIn,
-          checkOut,
-          adults,
-          children,
-          extraBed,
-          extras: extrasArray,
-          discount: discountPayload,
-        })
-        .then((res) => {
-          setQuote(res.data);
-          if (res.data?.status === 'ok') {
-            setPaidAmountNaira(
-              (res.data.breakdown.totalMinor / 100).toString(),
-            );
-          }
-        })
-        .catch(() => {})
-        .finally(() => setQuoting(false));
-    }, 300);
-
-    return () => clearTimeout(timer);
+    return {
+      roomTypeId: selectedRoomTypeId,
+      checkIn,
+      checkOut,
+      adults,
+      children,
+      extraBed,
+      extras: (values.extras ?? []).filter((extra) => extra.quantity > 0),
+      discount: discountPayload,
+    };
   }, [
     selectedRoomTypeId,
     checkIn,
@@ -214,121 +265,164 @@ export function NewReservationClient({
     adults,
     children,
     extraBed,
-    extraSelections,
-    hasDiscount,
-    discountType,
-    discountValue,
+    values.extras,
+    values.discount,
     isManagerOrOwner,
   ]);
 
+  const [quoteInput, setQuoteInput] = useState<ReservationQuoteInput | null>(
+    null,
+  );
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (quoteCandidate) setQuoteInput(quoteCandidate);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [quoteCandidate]);
+
+  const quoteQuery = useReservationQuote(quoteInput);
+  const quote = quoteQuery.data ?? null;
+  const quoting = quoteQuery.isFetching;
+
+  useEffect(() => {
+    if (quote?.status === 'ok') {
+      setValue(
+        'paidAmountNaira',
+        (quote.breakdown.totalMinor / 100).toString(),
+      );
+    }
+  }, [quote, setValue]);
+
   const handleExtraQuantityChange = (id: string, delta: number) => {
-    setExtraSelections((prev) => {
-      const cur = prev[id] || 0;
-      const next = Math.max(0, cur + delta);
-      return { ...prev, [id]: next };
+    const current = getValues('extras') ?? [];
+    const currentQuantity =
+      current.find((extra) => extra.id === id)?.quantity ?? 0;
+    const next = Math.max(0, currentQuantity + delta);
+    const updated =
+      next === 0
+        ? current.filter((extra) => extra.id !== id)
+        : current.some((extra) => extra.id === id)
+          ? current.map((extra) =>
+              extra.id === id ? { ...extra, quantity: next } : extra,
+            )
+          : [...current, { id, quantity: next }];
+
+    setValue('extras', updated, {
+      shouldDirty: true,
+      shouldValidate: isSubmitted,
     });
   };
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
-    if (!termsAccepted) {
-      setError(ERROR_MESSAGES.ACCEPT_TERMS_FOR_GUEST);
-      return;
-    }
+  const [error, setError] = useState<string | null>(null);
+  const busy = isSubmitting || createReservation.isPending;
+
+  const onSubmit = async (input: NewReservationFormOutput) => {
+    setError(null);
 
     if (quote?.status !== 'ok') {
       setError(ERROR_MESSAGES.SELECT_VALID_STAY_AND_ROOM);
       return;
     }
 
-    if (!isManagerOrOwner && checkIn < today) {
+    if (!isManagerOrOwner && input.checkIn < today) {
       setError(ERROR_MESSAGES.MANAGERS_ONLY_PAST_CHECKIN);
       return;
     }
 
-    if (hasDiscount && (!discountReason || discountReason.trim().length < 3)) {
-      setError(ERROR_MESSAGES.STAFF_DISCOUNT_REASON_REQUIRED);
-      return;
-    }
-
-    setError(null);
-    setSubmitting(true);
-
     try {
-      const extrasArray = Object.entries(extraSelections)
-        .filter(([, qty]) => qty > 0)
-        .map(([id, quantity]) => ({ id, quantity }));
+      const extrasArray = (input.extras ?? [])
+        .filter((extra) => extra.quantity > 0)
+        .map((extra) => ({ id: extra.id, quantity: extra.quantity }));
 
-      const numVal = parseFloat(discountValue);
+      const numVal = input.discount?.value ?? Number.NaN;
 
-      let pChoice: AdminCreateReservationInput['paymentChoice'];
-      if (paymentMode === 'hold') {
-        pChoice = { mode: 'hold', holdHours };
-      } else if (paymentMode === 'record_payment') {
-        const pNum = parseFloat(paidAmountNaira);
-        if (isNaN(pNum) || pNum <= 0) {
+      let paymentChoice: AdminCreateReservationInput['paymentChoice'];
+      if (input.paymentMode === 'hold') {
+        paymentChoice = { mode: 'hold', holdHours: input.holdHours };
+      } else if (input.paymentMode === 'record_payment') {
+        const paidAmount = Number.parseFloat(input.paidAmountNaira);
+        if (!Number.isFinite(paidAmount) || paidAmount <= 0) {
           setError(ERROR_MESSAGES.VALID_PAYMENT_AMOUNT);
-          setSubmitting(false);
           return;
         }
-        pChoice = {
+        paymentChoice = {
           mode: 'record_payment',
-          amountMinor: Math.round(pNum * 100),
-          method: paymentMethod,
-          reference: paymentReference.trim(),
-          note: paymentNote.trim() || undefined,
+          amountMinor: Math.round(paidAmount * 100),
+          method: input.paymentMethod,
+          reference: input.paymentReference.trim(),
+          note: input.paymentNote.trim() || undefined,
         };
       } else {
-        pChoice = { mode: 'pay_at_hotel' };
+        paymentChoice = { mode: 'pay_at_hotel' };
       }
 
-      const res = await adminService.createReservation({
-        checkIn,
-        checkOut,
-        adults,
-        children,
-        roomTypeId: selectedRoomTypeId,
-        roomId: selectedRoomId || undefined,
-        extraBed,
+      const res = await createReservation.mutateAsync({
+        checkIn: input.checkIn,
+        checkOut: input.checkOut,
+        adults: input.adults,
+        children: input.children,
+        roomTypeId: input.roomTypeId,
+        roomId: input.roomId || undefined,
+        extraBed: input.extraBed,
         extras: extrasArray,
         guest: {
-          fullName: guestName.trim(),
-          email: noEmail ? undefined : guestEmail.trim() || undefined,
-          phone: guestPhone.trim(),
-          country: guestCountry.trim() || 'NG',
-          arrivalTime: arrivalTime.trim() || undefined,
-          specialRequests: specialRequests.trim() || undefined,
+          fullName: input.guest.fullName.trim(),
+          email: input.noEmail
+            ? undefined
+            : input.guest.email?.trim() || undefined,
+          phone: input.guest.phone.trim(),
+          country: input.guest.country?.trim() || 'NG',
+          arrivalTime: input.guest.arrivalTime?.trim() || undefined,
+          specialRequests: input.guest.specialRequests?.trim() || undefined,
         },
-        noEmail,
-        internalNotes: internalNotes.trim() || undefined,
-        source,
+        noEmail: input.noEmail,
+        internalNotes: input.internalNotes?.trim() || undefined,
+        source: input.source,
         discount:
-          isManagerOrOwner && hasDiscount && !isNaN(numVal) && numVal > 0
+          isManagerOrOwner &&
+          input.discount &&
+          Number.isFinite(numVal) &&
+          numVal > 0
             ? {
-                type: discountType,
+                type: input.discount.type,
                 value: numVal,
-                reason: discountReason.trim(),
+                reason: input.discount.reason.trim(),
               }
             : undefined,
-        paymentChoice: pChoice,
+        paymentChoice,
         termsAcceptedByStaff: true,
         idempotencyKey: crypto.randomUUID(),
       });
 
+      clearDraft();
       toast.add({
         title: SUCCESS_MESSAGES.RESERVATION_CREATED,
         type: 'success',
       });
-      router.push(`/admin/reservations/${res.data.id}`);
+      router.push(`/admin/reservations/${res.id}`);
     } catch (err) {
+      applyServerFieldErrors(form.setError, err);
       setError(
         err instanceof Error
           ? err.message
           : ERROR_MESSAGES.FAILED_TO_CREATE_RESERVATION_UI,
       );
-      setSubmitting(false);
     }
   };
+
+  const validationMessage =
+    errors.termsAccepted?.message ??
+    errors.discount?.reason?.message ??
+    errors.discount?.value?.message ??
+    errors.paidAmountNaira?.message ??
+    errors.guest?.fullName?.message ??
+    errors.guest?.phone?.message ??
+    errors.guest?.email?.message ??
+    errors.roomTypeId?.message ??
+    errors.checkIn?.message ??
+    errors.checkOut?.message;
+  const displayError = error ?? (isSubmitted ? validationMessage : undefined);
 
   const nights = nightsBetween(checkIn, checkOut);
 
@@ -352,17 +446,17 @@ export function NewReservationClient({
         </p>
       </div>
 
-      {error && (
+      {displayError && (
         <div
           role="alert"
           className="rounded-control border-destructive/30 bg-destructive/10 text-small text-destructive flex items-start gap-2.5 border p-4"
         >
           <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          <span>{error}</span>
+          <span>{displayError}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form noValidate onSubmit={handleSubmit(onSubmit)}>
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Main Form (2 columns) */}
           <div className="space-y-6 lg:col-span-2">
@@ -397,25 +491,45 @@ export function NewReservationClient({
                       </span>
                     </PopoverTrigger>
                     <PopoverContent align="start" className="w-auto p-0">
-                      <Calendar
-                        mode="range"
-                        selected={{
-                          from: checkIn ? parseISO(checkIn) : undefined,
-                          to: checkOut ? parseISO(checkOut) : undefined,
-                        }}
-                        disabled={
-                          isManagerOrOwner
-                            ? undefined
-                            : (date) =>
-                                date < new Date(new Date().setHours(0, 0, 0, 0))
-                        }
-                        onSelect={(range) => {
-                          if (range?.from)
-                            setCheckIn(format(range.from, 'yyyy-MM-dd'));
-                          if (range?.to)
-                            setCheckOut(format(range.to, 'yyyy-MM-dd'));
-                        }}
-                        numberOfMonths={1}
+                      <Controller
+                        control={control}
+                        name="checkIn"
+                        render={({ field }) => (
+                          <Calendar
+                            mode="range"
+                            selected={{
+                              from: field.value
+                                ? parseISO(field.value)
+                                : undefined,
+                              to: checkOut ? parseISO(checkOut) : undefined,
+                            }}
+                            disabled={
+                              isManagerOrOwner
+                                ? undefined
+                                : (date) =>
+                                    date <
+                                    new Date(new Date().setHours(0, 0, 0, 0))
+                            }
+                            onSelect={(range) => {
+                              if (range?.from) {
+                                field.onChange(
+                                  format(range.from, 'yyyy-MM-dd'),
+                                );
+                              }
+                              if (range?.to) {
+                                setValue(
+                                  'checkOut',
+                                  format(range.to, 'yyyy-MM-dd'),
+                                  {
+                                    shouldDirty: true,
+                                    shouldValidate: isSubmitted,
+                                  },
+                                );
+                              }
+                            }}
+                            numberOfMonths={1}
+                          />
+                        )}
                       />
                     </PopoverContent>
                   </Popover>
@@ -437,8 +551,8 @@ export function NewReservationClient({
                       min="1"
                       max={activeRoomType?.maxAdults ?? 10}
                       required
-                      value={adults}
-                      onChange={(e) => setAdults(parseInt(e.target.value) || 1)}
+                      {...register('adults', { valueAsNumber: true })}
+                      className={inputClass(errors.adults?.message)}
                     />
                   </div>
 
@@ -454,10 +568,8 @@ export function NewReservationClient({
                       type="number"
                       min="0"
                       max={activeRoomType?.maxChildren ?? 5}
-                      value={children}
-                      onChange={(e) =>
-                        setChildren(parseInt(e.target.value) || 0)
-                      }
+                      {...register('children', { valueAsNumber: true })}
+                      className={inputClass(errors.children?.message)}
                     />
                   </div>
                 </div>
@@ -476,7 +588,12 @@ export function NewReservationClient({
                           type="button"
                           variant={selected ? 'default' : 'outline'}
                           size="md"
-                          onClick={() => setSelectedRoomTypeId(rt.id)}
+                          onClick={() =>
+                            setValue('roomTypeId', rt.id, {
+                              shouldDirty: true,
+                              shouldValidate: isSubmitted,
+                            })
+                          }
                           className="h-auto w-full items-start justify-between p-3.5 text-left font-normal"
                         >
                           <div>
@@ -505,38 +622,50 @@ export function NewReservationClient({
                   >
                     Room Assignment
                   </Label>
-                  <Select
-                    items={[
-                      {
-                        value: 'auto',
-                        label: 'Auto-assign best available room',
-                      },
-                      ...availableRooms.map((r) => ({
-                        value: r.id,
-                        label: `Room ${r.roomNumber}${r.floor ? ` (Floor ${r.floor})` : ''}`,
-                      })),
-                    ]}
-                    value={selectedRoomId || 'auto'}
-                    onValueChange={(val) =>
-                      setSelectedRoomId(val === 'auto' || !val ? '' : val)
-                    }
-                    disabled={loadingRooms}
-                  >
-                    <SelectTrigger id="room-assignment" className="w-full">
-                      <SelectValue placeholder="Auto-assign best available room" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="auto">
-                        Auto-assign best available room
-                      </SelectItem>
-                      {availableRooms.map((r) => (
-                        <SelectItem key={r.id} value={r.id}>
-                          Room {r.roomNumber}{' '}
-                          {r.floor ? `(Floor ${r.floor})` : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    control={control}
+                    name="roomId"
+                    render={({ field }) => (
+                      <Select
+                        items={[
+                          {
+                            value: 'auto',
+                            label: 'Auto-assign best available room',
+                          },
+                          ...availableRooms.map((r) => ({
+                            value: r.id,
+                            label: `Room ${r.roomNumber}${r.floor ? ` (Floor ${r.floor})` : ''}`,
+                          })),
+                        ]}
+                        value={field.value || 'auto'}
+                        onValueChange={(val) => {
+                          field.onChange(
+                            val === 'auto' || !val ? undefined : val,
+                          );
+                        }}
+                        disabled={loadingRooms}
+                      >
+                        <SelectTrigger
+                          id="room-assignment"
+                          className="w-full"
+                          onBlur={field.onBlur}
+                        >
+                          <SelectValue placeholder="Auto-assign best available room" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="auto">
+                            Auto-assign best available room
+                          </SelectItem>
+                          {availableRooms.map((r) => (
+                            <SelectItem key={r.id} value={r.id}>
+                              Room {r.roomNumber}{' '}
+                              {r.floor ? `(Floor ${r.floor})` : ''}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                   <p className="text-caption text-muted-foreground mt-1">
                     {loadingRooms
                       ? 'Checking available rooms…'
@@ -552,10 +681,19 @@ export function NewReservationClient({
                     htmlFor="extra-bed-toggle"
                     className="text-small text-ink flex cursor-pointer items-center gap-2 pt-2"
                   >
-                    <Checkbox
-                      id="extra-bed-toggle"
-                      checked={extraBed}
-                      onCheckedChange={(checked) => setExtraBed(!!checked)}
+                    <Controller
+                      control={control}
+                      name="extraBed"
+                      render={({ field }) => (
+                        <Checkbox
+                          id="extra-bed-toggle"
+                          checked={field.value === true}
+                          onCheckedChange={(checked) =>
+                            field.onChange(!!checked)
+                          }
+                          onBlur={field.onBlur}
+                        />
+                      )}
                     />
                     <span>Add rollaway extra bed</span>
                   </Label>
@@ -580,9 +718,9 @@ export function NewReservationClient({
                     id="new-guest-name"
                     type="text"
                     required
-                    value={guestName}
-                    onChange={(e) => setGuestName(e.target.value)}
+                    {...register('guest.fullName')}
                     placeholder="e.g. Adebayo Ogunlesi"
+                    className={inputClass(errors.guest?.fullName?.message)}
                   />
                 </div>
 
@@ -598,9 +736,9 @@ export function NewReservationClient({
                       id="new-guest-phone"
                       type="tel"
                       required
-                      value={guestPhone}
-                      onChange={(e) => setGuestPhone(e.target.value)}
+                      {...register('guest.phone')}
                       placeholder="+234 801 234 5678"
+                      className={inputClass(errors.guest?.phone?.message)}
                     />
                   </div>
 
@@ -617,22 +755,29 @@ export function NewReservationClient({
                       type="email"
                       required={!noEmail}
                       disabled={noEmail}
-                      value={guestEmail}
-                      onChange={(e) => setGuestEmail(e.target.value)}
+                      {...register('guest.email')}
                       placeholder="guest@example.com"
+                      className={inputClass(errors.guest?.email?.message)}
                     />
                     <Label
                       htmlFor="no-email-checkbox"
                       className="text-caption text-ink mt-1.5 flex cursor-pointer items-center gap-2"
                     >
-                      <Checkbox
-                        id="no-email-checkbox"
-                        checked={noEmail}
-                        onCheckedChange={(checked) => setNoEmail(!!checked)}
+                      <Controller
+                        control={control}
+                        name="noEmail"
+                        render={({ field }) => (
+                          <Checkbox
+                            id="no-email-checkbox"
+                            checked={field.value === true}
+                            onCheckedChange={(checked) =>
+                              field.onChange(!!checked)
+                            }
+                            onBlur={field.onBlur}
+                          />
+                        )}
                       />
-                      <span>
-                        No email available (skips guest email dispatch)
-                      </span>
+                      <span>No email available</span>
                     </Label>
                   </div>
                 </div>
@@ -649,12 +794,12 @@ export function NewReservationClient({
                       id="new-guest-country"
                       type="text"
                       maxLength={2}
-                      value={guestCountry}
-                      onChange={(e) =>
-                        setGuestCountry(e.target.value.toUpperCase())
-                      }
+                      {...register('guest.country', {
+                        setValueAs: (value) =>
+                          String(value ?? '').toUpperCase(),
+                      })}
                       placeholder="NG"
-                      className="uppercase"
+                      className={`${inputClass(errors.guest?.country?.message)} uppercase`}
                     />
                   </div>
 
@@ -668,9 +813,9 @@ export function NewReservationClient({
                     <Input
                       id="new-arrival-time"
                       type="text"
-                      value={arrivalTime}
-                      onChange={(e) => setArrivalTime(e.target.value)}
+                      {...register('guest.arrivalTime')}
                       placeholder="e.g. 14:00"
+                      className={inputClass(errors.guest?.arrivalTime?.message)}
                     />
                   </div>
 
@@ -681,30 +826,49 @@ export function NewReservationClient({
                     >
                       Booking Channel
                     </Label>
-                    <Select
-                      items={[
-                        { value: 'phone', label: 'Phone reservation' },
-                        { value: 'walk_in', label: 'Walk-in guest' },
-                        { value: 'admin', label: 'Admin courtesy / reserve' },
-                      ]}
-                      value={source}
-                      onValueChange={(val) => {
-                        if (val) {
-                          setSource(val as 'phone' | 'walk_in' | 'admin');
-                        }
-                      }}
-                    >
-                      <SelectTrigger id="booking-channel" className="w-full">
-                        <SelectValue placeholder="Select channel" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="phone">Phone reservation</SelectItem>
-                        <SelectItem value="walk_in">Walk-in guest</SelectItem>
-                        <SelectItem value="admin">
-                          Admin courtesy / reserve
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Controller
+                      control={control}
+                      name="source"
+                      render={({ field }) => (
+                        <Select
+                          items={[
+                            { value: 'phone', label: 'Phone reservation' },
+                            { value: 'walk_in', label: 'Walk-in guest' },
+                            {
+                              value: 'admin',
+                              label: 'Admin courtesy / reserve',
+                            },
+                          ]}
+                          value={field.value}
+                          onValueChange={(val) => {
+                            if (val) {
+                              field.onChange(
+                                val as 'phone' | 'walk_in' | 'admin',
+                              );
+                            }
+                          }}
+                        >
+                          <SelectTrigger
+                            id="booking-channel"
+                            className="w-full"
+                            onBlur={field.onBlur}
+                          >
+                            <SelectValue placeholder="Select channel" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="phone">
+                              Phone reservation
+                            </SelectItem>
+                            <SelectItem value="walk_in">
+                              Walk-in guest
+                            </SelectItem>
+                            <SelectItem value="admin">
+                              Admin courtesy / reserve
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </div>
                 </div>
 
@@ -718,9 +882,11 @@ export function NewReservationClient({
                   <Textarea
                     id="new-special-requests"
                     rows={2}
-                    value={specialRequests}
-                    onChange={(e) => setSpecialRequests(e.target.value)}
+                    {...register('guest.specialRequests')}
                     placeholder="Dietary requirements, high floor, quiet room..."
+                    className={inputClass(
+                      errors.guest?.specialRequests?.message,
+                    )}
                   />
                 </div>
 
@@ -734,9 +900,9 @@ export function NewReservationClient({
                   <Textarea
                     id="new-internal-notes"
                     rows={2}
-                    value={internalNotes}
-                    onChange={(e) => setInternalNotes(e.target.value)}
+                    {...register('internalNotes')}
                     placeholder="Staff notes for reception and auditing..."
+                    className={inputClass(errors.internalNotes?.message)}
                   />
                 </div>
               </div>
@@ -750,7 +916,9 @@ export function NewReservationClient({
               >
                 <div className="divide-line divide-y">
                   {extrasCatalog.map((extra) => {
-                    const quantity = extraSelections[extra.id] || 0;
+                    const quantity =
+                      extras.find((selection) => selection.id === extra.id)
+                        ?.quantity ?? 0;
                     return (
                       <div
                         key={extra.id}
@@ -811,10 +979,27 @@ export function NewReservationClient({
                     htmlFor="discount-toggle-checkbox"
                     className="text-small text-ink flex cursor-pointer items-center gap-2"
                   >
-                    <Checkbox
-                      id="discount-toggle-checkbox"
-                      checked={hasDiscount}
-                      onCheckedChange={(checked) => setHasDiscount(!!checked)}
+                    <Controller
+                      control={control}
+                      name="discount"
+                      render={({ field }) => (
+                        <Checkbox
+                          id="discount-toggle-checkbox"
+                          checked={field.value !== undefined}
+                          onCheckedChange={(checked) =>
+                            field.onChange(
+                              checked
+                                ? {
+                                    type: 'percentage',
+                                    value: 10,
+                                    reason: '',
+                                  }
+                                : undefined,
+                            )
+                          }
+                          onBlur={field.onBlur}
+                        />
+                      )}
                     />
                     <span>Apply custom discount to this booking</span>
                   </Label>
@@ -828,33 +1013,43 @@ export function NewReservationClient({
                         >
                           Discount Type
                         </Label>
-                        <Select
-                          items={[
-                            { value: 'percentage', label: 'Percentage (%)' },
-                            { value: 'fixed', label: 'Fixed Amount (₦)' },
-                          ]}
-                          value={discountType}
-                          onValueChange={(val) => {
-                            if (val) {
-                              setDiscountType(val as 'fixed' | 'percentage');
-                            }
-                          }}
-                        >
-                          <SelectTrigger
-                            id="discount-type-select"
-                            className="w-full"
-                          >
-                            <SelectValue placeholder="Discount Type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="percentage">
-                              Percentage (%)
-                            </SelectItem>
-                            <SelectItem value="fixed">
-                              Fixed Amount (₦)
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Controller
+                          control={control}
+                          name="discount.type"
+                          render={({ field }) => (
+                            <Select
+                              items={[
+                                {
+                                  value: 'percentage',
+                                  label: 'Percentage (%)',
+                                },
+                                { value: 'fixed', label: 'Fixed Amount (₦)' },
+                              ]}
+                              value={field.value ?? discountType}
+                              onValueChange={(val) => {
+                                if (val) {
+                                  field.onChange(val as 'fixed' | 'percentage');
+                                }
+                              }}
+                            >
+                              <SelectTrigger
+                                id="discount-type-select"
+                                className="w-full"
+                                onBlur={field.onBlur}
+                              >
+                                <SelectValue placeholder="Discount Type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="percentage">
+                                  Percentage (%)
+                                </SelectItem>
+                                <SelectItem value="fixed">
+                                  Fixed Amount (₦)
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
                       </div>
 
                       <div className="space-y-1.5">
@@ -870,8 +1065,12 @@ export function NewReservationClient({
                           step="any"
                           min="1"
                           required
-                          value={discountValue}
-                          onChange={(e) => setDiscountValue(e.target.value)}
+                          {...register('discount.value', {
+                            valueAsNumber: true,
+                          })}
+                          className={inputClass(
+                            errors.discount?.value?.message,
+                          )}
                         />
                       </div>
 
@@ -887,9 +1086,11 @@ export function NewReservationClient({
                           id="discount-reason-input"
                           type="text"
                           required
-                          value={discountReason}
-                          onChange={(e) => setDiscountReason(e.target.value)}
+                          {...register('discount.reason')}
                           placeholder="e.g. Corporate contract"
+                          className={inputClass(
+                            errors.discount?.reason?.message,
+                          )}
                         />
                       </div>
                     </div>
@@ -910,7 +1111,12 @@ export function NewReservationClient({
                     type="button"
                     variant={paymentMode === 'hold' ? 'default' : 'outline'}
                     size="md"
-                    onClick={() => setPaymentMode('hold')}
+                    onClick={() =>
+                      setValue('paymentMode', 'hold', {
+                        shouldDirty: true,
+                        shouldValidate: isSubmitted,
+                      })
+                    }
                     className="h-auto flex-col items-start p-4 text-left font-normal"
                   >
                     <CalendarDays
@@ -934,7 +1140,12 @@ export function NewReservationClient({
                         paymentMode === 'record_payment' ? 'default' : 'outline'
                       }
                       size="md"
-                      onClick={() => setPaymentMode('record_payment')}
+                      onClick={() =>
+                        setValue('paymentMode', 'record_payment', {
+                          shouldDirty: true,
+                          shouldValidate: isSubmitted,
+                        })
+                      }
                       className="h-auto flex-col items-start p-4 text-left font-normal"
                     >
                       <CreditCard
@@ -958,7 +1169,12 @@ export function NewReservationClient({
                       paymentMode === 'pay_at_hotel' ? 'default' : 'outline'
                     }
                     size="md"
-                    onClick={() => setPaymentMode('pay_at_hotel')}
+                    onClick={() =>
+                      setValue('paymentMode', 'pay_at_hotel', {
+                        shouldDirty: true,
+                        shouldValidate: isSubmitted,
+                      })
+                    }
                     className="h-auto flex-col items-start p-4 text-left font-normal"
                   >
                     <DollarSign
@@ -987,7 +1203,12 @@ export function NewReservationClient({
                           type="button"
                           variant={holdHours === hours ? 'default' : 'outline'}
                           size="xs"
-                          onClick={() => setHoldHours(hours)}
+                          onClick={() =>
+                            setValue('holdHours', hours, {
+                              shouldDirty: true,
+                              shouldValidate: isSubmitted,
+                            })
+                          }
                         >
                           {hours} hours
                         </Button>
@@ -1012,8 +1233,10 @@ export function NewReservationClient({
                           type="number"
                           step="any"
                           required
-                          value={paidAmountNaira}
-                          onChange={(e) => setPaidAmountNaira(e.target.value)}
+                          {...register('paidAmountNaira')}
+                          className={inputClass(
+                            errors.paidAmountNaira?.message,
+                          )}
                         />
                       </div>
 
@@ -1024,40 +1247,52 @@ export function NewReservationClient({
                         >
                           Method
                         </Label>
-                        <Select
-                          items={[
-                            { value: 'cash', label: 'Cash at Hotel' },
-                            {
-                              value: 'bank_transfer',
-                              label: 'Direct Bank Transfer',
-                            },
-                            { value: 'card', label: 'Card POS Terminal' },
-                          ]}
-                          value={paymentMethod}
-                          onValueChange={(val) => {
-                            if (val) {
-                              setPaymentMethod(
-                                val as 'cash' | 'bank_transfer' | 'card',
-                              );
-                            }
-                          }}
-                        >
-                          <SelectTrigger
-                            id="immediate-payment-method"
-                            className="w-full"
-                          >
-                            <SelectValue placeholder="Payment method" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="cash">Cash at Hotel</SelectItem>
-                            <SelectItem value="bank_transfer">
-                              Direct Bank Transfer
-                            </SelectItem>
-                            <SelectItem value="card">
-                              Card POS Terminal
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Controller
+                          control={control}
+                          name="paymentMethod"
+                          render={({ field }) => (
+                            <Select
+                              items={[
+                                { value: 'cash', label: 'Cash at Hotel' },
+                                {
+                                  value: 'bank_transfer',
+                                  label: 'Direct Bank Transfer',
+                                },
+                                {
+                                  value: 'card',
+                                  label: 'Card POS Terminal',
+                                },
+                              ]}
+                              value={field.value}
+                              onValueChange={(val) => {
+                                if (val) {
+                                  field.onChange(
+                                    val as 'cash' | 'bank_transfer' | 'card',
+                                  );
+                                }
+                              }}
+                            >
+                              <SelectTrigger
+                                id="immediate-payment-method"
+                                className="w-full"
+                                onBlur={field.onBlur}
+                              >
+                                <SelectValue placeholder="Payment method" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="cash">
+                                  Cash at Hotel
+                                </SelectItem>
+                                <SelectItem value="bank_transfer">
+                                  Direct Bank Transfer
+                                </SelectItem>
+                                <SelectItem value="card">
+                                  Card POS Terminal
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
                       </div>
 
                       <div className="space-y-1.5">
@@ -1070,9 +1305,8 @@ export function NewReservationClient({
                         <Input
                           id="immediate-reference"
                           type="text"
-                          value={paymentReference}
-                          onChange={(e) => setPaymentReference(e.target.value)}
-                          className="font-mono"
+                          {...register('paymentReference')}
+                          className={`${inputClass(errors.paymentReference?.message)} font-mono`}
                         />
                       </div>
                     </div>
@@ -1087,9 +1321,9 @@ export function NewReservationClient({
                       <Input
                         id="immediate-note"
                         type="text"
-                        value={paymentNote}
-                        onChange={(e) => setPaymentNote(e.target.value)}
+                        {...register('paymentNote')}
                         placeholder="e.g. Front desk receipt #0129"
+                        className={inputClass(errors.paymentNote?.message)}
                       />
                     </div>
                   </div>
@@ -1203,11 +1437,18 @@ export function NewReservationClient({
                   htmlFor="terms-accepted-checkbox"
                   className="text-caption text-ink flex cursor-pointer items-start gap-2"
                 >
-                  <Checkbox
-                    id="terms-accepted-checkbox"
-                    checked={termsAccepted}
-                    onCheckedChange={(checked) => setTermsAccepted(!!checked)}
-                    className="mt-0.5"
+                  <Controller
+                    control={control}
+                    name="termsAccepted"
+                    render={({ field }) => (
+                      <Checkbox
+                        id="terms-accepted-checkbox"
+                        checked={field.value === true}
+                        onCheckedChange={(checked) => field.onChange(!!checked)}
+                        onBlur={field.onBlur}
+                        className="mt-0.5"
+                      />
+                    )}
                   />
                   <span>
                     I confirm that the guest has agreed to the booking terms and
@@ -1219,12 +1460,10 @@ export function NewReservationClient({
               {/* Submit Button */}
               <Button
                 type="submit"
-                disabled={
-                  submitting || quote?.status !== 'ok' || !termsAccepted
-                }
+                disabled={busy || quote?.status !== 'ok' || !termsAccepted}
                 className="w-full"
               >
-                {submitting ? (
+                {busy ? (
                   <>
                     <Loader2
                       className="mr-2 size-4 animate-spin"

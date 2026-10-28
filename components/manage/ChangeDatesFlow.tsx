@@ -6,10 +6,13 @@ import { useEffect, useRef, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
-import { manageService } from '@/app/api/services/manage.service';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useChangeDates,
+  useChangeQuote,
+} from '@/hooks/services/guest/use-manage';
 import { formatDeadline, formatMinor } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import { whatsappHref } from '@/lib/site';
@@ -87,6 +90,8 @@ export function ChangeDatesFlow({
     checkIn: v.stay.checkIn,
     checkOut: v.stay.checkOut,
   };
+  const changeQuote = useChangeQuote();
+  const changeDates = useChangeDates();
   const [step, setStep] = useState<'pick' | 'payment' | 'done'>('pick');
   const [range, setRange] = useState<DateRange>(current);
   const [quote, setQuote] = useState<ChangeQuoteResponse | null>(null);
@@ -132,13 +137,11 @@ export function ChangeDatesFlow({
     setError(null);
     try {
       setQuote(
-        (
-          await manageService.changeQuote(
-            v.reference,
-            { checkIn: r.checkIn, checkOut: r.checkOut },
-            csrf,
-          )
-        ).data,
+        await changeQuote.mutateAsync({
+          reference: v.reference,
+          body: { checkIn: r.checkIn, checkOut: r.checkOut },
+          csrf,
+        }),
       );
     } catch (e) {
       if (
@@ -169,13 +172,11 @@ export function ChangeDatesFlow({
     setBusy(true);
     setError(null);
     try {
-      const res = (
-        await manageService.changeDates(
-          v.reference,
-          { idempotencyKey: key.current, quoteId: quote.quoteId },
-          csrf,
-        )
-      ).data;
+      const res = await changeDates.mutateAsync({
+        reference: v.reference,
+        body: { idempotencyKey: key.current, quoteId: quote.quoteId },
+        csrf,
+      });
       setConfirmed(quote);
       onUpdated(
         res.view,

@@ -1,5 +1,6 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   AlertCircle,
   ArrowDown,
@@ -9,9 +10,10 @@ import {
   RotateCcw,
   Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import {
   AdminEmpty,
   AdminError,
@@ -29,6 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -50,6 +53,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useCreateExtra,
+  useDeleteExtra,
+  useExtras,
+  useReorderExtras,
+  useUpdateExtra,
+} from '@/hooks/services/admin/use-inventory';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import { minorToNaira, nairaToMinor } from '@/lib/rate-resolution';
 import type {
   AdminExtra,
@@ -57,78 +68,97 @@ import type {
   ExtraPricingUnit,
 } from '@/types/inventory.types';
 
+import { extraFormSchema, slugify } from './form-schemas';
+
 interface ExtrasClientProps {
   initialExtras: AdminExtra[];
 }
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+type ExtraFormInput = z.input<typeof extraFormSchema>;
+type ExtraFormOutput = z.output<typeof extraFormSchema>;
 
 export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
+  const extrasQuery = useExtras(initialExtras);
+  const createExtra = useCreateExtra();
+  const updateExtra = useUpdateExtra();
+  const deleteExtra = useDeleteExtra();
+  const reorderExtras = useReorderExtras();
   const [extras, setExtras] = useState<AdminExtra[]>(initialExtras);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Dialog State
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingExtra, setEditingExtra] = useState<AdminExtra | null>(null);
-  const [name, setName] = useState('');
-  const [slug, setSlug] = useState('');
-  const [description, setDescription] = useState('');
-  const [priceNaira, setPriceNaira] = useState('25,000');
-  const [pricingUnit, setPricingUnit] = useState<ExtraPricingUnit>('per_stay');
-  const [maxQuantity, setMaxQuantity] = useState(5);
-  const [isActive, setIsActive] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
 
+  const loading = extrasQuery.isFetching;
+  const error =
+    extrasQuery.error instanceof Error
+      ? extrasQuery.error.message
+      : extrasQuery.error
+        ? ERROR_MESSAGES.FAILED_TO_RELOAD_EXTRAS
+        : null;
+
+  const form = useForm<ExtraFormInput, unknown, ExtraFormOutput>({
+    resolver: zodResolver(extraFormSchema),
+    defaultValues: {
+      name: '',
+      slug: '',
+      description: '',
+      priceNaira: '25,000',
+      pricingUnit: 'per_stay',
+      maxQuantity: 5,
+      isActive: true,
+    },
+    mode: 'onBlur',
+  });
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    handleSubmit,
+    register,
+    reset,
+    setError: setFieldError,
+    setValue,
+    watch,
+  } = form;
+  const priceNaira = watch('priceNaira');
+  const pricingUnit = watch('pricingUnit') as ExtraPricingUnit;
+
+  const isSaving =
+    isSubmitting || createExtra.isPending || updateExtra.isPending;
+
+  useEffect(() => {
+    if (extrasQuery.data) setExtras(extrasQuery.data);
+  }, [extrasQuery.data]);
+
   async function refresh() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await adminService.listExtras();
-      if (res.data) {
-        setExtras(res.data);
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_RELOAD_EXTRAS,
-      );
-    } finally {
-      setLoading(false);
-    }
+    await extrasQuery.refetch();
   }
 
   function openCreateDialog() {
     setEditingExtra(null);
-    setName('');
-    setSlug('');
-    setDescription('');
-    setPriceNaira('25,000');
-    setPricingUnit('per_stay');
-    setMaxQuantity(5);
-    setIsActive(true);
+    reset({
+      name: '',
+      slug: '',
+      description: '',
+      priceNaira: '25,000',
+      pricingUnit: 'per_stay',
+      maxQuantity: 5,
+      isActive: true,
+    });
     setDialogError(null);
     setDialogOpen(true);
   }
 
   function openEditDialog(item: AdminExtra) {
     setEditingExtra(item);
-    setName(item.name);
-    setSlug(item.slug);
-    setDescription(item.description || '');
-    setPriceNaira(minorToNaira(item.priceMinor));
-    setPricingUnit(item.pricingUnit);
-    setMaxQuantity(item.maxQuantity);
-    setIsActive(item.isActive);
+    reset({
+      name: item.name,
+      slug: item.slug,
+      description: item.description || '',
+      priceNaira: minorToNaira(item.priceMinor),
+      pricingUnit: item.pricingUnit,
+      maxQuantity: item.maxQuantity,
+      isActive: item.isActive,
+    });
     setDialogError(null);
     setDialogOpen(true);
   }
@@ -148,46 +178,37 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
 
     setExtras(updated);
     try {
-      await adminService.reorderExtras(items);
+      await reorderExtras.mutateAsync(items);
       toast.add({ title: SUCCESS_MESSAGES.EXTRAS_REORDERED, type: 'success' });
     } catch {
       await refresh();
     }
   }
 
-  async function handleSave(e: React.SubmitEvent) {
-    e.preventDefault();
-    if (!name.trim()) {
-      setDialogError(ERROR_MESSAGES.EXTRA_NAME_REQUIRED);
-      return;
-    }
+  async function handleSave(input: ExtraFormOutput) {
+    setDialogError(null);
 
-    const priceMinor = nairaToMinor(priceNaira);
-    const input: AdminExtraInput = {
-      name: name.trim(),
-      slug: slug.trim() || slugify(name),
-      description: description.trim() || null,
-      priceMinor,
-      pricingUnit,
-      maxQuantity,
-      isActive,
+    const { priceNaira, ...rest } = input;
+    const payload: AdminExtraInput = {
+      ...rest,
+      priceMinor: nairaToMinor(priceNaira),
       sortOrder: editingExtra ? editingExtra.sortOrder : extras.length + 1,
     };
 
-    setIsSaving(true);
-    setDialogError(null);
-
     try {
       if (editingExtra) {
-        await adminService.updateExtra(editingExtra.id, input);
+        await updateExtra.mutateAsync({
+          id: editingExtra.id,
+          input: payload,
+        });
         toast.add({
-          title: SUCCESS_MESSAGES.EXTRA_UPDATED_WITH_NAME(name),
+          title: SUCCESS_MESSAGES.EXTRA_UPDATED_WITH_NAME(input.name),
           type: 'success',
         });
       } else {
-        await adminService.createExtra(input);
+        await createExtra.mutateAsync(payload);
         toast.add({
-          title: SUCCESS_MESSAGES.EXTRA_CREATED_WITH_NAME(name),
+          title: SUCCESS_MESSAGES.EXTRA_CREATED_WITH_NAME(input.name),
           type: 'success',
         });
       }
@@ -199,8 +220,7 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
           ? err.message
           : ERROR_MESSAGES.FAILED_TO_SAVE_EXTRA,
       );
-    } finally {
-      setIsSaving(false);
+      applyServerFieldErrors(setFieldError, err);
     }
   }
 
@@ -214,7 +234,7 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
     }
 
     try {
-      await adminService.deleteExtra(item.id);
+      await deleteExtra.mutateAsync(item.id);
       toast.add({
         title: SUCCESS_MESSAGES.EXTRA_DELETED_WITH_NAME(item.name),
         type: 'success',
@@ -233,7 +253,7 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
   }
 
   // Calculate live preview for dialog: 3 nights, 2 guests, quantity 1
-  const previewUnitPriceMinor = nairaToMinor(priceNaira);
+  const previewUnitPriceMinor = nairaToMinor(priceNaira || '');
   let livePreviewTotalMinor = 0;
   if (pricingUnit === 'per_stay') {
     livePreviewTotalMinor = previewUnitPriceMinor * 1;
@@ -436,7 +456,11 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSave} className="text-small space-y-4 p-6">
+          <form
+            onSubmit={handleSubmit(handleSave)}
+            className="text-small space-y-4 p-6"
+            noValidate
+          >
             {dialogError && (
               <Alert
                 variant="destructive"
@@ -446,125 +470,154 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
                 <p>{dialogError}</p>
               </Alert>
             )}
-            <div className="space-y-1.5">
-              <Label htmlFor="extra-name">
-                Name <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="extra-name"
-                type="text"
-                required
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  if (!editingExtra) setSlug(slugify(e.target.value));
-                }}
-                placeholder="e.g. Airport Transfer (SUV)"
-              />
-            </div>
+            <Field id="extra-name" label="Name *" error={errors.name?.message}>
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  type="text"
+                  placeholder="e.g. Airport Transfer (SUV)"
+                  className={inputClass(errors.name?.message)}
+                  {...register('name', {
+                    onChange: (event) => {
+                      if (!editingExtra) {
+                        setValue('slug', slugify(event.target.value));
+                      }
+                    },
+                  })}
+                />
+              )}
+            </Field>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="extra-slug">
-                Slug <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="extra-slug"
-                type="text"
-                required
-                value={slug}
-                onChange={(e) => setSlug(slugify(e.target.value))}
-                placeholder="e.g. airport-transfer-suv"
-              />
-            </div>
+            <Field id="extra-slug" label="Slug *" error={errors.slug?.message}>
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  type="text"
+                  placeholder="e.g. airport-transfer-suv"
+                  className={inputClass(errors.slug?.message)}
+                  {...register('slug', {
+                    onChange: (event) =>
+                      setValue('slug', slugify(event.target.value)),
+                  })}
+                />
+              )}
+            </Field>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="extra-description">Description</Label>
-              <Textarea
-                id="extra-description"
-                rows={2}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="e.g. Chauffeured pickup or drop-off to Murtala Muhammed Airport."
-              />
-            </div>
+            <Field
+              id="extra-description"
+              label="Description"
+              error={errors.description?.message}
+            >
+              {(a11y) => (
+                <Textarea
+                  {...a11y}
+                  rows={2}
+                  placeholder="e.g. Chauffeured pickup or drop-off to Murtala Muhammed Airport."
+                  className={inputClass(errors.description?.message)}
+                  {...register('description')}
+                />
+              )}
+            </Field>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="extra-price">
-                  Price in Naira (₦) <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="extra-price"
-                  type="text"
-                  required
-                  value={priceNaira}
-                  onChange={(e) => setPriceNaira(e.target.value)}
-                  placeholder="25,000"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="extra-max-qty">Max Quantity per Booking</Label>
-                <Input
-                  id="extra-max-qty"
-                  type="number"
-                  min="1"
-                  max="50"
-                  required
-                  value={maxQuantity}
-                  onChange={(e) =>
-                    setMaxQuantity(parseInt(e.target.value, 10) || 1)
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="extra-pricing-unit">Pricing Unit</Label>
-              <Select
-                items={[
-                  {
-                    value: 'per_stay',
-                    label:
-                      'Per stay (flat fee regardless of duration or guests)',
-                  },
-                  {
-                    value: 'per_night',
-                    label: 'Per night (charged for each night of stay)',
-                  },
-                  {
-                    value: 'per_guest',
-                    label: 'Per guest (charged once per guest)',
-                  },
-                  {
-                    value: 'per_guest_per_night',
-                    label: 'Per guest per night (e.g. breakfast buffet)',
-                  },
-                ]}
-                value={pricingUnit}
-                onValueChange={(val) => {
-                  if (val) setPricingUnit(val as ExtraPricingUnit);
-                }}
+              <Field
+                id="extra-price"
+                label="Price in Naira (₦) *"
+                error={errors.priceNaira?.message}
               >
-                <SelectTrigger id="extra-pricing-unit" className="w-full">
-                  <SelectValue placeholder="Select pricing unit" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="per_stay">
-                    Per stay (flat fee regardless of duration or guests)
-                  </SelectItem>
-                  <SelectItem value="per_night">
-                    Per night (charged for each night of stay)
-                  </SelectItem>
-                  <SelectItem value="per_guest">
-                    Per guest (charged once per guest)
-                  </SelectItem>
-                  <SelectItem value="per_guest_per_night">
-                    Per guest per night (e.g. breakfast buffet)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    type="text"
+                    placeholder="25,000"
+                    className={inputClass(errors.priceNaira?.message)}
+                    {...register('priceNaira')}
+                  />
+                )}
+              </Field>
+
+              <Field
+                id="extra-max-qty"
+                label="Max Quantity per Booking"
+                error={errors.maxQuantity?.message}
+              >
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    type="number"
+                    min="1"
+                    max="50"
+                    className={inputClass(errors.maxQuantity?.message)}
+                    {...register('maxQuantity', { valueAsNumber: true })}
+                  />
+                )}
+              </Field>
             </div>
+
+            <Field
+              id="extra-pricing-unit"
+              label="Pricing Unit"
+              error={errors.pricingUnit?.message}
+            >
+              {(a11y) => (
+                <Controller
+                  control={control}
+                  name="pricingUnit"
+                  render={({ field }) => (
+                    <Select
+                      items={[
+                        {
+                          value: 'per_stay',
+                          label:
+                            'Per stay (flat fee regardless of duration or guests)',
+                        },
+                        {
+                          value: 'per_night',
+                          label: 'Per night (charged for each night of stay)',
+                        },
+                        {
+                          value: 'per_guest',
+                          label: 'Per guest (charged once per guest)',
+                        },
+                        {
+                          value: 'per_guest_per_night',
+                          label: 'Per guest per night (e.g. breakfast buffet)',
+                        },
+                      ]}
+                      value={field.value}
+                      onValueChange={(value) => {
+                        if (value) field.onChange(value);
+                      }}
+                      disabled={isSaving}
+                    >
+                      <SelectTrigger
+                        id={a11y.id}
+                        aria-describedby={a11y['aria-describedby']}
+                        aria-invalid={a11y['aria-invalid']}
+                        onBlur={field.onBlur}
+                        className={inputClass(errors.pricingUnit?.message)}
+                      >
+                        <SelectValue placeholder="Select pricing unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="per_stay">
+                          Per stay (flat fee regardless of duration or guests)
+                        </SelectItem>
+                        <SelectItem value="per_night">
+                          Per night (charged for each night of stay)
+                        </SelectItem>
+                        <SelectItem value="per_guest">
+                          Per guest (charged once per guest)
+                        </SelectItem>
+                        <SelectItem value="per_guest_per_night">
+                          Per guest per night (e.g. breakfast buffet)
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              )}
+            </Field>
 
             {/* Live Calculation Preview */}
             <div className="border-line bg-paper rounded border p-3 text-xs">
@@ -580,10 +633,21 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
             </div>
 
             <div className="flex items-center gap-2.5 pt-2">
-              <Checkbox
-                id="extraActive"
-                checked={isActive}
-                onCheckedChange={(checked) => setIsActive(!!checked)}
+              <Controller
+                control={control}
+                name="isActive"
+                render={({ field }) => (
+                  <Checkbox
+                    id="extraActive"
+                    name={field.name}
+                    ref={field.ref}
+                    checked={field.value === true}
+                    onCheckedChange={(checked) =>
+                      field.onChange(checked === true)
+                    }
+                    onBlur={field.onBlur}
+                  />
+                )}
               />
               <Label htmlFor="extraActive" className="cursor-pointer">
                 Active (offered during checkout)

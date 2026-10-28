@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ArrowDown,
   ArrowUp,
@@ -14,7 +15,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { adminService } from '@/app/api/services/admin.service';
 import {
   AdminEmpty,
   AdminError,
@@ -34,6 +34,11 @@ import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { MAX_ROOM_TYPES } from '@/constants/inventory';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useReorderRoomTypes,
+  useRoomTypes,
+} from '@/hooks/services/admin/use-inventory';
+import { queryKeys } from '@/hooks/services/query-keys';
 import { minorToNaira } from '@/lib/rate-resolution';
 import type { AdminRoomTypeListItem } from '@/types/inventory.types';
 
@@ -46,32 +51,28 @@ export function RoomTypesListClient({
   initialRoomTypes,
   currentRole,
 }: RoomTypesListClientProps) {
-  const [roomTypes, setRoomTypes] =
-    useState<AdminRoomTypeListItem[]>(initialRoomTypes);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const roomTypesQuery = useRoomTypes(initialRoomTypes);
+  const reorderRoomTypes = useReorderRoomTypes();
+  const queryClient = useQueryClient();
+  const roomTypes = roomTypesQuery.data ?? initialRoomTypes;
+  const [mutationError, setMutationError] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
+
+  const loading = roomTypesQuery.isFetching;
+  const error =
+    mutationError ??
+    (roomTypesQuery.error instanceof Error
+      ? roomTypesQuery.error.message
+      : roomTypesQuery.error
+        ? ERROR_MESSAGES.FAILED_TO_RELOAD_ROOM_TYPES
+        : null);
 
   const isOwner = currentRole === 'owner';
   const atLimit = roomTypes.length >= MAX_ROOM_TYPES;
 
   async function refresh() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await adminService.listRoomTypes();
-      if (res.data) {
-        setRoomTypes(res.data);
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_RELOAD_ROOM_TYPES,
-      );
-    } finally {
-      setLoading(false);
-    }
+    setMutationError(null);
+    await roomTypesQuery.refetch();
   }
 
   async function handleMove(index: number, direction: 'up' | 'down') {
@@ -79,6 +80,7 @@ export function RoomTypesListClient({
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= roomTypes.length) return;
 
+    const previous = roomTypes;
     const updated = [...roomTypes];
     const [moved] = updated.splice(index, 1);
     updated.splice(targetIndex, 0, moved);
@@ -89,17 +91,18 @@ export function RoomTypesListClient({
       sortOrder: idx + 1,
     }));
 
-    setRoomTypes(updated);
+    queryClient.setQueryData(queryKeys.admin.inventory.roomTypes(), updated);
     setReordering(true);
 
     try {
-      await adminService.reorderRoomTypes(items);
+      await reorderRoomTypes.mutateAsync(items);
       toast.add({
         title: SUCCESS_MESSAGES.ROOM_TYPES_REORDERED,
         type: 'success',
       });
     } catch {
-      setError(ERROR_MESSAGES.FAILED_TO_UPDATE_SORT_ORDER);
+      queryClient.setQueryData(queryKeys.admin.inventory.roomTypes(), previous);
+      setMutationError(ERROR_MESSAGES.FAILED_TO_UPDATE_SORT_ORDER);
       await refresh();
     } finally {
       setReordering(false);

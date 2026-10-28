@@ -1,5 +1,6 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   AlertCircle,
   Bath,
@@ -18,8 +19,9 @@ import {
   Wind,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -31,13 +33,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useCreateAmenity,
+  useUpdateAmenity,
+} from '@/hooks/services/admin/use-inventory';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import type { AdminAmenity, AdminAmenityInput } from '@/types/inventory.types';
+
+import { amenityFormSchema, keyify } from './form-schemas';
 
 interface AmenityDialogProps {
   open: boolean;
@@ -63,14 +73,8 @@ const AVAILABLE_ICONS = [
   { key: 'Car', icon: Car, label: 'Parking' },
 ];
 
-function keyify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s]/g, '')
-    .replace(/[\s-]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-}
+type AmenityFormInput = z.input<typeof amenityFormSchema>;
+type AmenityFormOutput = z.output<typeof amenityFormSchema>;
 
 export function AmenityDialog({
   open,
@@ -79,58 +83,60 @@ export function AmenityDialog({
   onSaved,
 }: AmenityDialogProps) {
   const isEditing = !!amenity?.id;
-
-  const [label, setLabel] = useState(amenity?.label || '');
-  const [key, setKey] = useState(amenity?.key || '');
-  const [icon, setIcon] = useState(amenity?.icon || 'Wifi');
-  const [description, setDescription] = useState(amenity?.description || '');
-  const [isActive, setIsActive] = useState(amenity?.isActive ?? true);
-  const [isSaving, setIsSaving] = useState(false);
+  const createAmenity = useCreateAmenity();
+  const updateAmenity = useUpdateAmenity();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  async function handleSubmit(e: React.SubmitEvent) {
-    e.preventDefault();
-    if (!label.trim()) {
-      setErrorMessage(ERROR_MESSAGES.AMENITY_LABEL_REQUIRED);
-      return;
-    }
+  const form = useForm<AmenityFormInput, unknown, AmenityFormOutput>({
+    resolver: zodResolver(amenityFormSchema),
+    defaultValues: {
+      label: amenity?.label || '',
+      key: amenity?.key || '',
+      icon: amenity?.icon || 'Wifi',
+      description: amenity?.description || '',
+      isActive: amenity?.isActive ?? true,
+    },
+    mode: 'onBlur',
+  });
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    handleSubmit,
+    register,
+    setError: setFieldError,
+    setValue,
+    watch,
+  } = form;
 
-    const cleanedKey = key.trim() || keyify(label);
-    if (!/^[a-z0-9_]+$/.test(cleanedKey)) {
-      setErrorMessage(ERROR_MESSAGES.KEY_PATTERN_INVALID_DESCRIPTION);
-      return;
-    }
+  const icon = watch('icon') || 'Wifi';
+  const busy =
+    isSubmitting || createAmenity.isPending || updateAmenity.isPending;
 
-    setIsSaving(true);
+  async function handleFormSubmit(input: AmenityFormOutput) {
     setErrorMessage(null);
 
-    const input: AdminAmenityInput = {
-      label: label.trim(),
-      key: cleanedKey,
-      icon,
-      description: description.trim() || null,
-      isActive,
+    const payload: AdminAmenityInput = {
+      ...input,
       sortOrder: amenity ? amenity.sortOrder : 0,
     };
 
     try {
       if (isEditing && amenity?.id) {
-        await adminService.updateAmenity(amenity.id, input);
+        await updateAmenity.mutateAsync({ id: amenity.id, input: payload });
         toast.add({ title: SUCCESS_MESSAGES.AMENITY_UPDATED, type: 'success' });
       } else {
-        await adminService.createAmenity(input);
+        await createAmenity.mutateAsync(payload);
         toast.add({ title: SUCCESS_MESSAGES.AMENITY_CREATED, type: 'success' });
       }
       await onSaved();
       onClose();
-    } catch (err) {
+    } catch (caught) {
       setErrorMessage(
-        err instanceof Error
-          ? err.message
+        caught instanceof Error
+          ? caught.message
           : ERROR_MESSAGES.FAILED_TO_SAVE_AMENITY,
       );
-    } finally {
-      setIsSaving(false);
+      applyServerFieldErrors(setFieldError, caught);
     }
   }
 
@@ -138,7 +144,7 @@ export function AmenityDialog({
     <Dialog
       open={open}
       onOpenChange={(nextOpen) => {
-        if (!nextOpen && !isSaving) onClose();
+        if (!nextOpen && !busy) onClose();
       }}
     >
       <DialogContent className="rounded-card border-line bg-card max-h-[90vh] max-w-lg gap-0 overflow-y-auto border p-0 shadow-2xl sm:max-w-lg">
@@ -151,7 +157,11 @@ export function AmenityDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="text-small space-y-4 p-6">
+        <form
+          onSubmit={handleSubmit(handleFormSubmit)}
+          className="text-small space-y-4 p-6"
+          noValidate
+        >
           {errorMessage && (
             <Alert
               variant="destructive"
@@ -162,42 +172,48 @@ export function AmenityDialog({
             </Alert>
           )}
 
-          <div className="space-y-1.5">
-            <Label htmlFor="amenity-label">
-              Label <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="amenity-label"
-              type="text"
-              required
-              value={label}
-              onChange={(e) => {
-                setLabel(e.target.value);
-                if (!isEditing) setKey(keyify(e.target.value));
-              }}
-              placeholder="e.g. High-Speed Wi-Fi"
-            />
-          </div>
+          <Field
+            id="amenity-label"
+            label="Label *"
+            error={errors.label?.message}
+          >
+            {(a11y) => (
+              <Input
+                {...a11y}
+                type="text"
+                placeholder="e.g. High-Speed Wi-Fi"
+                className={inputClass(errors.label?.message)}
+                {...register('label', {
+                  onChange: (event) => {
+                    if (!isEditing) {
+                      setValue('key', keyify(event.target.value));
+                    }
+                  },
+                })}
+              />
+            )}
+          </Field>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="amenity-key">
-              Unique Key <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="amenity-key"
-              type="text"
-              required
-              value={key}
-              onChange={(e) => setKey(keyify(e.target.value))}
-              placeholder="e.g. high_speed_wifi"
-            />
-            <p className="text-muted-foreground text-xs">
-              Used in system filters and room templates (lowercase,
-              underscores).
-            </p>
-          </div>
+          <Field
+            id="amenity-key"
+            label="Unique Key *"
+            error={errors.key?.message}
+            hint="Used in system filters and room templates (lowercase, underscores)."
+          >
+            {(a11y) => (
+              <Input
+                {...a11y}
+                type="text"
+                placeholder="e.g. high_speed_wifi"
+                className={inputClass(errors.key?.message)}
+                {...register('key', {
+                  onChange: (event) =>
+                    setValue('key', keyify(event.target.value)),
+                })}
+              />
+            )}
+          </Field>
 
-          {/* Visual Icon Picker */}
           <div className="space-y-1.5">
             <Label>Visual Icon</Label>
             <div className="mt-1 grid grid-cols-4 gap-2 sm:grid-cols-7">
@@ -209,7 +225,7 @@ export function AmenityDialog({
                     key={item.key}
                     type="button"
                     variant={isSelected ? 'secondary' : 'outline'}
-                    onClick={() => setIcon(item.key)}
+                    onClick={() => setValue('icon', item.key)}
                     className={`h-auto flex-col p-2 text-xs ${
                       isSelected
                         ? 'border-primary bg-primary/10 text-primary ring-primary ring-1'
@@ -227,22 +243,38 @@ export function AmenityDialog({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="amenity-description">Description (Optional)</Label>
-            <Textarea
-              id="amenity-description"
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. Fibre optic 100Mbps unlimited wireless internet"
-            />
-          </div>
+          <Field
+            id="amenity-description"
+            label="Description (Optional)"
+            error={errors.description?.message}
+          >
+            {(a11y) => (
+              <Textarea
+                {...a11y}
+                rows={2}
+                placeholder="e.g. Fibre optic 100Mbps unlimited wireless internet"
+                className={inputClass(errors.description?.message)}
+                {...register('description')}
+              />
+            )}
+          </Field>
 
           <div className="flex items-center gap-2.5 pt-2">
-            <Checkbox
-              id="amenityActive"
-              checked={isActive}
-              onCheckedChange={(checked) => setIsActive(!!checked)}
+            <Controller
+              control={control}
+              name="isActive"
+              render={({ field }) => (
+                <Checkbox
+                  id="amenityActive"
+                  name={field.name}
+                  ref={field.ref}
+                  checked={field.value === true}
+                  onCheckedChange={(checked) =>
+                    field.onChange(checked === true)
+                  }
+                  onBlur={field.onBlur}
+                />
+              )}
             />
             <Label htmlFor="amenityActive" className="cursor-pointer">
               Active (available to assign to room types)
@@ -255,11 +287,11 @@ export function AmenityDialog({
               variant="outline"
               size="sm"
               onClick={onClose}
-              disabled={isSaving}
+              disabled={busy}
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" loading={isSaving}>
+            <Button type="submit" size="sm" loading={busy}>
               {isEditing ? 'Save Changes' : 'Create Amenity'}
             </Button>
           </DialogFooter>

@@ -1,22 +1,32 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import {
-  checkoutService,
   loadProviderScript,
   newKey,
 } from '@/app/api/services/checkout.service';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import {
+  useCheckoutQuote,
+  useCheckoutStatus,
+  useCreateReservation,
+  useInitPayment,
+  useUploadProof,
+} from '@/hooks/services/guest/use-checkout';
+import { useFormDraft } from '@/hooks/use-form-draft';
 import { formatMinor } from '@/lib/format';
 import {
   checkProofFile,
   guestSchema,
+  type GuestDetails,
   type GuestInput,
   type ReservationRequestInput,
 } from '@/schemas/checkout.schema';
@@ -49,7 +59,6 @@ import { ProgressSteps, type StepInfo } from './ProgressSteps';
 import { MobileSummary, SummaryCard } from './SummaryCard';
 import { useHoldCountdown } from './useHoldCountdown';
 
-const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 30_000;
 const TERMS_MESSAGE = ERROR_MESSAGES.TERMS_ACCEPTANCE_REQUIRED;
 
@@ -85,6 +94,34 @@ export function CheckoutFlow({
 }: CheckoutFlowProps) {
   const router = useRouter();
   const reduced = useReducedMotion();
+  const form = useForm<GuestInput, unknown, GuestDetails>({
+    resolver: zodResolver(guestSchema),
+    defaultValues: {
+      fullName: '',
+      email: '',
+      country: 'NG',
+      phone: '',
+      arrivalTime: '',
+      specialRequests: '',
+    },
+    mode: 'onBlur',
+  });
+  const { clearDraft } = useFormDraft(
+    form,
+    `checkout:${room.slug}:${stay.checkIn}:${stay.checkOut}:${stay.adults}:${stay.children}`,
+  );
+  const {
+    formState: { errors: formErrors },
+    setError: setGuestError,
+    setValue,
+    trigger,
+    watch,
+  } = form;
+  const values = watch();
+  const quoteMutation = useCheckoutQuote();
+  const createReservation = useCreateReservation();
+  const initPayment = useInitPayment();
+  const uploadProof = useUploadProof();
   const bannerMotion = reduced
     ? {}
     : {
@@ -96,7 +133,7 @@ export function CheckoutFlow({
 
   // --- quote (always from the server) ---
   const [quote, setQuote] = useState<CheckoutQuoteResponse>(initialQuote);
-  const [quoteLoading, setQuoteLoading] = useState(false);
+  const quoteLoading = quoteMutation.isPending;
   const [quoteFailed, setQuoteFailed] = useState(false);
   // A guest returning from the payment provider has already accepted the price.
   const resumed = resumeReference !== null;
@@ -105,15 +142,6 @@ export function CheckoutFlow({
   const priceChange = ok?.priceChange && !accepted ? ok.priceChange : null;
 
   // --- form ---
-  const [values, setValues] = useState<GuestInput>({
-    fullName: '',
-    email: '',
-    country: 'NG',
-    phone: '',
-    arrivalTime: '',
-    specialRequests: '',
-  });
-  const [errors, setErrors] = useState<Partial<Record<GuestField, string>>>({});
   const [terms, setTerms] = useState(resumed);
   const [termsError, setTermsError] = useState<string | undefined>();
   const [website, setWebsite] = useState('');
@@ -143,6 +171,11 @@ export function CheckoutFlow({
   const [netError, setNetError] = useState<string | null>(null);
   const [timedOut, setTimedOut] = useState(false);
   const [pollNonce, setPollNonce] = useState(0);
+  const statusQuery = useCheckoutStatus(
+    reservation?.reference ?? null,
+    phase.name === 'confirming' && !timedOut,
+  );
+  const status = statusQuery.data;
 
   const submitting = useRef(false);
   const reserveKey = useRef(newKey()); // generated when the page loads
@@ -212,15 +245,12 @@ export function CheckoutFlow({
     }
     if (reservation || quote.status !== 'ok') return;
     const timer = window.setTimeout(async () => {
-      setQuoteLoading(true);
       setQuoteFailed(false);
       setAccepted(true);
       try {
-        setQuote((await checkoutService.quote(quoteRequest())).data);
+        setQuote(await quoteMutation.mutateAsync(quoteRequest()));
       } catch {
         setQuoteFailed(true);
-      } finally {
-        setQuoteLoading(false);
       }
     }, 300);
     return () => window.clearTimeout(timer);
@@ -230,66 +260,46 @@ export function CheckoutFlow({
   // --- polling after the guest returns from the provider (only the verified webhook changes the status) ---
   useEffect(() => {
     if (phase.name !== 'confirming' || !reservation) return;
-    const reference = reservation.reference;
-    let stopped = false;
-    let timer: number | undefined;
-    const started = Date.now();
-
-    const tick = async () => {
-      try {
-        const s = (await checkoutService.status(reference)).data;
-        if (stopped) return;
-        setReservation({
-          reference,
-          holdExpiresAt: Date.parse(s.holdExpiresAt),
-          skewMs: Date.parse(s.serverTime) - Date.now(),
-        });
-        if (s.status === 'confirmed')
-          return router.push(confirmationHref(reference));
-        if (s.status === 'pending_approval')
-          return setPhase({ name: 'request-received', reason: 'manual' });
-        if (s.status === 'payment_failed' || s.paymentStatus === 'failed')
-          return setPhase({ name: 'failed', reason: 'failed' });
-        if (s.status === 'cancelled' || s.paymentStatus === 'cancelled')
-          return setPhase({ name: 'failed', reason: 'cancelled' });
-      } catch {
-        /* keep polling until the timeout */
-      }
-      if (stopped) return;
-      if (Date.now() - started > POLL_TIMEOUT_MS) return setTimedOut(true);
-      timer = window.setTimeout(tick, POLL_INTERVAL_MS);
-    };
-    void tick();
-    return () => {
-      stopped = true;
-      window.clearTimeout(timer);
-    };
+    const timer = window.setTimeout(() => setTimedOut(true), POLL_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase.name, pollNonce, reservation?.reference]);
 
+  useEffect(() => {
+    if (!status || !reservation) return;
+    setReservation({
+      reference: reservation.reference,
+      holdExpiresAt: Date.parse(status.holdExpiresAt),
+      skewMs: Date.parse(status.serverTime) - Date.now(),
+    });
+    if (status.status === 'confirmed')
+      return router.push(confirmationHref(reservation.reference));
+    if (status.status === 'pending_approval')
+      return setPhase({ name: 'request-received', reason: 'manual' });
+    if (status.status === 'payment_failed' || status.paymentStatus === 'failed')
+      return setPhase({ name: 'failed', reason: 'failed' });
+    if (status.status === 'cancelled' || status.paymentStatus === 'cancelled')
+      return setPhase({ name: 'failed', reason: 'cancelled' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
+
   // --- validation ---
-  const issuesFor = (v: GuestInput) => {
-    const out: Partial<Record<GuestField, string>> = {};
-    const r = guestSchema.safeParse(v);
-    if (!r.success)
-      for (const i of r.error.issues)
-        out[i.path[0] as GuestField] ??= i.message;
-    return out;
-  };
   const detailsValid = resumed || guestSchema.safeParse(values).success;
+  const detailsErrors = Object.fromEntries(
+    Object.entries(formErrors).map(([field, error]) => [field, error?.message]),
+  ) as Partial<Record<GuestField, string>>;
 
   const onChange = (name: GuestField, value: string) => {
-    setValues((v) => ({ ...v, [name]: value }));
-    if (errors[name] || (name === 'country' && errors.phone))
-      setErrors((e) => ({
-        ...e,
-        [name]: undefined,
-        ...(name === 'country' ? { phone: undefined } : {}),
-      }));
+    const shouldValidate =
+      form.formState.isSubmitted ||
+      Boolean(formErrors[name]) ||
+      (name === 'country' && Boolean(formErrors.phone));
+    setValue(name, value, { shouldDirty: true, shouldValidate });
+    if (name === 'country' && values.phone) void trigger('phone');
   };
   const onBlur = (name: GuestField) => {
     if (name === 'specialRequests' && !values.specialRequests) return;
-    setErrors((e) => ({ ...e, [name]: issuesFor(values)[name] }));
+    void trigger(name);
   };
 
   // --- actions ---
@@ -302,14 +312,15 @@ export function CheckoutFlow({
     }
     payKey.current = null;
     if (body?.code === ERROR_CODES.VALIDATION && body.fieldErrors) {
-      const next: Partial<Record<GuestField, string>> = {};
       let termsMsg: string | undefined;
       for (const [key, message] of Object.entries(body.fieldErrors)) {
         if (key.startsWith('guest.'))
-          next[key.slice(6) as GuestField] = message;
+          setGuestError(key.slice(6) as GuestField, {
+            type: 'server',
+            message,
+          });
         if (key === 'termsAccepted') termsMsg = message;
       }
-      setErrors(next);
       setTermsError(termsMsg);
     } else if (body?.code === ERROR_CODES.UNAVAILABLE && body.quote) {
       setQuote(body.quote as CheckoutQuoteResponse);
@@ -325,13 +336,11 @@ export function CheckoutFlow({
 
   async function startPayment(reference: string) {
     const key = (payKey.current ??= newKey());
-    const init = (
-      await checkoutService.initPayment({
-        reference,
-        method,
-        idempotencyKey: key,
-      })
-    ).data;
+    const init = await initPayment.mutateAsync({
+      reference,
+      method,
+      idempotencyKey: key,
+    });
     if (init.kind === 'redirect') {
       setPhase({ name: 'redirecting' });
       window.location.assign(init.url); // the provider's hosted checkout. Confirmation comes only from its webhook.
@@ -359,24 +368,20 @@ export function CheckoutFlow({
       return;
     }
     setProofError(null);
-    await checkoutService.uploadProof(reference, proofFile);
+    await uploadProof.mutateAsync({ reference, file: proofFile });
     setPhase({ name: 'transfer-submitted' });
   }
 
-  async function submit() {
+  async function submitResolved(guest: GuestDetails | null) {
     if (submitting.current || !ok || quoteLoading || priceChange || expired)
       return;
     let current = reservation;
 
     // Once the reservation exists its details and terms are already saved, so only a new reservation is validated.
     if (!current) {
-      const fieldIssues = issuesFor(values);
-      const tErr = terms ? undefined : TERMS_MESSAGE;
-      setErrors(fieldIssues);
-      setTermsError(tErr);
-      if (Object.keys(fieldIssues).length > 0 || tErr) {
-        return;
-      }
+      const termsMessage = terms ? undefined : TERMS_MESSAGE;
+      setTermsError(termsMessage);
+      if (termsMessage) return;
     }
 
     submitting.current = true;
@@ -390,18 +395,19 @@ export function CheckoutFlow({
           ...stay,
           extraBed,
           extras: selections,
-          guest: values,
+          guest: guest ?? (form.getValues() as GuestDetails),
           expectedTotalMinor: ok.breakdown.totalMinor,
           termsAccepted: true,
           website,
         };
-        const res = (await checkoutService.createReservation(body)).data;
+        const res = await createReservation.mutateAsync(body);
         current = {
           reference: res.reference,
           holdExpiresAt: Date.parse(res.holdExpiresAt),
           skewMs: Date.parse(res.serverTime) - Date.now(),
         };
         setReservation(current);
+        clearDraft();
       }
       if (ok.payment.mode === 'pay_at_hotel') {
         setPhase({
@@ -421,6 +427,14 @@ export function CheckoutFlow({
     }
   }
 
+  const submit = () => {
+    if (reservation) {
+      void submitResolved(null);
+      return;
+    }
+    void form.handleSubmit(submitResolved)();
+  };
+
   async function restart() {
     if (submitting.current) return;
     submitting.current = true;
@@ -436,13 +450,7 @@ export function CheckoutFlow({
       setPhase({ name: 'form' });
       router.replace(checkoutHref(stay));
       setAccepted(true);
-      setQuote(
-        (
-          await checkoutService.quote({
-            ...quoteRequest(),
-          })
-        ).data,
-      );
+      setQuote(await quoteMutation.mutateAsync(quoteRequest()));
     } catch {
       setNetError(ERROR_MESSAGES.COULD_NOT_RECHECK_AVAILABILITY);
     } finally {
@@ -700,9 +708,9 @@ export function CheckoutFlow({
         <form
           id="checkout-form"
           noValidate
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit();
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit();
           }}
           className="space-y-10"
         >
@@ -736,7 +744,7 @@ export function CheckoutFlow({
             <legend className="sr-only">Your details and extras</legend>
             <DetailsStep
               values={values}
-              errors={errors}
+              errors={detailsErrors}
               disabled={locked || expired}
               onChange={onChange}
               onBlur={onBlur}

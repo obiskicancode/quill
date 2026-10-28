@@ -1,9 +1,8 @@
 'use client';
 
 import { LogOut, MonitorSmartphone, RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { ServiceError } from '@/app/api/services/base.service';
 import { AdminCard } from '@/components/admin/AdminCard';
 import { AdminEmpty, AdminLoading } from '@/components/admin/AdminStates';
@@ -14,6 +13,11 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useAdminSessions,
+  useRevokeOtherSessions,
+  useRevokeSession,
+} from '@/hooks/services/admin/use-account';
 import { formatDate } from '@/lib/dates';
 import type { AdminSession } from '@/types/admin.types';
 
@@ -21,76 +25,40 @@ type DialogState =
   { type: 'one'; session: AdminSession } | { type: 'all' } | null;
 
 export function SessionsPanel() {
-  const [sessions, setSessions] = useState<AdminSession[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  const sessionsQuery = useAdminSessions();
+  const revokeSession = useRevokeSession();
+  const revokeOtherSessions = useRevokeOtherSessions();
   const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<DialogState>(null);
-  const [busy, setBusy] = useState(false);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await adminService.getSessions();
-      setSessions(result.data.sessions);
-    } catch (caught) {
-      setError(
-        caught instanceof ServiceError
-          ? caught.message
-          : ERROR_MESSAGES.COULD_NOT_LOAD_SESSIONS,
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    adminService
-      .getSessions()
-      .then((result) => {
-        if (cancelled) return;
-        setSessions(result.data.sessions);
-        setLoading(false);
-      })
-      .catch((caught) => {
-        if (cancelled) return;
-        setError(
-          caught instanceof ServiceError
-            ? caught.message
-            : ERROR_MESSAGES.COULD_NOT_LOAD_SESSIONS,
-        );
-        setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const sessions = sessionsQuery.data ?? null;
+  const busy = revokeSession.isPending || revokeOtherSessions.isPending;
+  const queryError =
+    sessionsQuery.error instanceof ServiceError
+      ? sessionsQuery.error.message
+      : sessionsQuery.error
+        ? ERROR_MESSAGES.COULD_NOT_LOAD_SESSIONS
+        : null;
 
   async function confirmRevoke() {
     if (!dialog) return;
-    setBusy(true);
     setError(null);
     try {
       const result =
         dialog.type === 'one'
-          ? await adminService.revokeSession(dialog.session.id)
-          : await adminService.revokeOtherSessions();
-      const count = result.data.revoked;
+          ? await revokeSession.mutateAsync(dialog.session.id)
+          : await revokeOtherSessions.mutateAsync();
+      const count = result.revoked;
       toast.add({
         title: SUCCESS_MESSAGES.SESSIONS_SIGNED_OUT(count),
         type: 'success',
       });
       setDialog(null);
-      await load();
     } catch (caught) {
       setError(
         caught instanceof ServiceError
           ? caught.message
           : ERROR_MESSAGES.COULD_NOT_SIGN_OUT_SESSION,
       );
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -107,8 +75,8 @@ export function SessionsPanel() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => void load()}
-              loading={loading}
+              onClick={() => void sessionsQuery.refetch()}
+              loading={sessionsQuery.isFetching}
             >
               <RefreshCw className="size-4" aria-hidden />
               Refresh
@@ -127,9 +95,11 @@ export function SessionsPanel() {
         }
       >
         <div className="space-y-3">
-          {error && <StatusBanner tone="error">{error}</StatusBanner>}
+          {(error || queryError) && (
+            <StatusBanner tone="error">{error ?? queryError}</StatusBanner>
+          )}
 
-          {loading && !sessions ? (
+          {sessionsQuery.isPending && !sessions ? (
             <AdminLoading label="Loading sessions" />
           ) : !sessions || sessions.length === 0 ? (
             <AdminEmpty title="No active sessions">

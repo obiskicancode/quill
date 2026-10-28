@@ -2,22 +2,45 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, Copy, Download, KeyRound, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { ServiceError } from '@/app/api/services/base.service';
 import { AdminCard } from '@/components/admin/AdminCard';
 import { StatusBanner } from '@/components/admin/StatusBanner';
-import { Field, inputClass } from '@/components/checkout/Field';
 import { FlowDialog } from '@/components/manage/FlowDialog';
 import { Button } from '@/components/ui/button';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from '@/components/ui/input-otp';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useConfirm2fa,
+  useDisable2fa,
+  useRotateRecoveryCodes,
+  useSetup2fa,
+} from '@/hooks/services/admin/use-account';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import {
+  adminConfirm2faSchema,
+  adminDisable2faSchema,
+  type AdminConfirm2faInput,
+  type AdminDisable2faInput,
+} from '@/schemas/admin-auth.schema';
 import type { AdminMfaSetupResponse } from '@/types/admin.types';
 import type { AdminRole } from '@/types/auth.types';
+
+type ConfirmOutput = z.output<typeof adminConfirm2faSchema>;
+type PasswordOutput = z.output<typeof adminDisable2faSchema>;
 
 export function TwoFactorPanel({
   enabled,
@@ -31,28 +54,44 @@ export function TwoFactorPanel({
   onEnabledChange: (enabled: boolean) => void;
 }) {
   const router = useRouter();
+  const setup2fa = useSetup2fa();
+  const confirm2fa = useConfirm2fa();
+  const disable2fa = useDisable2fa();
+  const rotateCodes = useRotateRecoveryCodes();
+  const confirmForm = useForm<AdminConfirm2faInput, unknown, ConfirmOutput>({
+    resolver: zodResolver(adminConfirm2faSchema),
+    defaultValues: { code: '' },
+    mode: 'onBlur',
+  });
+  const passwordForm = useForm<AdminDisable2faInput, unknown, PasswordOutput>({
+    resolver: zodResolver(adminDisable2faSchema),
+    defaultValues: { password: '' },
+    mode: 'onBlur',
+  });
   const [isEnabled, setIsEnabled] = useState(enabled);
   const [setup, setSetup] = useState<AdminMfaSetupResponse | null>(null);
   const [codes, setCodes] = useState<string[] | null>(null);
-  const [setupBusy, setSetupBusy] = useState(false);
-  const [confirmCode, setConfirmCode] = useState('');
-  const [confirmBusy, setConfirmBusy] = useState(false);
   const [setupError, setSetupError] = useState<string | null>(null);
-  const [confirmError, setConfirmError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(false);
   const [dialogAction, setDialogAction] = useState<'disable' | 'rotate' | null>(
     null,
   );
-  const [password, setPassword] = useState('');
-  const [dialogBusy, setDialogBusy] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
+  const setupBusy = setup2fa.isPending;
+  const confirmBusy =
+    confirmForm.formState.isSubmitting || confirm2fa.isPending;
+  const dialogBusy =
+    passwordForm.formState.isSubmitting ||
+    disable2fa.isPending ||
+    rotateCodes.isPending;
 
   async function startSetup() {
-    setSetupBusy(true);
     setSetupError(null);
+    setCopiedKey(false);
     try {
-      const result = await adminService.setup2fa();
-      setSetup(result.data);
+      const result = await setup2fa.mutateAsync();
+      setSetup(result);
       setCodes(null);
     } catch (caught) {
       setSetupError(
@@ -60,33 +99,24 @@ export function TwoFactorPanel({
           ? caught.message
           : ERROR_MESSAGES.COULD_NOT_START_2FA_SETUP,
       );
-    } finally {
-      setSetupBusy(false);
     }
   }
 
-  async function confirmSetup(event: React.SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setConfirmBusy(true);
-    setConfirmError(null);
+  const confirmSetup = async (input: ConfirmOutput) => {
     try {
-      const result = await adminService.confirm2fa({ code: confirmCode });
-      setCodes(result.data.recoveryCodes);
+      const result = await confirm2fa.mutateAsync(input);
+      setCodes(result.recoveryCodes);
       setSetup(null);
-      setConfirmCode('');
+      confirmForm.reset();
       setIsEnabled(true);
       onEnabledChange(true);
       router.refresh();
     } catch (caught) {
-      setConfirmError(
-        caught instanceof ServiceError
-          ? caught.message
-          : ERROR_MESSAGES.COULD_NOT_CONFIRM_CODE,
-      );
-    } finally {
-      setConfirmBusy(false);
+      if (caught instanceof ServiceError) {
+        applyServerFieldErrors(confirmForm.setError, caught);
+      }
     }
-  }
+  };
 
   async function copyCodes() {
     if (!codes) return;
@@ -97,6 +127,25 @@ export function TwoFactorPanel({
     } catch {
       toast.add({
         title: ERROR_MESSAGES.COULD_NOT_COPY_CODES,
+        type: 'error',
+        priority: 'high',
+      });
+    }
+  }
+
+  async function copySetupKey() {
+    if (!setup) return;
+    try {
+      await navigator.clipboard.writeText(setup.manualKey);
+      setCopiedKey(true);
+      toast.add({
+        title: SUCCESS_MESSAGES.COPIED,
+        type: 'success',
+      });
+      window.setTimeout(() => setCopiedKey(false), 2000);
+    } catch {
+      toast.add({
+        title: ERROR_MESSAGES.COULD_NOT_COPY_SETUP_KEY,
         type: 'error',
         priority: 'high',
       });
@@ -123,18 +172,16 @@ export function TwoFactorPanel({
 
   function openDialog(action: 'disable' | 'rotate') {
     setDialogAction(action);
-    setPassword('');
+    passwordForm.reset();
     setDialogError(null);
   }
 
-  async function completeDialog(event: React.SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const completeDialog = async (input: PasswordOutput) => {
     if (!dialogAction) return;
-    setDialogBusy(true);
     setDialogError(null);
     try {
       if (dialogAction === 'disable') {
-        await adminService.disable2fa({ password });
+        await disable2fa.mutateAsync(input);
         setIsEnabled(false);
         setCodes(null);
         toast.add({
@@ -143,26 +190,25 @@ export function TwoFactorPanel({
         });
         onEnabledChange(false);
       } else {
-        const result = await adminService.rotateRecoveryCodes({ password });
-        setCodes(result.data.recoveryCodes);
+        const result = await rotateCodes.mutateAsync(input);
+        setCodes(result.recoveryCodes);
         toast.add({
           title: SUCCESS_MESSAGES.RECOVERY_CODES_ROTATED,
           type: 'success',
         });
       }
       setDialogAction(null);
-      setPassword('');
+      passwordForm.reset();
       router.refresh();
     } catch (caught) {
-      setDialogError(
-        caught instanceof ServiceError
-          ? caught.message
-          : ERROR_MESSAGES.COULD_NOT_COMPLETE_ACTION,
-      );
-    } finally {
-      setDialogBusy(false);
+      if (caught instanceof ServiceError) {
+        setDialogError(caught.message);
+        applyServerFieldErrors(passwordForm.setError, caught);
+      } else {
+        setDialogError(ERROR_MESSAGES.COULD_NOT_COMPLETE_ACTION);
+      }
     }
-  }
+  };
 
   if (codes) {
     return (
@@ -211,7 +257,6 @@ export function TwoFactorPanel({
             size="sm"
             onClick={() => {
               setCodes(null);
-
               if (pending) router.push('/admin');
             }}
           >
@@ -228,14 +273,6 @@ export function TwoFactorPanel({
         title="Two-factor authentication"
         description="Use an authenticator app such as Google Authenticator, 1Password or Authy."
       >
-        {pending && (
-          <div className="mb-4">
-            <StatusBanner tone="error">
-              Owners must set up two-factor authentication before opening the
-              dashboard.
-            </StatusBanner>
-          </div>
-        )}
         {setupError && (
           <div className="mb-4">
             <StatusBanner tone="error">{setupError}</StatusBanner>
@@ -276,61 +313,96 @@ export function TwoFactorPanel({
                 <li>Open your authenticator app and scan the QR code.</li>
                 <li>
                   If you cannot scan it, enter this key manually:
-                  <code className="rounded-control border-line bg-paper text-small text-ink mt-1 block border px-3 py-2 font-mono break-all select-all">
-                    {setup.manualKey}
-                  </code>
+                  <div className="rounded-control border-line bg-paper mt-1 flex w-fit items-center gap-2 border px-3 py-2">
+                    <code className="text-small text-ink min-w-0 flex-1 font-mono break-all select-all">
+                      {setup.manualKey}
+                    </code>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={copySetupKey}
+                      aria-label={
+                        copiedKey ? 'Setup key copied' : 'Copy setup key'
+                      }
+                      title={copiedKey ? 'Copied' : 'Copy setup key'}
+                      className="shrink-0"
+                    >
+                      {copiedKey ? (
+                        <Check className="size-4" aria-hidden />
+                      ) : (
+                        <Copy className="size-4" aria-hidden />
+                      )}
+                    </Button>
+                  </div>
                 </li>
                 <li>Enter the six-digit code your app shows.</li>
               </ol>
 
-              {confirmError && (
-                <div className="mt-3">
-                  <StatusBanner tone="error">{confirmError}</StatusBanner>
-                </div>
-              )}
-
               <form
-                onSubmit={confirmSetup}
-                className="mt-4 flex flex-wrap items-end gap-3"
+                onSubmit={confirmForm.handleSubmit(confirmSetup)}
+                className="mt-4 flex flex-col gap-3"
                 noValidate
               >
-                <div className="w-40">
-                  <Field id="admin-setup-code" label="Six-digit code">
+                <div className="min-w-0">
+                  <Field
+                    id="admin-setup-code"
+                    label="Six-digit code"
+                    error={confirmForm.formState.errors.code?.message}
+                  >
                     {(a11y) => (
-                      <Input
-                        {...a11y}
-                        value={confirmCode}
-                        onChange={(event) =>
-                          setConfirmCode(
-                            event.target.value.replace(/\D/g, '').slice(0, 6),
-                          )
-                        }
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        maxLength={6}
-                        required
-                        className={`${inputClass()} text-h3 text-center tracking-[0.3em]`}
+                      <Controller
+                        control={confirmForm.control}
+                        name="code"
+                        render={({ field }) => (
+                          <InputOTP
+                            {...a11y}
+                            name={field.name}
+                            ref={field.ref}
+                            value={field.value}
+                            onChange={(value) =>
+                              field.onChange(value.replace(/\D/g, ''))
+                            }
+                            onBlur={field.onBlur}
+                            maxLength={6}
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            disabled={confirmBusy}
+                          >
+                            <InputOTPGroup className="gap-1.5">
+                              {Array.from({ length: 6 }).map((_, index) => (
+                                <InputOTPSlot
+                                  key={index}
+                                  index={index}
+                                  className="rounded-control text-h3 size-10"
+                                />
+                              ))}
+                            </InputOTPGroup>
+                          </InputOTP>
+                        )}
                       />
                     )}
                   </Field>
                 </div>
-                <Button type="submit" loading={confirmBusy}>
-                  Confirm and enable
-                </Button>
+                <div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSetup(null);
+                      setCopiedKey(false);
+                      confirmForm.reset();
+                    }}
+                    className="mt-3 font-semibold"
+                  >
+                    Cancel setup
+                  </Button>
+                  <Button type="submit" loading={confirmBusy}>
+                    Confirm and enable
+                  </Button>
+                </div>
               </form>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSetup(null);
-                  setConfirmError(null);
-                  setConfirmCode('');
-                }}
-                className="mt-3 font-semibold"
-              >
-                Cancel setup
-              </Button>
             </div>
           </div>
         )}
@@ -344,7 +416,7 @@ export function TwoFactorPanel({
               Recovery codes are the only backup if you lose your authenticator.
               Rotate them if you think they were exposed.
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap items-center gap-2">
               <Button
                 variant="secondary"
                 size="sm"
@@ -393,18 +465,27 @@ export function TwoFactorPanel({
             <StatusBanner tone="error">{dialogError}</StatusBanner>
           </div>
         )}
-        <form onSubmit={completeDialog} className="mt-4 space-y-4">
-          <Field id="admin-2fa-password" label="Current password">
+        <form
+          onSubmit={passwordForm.handleSubmit(completeDialog)}
+          className="mt-4 space-y-4"
+          noValidate
+        >
+          <Field
+            id="admin-2fa-password"
+            label="Current password"
+            error={passwordForm.formState.errors.password?.message}
+          >
             {(a11y) => (
               <Input
                 {...a11y}
+                {...passwordForm.register('password')}
                 type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
                 autoComplete="current-password"
                 autoFocus
-                required
-                className={inputClass()}
+                disabled={dialogBusy}
+                className={inputClass(
+                  passwordForm.formState.errors.password?.message,
+                )}
               />
             )}
           </Field>

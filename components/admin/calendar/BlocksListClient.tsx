@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertCircle,
   AlertTriangle,
@@ -13,9 +13,8 @@ import {
   ShieldAlert,
   Trash2,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -43,6 +42,10 @@ import {
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useBlocksList,
+  useDeleteBlock,
+} from '@/hooks/services/admin/use-calendar';
 import { formatShort } from '@/lib/dates';
 import type { AdminRole } from '@/types/auth.types';
 import type {
@@ -50,7 +53,6 @@ import type {
   CalendarBlockBar,
   CalendarRoom,
   RoomBlockListItem,
-  RoomBlocksListResponse,
 } from '@/types/calendar.types';
 
 import { BlockModal } from './BlockModal';
@@ -69,124 +71,115 @@ export function BlocksListClient({
   today,
 }: BlocksListClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   // URL state
-  const pageParam = Number(searchParams.get('page')) || 1;
-  const pageSizeParam = Number(searchParams.get('pageSize')) || 25;
+  const rawPage = Number(searchParams.get('page'));
+  const rawPageSize = Number(searchParams.get('pageSize'));
   const roomTypeParam = searchParams.get('roomTypeId') || '';
   const roomParam = searchParams.get('roomId') || '';
-  const reasonParam = (searchParams.get('reason') as BlockReason) || '';
-  const statusParam =
-    (searchParams.get('status') as 'all' | 'upcoming' | 'current' | 'past') ||
-    'all';
+  const reasonParam = searchParams.get('reason');
+  const statusParam = searchParams.get('status');
+  const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
+  const pageSize = [25, 50, 100].includes(rawPageSize) ? rawPageSize : 25;
+  const roomTypeId = initialRoomTypes.some((rt) => rt.id === roomTypeParam)
+    ? roomTypeParam
+    : '';
+  const roomId = initialRooms.some(
+    (r) => r.id === roomParam && (!roomTypeId || r.roomTypeId === roomTypeId),
+  )
+    ? roomParam
+    : '';
+  const reason: BlockReason | '' = [
+    'maintenance',
+    'owner_hold',
+    'renovation',
+    'other',
+  ].includes(reasonParam ?? '')
+    ? (reasonParam as BlockReason)
+    : '';
+  const status: 'all' | 'upcoming' | 'current' | 'past' = [
+    'all',
+    'upcoming',
+    'current',
+    'past',
+  ].includes(statusParam ?? '')
+    ? (statusParam as 'all' | 'upcoming' | 'current' | 'past')
+    : 'all';
 
-  const [page, setPage] = useState(pageParam);
-  const [pageSize, setPageSize] = useState(pageSizeParam);
-  const [roomTypeId, setRoomTypeId] = useState(roomTypeParam);
-  const [roomId, setRoomId] = useState(roomParam);
-  const [reason, setReason] = useState<BlockReason | ''>(reasonParam);
-  const [status, setStatus] = useState<'all' | 'upcoming' | 'current' | 'past'>(
-    statusParam,
+  const updateQuery = useCallback(
+    (
+      patch: {
+        page?: number;
+        pageSize?: number;
+        roomTypeId?: string;
+        roomId?: string;
+        reason?: BlockReason | '';
+        status?: 'all' | 'upcoming' | 'current' | 'past';
+      },
+      resetPage = true,
+    ) => {
+      const nextPage = patch.page ?? (resetPage ? 1 : page);
+      const nextPageSize = patch.pageSize ?? pageSize;
+      const nextRoomTypeId = patch.roomTypeId ?? roomTypeId;
+      const nextRoomId = patch.roomId ?? roomId;
+      const nextReason = patch.reason ?? reason;
+      const nextStatus = patch.status ?? status;
+
+      const q = new URLSearchParams();
+      if (nextPage > 1) q.set('page', String(nextPage));
+      if (nextPageSize !== 25) q.set('pageSize', String(nextPageSize));
+      if (nextRoomTypeId) q.set('roomTypeId', nextRoomTypeId);
+      if (nextRoomId) q.set('roomId', nextRoomId);
+      if (nextReason) q.set('reason', nextReason);
+      if (nextStatus !== 'all') q.set('status', nextStatus);
+
+      const str = q.toString();
+      router.replace(str ? `${pathname}?${str}` : pathname, {
+        scroll: false,
+      });
+    },
+    [page, pageSize, pathname, reason, roomId, roomTypeId, router, status],
   );
-
-  const [data, setData] = useState<RoomBlocksListResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   // Modal & Action states
   const [modalOpen, setModalOpen] = useState(false);
   const [blockToEdit, setBlockToEdit] = useState<CalendarBlockBar | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
-  // Fetch list
-  const fetchBlocks = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await adminService.listBlocks({
-        page,
-        pageSize,
-        roomTypeId: roomTypeId || undefined,
-        roomId: roomId || undefined,
-        reason: reason || undefined,
-        status,
-      });
-      setData(res.data);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_LOAD_ROOM_BLOCKS,
-      );
-    } finally {
-      setLoading(false);
-    }
+  const blocksQuery = useBlocksList({
+    page,
+    pageSize,
+    roomTypeId: roomTypeId || undefined,
+    roomId: roomId || undefined,
+    reason: reason || undefined,
+    status,
+  });
+  const deleteBlock = useDeleteBlock();
+
+  const data = blocksQuery.data ?? null;
+  const loading = blocksQuery.isPending && !blocksQuery.data;
+  const error = blocksQuery.error
+    ? blocksQuery.error instanceof Error
+      ? blocksQuery.error.message
+      : ERROR_MESSAGES.FAILED_TO_LOAD_ROOM_BLOCKS
+    : null;
+  const deleting = deleteBlock.isPending;
+
+  const fetchBlocks = () => {
+    void blocksQuery.refetch();
   };
-
-  useEffect(() => {
-    let active = true;
-
-    // Sync to URL
-    const q = new URLSearchParams();
-    if (page > 1) q.set('page', String(page));
-    if (pageSize !== 25) q.set('pageSize', String(pageSize));
-    if (roomTypeId) q.set('roomTypeId', roomTypeId);
-    if (roomId) q.set('roomId', roomId);
-    if (reason) q.set('reason', reason);
-    if (status !== 'all') q.set('status', status);
-
-    const str = q.toString();
-    router.replace(`/admin/calendar/blocks${str ? `?${str}` : ''}`, {
-      scroll: false,
-    });
-
-    const run = async () => {
-      try {
-        const res = await adminService.listBlocks({
-          page,
-          pageSize,
-          roomTypeId: roomTypeId || undefined,
-          roomId: roomId || undefined,
-          reason: reason || undefined,
-          status,
-        });
-        if (active) {
-          setData(res.data);
-          setError(null);
-        }
-      } catch (err) {
-        if (active) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : ERROR_MESSAGES.FAILED_TO_LOAD_ROOM_BLOCKS,
-          );
-        }
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    run();
-
-    return () => {
-      active = false;
-    };
-  }, [page, pageSize, roomTypeId, roomId, reason, status, router]);
 
   // Delete Action
   const handleDelete = async (id: string) => {
-    setDeleting(true);
     try {
-      await adminService.deleteBlock(id);
+      await deleteBlock.mutateAsync(id);
       toast.add({
         title: SUCCESS_MESSAGES.ROOM_BLOCK_REMOVED,
         type: 'success',
       });
       setDeletingId(null);
-      fetchBlocks();
     } catch (err) {
       toast.add({
         title:
@@ -196,8 +189,6 @@ export function BlocksListClient({
         type: 'error',
         priority: 'high',
       });
-    } finally {
-      setDeleting(false);
     }
   };
 
@@ -266,10 +257,7 @@ export function BlocksListClient({
                 type="button"
                 variant={status === s ? 'secondary' : 'ghost'}
                 size="xs"
-                onClick={() => {
-                  setStatus(s);
-                  setPage(1);
-                }}
+                onClick={() => updateQuery({ status: s })}
                 className={`capitalize ${
                   status === s
                     ? 'font-semibold shadow-xs'
@@ -291,11 +279,12 @@ export function BlocksListClient({
               })),
             ]}
             value={roomTypeId || 'all'}
-            onValueChange={(val) => {
-              setRoomTypeId(val === 'all' || !val ? '' : val);
-              setRoomId('');
-              setPage(1);
-            }}
+            onValueChange={(val) =>
+              updateQuery({
+                roomTypeId: val === 'all' || !val ? '' : val,
+                roomId: '',
+              })
+            }
           >
             <SelectTrigger aria-label="Filter by room type" className="w-37.5">
               <SelectValue placeholder="All Room Types" />
@@ -320,10 +309,11 @@ export function BlocksListClient({
               })),
             ]}
             value={roomId || 'all'}
-            onValueChange={(val) => {
-              setRoomId(val === 'all' || !val ? '' : val);
-              setPage(1);
-            }}
+            onValueChange={(val) =>
+              updateQuery({
+                roomId: val === 'all' || !val ? '' : val,
+              })
+            }
           >
             <SelectTrigger aria-label="Filter by room" className="w-40">
               <SelectValue placeholder="All Rooms" />
@@ -348,10 +338,11 @@ export function BlocksListClient({
               { value: 'other', label: 'Other Operations' },
             ]}
             value={reason || 'all'}
-            onValueChange={(val) => {
-              setReason(val === 'all' || !val ? '' : (val as BlockReason));
-              setPage(1);
-            }}
+            onValueChange={(val) =>
+              updateQuery({
+                reason: val === 'all' || !val ? '' : (val as BlockReason),
+              })
+            }
           >
             <SelectTrigger aria-label="Filter by reason" className="w-37.5">
               <SelectValue placeholder="All Reasons" />
@@ -370,13 +361,14 @@ export function BlocksListClient({
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => {
-                setRoomTypeId('');
-                setRoomId('');
-                setReason('');
-                setStatus('all');
-                setPage(1);
-              }}
+              onClick={() =>
+                updateQuery({
+                  roomTypeId: '',
+                  roomId: '',
+                  reason: '',
+                  status: 'all',
+                })
+              }
               className="text-muted-foreground hover:text-ink h-8 px-2 text-xs"
             >
               Clear filters
@@ -570,10 +562,7 @@ export function BlocksListClient({
                 ]}
                 value={String(pageSize)}
                 onValueChange={(val) => {
-                  if (val) {
-                    setPageSize(Number(val));
-                    setPage(1);
-                  }
+                  if (val) updateQuery({ pageSize: Number(val) });
                 }}
               >
                 <SelectTrigger
@@ -595,7 +584,9 @@ export function BlocksListClient({
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    onClick={() =>
+                      updateQuery({ page: Math.max(1, page - 1) }, false)
+                    }
                     disabled={page <= 1}
                   />
                 </PaginationItem>
@@ -606,7 +597,7 @@ export function BlocksListClient({
                 </PaginationItem>
                 <PaginationItem>
                   <PaginationNext
-                    onClick={() => setPage((p) => p + 1)}
+                    onClick={() => updateQuery({ page: page + 1 }, false)}
                     disabled={page >= data.totalPages}
                   />
                 </PaginationItem>

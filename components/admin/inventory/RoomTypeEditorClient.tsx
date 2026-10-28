@@ -13,12 +13,17 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useCreateRoomType,
+  useDeleteRoomType,
+  useRoomType,
+  useUpdateRoomType,
+} from '@/hooks/services/admin/use-inventory';
 import type {
   AdminRoomTypeDetail,
   AdminRoomTypeInput,
@@ -42,47 +47,49 @@ export function RoomTypeEditorClient({
   currentRole,
 }: RoomTypeEditorClientProps) {
   const router = useRouter();
-  const [data, setData] = useState<AdminRoomTypeDetail | null>(initialData);
+  const roomTypeQuery = useRoomType(initialData?.id, initialData);
+  const createRoomType = useCreateRoomType();
+  const updateRoomType = useUpdateRoomType(initialData?.id ?? '');
+  const deleteRoomType = useDeleteRoomType();
   const [activeTab, setActiveTab] = useState<TabKey>('details');
-  const [isSaving, setIsSaving] = useState(false);
 
+  const data: AdminRoomTypeDetail | null =
+    roomTypeQuery.data ?? initialData ?? null;
   const isExisting = !!data?.id;
+  const isSaving = createRoomType.isPending || updateRoomType.isPending;
 
   async function handleRefresh() {
     if (!data?.id) return;
     try {
-      const res = await adminService.getRoomType(data.id);
-      if (res.data) {
-        setData(res.data);
-      }
+      await roomTypeQuery.refetch();
     } catch {
       // Ignored
     }
   }
 
-  async function handleSaveDetails(input: AdminRoomTypeInput) {
-    setIsSaving(true);
-
+  async function handleSaveDetails(
+    input: AdminRoomTypeInput,
+  ): Promise<boolean> {
     try {
       if (isExisting && data?.id) {
-        const res = await adminService.updateRoomType(data.id, input);
-        if (res.data) {
-          setData(res.data);
+        const updated = await updateRoomType.mutateAsync(input);
+        if (updated) {
           toast.add({
             title: SUCCESS_MESSAGES.ROOM_TYPE_UPDATED,
             type: 'success',
           });
         }
       } else {
-        const res = await adminService.createRoomType(input);
-        if (res.data) {
+        const created = await createRoomType.mutateAsync(input);
+        if (created) {
           toast.add({
             title: SUCCESS_MESSAGES.ROOM_TYPE_CREATED,
             type: 'success',
           });
-          router.push(`/admin/rooms/${res.data.id}`);
+          router.push(`/admin/rooms/${created.id}`);
         }
       }
+      return true;
     } catch (err: unknown) {
       toast.add({
         title:
@@ -94,8 +101,7 @@ export function RoomTypeEditorClient({
         type: 'error',
         priority: 'high',
       });
-    } finally {
-      setIsSaving(false);
+      return false;
     }
   }
 
@@ -110,7 +116,7 @@ export function RoomTypeEditorClient({
     }
 
     try {
-      await adminService.deleteRoomType(data.id);
+      await deleteRoomType.mutateAsync(data.id);
       toast.add({ title: SUCCESS_MESSAGES.ROOM_TYPE_DELETED, type: 'success' });
       router.push('/admin/rooms');
     } catch (err) {

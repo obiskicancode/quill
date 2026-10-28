@@ -1,7 +1,10 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -13,9 +16,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { Field } from '@/components/ui/form-field';
 import { Textarea } from '@/components/ui/textarea';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+
+const reconcileFormSchema = z.object({
+  noteOrReason: z.string().trim().max(500),
+});
+
+const unreconcileFormSchema = z.object({
+  noteOrReason: z
+    .string()
+    .trim()
+    .min(5, ERROR_MESSAGES.UNRECONCILE_REASON_MIN_5_PERIOD)
+    .max(500),
+});
+
+type ReconciliationInput = z.input<typeof unreconcileFormSchema>;
+type ReconciliationOutput = z.output<typeof unreconcileFormSchema>;
 
 export function ReconciliationModal({
   isOpen,
@@ -34,33 +52,49 @@ export function ReconciliationModal({
   onConfirmUnreconcile: (reason: string) => Promise<void>;
   loading?: boolean;
 }) {
-  const [noteOrReason, setNoteOrReason] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const form = useForm<ReconciliationInput, unknown, ReconciliationOutput>({
+    resolver: zodResolver(
+      mode === 'reconcile' ? reconcileFormSchema : unreconcileFormSchema,
+    ),
+    defaultValues: { noteOrReason: '' },
+    mode: 'onBlur',
+  });
+  const {
+    formState: { errors, isSubmitting },
+    handleSubmit,
+    register,
+  } = form;
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
-    setError(null);
+  const busy = isSubmitting || loading;
+  const isReconcile = mode === 'reconcile';
 
-    if (mode === 'unreconcile') {
-      if (!noteOrReason.trim() || noteOrReason.trim().length < 5) {
-        setError(ERROR_MESSAGES.UNRECONCILE_REASON_MIN_5_PERIOD);
-        return;
+  const handleFormSubmit = async (input: ReconciliationOutput) => {
+    setError(null);
+    try {
+      if (mode === 'unreconcile') {
+        await onConfirmUnreconcile(input.noteOrReason.trim());
+      } else {
+        await onConfirmReconcile(input.noteOrReason.trim() || undefined);
       }
-      await onConfirmUnreconcile(noteOrReason.trim());
-    } else {
-      await onConfirmReconcile(noteOrReason.trim() || undefined);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : isReconcile
+            ? ERROR_MESSAGES.FAILED_TO_RECONCILE
+            : ERROR_MESSAGES.FAILED_TO_UNRECONCILE,
+      );
     }
   };
-
-  const isReconcile = mode === 'reconcile';
 
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open && !loading) onClose();
+        if (!open && !busy) onClose();
       }}
     >
       <DialogContent className="rounded-card border-line bg-card max-w-md gap-0 border p-0 shadow-xl sm:max-w-md">
@@ -79,35 +113,40 @@ export function ReconciliationModal({
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 p-6">
+        <form
+          onSubmit={handleSubmit(handleFormSubmit)}
+          className="space-y-4 p-6"
+          noValidate
+        >
           <DialogDescription className="text-small text-muted-foreground">
             {isReconcile
               ? `You are marking ${paymentIds.length} payment(s) as verified against the hotel bank or physical cash records.`
               : 'Unreconciling will reset this payment to unverified and clear reconciliation timestamps. This action will be audited.'}
           </DialogDescription>
 
-          <div className="space-y-1.5">
-            <Label
-              htmlFor="reconcile-note"
-              className="text-caption font-semibold"
-            >
-              {isReconcile
+          <Field
+            id="reconcile-note"
+            label={
+              isReconcile
                 ? 'Audit Note (Optional)'
-                : 'Reason for Unreconciling (Required)'}
-            </Label>
-            <Textarea
-              id="reconcile-note"
-              rows={3}
-              required={!isReconcile}
-              placeholder={
-                isReconcile
-                  ? 'e.g., Verified against Zenith Bank statement dated 26-Oct...'
-                  : 'e.g., Bank chargeback received or ledger mismatch...'
-              }
-              value={noteOrReason}
-              onChange={(e) => setNoteOrReason(e.target.value)}
-            />
-          </div>
+                : 'Reason for Unreconciling (Required)'
+            }
+            error={errors.noteOrReason?.message}
+          >
+            {(a11y) => (
+              <Textarea
+                {...a11y}
+                {...register('noteOrReason')}
+                rows={3}
+                required={!isReconcile}
+                placeholder={
+                  isReconcile
+                    ? 'e.g., Verified against Zenith Bank statement dated 26-Oct...'
+                    : 'e.g., Bank chargeback received or ledger mismatch...'
+                }
+              />
+            )}
+          </Field>
 
           {error && (
             <Alert
@@ -124,7 +163,7 @@ export function ReconciliationModal({
               variant="outline"
               size="sm"
               onClick={onClose}
-              disabled={loading}
+              disabled={busy}
             >
               Cancel
             </Button>
@@ -132,7 +171,7 @@ export function ReconciliationModal({
               type="submit"
               size="sm"
               variant={isReconcile ? 'primary' : 'danger'}
-              loading={loading}
+              loading={busy}
             >
               {isReconcile ? 'Confirm Reconciliation' : 'Confirm Unreconcile'}
             </Button>

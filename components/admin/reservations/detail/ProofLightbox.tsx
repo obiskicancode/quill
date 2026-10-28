@@ -1,7 +1,7 @@
 'use client';
 
 import { Download, ExternalLink } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import {
   Dialog,
@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useAuditProofView } from '@/hooks/services/admin/use-reservations-data';
 
 interface ProofLightboxProps {
   open: boolean;
@@ -28,12 +29,20 @@ export function ProofLightbox({
   proofMimeType,
   onClose,
 }: ProofLightboxProps) {
+  const auditProofView = useAuditProofView();
+  const loggedViewRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!open) return;
-    import('@/app/api/services/admin.service').then(({ adminService }) => {
-      adminService.auditProofView(reservationId, paymentId).catch(() => {});
-    });
-  }, [open, reservationId, paymentId]);
+    if (!open) {
+      loggedViewRef.current = null;
+      return;
+    }
+
+    const viewKey = `${reservationId}:${paymentId ?? ''}`;
+    if (loggedViewRef.current === viewKey) return;
+    loggedViewRef.current = viewKey;
+    auditProofView.mutate({ reservationId, paymentId });
+  }, [open, reservationId, paymentId, auditProofView]);
 
   const isPdf = proofMimeType?.includes('pdf') || proofKey.endsWith('.pdf');
 

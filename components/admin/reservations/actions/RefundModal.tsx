@@ -1,11 +1,13 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -16,13 +18,48 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { useIssueReservationRefund } from '@/hooks/services/admin/use-reservations';
 import { formatNaira } from '@/lib/format';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import { adminRefundSchema } from '@/schemas/reservation.schema';
 import type {
   ReservationDetail,
   ReservationPaymentItem,
 } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
+
+function makeRefundFormSchema(maxNaira: number) {
+  return adminRefundSchema
+    .omit({
+      version: true,
+      idempotencyKey: true,
+      paymentId: true,
+      amountMinor: true,
+    })
+    .extend({
+      amountNaira: z.string().superRefine((value, ctx) => {
+        const amount = Number.parseFloat(value);
+
+        if (Number.isNaN(amount) || amount <= 0) {
+          ctx.addIssue({
+            code: 'custom',
+            message: ERROR_MESSAGES.POSITIVE_REFUND_AMOUNT,
+          });
+        } else if (amount > maxNaira) {
+          ctx.addIssue({
+            code: 'custom',
+            message: ERROR_MESSAGES.AMOUNT_EXCEEDS_PAYMENT_BALANCE(
+              formatNaira(maxNaira),
+            ),
+          });
+        }
+      }),
+    });
+}
+
+type RefundFormInput = z.input<ReturnType<typeof makeRefundFormSchema>>;
+type RefundFormOutput = z.output<ReturnType<typeof makeRefundFormSchema>>;
 
 interface RefundModalProps {
   open: boolean;
@@ -42,67 +79,63 @@ export function RefundModal({
   onRefresh,
 }: RefundModalProps) {
   const maxNaira = payment.amountMinor / 100;
-  const [amountNaira, setAmountNaira] = useState(maxNaira.toString());
-  const [method, setMethod] = useState<
-    'provider' | 'manual_bank' | 'manual_cash'
-  >(
+  const [defaultReference] = useState(
+    () => `REF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+  );
+  const defaultMethod =
     payment.provider === 'cash'
       ? 'manual_cash'
       : payment.provider === 'bank_transfer'
         ? 'manual_bank'
-        : 'provider',
-  );
-  const [reason, setReason] = useState('');
-  const [reference, setReference] = useState(
-    () => `REF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-  );
-  const [notes, setNotes] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+        : 'provider';
+  const issueRefund = useIssueReservationRefund();
+  const form = useForm<RefundFormInput, unknown, RefundFormOutput>({
+    resolver: zodResolver(makeRefundFormSchema(maxNaira)),
+    defaultValues: {
+      amountNaira: maxNaira.toString(),
+      method: defaultMethod,
+      reason: '',
+      reference: defaultReference,
+      notes: '',
+    },
+    mode: 'onBlur',
+  });
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    register,
+    setError: setFieldError,
+  } = form;
+  const busy = isSubmitting || issueRefund.isPending;
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
-    const num = parseFloat(amountNaira);
-    if (isNaN(num) || num <= 0) {
-      setError(ERROR_MESSAGES.POSITIVE_REFUND_AMOUNT);
-      return;
-    }
-    if (num > maxNaira) {
-      setError(
-        ERROR_MESSAGES.AMOUNT_EXCEEDS_PAYMENT_BALANCE(formatNaira(maxNaira)),
-      );
-      return;
-    }
-    if (!reason || reason.trim().length < 3) {
-      setError(ERROR_MESSAGES.REFUND_REASON_PROMPT);
-      return;
-    }
-
+  const onSubmit = async (input: RefundFormOutput) => {
     setError(null);
-    setSubmitting(true);
 
     try {
-      const updated = await adminService.issueRefund(reservation.id, {
-        paymentId: payment.id,
-        amountMinor: Math.round(num * 100),
-        reason: reason.trim(),
-        method,
-        reference: reference.trim() || undefined,
-        notes: notes.trim() || undefined,
-        version: reservation.updatedAt,
-        idempotencyKey: crypto.randomUUID(),
+      const updated = await issueRefund.mutateAsync({
+        id: reservation.id,
+        body: {
+          paymentId: payment.id,
+          amountMinor: Math.round(Number.parseFloat(input.amountNaira) * 100),
+          reason: input.reason.trim(),
+          method: input.method,
+          reference: input.reference?.trim() || undefined,
+          notes: input.notes?.trim() || undefined,
+          version: reservation.updatedAt,
+          idempotencyKey: crypto.randomUUID(),
+        },
       });
 
-      onSuccess(updated.data, SUCCESS_MESSAGES.REFUND_ISSUED);
+      onSuccess(updated, SUCCESS_MESSAGES.REFUND_ISSUED);
       onClose();
-    } catch (err) {
+    } catch (caught) {
       setError(
-        err instanceof Error
-          ? err.message
+        caught instanceof Error
+          ? caught.message
           : ERROR_MESSAGES.FAILED_TO_ISSUE_REFUND_UI,
       );
-    } finally {
-      setSubmitting(false);
+      applyServerFieldErrors(setFieldError, caught);
     }
   };
 
@@ -115,7 +148,11 @@ export function RefundModal({
       error={error}
       onRefresh={onRefresh}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        noValidate
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4"
+      >
         {/* Payment Summary */}
         <div className="bg-muted rounded-control border-line text-small flex items-center justify-between border p-3">
           <div>
@@ -132,110 +169,145 @@ export function RefundModal({
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="refund-amount">
-              Refund Amount (₦) <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="refund-amount"
-              type="number"
-              step="any"
-              min="1"
-              max={maxNaira}
-              required
-              value={amountNaira}
-              onChange={(e) => setAmountNaira(e.target.value)}
-            />
-          </div>
+          <Field
+            id="refund-amount"
+            label="Refund Amount (₦) *"
+            error={errors.amountNaira?.message}
+          >
+            {(a) => (
+              <Input
+                {...a}
+                {...register('amountNaira')}
+                type="number"
+                step="any"
+                min="1"
+                max={maxNaira}
+                disabled={busy}
+                className={inputClass(errors.amountNaira?.message)}
+              />
+            )}
+          </Field>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="refund-channel">
-              Refund Channel <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              items={[
-                ...(payment.provider !== 'cash' &&
-                payment.provider !== 'bank_transfer'
-                  ? [
+          <Field
+            id="refund-channel"
+            label="Refund Channel *"
+            error={errors.method?.message}
+          >
+            {(a) => (
+              <Controller
+                control={control}
+                name="method"
+                render={({ field }) => (
+                  <Select
+                    items={[
+                      ...(payment.provider !== 'cash' &&
+                      payment.provider !== 'bank_transfer'
+                        ? [
+                            {
+                              value: 'provider',
+                              label: `Original Payment Gateway (${payment.provider})`,
+                            },
+                          ]
+                        : []),
                       {
-                        value: 'provider',
-                        label: `Original Payment Gateway (${payment.provider})`,
+                        value: 'manual_bank',
+                        label: 'Bank Transfer to Guest',
                       },
-                    ]
-                  : []),
-                {
-                  value: 'manual_bank',
-                  label: 'Bank Transfer to Guest',
-                },
-                {
-                  value: 'manual_cash',
-                  label: 'Cash Handed to Guest',
-                },
-              ]}
-              value={method}
-              onValueChange={(val) => {
-                if (val) {
-                  setMethod(val as 'provider' | 'manual_bank' | 'manual_cash');
-                }
-              }}
-            >
-              <SelectTrigger id="refund-channel" className="w-full">
-                <SelectValue placeholder="Select refund channel" />
-              </SelectTrigger>
-              <SelectContent>
-                {payment.provider !== 'cash' &&
-                  payment.provider !== 'bank_transfer' && (
-                    <SelectItem value="provider">
-                      Original Payment Gateway ({payment.provider})
-                    </SelectItem>
-                  )}
-                <SelectItem value="manual_bank">
-                  Bank Transfer to Guest
-                </SelectItem>
-                <SelectItem value="manual_cash">
-                  Cash Handed to Guest
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+                      {
+                        value: 'manual_cash',
+                        label: 'Cash Handed to Guest',
+                      },
+                    ]}
+                    value={field.value}
+                    onValueChange={(val) => {
+                      if (val) {
+                        field.onChange(
+                          val as 'provider' | 'manual_bank' | 'manual_cash',
+                        );
+                      }
+                    }}
+                    disabled={busy}
+                  >
+                    <SelectTrigger
+                      id={a.id}
+                      aria-describedby={a['aria-describedby']}
+                      aria-invalid={a['aria-invalid']}
+                      onBlur={field.onBlur}
+                      className={inputClass(errors.method?.message)}
+                    >
+                      <SelectValue placeholder="Select refund channel" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {payment.provider !== 'cash' &&
+                        payment.provider !== 'bank_transfer' && (
+                          <SelectItem value="provider">
+                            Original Payment Gateway ({payment.provider})
+                          </SelectItem>
+                        )}
+                      <SelectItem value="manual_bank">
+                        Bank Transfer to Guest
+                      </SelectItem>
+                      <SelectItem value="manual_cash">
+                        Cash Handed to Guest
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            )}
+          </Field>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="refund-reason">
-            Refund Reason <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="refund-reason"
-            type="text"
-            required
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="e.g. Overpayment adjustment, early departure..."
-          />
-        </div>
+        <Field
+          id="refund-reason"
+          label="Refund Reason *"
+          error={errors.reason?.message}
+        >
+          {(a) => (
+            <Input
+              {...a}
+              {...register('reason')}
+              type="text"
+              disabled={busy}
+              placeholder="e.g. Overpayment adjustment, early departure..."
+              className={inputClass(errors.reason?.message)}
+            />
+          )}
+        </Field>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="refund-reference">Internal Note / Reference</Label>
-          <Input
-            id="refund-reference"
-            type="text"
-            value={reference}
-            onChange={(e) => setReference(e.target.value)}
-            placeholder="Transaction reference or receipt code..."
-            className="font-mono"
-          />
-        </div>
+        <Field
+          id="refund-reference"
+          label="Internal Note / Reference"
+          error={errors.reference?.message}
+        >
+          {(a) => (
+            <Input
+              {...a}
+              {...register('reference')}
+              type="text"
+              disabled={busy}
+              placeholder="Transaction reference or receipt code..."
+              className={`${inputClass(errors.reference?.message)} font-mono`}
+            />
+          )}
+        </Field>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="refund-staff-notes">Staff Notes</Label>
-          <Textarea
-            id="refund-staff-notes"
-            rows={2}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Additional context or notes..."
-          />
-        </div>
+        <Field
+          id="refund-staff-notes"
+          label="Staff Notes"
+          error={errors.notes?.message}
+        >
+          {(a) => (
+            <Textarea
+              {...a}
+              {...register('notes')}
+              rows={2}
+              disabled={busy}
+              placeholder="Additional context or notes..."
+              className={inputClass(errors.notes?.message)}
+            />
+          )}
+        </Field>
 
         <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
           <Button
@@ -243,16 +315,11 @@ export function RefundModal({
             variant="outline"
             size="sm"
             onClick={onClose}
-            disabled={submitting}
+            disabled={busy}
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            variant="destructive"
-            size="sm"
-            loading={submitting}
-          >
+          <Button type="submit" variant="destructive" size="sm" loading={busy}>
             Confirm refund
           </Button>
         </div>

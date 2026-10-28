@@ -1,9 +1,9 @@
 'use client';
 
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Download, RefreshCw, Search } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { adminService } from '@/app/api/services/admin.service';
 import {
   AdminEmpty,
   AdminError,
@@ -19,6 +19,8 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { useAuditDetail, useAuditLogs } from '@/hooks/services/admin/use-audit';
+import { AuditQuerySchema } from '@/schemas/audit-admin.schema';
 import type {
   AuditDetailResponse,
   AuditListItem,
@@ -30,99 +32,104 @@ import { AuditDetailDrawer } from './AuditDetailDrawer';
 import { AuditTable } from './AuditTable';
 
 export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
-  const [logs, setLogs] = useState<AuditListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [total, setTotal] = useState(0);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const filters = useMemo<AuditQueryParams>(() => {
+    const parsed = AuditQuerySchema.safeParse(
+      Object.fromEntries(searchParams.entries()),
+    );
+    return parsed.success ? parsed.data : AuditQuerySchema.parse({});
+  }, [searchParams]);
+  const [searchValue, setSearchValue] = useState(filters.q ?? '');
 
-  // TODO:use searchparams where applicable
-  const [filters, setFilters] = useState<AuditQueryParams>({
-    preset: 'all',
-    q: '',
-    page: 1,
-    pageSize: 25,
-    sort: 'created_at',
-    order: 'desc',
-  });
+  const updateUrlParams = useCallback(
+    (updates: Partial<AuditQueryParams>) => {
+      const params = new URLSearchParams(searchParams.toString());
 
-  const [selectedAudit, setSelectedAudit] =
-    useState<AuditDetailResponse | null>(null);
+      for (const [key, value] of Object.entries(updates)) {
+        const isDefault =
+          value === undefined ||
+          value === '' ||
+          (key === 'preset' && value === 'all') ||
+          (key === 'page' && value === 1) ||
+          (key === 'pageSize' && value === 25) ||
+          (key === 'sort' && value === 'created_at') ||
+          (key === 'order' && value === 'desc');
+        if (isDefault) params.delete(key);
+        else params.set(key, String(value));
+      }
 
-  const loadLogs = useCallback(() => {
-    setLoading(true);
-    adminService
-      .listAuditLogs(filters)
-      .then((res) => {
-        if (res.data) {
-          setLogs(res.data.items);
-          setTotal(res.data.total);
-        }
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        const msg =
-          err instanceof Error
-            ? err.message
-            : ERROR_MESSAGES.FAILED_TO_LOAD_AUDIT_LOGS;
-        setError(msg);
-      })
-      .finally(() => {
-        setLoading(false);
+      if (!('page' in updates)) params.delete('page');
+
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
       });
-  }, [filters]);
+    },
+    [pathname, router, searchParams],
+  );
 
   useEffect(() => {
-    let active = true;
-    adminService
-      .listAuditLogs(filters)
-      .then((res) => {
-        if (!active) return;
-        if (res.data) {
-          setLogs(res.data.items);
-          setTotal(res.data.total);
-        }
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        if (!active) return;
-        const msg =
-          err instanceof Error
-            ? err.message
-            : ERROR_MESSAGES.FAILED_TO_LOAD_AUDIT_LOGS;
-        setError(msg);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [filters]);
+    const timer = window.setTimeout(() => {
+      setSearchValue(filters.q ?? '');
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [filters.q]);
 
-  const handleRowClick = async (item: AuditListItem) => {
-    try {
-      const res = await adminService.getAuditDetail(item.id);
-      if (res.data) {
-        setSelectedAudit(res.data);
-      } else {
-        setSelectedAudit({
-          ...item,
-          isEntityAvailable: true,
-          reason: item.summary,
-          diffs: [],
-          userAgent: null,
-        });
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const nextQuery = searchValue.trim();
+      if ((filters.q ?? '') !== nextQuery) {
+        updateUrlParams({ q: nextQuery || undefined });
       }
-    } catch {
-      setSelectedAudit({
-        ...item,
-        isEntityAvailable: true,
-        reason: item.summary,
-        diffs: [],
-        userAgent: null,
-      });
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [filters.q, searchValue, updateUrlParams]);
+
+  const [selectedItem, setSelectedItem] = useState<AuditListItem | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const logsQuery = useAuditLogs(filters);
+  const detailQuery = useAuditDetail(
+    selectedItem?.id ?? null,
+    Boolean(selectedItem),
+  );
+
+  const logs = logsQuery.data?.items ?? [];
+  const total = logsQuery.data?.total ?? 0;
+  const loading = refreshing || (logsQuery.isPending && !logsQuery.data);
+  const error = logsQuery.error
+    ? logsQuery.error instanceof Error
+      ? logsQuery.error.message
+      : ERROR_MESSAGES.FAILED_TO_LOAD_AUDIT_LOGS
+    : null;
+
+  const loadLogs = async () => {
+    setRefreshing(true);
+    try {
+      await logsQuery.refetch();
+    } finally {
+      setRefreshing(false);
     }
   };
+
+  const handleRowClick = (item: AuditListItem) => {
+    setSelectedItem(item);
+  };
+
+  const selectedAudit: AuditDetailResponse | null = selectedItem
+    ? (detailQuery.data ??
+      (detailQuery.isError
+        ? {
+            ...selectedItem,
+            isEntityAvailable: true,
+            reason: selectedItem.summary,
+            diffs: [],
+            userAgent: null,
+          }
+        : null))
+    : null;
 
   const handleExportCsv = () => {
     const q = new URLSearchParams();
@@ -164,7 +171,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
                   size="xs"
                   className="rounded-full"
                   onClick={() =>
-                    setFilters({ ...filters, preset: preset.key, page: 1 })
+                    updateUrlParams({ preset: preset.key, page: 1 })
                   }
                 >
                   {preset.label}
@@ -190,10 +197,8 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
                 ? 'Search entity ID, reference, IP address, summary...'
                 : 'Search entity ID, reference, summary...'
             }
-            value={filters.q || ''}
-            onChange={(e) =>
-              setFilters({ ...filters, q: e.target.value, page: 1 })
-            }
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
             className="pl-9"
           />
         </div>
@@ -257,10 +262,9 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={() =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        page: Math.max(1, (prev.page ?? 1) - 1),
-                      }))
+                      updateUrlParams({
+                        page: Math.max(1, (filters.page ?? 1) - 1),
+                      })
                     }
                     disabled={(filters.page ?? 1) <= 1}
                   />
@@ -274,10 +278,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
                 <PaginationItem>
                   <PaginationNext
                     onClick={() =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        page: (prev.page ?? 1) + 1,
-                      }))
+                      updateUrlParams({ page: (filters.page ?? 1) + 1 })
                     }
                     disabled={
                       (filters.page ?? 1) >=
@@ -296,7 +297,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
         <AuditDetailDrawer
           audit={selectedAudit}
           isOwner={isOwner}
-          onClose={() => setSelectedAudit(null)}
+          onClose={() => setSelectedItem(null)}
         />
       )}
     </div>

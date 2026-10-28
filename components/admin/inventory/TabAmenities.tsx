@@ -2,9 +2,8 @@
 
 import Link from 'next/link';
 import { AlertCircle, ExternalLink, Loader2, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -12,7 +11,10 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
-import type { AdminAmenity } from '@/types/inventory.types';
+import {
+  useAmenities,
+  useUpdateRoomTypeAmenities,
+} from '@/hooks/services/admin/use-inventory';
 
 interface TabAmenitiesProps {
   roomTypeId: string;
@@ -25,30 +27,31 @@ export function TabAmenities({
   assignedAmenityIds,
   onRefresh,
 }: TabAmenitiesProps) {
-  const [allAmenities, setAllAmenities] = useState<AdminAmenity[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(
-    new Set(assignedAmenityIds),
-  );
+  const amenitiesQuery = useAmenities();
+  const updateAmenities = useUpdateRoomTypeAmenities(roomTypeId);
+  const allAmenities = amenitiesQuery.data ?? [];
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const saving = updateAmenities.isPending;
+  const loading = amenitiesQuery.isLoading;
+  const errorMessage =
+    saveError ??
+    (amenitiesQuery.error
+      ? ERROR_MESSAGES.FAILED_TO_LOAD_AMENITIES_CATALOG
+      : null);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await adminService.listAmenities();
-        if (res.data) {
-          setAllAmenities(res.data);
-        }
-      } catch {
-        setErrorMessage(ERROR_MESSAGES.FAILED_TO_LOAD_AMENITIES_CATALOG);
-      } finally {
-        setLoading(false);
+  const selectedIds = useMemo(() => {
+    const next = new Set(assignedAmenityIds);
+    for (const [id, selected] of Object.entries(overrides)) {
+      if (selected) {
+        next.add(id);
+      } else {
+        next.delete(id);
       }
     }
-    load();
-  }, []);
+    return next;
+  }, [assignedAmenityIds, overrides]);
 
   const filtered = allAmenities.filter(
     (a) =>
@@ -57,44 +60,49 @@ export function TabAmenities({
   );
 
   function toggleAmenity(id: string) {
-    const next = new Set(selectedIds);
-    if (next.has(id)) {
-      next.delete(id);
-    } else {
-      next.add(id);
-    }
-    setSelectedIds(next);
+    setOverrides((prev) => ({
+      ...prev,
+      [id]: !selectedIds.has(id),
+    }));
   }
 
   function handleSelectAll() {
-    const next = new Set(selectedIds);
-    filtered.forEach((a) => next.add(a.id));
-    setSelectedIds(next);
+    setOverrides((prev) => {
+      const next = { ...prev };
+      filtered.forEach((a) => {
+        next[a.id] = true;
+      });
+      return next;
+    });
   }
 
   function handleClearAll() {
-    setSelectedIds(new Set());
+    setOverrides((prev) => {
+      const next = { ...prev };
+      allAmenities.forEach((a) => {
+        next[a.id] = false;
+      });
+      assignedAmenityIds.forEach((id) => {
+        next[id] = false;
+      });
+      return next;
+    });
   }
 
   async function handleSave() {
-    setSaving(true);
-    setErrorMessage(null);
+    setSaveError(null);
 
     try {
-      await adminService.updateRoomTypeAmenities(
-        roomTypeId,
-        Array.from(selectedIds),
-      );
+      await updateAmenities.mutateAsync(Array.from(selectedIds));
       toast.add({ title: SUCCESS_MESSAGES.AMENITIES_UPDATED, type: 'success' });
       await onRefresh();
+      setOverrides({});
     } catch (err) {
-      setErrorMessage(
+      setSaveError(
         err instanceof Error
           ? err.message
           : ERROR_MESSAGES.FAILED_TO_SAVE_AMENITIES,
       );
-    } finally {
-      setSaving(false);
     }
   }
 

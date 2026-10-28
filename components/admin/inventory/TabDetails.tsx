@@ -1,37 +1,38 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, Info, Lock, Unlock } from 'lucide-react';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SANITY_PRICE_MINOR } from '@/constants/inventory';
-import { minorToNaira, nairaToMinor } from '@/lib/rate-resolution';
+import { useFormDraft } from '@/hooks/use-form-draft';
+import { minorToNaira } from '@/lib/rate-resolution';
 import type {
   AdminRoomTypeDetail,
   AdminRoomTypeInput,
 } from '@/types/inventory.types';
 
+import { roomTypeDetailsFormSchema, slugify } from './form-schemas';
+
 interface TabDetailsProps {
   initialData?: AdminRoomTypeDetail | null;
-  onSave: (data: AdminRoomTypeInput) => Promise<void>;
+  onSave: (data: AdminRoomTypeInput) => Promise<boolean>;
   isSaving: boolean;
   currentRole: 'owner' | 'manager' | 'reception';
 }
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
+type RoomTypeFormInput = z.input<typeof roomTypeDetailsFormSchema>;
+type RoomTypeFormOutput = z.output<typeof roomTypeDetailsFormSchema>;
 
 export function TabDetails({
   initialData,
@@ -42,123 +43,85 @@ export function TabDetails({
   const isOwner = currentRole === 'owner';
   const isExisting = !!initialData?.id;
 
-  const [name, setName] = useState(initialData?.name || '');
-  const [slug, setSlug] = useState(initialData?.slug || '');
   const [slugLocked, setSlugLocked] = useState(isExisting);
   const [unlockSlugConfirmed, setUnlockSlugConfirmed] = useState(false);
-
-  const [description, setDescription] = useState(
-    initialData?.description || '',
-  );
-  const [shortDescription, setShortDescription] = useState(
-    initialData?.shortDescription || '',
-  );
-  const [bedConfig, setBedConfig] = useState(
-    initialData?.bedConfig || '1 King Bed',
-  );
-  const [sizeSqm, setSizeSqm] = useState<string>(
-    initialData?.sizeSqm ? String(initialData.sizeSqm) : '38',
-  );
-  const [maxAdults, setMaxAdults] = useState<number>(
-    initialData?.maxAdults || 2,
-  );
-  const [maxChildren, setMaxChildren] = useState<number>(
-    initialData?.maxChildren || 0,
-  );
-
-  const [extraBedAvailable, setExtraBedAvailable] = useState<boolean>(
-    initialData?.extraBedAvailable || false,
-  );
-  const [extraBedPriceNaira, setExtraBedPriceNaira] = useState<string>(
-    initialData?.extraBedPriceMinor
-      ? minorToNaira(initialData.extraBedPriceMinor)
-      : '0',
-  );
-
-  const [basePriceNaira, setBasePriceNaira] = useState<string>(
-    initialData?.basePriceMinor
-      ? minorToNaira(initialData.basePriceMinor)
-      : '75,000',
-  );
-  const [weekendPriceNaira, setWeekendPriceNaira] = useState<string>(
-    initialData?.weekendPriceMinor
-      ? minorToNaira(initialData.weekendPriceMinor)
-      : '',
-  );
-
-  const [showPrice, setShowPrice] = useState<boolean>(
-    initialData?.showPrice ?? true,
-  );
-  const [breakfastIncluded, setBreakfastIncluded] = useState<boolean>(
-    initialData?.breakfastIncluded ?? false,
-  );
-  const [viewNotes, setViewNotes] = useState(initialData?.viewNotes || '');
-  const [isActive, setIsActive] = useState<boolean>(
-    initialData?.isActive ?? true,
-  );
-
-  // SEO
-  const [metaTitle, setMetaTitle] = useState(initialData?.metaTitle || '');
-  const [metaDescription, setMetaDescription] = useState(
-    initialData?.metaDescription || '',
-  );
-
   const [validationError, setValidationError] = useState<string | null>(null);
   const [sanityConfirmPending, setSanityConfirmPending] = useState(false);
 
-  function handleNameChange(val: string) {
-    setName(val);
-    if (!isExisting || !slugLocked) {
-      setSlug(slugify(val));
-    }
-  }
+  const form = useForm<RoomTypeFormInput, unknown, RoomTypeFormOutput>({
+    resolver: zodResolver(roomTypeDetailsFormSchema),
+    defaultValues: {
+      name: initialData?.name || '',
+      slug: initialData?.slug || '',
+      description: initialData?.description || '',
+      shortDescription: initialData?.shortDescription || '',
+      bedConfig: initialData?.bedConfig || '1 King Bed',
+      sizeSqm: initialData?.sizeSqm ? String(initialData.sizeSqm) : '38',
+      maxAdults: initialData?.maxAdults || 2,
+      maxChildren: initialData?.maxChildren || 0,
+      extraBedAvailable: initialData?.extraBedAvailable || false,
+      extraBedPriceNaira: initialData?.extraBedPriceMinor
+        ? minorToNaira(initialData.extraBedPriceMinor)
+        : '0',
+      basePriceNaira: initialData?.basePriceMinor
+        ? minorToNaira(initialData.basePriceMinor)
+        : '75,000',
+      weekendPriceNaira: initialData?.weekendPriceMinor
+        ? minorToNaira(initialData.weekendPriceMinor)
+        : '',
+      showPrice: initialData?.showPrice ?? true,
+      breakfastIncluded: initialData?.breakfastIncluded ?? false,
+      viewNotes: initialData?.viewNotes || '',
+      isActive: initialData?.isActive ?? true,
+      metaTitle: initialData?.metaTitle || '',
+      metaDescription: initialData?.metaDescription || '',
+    },
+    mode: 'onBlur',
+  });
+  const { clearDraft } = useFormDraft(
+    form,
+    initialData?.id
+      ? `admin-room-type:${initialData.id}`
+      : 'admin-room-type:new',
+  );
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    handleSubmit,
+    register,
+    setValue,
+    watch,
+  } = form;
 
-  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
-    e.preventDefault();
+  const name = watch('name');
+  const slug = watch('slug');
+  const shortDescription = watch('shortDescription');
+  const description = watch('description');
+  const metaTitle = watch('metaTitle');
+  const metaDescription = watch('metaDescription');
+  const basePriceNaira = watch('basePriceNaira');
+  const extraBedAvailable = watch('extraBedAvailable');
+  const busy = isSaving || isSubmitting;
+
+  async function handleFormSubmit(input: RoomTypeFormOutput) {
     setValidationError(null);
 
-    const baseMinor = nairaToMinor(basePriceNaira);
-    if (baseMinor <= 0) {
-      setValidationError(ERROR_MESSAGES.BASE_PRICE_MUST_BE_POSITIVE);
-      return;
-    }
-
-    if (baseMinor > SANITY_PRICE_MINOR && !sanityConfirmPending) {
+    if (input.basePriceMinor > SANITY_PRICE_MINOR && !sanityConfirmPending) {
       setSanityConfirmPending(true);
       return;
     }
 
-    const weekendMinor = weekendPriceNaira.trim()
-      ? nairaToMinor(weekendPriceNaira)
-      : null;
-    const extraBedMinor = extraBedAvailable
-      ? nairaToMinor(extraBedPriceNaira)
-      : null;
-
     const payload: AdminRoomTypeInput = {
-      name: name.trim(),
-      slug: slug.trim(),
-      description: description.trim() || null,
-      shortDescription: shortDescription.trim() || null,
-      bedConfig: bedConfig.trim() || null,
-      sizeSqm: sizeSqm ? parseFloat(sizeSqm) : null,
-      maxAdults,
-      maxChildren,
-      extraBedAvailable,
-      extraBedPriceMinor: extraBedMinor,
-      basePriceMinor: baseMinor,
-      weekendPriceMinor: weekendMinor,
-      showPrice,
-      breakfastIncluded,
-      viewNotes: viewNotes.trim() || null,
-      metaTitle: metaTitle.trim() || null,
-      metaDescription: metaDescription.trim() || null,
-      isActive,
+      ...input,
       unlockSlugConfirmed,
     };
 
     try {
-      await onSave(payload);
+      const saved = await onSave(payload);
+      if (saved) {
+        form.reset(form.getValues());
+        clearDraft();
+      }
       setSanityConfirmPending(false);
     } catch (err) {
       setValidationError(
@@ -168,7 +131,11 @@ export function TabDetails({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form
+      onSubmit={handleSubmit(handleFormSubmit)}
+      className="space-y-8"
+      noValidate
+    >
       {validationError && (
         <div
           role="alert"
@@ -224,187 +191,231 @@ export function TabDetails({
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-          {/* Name */}
-          <div className="space-y-1.5 sm:col-span-1">
-            <Label htmlFor="room-name">
-              Room Type Name <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="room-name"
-              type="text"
-              required
-              value={name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              placeholder="e.g. Deluxe King Suite"
-            />
-          </div>
-
-          {/* Slug */}
-          <div className="space-y-1.5 sm:col-span-1">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="room-slug">
-                URL Slug <span className="text-destructive">*</span>
-              </Label>
-              {isExisting && slugLocked && (
-                <Button
-                  type="button"
-                  variant="link"
-                  size="sm"
-                  onClick={() => {
-                    if (isOwner) {
-                      setSlugLocked(false);
-                      setUnlockSlugConfirmed(true);
-                    } else {
-                      toast.add({
-                        title: ERROR_MESSAGES.ONLY_OWNER_UNLOCK_SLUG,
-                        type: 'error',
-                        priority: 'high',
-                      });
-                    }
-                  }}
-                  className="text-primary inline-flex h-auto cursor-pointer items-center gap-1 p-0 text-xs hover:underline"
-                >
-                  <Lock className="size-3" /> Locked
-                </Button>
-              )}
-            </div>
-            <div className="relative">
+          <Field
+            id="room-name"
+            label="Room Type Name *"
+            error={errors.name?.message}
+          >
+            {(a11y) => (
               <Input
-                id="room-slug"
+                {...a11y}
                 type="text"
-                required
-                disabled={isExisting && slugLocked}
-                value={slug}
-                onChange={(e) => setSlug(slugify(e.target.value))}
-                className="disabled:bg-paper disabled:text-muted-foreground"
+                placeholder="e.g. Deluxe King Suite"
+                className={inputClass(errors.name?.message)}
+                {...register('name', {
+                  onChange: (event) => {
+                    if (!isExisting || !slugLocked) {
+                      setValue('slug', slugify(event.target.value));
+                    }
+                  },
+                })}
               />
-              {isExisting && !slugLocked && (
-                <span className="text-warning absolute top-2.5 right-3 text-xs">
-                  <Unlock className="size-4" />
-                </span>
-              )}
-            </div>
-            {isExisting && !slugLocked && (
-              <p className="text-warning mt-1 text-xs">
-                Warning: Changing the slug breaks existing public bookmarks and
-                links.
-              </p>
             )}
-          </div>
+          </Field>
 
-          {/* Short Description */}
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="room-short-description">Short Summary</Label>
-            <Input
+          <Field id="room-slug" label="URL Slug *" error={errors.slug?.message}>
+            {(a11y) => (
+              <div className="space-y-1.5">
+                {isExisting && slugLocked && (
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      onClick={() => {
+                        if (isOwner) {
+                          setSlugLocked(false);
+                          setUnlockSlugConfirmed(true);
+                        } else {
+                          toast.add({
+                            title: ERROR_MESSAGES.ONLY_OWNER_UNLOCK_SLUG,
+                            type: 'error',
+                            priority: 'high',
+                          });
+                        }
+                      }}
+                      className="text-primary inline-flex h-auto cursor-pointer items-center gap-1 p-0 text-xs hover:underline"
+                    >
+                      <Lock className="size-3" /> Locked
+                    </Button>
+                  </div>
+                )}
+                <div className="relative">
+                  <Input
+                    {...a11y}
+                    type="text"
+                    disabled={isExisting && slugLocked}
+                    className={`${inputClass(errors.slug?.message)} disabled:bg-paper disabled:text-muted-foreground`}
+                    {...register('slug', {
+                      onChange: (event) =>
+                        setValue('slug', slugify(event.target.value)),
+                    })}
+                  />
+                  {isExisting && !slugLocked && (
+                    <span className="text-warning absolute top-2.5 right-3 text-xs">
+                      <Unlock className="size-4" />
+                    </span>
+                  )}
+                </div>
+                {isExisting && !slugLocked && (
+                  <p className="text-warning text-xs">
+                    Warning: Changing the slug breaks existing public bookmarks
+                    and links.
+                  </p>
+                )}
+              </div>
+            )}
+          </Field>
+
+          <div className="sm:col-span-2">
+            <Field
               id="room-short-description"
-              type="text"
-              maxLength={255}
-              value={shortDescription}
-              onChange={(e) => setShortDescription(e.target.value)}
-              placeholder="Brief summary for search cards and listings"
-            />
+              label="Short Summary"
+              error={errors.shortDescription?.message}
+            >
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  type="text"
+                  maxLength={255}
+                  placeholder="Brief summary for search cards and listings"
+                  className={inputClass(errors.shortDescription?.message)}
+                  {...register('shortDescription')}
+                />
+              )}
+            </Field>
           </div>
 
-          {/* Full Description */}
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="room-description">Detailed Description</Label>
-            <Textarea
+          <div className="sm:col-span-2">
+            <Field
               id="room-description"
-              rows={4}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detailed description of features, ambiance, and comfort..."
-            />
+              label="Detailed Description"
+              error={errors.description?.message}
+            >
+              {(a11y) => (
+                <Textarea
+                  {...a11y}
+                  rows={4}
+                  placeholder="Detailed description of features, ambiance, and comfort..."
+                  className={inputClass(errors.description?.message)}
+                  {...register('description')}
+                />
+              )}
+            </Field>
           </div>
 
-          {/* Bed Config */}
-          <div className="space-y-1.5">
-            <Label htmlFor="room-bed-config">Bed Configuration</Label>
-            <Input
-              id="room-bed-config"
-              type="text"
-              value={bedConfig}
-              onChange={(e) => setBedConfig(e.target.value)}
-              placeholder="e.g. 1 King Bed or 2 Twin Beds"
-            />
-          </div>
+          <Field
+            id="room-bed-config"
+            label="Bed Configuration"
+            error={errors.bedConfig?.message}
+          >
+            {(a11y) => (
+              <Input
+                {...a11y}
+                type="text"
+                placeholder="e.g. 1 King Bed or 2 Twin Beds"
+                className={inputClass(errors.bedConfig?.message)}
+                {...register('bedConfig')}
+              />
+            )}
+          </Field>
 
-          {/* Size (sqm) */}
-          <div className="space-y-1.5">
-            <Label htmlFor="room-size-sqm">Room Size (sqm)</Label>
-            <Input
-              id="room-size-sqm"
-              type="number"
-              step="0.1"
-              min="0"
-              value={sizeSqm}
-              onChange={(e) => setSizeSqm(e.target.value)}
-              placeholder="e.g. 42"
-            />
-          </div>
+          <Field
+            id="room-size-sqm"
+            label="Room Size (sqm)"
+            error={errors.sizeSqm?.message}
+          >
+            {(a11y) => (
+              <Input
+                {...a11y}
+                type="number"
+                step="0.1"
+                min="0"
+                placeholder="e.g. 42"
+                className={inputClass(errors.sizeSqm?.message)}
+                {...register('sizeSqm')}
+              />
+            )}
+          </Field>
 
-          {/* Occupancy */}
-          <div className="space-y-1.5">
-            <Label htmlFor="room-max-adults">
-              Max Adults <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="room-max-adults"
-              type="number"
-              min="1"
-              max="20"
-              required
-              value={maxAdults}
-              onChange={(e) => setMaxAdults(parseInt(e.target.value, 10) || 1)}
-            />
-          </div>
+          <Field
+            id="room-max-adults"
+            label="Max Adults *"
+            error={errors.maxAdults?.message}
+          >
+            {(a11y) => (
+              <Input
+                {...a11y}
+                type="number"
+                min="1"
+                max="20"
+                className={inputClass(errors.maxAdults?.message)}
+                {...register('maxAdults', { valueAsNumber: true })}
+              />
+            )}
+          </Field>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="room-max-children">Max Children</Label>
-            <Input
-              id="room-max-children"
-              type="number"
-              min="0"
-              max="10"
-              value={maxChildren}
-              onChange={(e) =>
-                setMaxChildren(parseInt(e.target.value, 10) || 0)
-              }
-            />
-          </div>
+          <Field
+            id="room-max-children"
+            label="Max Children"
+            error={errors.maxChildren?.message}
+          >
+            {(a11y) => (
+              <Input
+                {...a11y}
+                type="number"
+                min="0"
+                max="10"
+                className={inputClass(errors.maxChildren?.message)}
+                {...register('maxChildren', { valueAsNumber: true })}
+              />
+            )}
+          </Field>
 
           {/* Extra Bed */}
           <div className="border-line bg-paper/50 rounded-card border p-4 sm:col-span-2">
             <div className="flex items-center gap-2.5">
-              <Checkbox
-                id="extraBedAvailable"
-                checked={extraBedAvailable}
-                onCheckedChange={(checked) => setExtraBedAvailable(!!checked)}
+              <Controller
+                control={control}
+                name="extraBedAvailable"
+                render={({ field }) => (
+                  <Checkbox
+                    id="extraBedAvailable"
+                    name={field.name}
+                    ref={field.ref}
+                    checked={field.value === true}
+                    onCheckedChange={(checked) =>
+                      field.onChange(checked === true)
+                    }
+                    onBlur={field.onBlur}
+                  />
+                )}
               />
               <Label htmlFor="extraBedAvailable" className="cursor-pointer">
                 Extra Bed Allowed for this Room Type
               </Label>
             </div>
             {extraBedAvailable && (
-              <div className="mt-3 max-w-xs space-y-1.5">
-                <Label
-                  htmlFor="room-extra-bed-price"
-                  className="text-muted-foreground text-xs"
+              <div className="mt-3 max-w-xs">
+                <Field
+                  id="room-extra-bed-price"
+                  label="Extra Bed Price per Night (₦) — 0 means free"
+                  error={errors.extraBedPriceNaira?.message}
                 >
-                  Extra Bed Price per Night (₦) — 0 means free
-                </Label>
-                <div className="relative">
-                  <span className="text-muted-foreground absolute top-2 left-3 text-xs">
-                    ₦
-                  </span>
-                  <Input
-                    id="room-extra-bed-price"
-                    type="text"
-                    value={extraBedPriceNaira}
-                    onChange={(e) => setExtraBedPriceNaira(e.target.value)}
-                    className="pl-7"
-                  />
-                </div>
+                  {(a11y) => (
+                    <div className="relative">
+                      <span className="text-muted-foreground absolute top-2 left-3 text-xs">
+                        ₦
+                      </span>
+                      <Input
+                        {...a11y}
+                        type="text"
+                        className={`${inputClass(errors.extraBedPriceNaira?.message)} pl-7`}
+                        {...register('extraBedPriceNaira')}
+                      />
+                    </div>
+                  )}
+                </Field>
               </div>
             )}
           </div>
@@ -421,53 +432,49 @@ export function TabDetails({
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-          {/* Base Price */}
-          <div className="space-y-1.5">
-            <Label htmlFor="room-base-price">
-              Base Nightly Price (₦) <span className="text-destructive">*</span>
-            </Label>
-            <div className="relative">
-              <span className="text-muted-foreground absolute top-2 left-3 text-xs">
-                ₦
-              </span>
-              <Input
-                id="room-base-price"
-                type="text"
-                required
-                value={basePriceNaira}
-                onChange={(e) => setBasePriceNaira(e.target.value)}
-                placeholder="75,000"
-                className="pl-7"
-              />
-            </div>
-            <p className="text-muted-foreground text-xs">
-              Applies to Sunday through Thursday nights unless overridden by
-              rate rules.
-            </p>
-          </div>
+          <Field
+            id="room-base-price"
+            label="Base Nightly Price (₦) *"
+            error={errors.basePriceNaira?.message}
+            hint="Applies to Sunday through Thursday nights unless overridden by rate rules."
+          >
+            {(a11y) => (
+              <div className="relative">
+                <span className="text-muted-foreground absolute top-2 left-3 text-xs">
+                  ₦
+                </span>
+                <Input
+                  {...a11y}
+                  type="text"
+                  placeholder="75,000"
+                  className={`${inputClass(errors.basePriceNaira?.message)} pl-7`}
+                  {...register('basePriceNaira')}
+                />
+              </div>
+            )}
+          </Field>
 
-          {/* Weekend Price */}
-          <div className="space-y-1.5">
-            <Label htmlFor="room-weekend-price">
-              Weekend Price per Night (₦) — Optional
-            </Label>
-            <div className="relative">
-              <span className="text-muted-foreground absolute top-2 left-3 text-xs">
-                ₦
-              </span>
-              <Input
-                id="room-weekend-price"
-                type="text"
-                value={weekendPriceNaira}
-                onChange={(e) => setWeekendPriceNaira(e.target.value)}
-                placeholder="Leave blank to use base price"
-                className="pl-7"
-              />
-            </div>
-            <p className="text-muted-foreground text-xs">
-              Applies to Friday and Saturday nights.
-            </p>
-          </div>
+          <Field
+            id="room-weekend-price"
+            label="Weekend Price per Night (₦) — Optional"
+            error={errors.weekendPriceNaira?.message}
+            hint="Applies to Friday and Saturday nights."
+          >
+            {(a11y) => (
+              <div className="relative">
+                <span className="text-muted-foreground absolute top-2 left-3 text-xs">
+                  ₦
+                </span>
+                <Input
+                  {...a11y}
+                  type="text"
+                  placeholder="Leave blank to use base price"
+                  className={`${inputClass(errors.weekendPriceNaira?.message)} pl-7`}
+                  {...register('weekendPriceNaira')}
+                />
+              </div>
+            )}
+          </Field>
 
           <div className="border-line/60 bg-paper/30 text-muted-foreground rounded border p-3 text-xs sm:col-span-2">
             <span className="text-foreground font-semibold">
@@ -477,12 +484,22 @@ export function TabDetails({
             retains its original confirmed rate snapshot.
           </div>
 
-          {/* Toggles */}
           <div className="flex items-center gap-2.5">
-            <Checkbox
-              id="showPrice"
-              checked={showPrice}
-              onCheckedChange={(checked) => setShowPrice(!!checked)}
+            <Controller
+              control={control}
+              name="showPrice"
+              render={({ field }) => (
+                <Checkbox
+                  id="showPrice"
+                  name={field.name}
+                  ref={field.ref}
+                  checked={field.value === true}
+                  onCheckedChange={(checked) =>
+                    field.onChange(checked === true)
+                  }
+                  onBlur={field.onBlur}
+                />
+              )}
             />
             <Label htmlFor="showPrice" className="cursor-pointer">
               Show price publicly on website
@@ -490,10 +507,21 @@ export function TabDetails({
           </div>
 
           <div className="flex items-center gap-2.5">
-            <Checkbox
-              id="breakfastIncluded"
-              checked={breakfastIncluded}
-              onCheckedChange={(checked) => setBreakfastIncluded(!!checked)}
+            <Controller
+              control={control}
+              name="breakfastIncluded"
+              render={({ field }) => (
+                <Checkbox
+                  id="breakfastIncluded"
+                  name={field.name}
+                  ref={field.ref}
+                  checked={field.value === true}
+                  onCheckedChange={(checked) =>
+                    field.onChange(checked === true)
+                  }
+                  onBlur={field.onBlur}
+                />
+              )}
             />
             <Label htmlFor="breakfastIncluded" className="cursor-pointer">
               Complimentary Breakfast Included
@@ -501,27 +529,43 @@ export function TabDetails({
           </div>
 
           <div className="flex items-center gap-2.5">
-            <Checkbox
-              id="isActive"
-              checked={isActive}
-              onCheckedChange={(checked) => setIsActive(!!checked)}
+            <Controller
+              control={control}
+              name="isActive"
+              render={({ field }) => (
+                <Checkbox
+                  id="isActive"
+                  name={field.name}
+                  ref={field.ref}
+                  checked={field.value === true}
+                  onCheckedChange={(checked) =>
+                    field.onChange(checked === true)
+                  }
+                  onBlur={field.onBlur}
+                />
+              )}
             />
             <Label htmlFor="isActive" className="cursor-pointer">
               Active / Published (visible for bookings)
             </Label>
           </div>
 
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="room-view-notes">
-              View & Floor Notes (Internal / Guest info)
-            </Label>
-            <Input
+          <div className="sm:col-span-2">
+            <Field
               id="room-view-notes"
-              type="text"
-              value={viewNotes}
-              onChange={(e) => setViewNotes(e.target.value)}
-              placeholder="e.g. Ocean view, floors 2 to 4, quiet garden wing"
-            />
+              label="View & Floor Notes (Internal / Guest info)"
+              error={errors.viewNotes?.message}
+            >
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  type="text"
+                  placeholder="e.g. Ocean view, floors 2 to 4, quiet garden wing"
+                  className={inputClass(errors.viewNotes?.message)}
+                  {...register('viewNotes')}
+                />
+              )}
+            </Field>
           </div>
         </div>
       </section>
@@ -537,47 +581,61 @@ export function TabDetails({
         </p>
 
         <div className="mt-6 space-y-4">
-          <div className="space-y-1.5">
-            <div className="flex justify-between">
-              <Label htmlFor="metaTitle">SEO Title</Label>
-              <span
-                className={`text-xs ${metaTitle.length > 60 ? 'text-warning' : 'text-muted-foreground'}`}
-              >
-                {metaTitle.length} / 160 chars
-              </span>
-            </div>
-            <Input
-              id="metaTitle"
-              type="text"
-              maxLength={160}
-              value={metaTitle}
-              onChange={(e) => setMetaTitle(e.target.value)}
-              placeholder={
-                name
-                  ? `${name} | Dela Boutique Hotel`
-                  : 'Page title for search engines'
-              }
-            />
-          </div>
+          <Field
+            id="metaTitle"
+            label="SEO Title"
+            error={errors.metaTitle?.message}
+          >
+            {(a11y) => (
+              <div className="space-y-1.5">
+                <div className="flex justify-end">
+                  <span
+                    className={`text-xs ${(metaTitle ?? '').length > 60 ? 'text-warning' : 'text-muted-foreground'}`}
+                  >
+                    {(metaTitle ?? '').length} / 160 chars
+                  </span>
+                </div>
+                <Input
+                  {...a11y}
+                  type="text"
+                  maxLength={160}
+                  placeholder={
+                    name
+                      ? `${name} | Dela Boutique Hotel`
+                      : 'Page title for search engines'
+                  }
+                  className={inputClass(errors.metaTitle?.message)}
+                  {...register('metaTitle')}
+                />
+              </div>
+            )}
+          </Field>
 
-          <div className="space-y-1.5">
-            <div className="flex justify-between">
-              <Label htmlFor="metaDescription">Meta Description</Label>
-              <span
-                className={`text-xs ${metaDescription.length > 160 ? 'text-warning' : 'text-muted-foreground'}`}
-              >
-                {metaDescription.length} / 320 chars
-              </span>
-            </div>
-            <Textarea
-              id="metaDescription"
-              rows={2}
-              maxLength={320}
-              value={metaDescription}
-              onChange={(e) => setMetaDescription(e.target.value)}
-              placeholder="A brief, inviting description that appears beneath the search title"
-            />
-          </div>
+          <Field
+            id="metaDescription"
+            label="Meta Description"
+            error={errors.metaDescription?.message}
+          >
+            {(a11y) => (
+              <div className="space-y-1.5">
+                <div className="flex justify-end">
+                  <span
+                    className={`text-xs ${(metaDescription ?? '').length > 160 ? 'text-warning' : 'text-muted-foreground'}`}
+                  >
+                    {(metaDescription ?? '').length} / 320 chars
+                  </span>
+                </div>
+                <Textarea
+                  {...a11y}
+                  rows={2}
+                  maxLength={320}
+                  placeholder="A brief, inviting description that appears beneath the search title"
+                  className={inputClass(errors.metaDescription?.message)}
+                  {...register('metaDescription')}
+                />
+              </div>
+            )}
+          </Field>
 
           {/* Live Google Search Preview */}
           <div className="border-line bg-paper rounded-card mt-4 border p-4">
@@ -604,8 +662,8 @@ export function TabDetails({
 
       {/* Save Button */}
       <div className="flex justify-end gap-3">
-        <Button type="submit" size="sm" loading={isSaving} className="min-w-32">
-          {isSaving
+        <Button type="submit" size="sm" loading={busy} className="min-w-32">
+          {busy
             ? 'Saving...'
             : isExisting
               ? 'Save Changes'

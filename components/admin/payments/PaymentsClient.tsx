@@ -1,9 +1,8 @@
 'use client';
 
 import { Download, RefreshCw } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { adminService } from '@/app/api/services/admin.service';
 import {
   AdminEmpty,
   AdminError,
@@ -21,15 +20,23 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useManualRefunds,
+  useMarkManualRefundPaidOut,
+  usePaymentDetail,
+  usePayments,
+  usePaymentsSummary,
+  useRecheckRefundStatus,
+  useReconcilePayments,
+  useReprocessWebhookEvent,
+  useUnreconcilePayment,
+  useWebhookEvents,
+} from '@/hooks/services/admin/use-payments';
 import type {
-  ManualRefundItem,
   ManualRefundPayoutInput,
   PaymentDetailResponse,
   PaymentListItem,
-  PaymentsBreakdownResponse,
   PaymentsQueryParams,
-  PaymentSummaryResponse,
-  WebhookEventItem,
 } from '@/types/payments-admin.types';
 
 import { ManualRefundsTab } from './ManualRefundsTab';
@@ -41,23 +48,37 @@ import { PaymentsTable } from './PaymentsTable';
 import { ReconciliationModal } from './ReconciliationModal';
 import { WebhooksTab } from './WebhooksTab';
 
+function buildFallbackDetail(
+  paymentItem: PaymentListItem,
+): PaymentDetailResponse {
+  return {
+    ...paymentItem,
+    reservation: {
+      id: paymentItem.reservationId,
+      reference: paymentItem.reservationRef,
+      guestName: paymentItem.guestName,
+      guestEmail: paymentItem.guestEmail,
+      roomTypeName: 'Standard Room',
+      checkIn: '',
+      checkOut: '',
+      nights: 1,
+      status: 'confirmed',
+      totalMinor: paymentItem.amountMinor,
+      amountPaidMinor: paymentItem.amountMinor,
+      amountRefundedMinor: 0,
+    },
+    webhooks: [],
+  };
+}
+
 export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
   const [activeTab, setActiveTab] = useState<
     'payments' | 'refunds' | 'webhooks'
   >('payments');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Summary and breakdown
-  const [summary, setSummary] = useState<PaymentSummaryResponse | null>(null);
-  const [breakdown, setBreakdown] = useState<PaymentsBreakdownResponse | null>(
-    null,
-  );
   const [rangePreset, setRangePreset] = useState<string>('this_month');
 
   // Payments list & filters
-  const [payments, setPayments] = useState<PaymentListItem[]>([]);
-  const [totalPayments, setTotalPayments] = useState(0);
   const [selectedPaymentIds, setSelectedPaymentIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<PaymentsQueryParams>({
     status: 'all',
@@ -72,13 +93,8 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
     order: 'desc',
   });
 
-  // Manual refunds & webhooks
-  const [manualRefunds, setManualRefunds] = useState<ManualRefundItem[]>([]);
-  const [webhooks, setWebhooks] = useState<WebhookEventItem[]>([]);
-
-  // Drawers and modals
-  const [detailPayment, setDetailPayment] =
-    useState<PaymentDetailResponse | null>(null);
+  const [detailSelection, setDetailSelection] =
+    useState<PaymentListItem | null>(null);
   const [reconcileModalState, setReconcileModalState] = useState<{
     isOpen: boolean;
     mode: 'reconcile' | 'unreconcile';
@@ -91,91 +107,44 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
 
   const isUserInteracting = useRef(false);
 
-  // Fetch summary data
-  const loadSummary = useCallback(async () => {
-    try {
-      const res = await adminService.getPaymentsSummary();
-      if (res.data) {
-        setSummary(res.data.summary);
-        setBreakdown(res.data.breakdown);
-      }
-    } catch {
-      // quiet fallback
-    }
-  }, []);
+  const summaryQuery = usePaymentsSummary();
+  const paymentsQuery = usePayments(filters);
+  const refundsQuery = useManualRefunds();
+  const webhooksQuery = useWebhookEvents();
+  const detailQuery = usePaymentDetail(detailSelection?.id ?? null);
 
-  // Fetch payments list
-  const loadPayments = useCallback(async () => {
-    try {
-      const res = await adminService.listPayments(filters);
-      if (res.data) {
-        setError(null);
-        setPayments(res.data.items);
-        setTotalPayments(res.data.total);
-      }
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_LOAD_PAYMENTS;
-      setError(msg);
-    }
-  }, [filters]);
+  const reconcilePayments = useReconcilePayments();
+  const unreconcilePayment = useUnreconcilePayment();
+  const markRefundPaidOut = useMarkManualRefundPaidOut();
+  const recheckRefundStatus = useRecheckRefundStatus();
+  const reprocessWebhookEvent = useReprocessWebhookEvent();
 
-  // Fetch refunds and webhooks
-  const loadRefundsAndWebhooks = useCallback(async () => {
-    try {
-      const [refRes, whRes] = await Promise.all([
-        adminService.listManualRefunds(),
-        adminService.listWebhookEvents(),
-      ]);
-      if (refRes.data) setManualRefunds(refRes.data);
-      if (whRes.data) setWebhooks(whRes.data.items);
-    } catch {}
-  }, []);
+  const { refetch: refetchSummary } = summaryQuery;
+  const { refetch: refetchPayments } = paymentsQuery;
+  const { refetch: refetchRefunds } = refundsQuery;
+  const { refetch: refetchWebhooks } = webhooksQuery;
 
-  // Initial load
-  useEffect(() => {
-    let active = true;
-
-    async function fetchData() {
-      try {
-        const [sumRes, payRes, refRes, whRes] = await Promise.all([
-          adminService.getPaymentsSummary(),
-          adminService.listPayments(filters),
-          adminService.listManualRefunds(),
-          adminService.listWebhookEvents(),
-        ]);
-        if (!active) return;
-        if (sumRes.data) {
-          setSummary(sumRes.data.summary);
-          setBreakdown(sumRes.data.breakdown);
-        }
-        if (payRes.data) {
-          setPayments(payRes.data.items);
-          setTotalPayments(payRes.data.total);
-          setError(null);
-        }
-        if (refRes.data) setManualRefunds(refRes.data);
-        if (whRes.data) setWebhooks(whRes.data.items);
-      } catch (err: unknown) {
-        if (!active) return;
-        const msg =
-          err instanceof Error
-            ? err.message
-            : ERROR_MESSAGES.FAILED_TO_LOAD_PAYMENTS;
-        setError(msg);
-      } finally {
-        if (active) setLoading(false);
-      }
-    }
-
-    void fetchData();
-
-    return () => {
-      active = false;
-    };
-  }, [filters]);
+  const summary = summaryQuery.data?.summary ?? null;
+  const breakdown = summaryQuery.data?.breakdown ?? null;
+  const payments = paymentsQuery.data?.items ?? [];
+  const totalPayments = paymentsQuery.data?.total ?? 0;
+  const manualRefunds = refundsQuery.data ?? [];
+  const webhooks = webhooksQuery.data?.items ?? [];
+  const loading =
+    summaryQuery.isPending ||
+    paymentsQuery.isPending ||
+    refundsQuery.isPending ||
+    webhooksQuery.isPending;
+  const error = paymentsQuery.error
+    ? paymentsQuery.error instanceof Error
+      ? paymentsQuery.error.message
+      : ERROR_MESSAGES.FAILED_TO_LOAD_PAYMENTS
+    : null;
+  const detailPayment =
+    detailQuery.data ??
+    (detailSelection && detailQuery.isError
+      ? buildFallbackDetail(detailSelection)
+      : null);
 
   // Quiet 60s background refresh
   useEffect(() => {
@@ -183,22 +152,24 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
       if (
         document.hidden ||
         isUserInteracting.current ||
-        detailPayment !== null ||
+        detailSelection !== null ||
         reconcileModalState.isOpen
       ) {
         return;
       }
-      void loadSummary();
-      void loadPayments();
-      void loadRefundsAndWebhooks();
+      void refetchSummary();
+      void refetchPayments();
+      void refetchRefunds();
+      void refetchWebhooks();
     }, 60_000);
 
     return () => clearInterval(timer);
   }, [
-    loadSummary,
-    loadPayments,
-    loadRefundsAndWebhooks,
-    detailPayment,
+    refetchSummary,
+    refetchPayments,
+    refetchRefunds,
+    refetchWebhooks,
+    detailSelection,
     reconcileModalState.isOpen,
   ]);
 
@@ -213,56 +184,13 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
     setSelectedPaymentIds(checked ? payments.map((p) => p.id) : []);
   };
 
-  const handleOpenDetail = async (paymentItem: PaymentListItem) => {
-    try {
-      const res = await adminService.getPaymentDetail(paymentItem.id);
-      if (res.data) {
-        setDetailPayment(res.data);
-      } else {
-        setDetailPayment({
-          ...paymentItem,
-          reservation: {
-            id: paymentItem.reservationId,
-            reference: paymentItem.reservationRef,
-            guestName: paymentItem.guestName,
-            guestEmail: paymentItem.guestEmail,
-            roomTypeName: 'Standard Room',
-            checkIn: '',
-            checkOut: '',
-            nights: 1,
-            status: 'confirmed',
-            totalMinor: paymentItem.amountMinor,
-            amountPaidMinor: paymentItem.amountMinor,
-            amountRefundedMinor: 0,
-          },
-          webhooks: [],
-        });
-      }
-    } catch {
-      setDetailPayment({
-        ...paymentItem,
-        reservation: {
-          id: paymentItem.reservationId,
-          reference: paymentItem.reservationRef,
-          guestName: paymentItem.guestName,
-          guestEmail: paymentItem.guestEmail,
-          roomTypeName: 'Standard Room',
-          checkIn: '',
-          checkOut: '',
-          nights: 1,
-          status: 'confirmed',
-          totalMinor: paymentItem.amountMinor,
-          amountPaidMinor: paymentItem.amountMinor,
-          amountRefundedMinor: 0,
-        },
-        webhooks: [],
-      });
-    }
+  const handleOpenDetail = (paymentItem: PaymentListItem) => {
+    setDetailSelection(paymentItem);
   };
 
   const handleConfirmReconcile = async (note?: string) => {
     try {
-      await adminService.reconcilePaymentsBulk({
+      await reconcilePayments.mutateAsync({
         paymentIds: reconcileModalState.paymentIds,
         note,
       });
@@ -272,8 +200,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
         paymentIds: [],
       });
       setSelectedPaymentIds([]);
-      if (detailPayment) setDetailPayment(null);
-      await Promise.all([loadSummary(), loadPayments()]);
+      setDetailSelection(null);
       toast.add({
         title: SUCCESS_MESSAGES.PAYMENTS_RECONCILED,
         type: 'success',
@@ -289,15 +216,14 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
     try {
       const paymentId = reconcileModalState.paymentIds[0];
       if (paymentId) {
-        await adminService.unreconcilePayment(paymentId, reason);
+        await unreconcilePayment.mutateAsync({ id: paymentId, reason });
       }
       setReconcileModalState({
         isOpen: false,
         mode: 'unreconcile',
         paymentIds: [],
       });
-      if (detailPayment) setDetailPayment(null);
-      await Promise.all([loadSummary(), loadPayments()]);
+      setDetailSelection(null);
       toast.add({
         title: SUCCESS_MESSAGES.PAYMENT_UNRECONCILED,
         type: 'success',
@@ -315,22 +241,16 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
     id: string,
     input: ManualRefundPayoutInput,
   ) => {
-    await adminService.markManualRefundPaidOut(id, input);
-    await Promise.all([
-      loadSummary(),
-      loadPayments(),
-      loadRefundsAndWebhooks(),
-    ]);
+    await markRefundPaidOut.mutateAsync({ id, body: input });
   };
 
   const handleRecheckProviderRefund = async (id: string) => {
-    const res = await adminService.recheckRefundStatus(id);
-    return res.data?.message || SUCCESS_MESSAGES.STATUS_VERIFIED;
+    const res = await recheckRefundStatus.mutateAsync(id);
+    return res.message || SUCCESS_MESSAGES.STATUS_VERIFIED;
   };
 
   const handleReprocessWebhook = async (id: string) => {
-    await adminService.reprocessWebhookEvent(id);
-    await loadRefundsAndWebhooks();
+    await reprocessWebhookEvent.mutateAsync(id);
   };
 
   const handleExportCsv = () => {
@@ -357,7 +277,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
         selectedRange={rangePreset}
         onRangeShortcut={(preset) => {
           setRangePreset(preset);
-          loadSummary();
+          void refetchSummary();
         }}
       />
 
@@ -435,9 +355,10 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
             variant="outline"
             size="sm"
             onClick={() => {
-              loadSummary();
-              loadPayments();
-              loadRefundsAndWebhooks();
+              void refetchSummary();
+              void refetchPayments();
+              void refetchRefunds();
+              void refetchWebhooks();
             }}
             title="Refresh payments data"
             className="px-2"
@@ -475,7 +396,11 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
             <AdminError
               message={error}
               action={
-                <Button variant="outline" size="sm" onClick={loadPayments}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void refetchPayments()}
+                >
                   Retry
                 </Button>
               }
@@ -566,7 +491,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
         <PaymentDetailDrawer
           payment={detailPayment}
           isOwner={isOwner}
-          onClose={() => setDetailPayment(null)}
+          onClose={() => setDetailSelection(null)}
           onReconcile={(id) => {
             setReconcileModalState({
               isOpen: true,
@@ -598,6 +523,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
         }
         onConfirmReconcile={handleConfirmReconcile}
         onConfirmUnreconcile={handleConfirmUnreconcile}
+        loading={reconcilePayments.isPending || unreconcilePayment.isPending}
       />
     </div>
   );

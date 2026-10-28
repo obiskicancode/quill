@@ -2,14 +2,16 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { KeyRound, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { ServiceError } from '@/app/api/services/base.service';
 import { StatusBanner } from '@/components/admin/StatusBanner';
-import { Field, inputClass } from '@/components/checkout/Field';
 import { Button } from '@/components/ui/button';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import {
   InputOTP,
@@ -18,22 +20,39 @@ import {
 } from '@/components/ui/input-otp';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { useAdminVerify2fa } from '@/hooks/services/admin/use-auth';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import {
+  adminVerify2faSchema,
+  type AdminVerify2faInput,
+} from '@/schemas/admin-auth.schema';
 
 type Mode = 'totp' | 'recovery';
+type VerifyOutput = z.output<typeof adminVerify2faSchema>;
 
 export function VerifyForm({ next }: { next?: string }) {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>('totp');
-  const [code, setCode] = useState('');
-  const [busy, setBusy] = useState(false);
+  const verify2fa = useAdminVerify2fa();
+  const form = useForm<AdminVerify2faInput, unknown, VerifyOutput>({
+    resolver: zodResolver(adminVerify2faSchema),
+    defaultValues: { code: '', mode: 'totp' },
+    mode: 'onBlur',
+  });
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    setError: setFieldError,
+    setValue,
+    watch,
+  } = form;
+  const mode = watch('mode') as Mode;
   const [error, setError] = useState<string | null>(null);
+  const busy = isSubmitting || verify2fa.isPending;
 
-  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
+  const onSubmit = async (input: VerifyOutput) => {
     setError(null);
     try {
-      const result = (await adminService.verify2fa({ code, mode })).data;
+      const result = await verify2fa.mutateAsync(input);
       const target =
         next?.startsWith('/admin') && !next.startsWith('//')
           ? next
@@ -41,15 +60,14 @@ export function VerifyForm({ next }: { next?: string }) {
       router.push(target);
       router.refresh();
     } catch (caught) {
-      setError(
-        caught instanceof ServiceError
-          ? caught.message
-          : ERROR_MESSAGES.COULD_NOT_VERIFY_CODE,
-      );
-    } finally {
-      setBusy(false);
+      if (caught instanceof ServiceError) {
+        setError(caught.message);
+        applyServerFieldErrors(setFieldError, caught);
+      } else {
+        setError(ERROR_MESSAGES.COULD_NOT_VERIFY_CODE);
+      }
     }
-  }
+  };
 
   return (
     <div>
@@ -65,10 +83,11 @@ export function VerifyForm({ next }: { next?: string }) {
 
       <Tabs
         value={mode}
-        onValueChange={(val) => {
-          setMode(val as Mode);
-          setCode('');
+        onValueChange={(value) => {
+          setValue('mode', value as Mode);
+          setValue('code', '');
           setError(null);
+          form.clearErrors('code');
         }}
         className="mt-5 w-full"
       >
@@ -90,7 +109,11 @@ export function VerifyForm({ next }: { next?: string }) {
         </div>
       )}
 
-      <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="mt-5 space-y-4"
+        noValidate
+      >
         <Field
           id="admin-mfa-code"
           label={mode === 'totp' ? 'Six-digit code' : 'Recovery code'}
@@ -99,59 +122,71 @@ export function VerifyForm({ next }: { next?: string }) {
               ? 'Codes change every 30 seconds.'
               : 'Recovery codes can only be used once.'
           }
+          error={errors.code?.message}
         >
-          {(a11y) =>
-            mode === 'totp' ? (
-              <div className="flex justify-center py-2">
-                <InputOTP
-                  maxLength={6}
-                  value={code}
-                  onChange={(val) => setCode(val.replace(/\D/g, ''))}
-                  autoFocus
-                >
-                  <InputOTPGroup className="gap-2">
-                    <InputOTPSlot
-                      index={0}
-                      className="rounded-control text-h3 size-12"
-                    />
-                    <InputOTPSlot
-                      index={1}
-                      className="rounded-control text-h3 size-12"
-                    />
-                    <InputOTPSlot
-                      index={2}
-                      className="rounded-control text-h3 size-12"
-                    />
-                    <InputOTPSlot
-                      index={3}
-                      className="rounded-control text-h3 size-12"
-                    />
-                    <InputOTPSlot
-                      index={4}
-                      className="rounded-control text-h3 size-12"
-                    />
-                    <InputOTPSlot
-                      index={5}
-                      className="rounded-control text-h3 size-12"
-                    />
-                  </InputOTPGroup>
-                </InputOTP>
-              </div>
-            ) : (
-              <Input
-                {...a11y}
-                type="text"
-                value={code}
-                onChange={(event) => setCode(event.target.value.toUpperCase())}
-                inputMode="text"
-                autoComplete="one-time-code"
-                autoFocus
-                maxLength={11}
-                required
-                className={`${inputClass()} tracking-wider uppercase`}
-              />
-            )
-          }
+          {(a11y) => (
+            <Controller
+              control={control}
+              name="code"
+              render={({ field }) =>
+                mode === 'totp' ? (
+                  <div className="flex justify-center py-2">
+                    <InputOTP
+                      maxLength={6}
+                      value={field.value}
+                      onChange={(value) =>
+                        field.onChange(value.replace(/\D/g, ''))
+                      }
+                      onBlur={field.onBlur}
+                      autoFocus
+                    >
+                      <InputOTPGroup className="gap-2">
+                        <InputOTPSlot
+                          index={0}
+                          className="rounded-control text-h3 size-12"
+                        />
+                        <InputOTPSlot
+                          index={1}
+                          className="rounded-control text-h3 size-12"
+                        />
+                        <InputOTPSlot
+                          index={2}
+                          className="rounded-control text-h3 size-12"
+                        />
+                        <InputOTPSlot
+                          index={3}
+                          className="rounded-control text-h3 size-12"
+                        />
+                        <InputOTPSlot
+                          index={4}
+                          className="rounded-control text-h3 size-12"
+                        />
+                        <InputOTPSlot
+                          index={5}
+                          className="rounded-control text-h3 size-12"
+                        />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
+                ) : (
+                  <Input
+                    {...a11y}
+                    {...field}
+                    type="text"
+                    onChange={(event) =>
+                      field.onChange(event.target.value.toUpperCase())
+                    }
+                    inputMode="text"
+                    autoComplete="one-time-code"
+                    autoFocus
+                    maxLength={11}
+                    disabled={busy}
+                    className={`${inputClass(errors.code?.message)} tracking-wider uppercase`}
+                  />
+                )
+              }
+            />
+          )}
         </Field>
 
         <Button type="submit" loading={busy} className="w-full">

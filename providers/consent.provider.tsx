@@ -3,7 +3,7 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useWebStorage } from '@/hooks/use-web-storage';
 
 export type ConsentState = 'unknown' | 'granted' | 'denied';
 
@@ -19,7 +19,8 @@ const ConsentContext = createContext<ConsentContextType | undefined>(undefined);
 const STORAGE_KEY = 'dea-consent';
 
 export function ConsentProvider({ children }: { children: ReactNode }) {
-  const [consent, setConsent, removeConsent] = useLocalStorage<ConsentState>(
+  const [consent, setConsent, removeConsent] = useWebStorage<ConsentState>(
+    'localStorage',
     STORAGE_KEY,
     'unknown',
     (v) => v,

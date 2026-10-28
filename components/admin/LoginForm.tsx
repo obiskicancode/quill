@@ -2,16 +2,26 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { ServiceError } from '@/app/api/services/base.service';
 import { StatusBanner } from '@/components/admin/StatusBanner';
-import { Field, inputClass } from '@/components/checkout/Field';
 import { Button } from '@/components/ui/button';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { useAdminLogin } from '@/hooks/services/admin/use-auth';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import {
+  adminLoginSchema,
+  type AdminLoginInput,
+} from '@/schemas/admin-auth.schema';
+
+type AdminLoginOutput = z.output<typeof adminLoginSchema>;
 
 export function LoginForm({
   next,
@@ -23,13 +33,21 @@ export function LoginForm({
   reset?: boolean;
 }) {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const login = useAdminLogin();
+  const form = useForm<AdminLoginInput, unknown, AdminLoginOutput>({
+    resolver: zodResolver(adminLoginSchema),
+    defaultValues: { email: '', password: '', next },
+    mode: 'onBlur',
+  });
+  const {
+    formState: { errors, isSubmitting },
+    register,
+    setError: setFieldError,
+  } = form;
   const [showPassword, setShowPassword] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [lockSeconds, setLockSeconds] = useState(0);
+  const busy = isSubmitting || login.isPending;
 
   useEffect(() => {
     if (lockSeconds <= 0) return;
@@ -39,15 +57,11 @@ export function LoginForm({
     return () => window.clearInterval(timer);
   }, [lockSeconds]);
 
-  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (busy || lockSeconds > 0) return;
-    setBusy(true);
+  const onSubmit = async (input: AdminLoginOutput) => {
+    if (lockSeconds > 0) return;
     setError(null);
-    setFieldErrors({});
-
     try {
-      const result = (await adminService.login({ email, password, next })).data;
+      const result = await login.mutateAsync(input);
       if (result.mfaRequired) {
         const params = new URLSearchParams();
         if (next) params.set('next', next);
@@ -61,17 +75,15 @@ export function LoginForm({
     } catch (caught) {
       if (caught instanceof ServiceError) {
         setError(caught.message);
-        setFieldErrors(caught.body?.fieldErrors ?? {});
+        applyServerFieldErrors(setFieldError, caught);
         if (typeof caught.body?.retryAfterSeconds === 'number') {
           setLockSeconds(caught.body.retryAfterSeconds);
         }
       } else {
         setError(ERROR_MESSAGES.COULD_NOT_SIGN_IN);
       }
-    } finally {
-      setBusy(false);
     }
-  }
+  };
 
   return (
     <div>
@@ -107,19 +119,25 @@ export function LoginForm({
         )}
       </div>
 
-      <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
-        <Field id="admin-email" label="Email address" error={fieldErrors.email}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="mt-5 space-y-4"
+        noValidate
+      >
+        <Field
+          id="admin-email"
+          label="Email address"
+          error={errors.email?.message}
+        >
           {(a11y) => (
             <Input
               {...a11y}
+              {...register('email')}
               type="email"
-              name="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
               autoComplete="username"
               autoFocus
-              required
-              className={inputClass(fieldErrors.email)}
+              disabled={busy}
+              className={inputClass(errors.email?.message)}
             />
           )}
         </Field>
@@ -127,19 +145,17 @@ export function LoginForm({
         <Field
           id="admin-password"
           label="Password"
-          error={fieldErrors.password}
+          error={errors.password?.message}
         >
           {(a11y) => (
             <div className="relative">
               <Input
                 {...a11y}
+                {...register('password')}
                 type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
                 autoComplete="current-password"
-                required
-                className={`${inputClass(fieldErrors.password)} pr-12`}
+                disabled={busy}
+                className={`${inputClass(errors.password?.message)} pr-12`}
               />
               <Button
                 type="button"

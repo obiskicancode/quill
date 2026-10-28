@@ -1,9 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle2, ExternalLink, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
+import { ServiceError } from '@/app/api/services/base.service';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -37,10 +42,34 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { ManualRefundPayoutInputSchema } from '@/schemas/payments-admin.schema';
 import type {
   ManualRefundItem,
   ManualRefundPayoutInput,
 } from '@/types/payments-admin.types';
+
+const ManualRefundPayoutFormSchema = ManualRefundPayoutInputSchema.omit({
+  amountMinor: true,
+  idempotencyKey: true,
+})
+  .extend({
+    amountNaira: z
+      .string()
+      .trim()
+      .min(1, ERROR_MESSAGES.VALID_PAYOUT_AMOUNT)
+      .refine((value) => {
+        const amountMinor = Math.round(Number(value) * 100);
+        return Number.isFinite(amountMinor) && amountMinor > 0;
+      }, ERROR_MESSAGES.VALID_PAYOUT_AMOUNT)
+      .transform((value) => Math.round(Number(value) * 100)),
+  })
+  .transform(({ amountNaira, ...rest }) => ({
+    ...rest,
+    amountMinor: amountNaira,
+  }));
+
+type PayoutInput = z.input<typeof ManualRefundPayoutFormSchema>;
+type PayoutOutput = z.output<typeof ManualRefundPayoutFormSchema>;
 
 function formatNaira(minor: number): string {
   return `₦${(minor / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
@@ -48,6 +77,10 @@ function formatNaira(minor: number): string {
 
 function generatePayoutReference(): string {
   return `REF-TRF-${Date.now().toString().slice(-6)}`;
+}
+
+function generatePayoutIdempotencyKey(id: string): string {
+  return `payout-${id}-${Date.now()}`;
 }
 
 function getTodayDateString(): string {
@@ -68,29 +101,33 @@ export function ManualRefundsTab({
   const [selectedRefund, setSelectedRefund] = useState<ManualRefundItem | null>(
     null,
   );
-  const [payoutForm, setPayoutForm] = useState<{
-    amountNaira: string;
-    method: 'bank_transfer' | 'cash';
-    reference: string;
-    paidDate: string;
-    doNotEmailGuest: boolean;
-    note: string;
-  }>(() => ({
-    amountNaira: '',
-    method: 'bank_transfer',
-    reference: '',
-    paidDate: '',
-    doNotEmailGuest: false,
-    note: '',
-  }));
-
-  const [submitting, setSubmitting] = useState(false);
   const [recheckingId, setRecheckingId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
+  const form = useForm<PayoutInput, unknown, PayoutOutput>({
+    resolver: zodResolver(ManualRefundPayoutFormSchema),
+    defaultValues: {
+      amountNaira: '',
+      method: 'bank_transfer',
+      reference: '',
+      paidDate: '',
+      doNotEmailGuest: false,
+      note: '',
+    },
+    mode: 'onBlur',
+  });
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    handleSubmit,
+    register,
+    reset,
+    setError: setFieldError,
+  } = form;
+
   const handleOpenPayout = (refund: ManualRefundItem) => {
     setSelectedRefund(refund);
-    setPayoutForm({
+    reset({
       amountNaira: String(refund.refundDueMinor / 100),
       method: refund.method === 'cash' ? 'cash' : 'bank_transfer',
       reference: generatePayoutReference(),
@@ -101,16 +138,10 @@ export function ManualRefundsTab({
     setFormError(null);
   };
 
-  const handleSubmitPayout = async (e: React.SubmitEvent) => {
-    e.preventDefault();
+  const handleSubmitPayout = async (input: PayoutOutput) => {
     if (!selectedRefund) return;
 
-    const amountMinor = Math.round(Number(payoutForm.amountNaira) * 100);
-    if (isNaN(amountMinor) || amountMinor <= 0) {
-      setFormError(ERROR_MESSAGES.VALID_PAYOUT_AMOUNT);
-      return;
-    }
-    if (amountMinor > selectedRefund.refundDueMinor) {
+    if (input.amountMinor > selectedRefund.refundDueMinor) {
       setFormError(
         ERROR_MESSAGES.PAYOUT_EXCEEDS_REFUND_DUE_SIMPLE(
           formatNaira(selectedRefund.refundDueMinor),
@@ -119,16 +150,11 @@ export function ManualRefundsTab({
       return;
     }
 
+    setFormError(null);
     try {
-      setSubmitting(true);
       await onMarkPaidOut(selectedRefund.id, {
-        amountMinor,
-        method: payoutForm.method,
-        reference: payoutForm.reference,
-        paidDate: payoutForm.paidDate,
-        idempotencyKey: `payout-${selectedRefund.id}-${Date.now()}`,
-        doNotEmailGuest: payoutForm.doNotEmailGuest,
-        note: payoutForm.note,
+        ...input,
+        idempotencyKey: generatePayoutIdempotencyKey(selectedRefund.id),
       });
       toast.add({
         title: SUCCESS_MESSAGES.REFUND_PAYOUT_MARKED_PAID,
@@ -136,13 +162,26 @@ export function ManualRefundsTab({
       });
       setSelectedRefund(null);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_RECORD_REFUND_PAYOUT;
-      setFormError(msg);
-    } finally {
-      setSubmitting(false);
+      if (err instanceof ServiceError) {
+        const fieldErrors = err.body?.fieldErrors;
+        if (fieldErrors) {
+          for (const [field, message] of Object.entries(fieldErrors)) {
+            if (!message) continue;
+            const fieldName = field === 'amountMinor' ? 'amountNaira' : field;
+            setFieldError(fieldName as keyof PayoutInput, {
+              type: 'server',
+              message,
+            });
+          }
+        }
+        setFormError(err.message);
+      } else {
+        setFormError(
+          err instanceof Error
+            ? err.message
+            : ERROR_MESSAGES.FAILED_TO_RECORD_REFUND_PAYOUT,
+        );
+      }
     }
   };
 
@@ -281,7 +320,7 @@ export function ManualRefundsTab({
         <Dialog
           open
           onOpenChange={(nextOpen) => {
-            if (!nextOpen && !submitting) setSelectedRefund(null);
+            if (!nextOpen && !isSubmitting) setSelectedRefund(null);
           }}
         >
           <DialogContent className="rounded-card border-line bg-card max-w-lg gap-0 border p-0 shadow-xl sm:max-w-lg">
@@ -295,8 +334,9 @@ export function ManualRefundsTab({
             </DialogHeader>
 
             <form
-              onSubmit={handleSubmitPayout}
+              onSubmit={handleSubmit(handleSubmitPayout)}
               className="text-small space-y-4 p-6"
+              noValidate
             >
               <div className="bg-paper border-line text-caption text-muted-foreground space-y-1 rounded-lg border p-3">
                 <div>
@@ -321,120 +361,134 @@ export function ManualRefundsTab({
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="payout-amount" className="text-caption">
-                    Amount Paid Out (₦)
-                  </Label>
-                  <Input
-                    id="payout-amount"
-                    type="number"
-                    step="any"
-                    required
-                    value={payoutForm.amountNaira}
-                    onChange={(e) =>
-                      setPayoutForm({
-                        ...payoutForm,
-                        amountNaira: e.target.value,
-                      })
-                    }
-                    className="border-line bg-paper font-mono"
-                  />
-                </div>
+                <Field
+                  id="payout-amount"
+                  label="Amount Paid Out (₦)"
+                  error={errors.amountNaira?.message}
+                >
+                  {(a11y) => (
+                    <Input
+                      {...a11y}
+                      {...register('amountNaira')}
+                      type="number"
+                      step="any"
+                      required
+                      className={`${inputClass(errors.amountNaira?.message)} border-line bg-paper font-mono`}
+                    />
+                  )}
+                </Field>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="payout-method" className="text-caption">
-                    Payout Method
-                  </Label>
-                  <Select
-                    items={[
-                      { value: 'bank_transfer', label: 'Bank Transfer' },
-                      { value: 'cash', label: 'Cash' },
-                    ]}
-                    value={payoutForm.method}
-                    onValueChange={(val) => {
-                      if (val) {
-                        setPayoutForm({
-                          ...payoutForm,
-                          method: val as 'bank_transfer' | 'cash',
-                        });
-                      }
-                    }}
-                  >
-                    <SelectTrigger id="payout-method" className="w-full">
-                      <SelectValue placeholder="Select payout method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="bank_transfer">
-                        Bank Transfer
-                      </SelectItem>
-                      <SelectItem value="cash">Cash</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Field
+                  id="payout-method"
+                  label="Payout Method"
+                  error={errors.method?.message}
+                >
+                  {(a11y) => (
+                    <Controller
+                      control={control}
+                      name="method"
+                      render={({ field }) => (
+                        <Select
+                          items={[
+                            {
+                              value: 'bank_transfer',
+                              label: 'Bank Transfer',
+                            },
+                            { value: 'cash', label: 'Cash' },
+                          ]}
+                          value={field.value}
+                          onValueChange={(val) => {
+                            if (val) field.onChange(val);
+                          }}
+                        >
+                          <SelectTrigger
+                            id={a11y.id}
+                            aria-describedby={a11y['aria-describedby']}
+                            aria-invalid={a11y['aria-invalid']}
+                            onBlur={field.onBlur}
+                            className="w-full"
+                          >
+                            <SelectValue placeholder="Select payout method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="bank_transfer">
+                              Bank Transfer
+                            </SelectItem>
+                            <SelectItem value="cash">Cash</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  )}
+                </Field>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="payout-reference" className="text-caption">
-                    Payout Reference / Narration
-                  </Label>
-                  <Input
-                    id="payout-reference"
-                    type="text"
-                    required
-                    value={payoutForm.reference}
-                    onChange={(e) =>
-                      setPayoutForm({
-                        ...payoutForm,
-                        reference: e.target.value,
-                      })
-                    }
-                    className="border-line bg-paper"
-                  />
-                </div>
+                <Field
+                  id="payout-reference"
+                  label="Payout Reference / Narration"
+                  error={errors.reference?.message}
+                >
+                  {(a11y) => (
+                    <Input
+                      {...a11y}
+                      {...register('reference')}
+                      type="text"
+                      required
+                      className={`${inputClass(errors.reference?.message)} border-line bg-paper`}
+                    />
+                  )}
+                </Field>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="payout-date" className="text-caption">
-                    Date Paid
-                  </Label>
-                  <Input
-                    id="payout-date"
-                    type="date"
-                    required
-                    value={payoutForm.paidDate}
-                    onChange={(e) =>
-                      setPayoutForm({ ...payoutForm, paidDate: e.target.value })
-                    }
-                    className="border-line bg-paper"
-                  />
-                </div>
+                <Field
+                  id="payout-date"
+                  label="Date Paid"
+                  error={errors.paidDate?.message}
+                >
+                  {(a11y) => (
+                    <Input
+                      {...a11y}
+                      {...register('paidDate')}
+                      type="date"
+                      required
+                      className={`${inputClass(errors.paidDate?.message)} border-line bg-paper`}
+                    />
+                  )}
+                </Field>
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="payout-note" className="text-caption">
-                  Internal Note
-                </Label>
-                <Textarea
-                  id="payout-note"
-                  rows={2}
-                  value={payoutForm.note}
-                  onChange={(e) =>
-                    setPayoutForm({ ...payoutForm, note: e.target.value })
-                  }
-                  className="border-line bg-paper"
-                />
-              </div>
+              <Field
+                id="payout-note"
+                label="Internal Note"
+                optional
+                error={errors.note?.message}
+              >
+                {(a11y) => (
+                  <Textarea
+                    {...a11y}
+                    {...register('note')}
+                    rows={2}
+                    className={`${inputClass(errors.note?.message)} border-line bg-paper`}
+                  />
+                )}
+              </Field>
 
               <div className="flex items-center gap-2 pt-1">
-                <Checkbox
-                  id="doNotEmailGuest"
-                  checked={payoutForm.doNotEmailGuest}
-                  onCheckedChange={(checked) =>
-                    setPayoutForm({
-                      ...payoutForm,
-                      doNotEmailGuest: !!checked,
-                    })
-                  }
+                <Controller
+                  control={control}
+                  name="doNotEmailGuest"
+                  render={({ field }) => (
+                    <Checkbox
+                      id="doNotEmailGuest"
+                      name={field.name}
+                      ref={field.ref}
+                      checked={field.value === true}
+                      onCheckedChange={(checked) =>
+                        field.onChange(checked === true)
+                      }
+                      onBlur={field.onBlur}
+                    />
+                  )}
                 />
                 <Label
                   htmlFor="doNotEmailGuest"
@@ -459,11 +513,11 @@ export function ManualRefundsTab({
                   type="button"
                   variant="outline"
                   onClick={() => setSelectedRefund(null)}
-                  disabled={submitting}
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" loading={submitting}>
+                <Button type="submit" loading={isSubmitting}>
                   Confirm Paid Out
                 </Button>
               </DialogFooter>

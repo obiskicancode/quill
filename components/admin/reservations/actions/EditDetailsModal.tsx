@@ -1,17 +1,30 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { useUpdateReservationDetails } from '@/hooks/services/admin/use-reservations';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import { adminEditDetailsSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
+
+const editDetailsFormSchema = adminEditDetailsSchema.omit({
+  version: true,
+  idempotencyKey: true,
+});
+
+type EditDetailsFormInput = z.input<typeof editDetailsFormSchema>;
+type EditDetailsFormOutput = z.output<typeof editDetailsFormSchema>;
 
 interface EditDetailsModalProps {
   open: boolean;
@@ -28,47 +41,57 @@ export function EditDetailsModal({
   onSuccess,
   onRefresh,
 }: EditDetailsModalProps) {
-  const [fullName, setFullName] = useState(reservation.guestName);
-  const [email, setEmail] = useState(reservation.guestEmail ?? '');
-  const [phone, setPhone] = useState(reservation.guestPhone ?? '');
-  const [country, setCountry] = useState(reservation.guestCountry ?? 'NG');
-  const [arrivalTime, setArrivalTime] = useState(reservation.arrivalTime ?? '');
-  const [specialRequests, setSpecialRequests] = useState(
-    reservation.specialRequests ?? '',
-  );
-  const [internalNotes, setInternalNotes] = useState(reservation.notes ?? '');
-
-  const [loading, setLoading] = useState(false);
+  const updateDetails = useUpdateReservationDetails();
+  const form = useForm<EditDetailsFormInput, unknown, EditDetailsFormOutput>({
+    resolver: zodResolver(editDetailsFormSchema),
+    defaultValues: {
+      fullName: reservation.guestName,
+      email: reservation.guestEmail ?? '',
+      phone: reservation.guestPhone ?? '',
+      country: reservation.guestCountry ?? 'NG',
+      arrivalTime: reservation.arrivalTime ?? '',
+      specialRequests: reservation.specialRequests ?? '',
+      internalNotes: reservation.notes ?? '',
+    },
+    mode: 'onBlur',
+  });
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    register,
+    setError: setFieldError,
+  } = form;
+  const busy = isSubmitting || updateDetails.isPending;
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
+  const onSubmit = async (input: EditDetailsFormOutput) => {
     setError(null);
-    setLoading(true);
 
     try {
-      const updated = await adminService.updateDetails(reservation.id, {
-        fullName: fullName.trim(),
-        email: email.trim() || undefined,
-        phone: phone.trim(),
-        country: country.trim() || undefined,
-        arrivalTime: arrivalTime.trim() || undefined,
-        specialRequests: specialRequests.trim() || undefined,
-        internalNotes: internalNotes.trim() || undefined,
-        version: reservation.updatedAt,
-        idempotencyKey: crypto.randomUUID(),
+      const updated = await updateDetails.mutateAsync({
+        id: reservation.id,
+        body: {
+          fullName: input.fullName.trim(),
+          email: input.email?.trim() || undefined,
+          phone: input.phone.trim(),
+          country: input.country?.trim() || undefined,
+          arrivalTime: input.arrivalTime?.trim() || undefined,
+          specialRequests: input.specialRequests?.trim() || undefined,
+          internalNotes: input.internalNotes?.trim() || undefined,
+          version: reservation.updatedAt,
+          idempotencyKey: crypto.randomUUID(),
+        },
       });
 
-      onSuccess(updated.data, SUCCESS_MESSAGES.RESERVATION_UPDATED);
+      onSuccess(updated, SUCCESS_MESSAGES.RESERVATION_UPDATED);
       onClose();
-    } catch (err) {
+    } catch (caught) {
       setError(
-        err instanceof Error
-          ? err.message
+        caught instanceof Error
+          ? caught.message
           : ERROR_MESSAGES.FAILED_TO_UPDATE_DETAILS_UI,
       );
-    } finally {
-      setLoading(false);
+      applyServerFieldErrors(setFieldError, caught);
     }
   };
 
@@ -81,96 +104,145 @@ export function EditDetailsModal({
       error={error}
       onRefresh={onRefresh}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="edit-guest-name">
-            Guest Full Name <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="edit-guest-name"
-            type="text"
-            required
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-          />
+      <form
+        noValidate
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4"
+      >
+        <Field
+          id="edit-guest-name"
+          label="Guest Full Name *"
+          error={errors.fullName?.message}
+        >
+          {(a) => (
+            <Input
+              {...a}
+              {...register('fullName')}
+              type="text"
+              disabled={busy}
+              className={inputClass(errors.fullName?.message)}
+            />
+          )}
+        </Field>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field
+            id="edit-guest-email"
+            label="Email Address"
+            error={errors.email?.message}
+            hint="Changing email sends a new confirmation to the new address."
+          >
+            {(a) => (
+              <Input
+                {...a}
+                {...register('email')}
+                type="email"
+                disabled={busy}
+                placeholder="guest@example.com"
+                className={inputClass(errors.email?.message)}
+              />
+            )}
+          </Field>
+
+          <Field
+            id="edit-guest-phone"
+            label="Phone Number *"
+            error={errors.phone?.message}
+          >
+            {(a) => (
+              <Input
+                {...a}
+                {...register('phone')}
+                type="tel"
+                disabled={busy}
+                className={inputClass(errors.phone?.message)}
+              />
+            )}
+          </Field>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-guest-email">Email Address</Label>
-            <Input
-              id="edit-guest-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="guest@example.com"
-            />
-            <p className="text-caption text-muted-foreground">
-              Changing email sends a new confirmation to the new address.
-            </p>
-          </div>
+          <Field
+            id="edit-guest-country"
+            label="Country Code"
+            error={errors.country?.message}
+          >
+            {(a) => (
+              <Controller
+                control={control}
+                name="country"
+                render={({ field }) => (
+                  <Input
+                    {...a}
+                    name={field.name}
+                    ref={field.ref}
+                    type="text"
+                    maxLength={2}
+                    value={field.value ?? ''}
+                    onChange={(e) =>
+                      field.onChange(e.target.value.toUpperCase())
+                    }
+                    onBlur={field.onBlur}
+                    disabled={busy}
+                    placeholder="NG"
+                    className={`${inputClass(errors.country?.message)} uppercase`}
+                  />
+                )}
+              />
+            )}
+          </Field>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-guest-phone">
-              Phone Number <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="edit-guest-phone"
-              type="tel"
-              required
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-          </div>
+          <Field
+            id="edit-arrival-time"
+            label="Estimated Arrival Time"
+            error={errors.arrivalTime?.message}
+          >
+            {(a) => (
+              <Input
+                {...a}
+                {...register('arrivalTime')}
+                type="text"
+                disabled={busy}
+                placeholder="e.g. 15:00"
+                className={inputClass(errors.arrivalTime?.message)}
+              />
+            )}
+          </Field>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-guest-country">Country Code</Label>
-            <Input
-              id="edit-guest-country"
-              type="text"
-              maxLength={2}
-              value={country}
-              onChange={(e) => setCountry(e.target.value.toUpperCase())}
-              placeholder="NG"
-              className="uppercase"
+        <Field
+          id="edit-special-requests"
+          label="Special Requests"
+          error={errors.specialRequests?.message}
+        >
+          {(a) => (
+            <Textarea
+              {...a}
+              {...register('specialRequests')}
+              rows={2}
+              disabled={busy}
+              placeholder="Guest preferences, dietary requests, early check-in notes..."
+              className={inputClass(errors.specialRequests?.message)}
             />
-          </div>
+          )}
+        </Field>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="edit-arrival-time">Estimated Arrival Time</Label>
-            <Input
-              id="edit-arrival-time"
-              type="text"
-              value={arrivalTime}
-              onChange={(e) => setArrivalTime(e.target.value)}
-              placeholder="e.g. 15:00"
+        <Field
+          id="edit-internal-notes"
+          label="Internal Staff Notes"
+          error={errors.internalNotes?.message}
+        >
+          {(a) => (
+            <Textarea
+              {...a}
+              {...register('internalNotes')}
+              rows={3}
+              disabled={busy}
+              placeholder="Confidential notes visible only to front desk and managers..."
+              className={inputClass(errors.internalNotes?.message)}
             />
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="edit-special-requests">Special Requests</Label>
-          <Textarea
-            id="edit-special-requests"
-            rows={2}
-            value={specialRequests}
-            onChange={(e) => setSpecialRequests(e.target.value)}
-            placeholder="Guest preferences, dietary requests, early check-in notes..."
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="edit-internal-notes">Internal Staff Notes</Label>
-          <Textarea
-            id="edit-internal-notes"
-            rows={3}
-            value={internalNotes}
-            onChange={(e) => setInternalNotes(e.target.value)}
-            placeholder="Confidential notes visible only to front desk and managers..."
-          />
-        </div>
+          )}
+        </Field>
 
         <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
           <Button
@@ -178,11 +250,11 @@ export function EditDetailsModal({
             variant="outline"
             size="sm"
             onClick={onClose}
-            disabled={loading}
+            disabled={busy}
           >
             Cancel
           </Button>
-          <Button type="submit" size="sm" loading={loading}>
+          <Button type="submit" size="sm" loading={busy}>
             Save details
           </Button>
         </div>

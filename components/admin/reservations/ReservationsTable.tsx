@@ -26,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useWebStorage } from '@/hooks/use-web-storage';
 import { formatNaira } from '@/lib/format';
 import type {
   ReservationListItem,
@@ -72,6 +73,14 @@ const DEFAULT_COLUMNS: Record<ColumnKey, boolean> = {
   bookedOn: true,
 };
 
+const serializeColumns = (value: Record<ColumnKey, boolean>) =>
+  JSON.stringify(value);
+
+const deserializeColumns = (raw: string): Record<ColumnKey, boolean> => {
+  const stored = JSON.parse(raw) as Partial<Record<ColumnKey, boolean>>;
+  return { ...DEFAULT_COLUMNS, ...stored };
+};
+
 export function ReservationsTable({
   rows,
   sort,
@@ -81,33 +90,20 @@ export function ReservationsTable({
   const router = useRouter();
 
   // Column visibility state persisted in localStorage
-  const [visibleColumns, setVisibleColumns] = useState<
+  const [visibleColumns, setVisibleColumns] = useWebStorage<
     Record<ColumnKey, boolean>
-  >(() => {
-    if (typeof window === 'undefined') return DEFAULT_COLUMNS;
-    try {
-      const stored = localStorage.getItem('admin_res_columns');
-      if (stored) {
-        return { ...DEFAULT_COLUMNS, ...JSON.parse(stored) };
-      }
-    } catch {
-      // ignore JSON parse error
-    }
-    return DEFAULT_COLUMNS;
-  });
+  >(
+    'localStorage',
+    'admin_res_columns',
+    DEFAULT_COLUMNS,
+    serializeColumns,
+    deserializeColumns,
+  );
 
   const [copiedRef, setCopiedRef] = useState<string | null>(null);
 
   const toggleColumn = (key: ColumnKey) => {
-    setVisibleColumns((prev) => {
-      const updated = { ...prev, [key]: !prev[key] };
-      try {
-        localStorage.setItem('admin_res_columns', JSON.stringify(updated));
-      } catch {
-        // ignore storage error
-      }
-      return updated;
-    });
+    setVisibleColumns((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handleCopy = (e: React.MouseEvent, ref: string) => {

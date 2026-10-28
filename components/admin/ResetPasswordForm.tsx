@@ -2,52 +2,61 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, KeyRound } from 'lucide-react';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { ServiceError } from '@/app/api/services/base.service';
 import { StatusBanner } from '@/components/admin/StatusBanner';
-import { Field, inputClass } from '@/components/checkout/Field';
 import { Button } from '@/components/ui/button';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { useAdminResetPassword } from '@/hooks/services/admin/use-auth';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import {
+  adminResetPasswordSchema,
+  type AdminResetPasswordInput,
+} from '@/schemas/admin-auth.schema';
+
+type ResetPasswordOutput = z.output<typeof adminResetPasswordSchema>;
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const resetPassword = useAdminResetPassword();
+  const form = useForm<AdminResetPasswordInput, unknown, ResetPasswordOutput>({
+    resolver: zodResolver(adminResetPasswordSchema),
+    defaultValues: { token, password: '', confirmPassword: '' },
+    mode: 'onBlur',
+  });
+  const {
+    formState: { errors, isSubmitting },
+    register,
+    setError: setFieldError,
+  } = form;
   const [showPassword, setShowPassword] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [invalidToken, setInvalidToken] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const busy = isSubmitting || resetPassword.isPending;
 
-  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
+  const onSubmit = async (input: ResetPasswordOutput) => {
     setError(null);
-    setFieldErrors({});
     setInvalidToken(false);
     try {
-      await adminService.resetPassword({
-        token,
-        password,
-        confirmPassword,
-      });
+      await resetPassword.mutateAsync(input);
       router.push('/admin/login?reset=1');
     } catch (caught) {
       if (caught instanceof ServiceError) {
         setError(caught.message);
-        setFieldErrors(caught.body?.fieldErrors ?? {});
+        applyServerFieldErrors(setFieldError, caught);
         if (caught.status === 400) setInvalidToken(true);
       } else {
         setError(ERROR_MESSAGES.COULD_NOT_RESET_PASSWORD);
       }
-    } finally {
-      setBusy(false);
     }
-  }
+  };
 
   return (
     <div>
@@ -75,24 +84,27 @@ export function ResetPasswordForm({ token }: { token: string }) {
         </p>
       )}
 
-      <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="mt-5 space-y-4"
+        noValidate
+      >
         <Field
           id="admin-reset-password"
           label="New password"
           hint="At least 10 characters. Avoid common or repeated passwords."
-          error={fieldErrors.password}
+          error={errors.password?.message}
         >
           {(a11y) => (
             <div className="relative">
               <Input
                 {...a11y}
+                {...register('password')}
                 type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
                 autoComplete="new-password"
                 autoFocus
-                required
-                className={`${inputClass(fieldErrors.password)} pr-12`}
+                disabled={busy}
+                className={`${inputClass(errors.password?.message)} pr-12`}
               />
               <Button
                 type="button"
@@ -115,17 +127,16 @@ export function ResetPasswordForm({ token }: { token: string }) {
         <Field
           id="admin-reset-confirm"
           label="Confirm new password"
-          error={fieldErrors.confirmPassword}
+          error={errors.confirmPassword?.message}
         >
           {(a11y) => (
             <Input
               {...a11y}
+              {...register('confirmPassword')}
               type={showPassword ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
               autoComplete="new-password"
-              required
-              className={inputClass(fieldErrors.confirmPassword)}
+              disabled={busy}
+              className={inputClass(errors.confirmPassword?.message)}
             />
           )}
         </Field>

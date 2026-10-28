@@ -1,19 +1,26 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { MessageCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
 import { ServiceError } from '@/app/api/services/base.service';
-import { bookingService } from '@/app/api/services/booking.service';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { useVerifyBooking } from '@/hooks/services/guest/use-verify-booking';
 import { formatCountdown } from '@/lib/format';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
-import { verifyRequestSchema } from '@/schemas/booking.schema';
+import {
+  verifyRequestSchema,
+  type VerifyRequest,
+} from '@/schemas/booking.schema';
 import type { GuestReservation } from '@/types/booking.types';
 
 import { Banner } from '../checkout/CheckoutStates';
-import { Field, inputClass } from '../checkout/Field';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
@@ -46,6 +53,8 @@ interface VerifyFormProps {
   embedded?: boolean;
 }
 
+type VerifyOutput = z.output<typeof verifyRequestSchema>;
+
 /** States: idle, loading, one generic error, and a lockout with a countdown after too many tries. */
 export function VerifyForm({
   reference,
@@ -56,59 +65,49 @@ export function VerifyForm({
   embedded = false,
 }: VerifyFormProps) {
   const site = useSite();
-  const [ref, setRef] = useState(reference);
-  const [email, setEmail] = useState('');
-  const [errors, setErrors] = useState<{ reference?: string; email?: string }>(
-    {},
-  );
+  const verifyBooking = useVerifyBooking();
+  const form = useForm<VerifyRequest, unknown, VerifyOutput>({
+    resolver: zodResolver(verifyRequestSchema),
+    defaultValues: { reference, email: '', scope },
+    mode: 'onBlur',
+  });
+  const {
+    formState: { errors, isSubmitting },
+    register,
+    setError,
+  } = form;
   const [serverError, setServerError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const [lockedFor, setLockedFor] = useState(0);
+  const busy = isSubmitting || verifyBooking.isPending;
 
   useEffect(() => {
     if (lockedFor <= 0) return;
     const id = window.setInterval(
-      () => setLockedFor((s) => Math.max(0, s - 1)),
+      () => setLockedFor((seconds) => Math.max(0, seconds - 1)),
       1000,
     );
     return () => window.clearInterval(id);
   }, [lockedFor]);
 
-  async function submit(e: React.SubmitEvent) {
-    e.preventDefault();
-    if (busy || lockedFor > 0) return;
-    const parsed = verifyRequestSchema.safeParse({
-      reference: ref,
-      email,
-      scope,
-    });
-    if (!parsed.success) {
-      const next: { reference?: string; email?: string } = {};
-      for (const i of parsed.error.issues)
-        next[i.path[0] as 'reference' | 'email'] ??= i.message;
-      setErrors(next);
-      setServerError(null);
-      return;
-    }
-    setErrors({});
+  const onSubmit = async (input: VerifyOutput) => {
+    if (lockedFor > 0) return;
     setServerError(null);
-    setBusy(true);
     try {
-      onVerified((await bookingService.verify(parsed.data)).data);
-    } catch (err) {
-      if (err instanceof ServiceError && err.status === 429) {
-        setLockedFor(err.body?.retryAfterSeconds ?? 600);
+      const booking = await verifyBooking.mutateAsync(input);
+      onVerified(booking);
+    } catch (caught) {
+      if (caught instanceof ServiceError && caught.status === 429) {
+        setLockedFor(caught.body?.retryAfterSeconds ?? 600);
         setServerError(ERROR_MESSAGES.VERIFY_TOO_MANY_ATTEMPTS);
-      } else if (err instanceof ServiceError && err.network) {
+      } else if (caught instanceof ServiceError && caught.network) {
         setServerError(ERROR_MESSAGES.COULD_NOT_REACH_SERVER_CONNECTION);
       } else {
+        applyServerFieldErrors(setError, caught);
         // One generic message for every other failure.
         setServerError(ERROR_MESSAGES.VERIFY_NOT_FOUND);
       }
-    } finally {
-      setBusy(false);
     }
-  }
+  };
 
   return (
     <div className={embedded ? '' : 'container-page max-w-xl py-10 md:py-16'}>
@@ -124,44 +123,46 @@ export function VerifyForm({
       )}
       <p className="text-body-lg text-ink/85 mt-3">{copy[variant].text}</p>
 
-      <form noValidate onSubmit={submit} className="mt-8 space-y-5">
+      <form
+        noValidate
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="mt-8 space-y-5"
+      >
         <Field
           id={`verify-reference${embedded ? '-embedded' : ''}`}
           label="Booking reference"
-          error={errors.reference}
+          error={errors.reference?.message}
           hint="For example DEA-AB12CD"
         >
           {(a) => (
             <Input
               {...a}
-              value={ref}
-              onChange={(e) => setRef(e.target.value)}
+              {...register('reference')}
               type="text"
               autoComplete="off"
               autoCapitalize="characters"
               spellCheck={false}
-              disabled={lockedFor > 0}
-              className={`${inputClass(errors.reference)} uppercase`}
+              disabled={lockedFor > 0 || busy}
+              className={`${inputClass(errors.reference?.message)} uppercase`}
             />
           )}
         </Field>
         <Field
           id={`verify-email${embedded ? '-embedded' : ''}`}
           label="Email used for the booking"
-          error={errors.email}
+          error={errors.email?.message}
         >
           {(a) => (
             <Input
               {...a}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              {...register('email')}
               type="email"
               inputMode="email"
               autoComplete="email"
               autoCapitalize="none"
               spellCheck={false}
-              disabled={lockedFor > 0}
-              className={inputClass(errors.email)}
+              disabled={lockedFor > 0 || busy}
+              className={inputClass(errors.email?.message)}
             />
           )}
         </Field>

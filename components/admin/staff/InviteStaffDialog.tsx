@@ -1,9 +1,12 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { UserPlus } from 'lucide-react';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
+import { ServiceError } from '@/app/api/services/base.service';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,8 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -26,14 +29,18 @@ import {
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
-import type { AdminRole } from '@/types/auth.types';
-import type { StaffInviteInput } from '@/types/staff-admin.types';
+import { useInviteStaff } from '@/hooks/services/admin/use-staff';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import { StaffInviteInputSchema } from '@/schemas/staff-admin.schema';
 
 const ROLE_OPTIONS = [
   { value: 'reception', label: 'Reception' },
   { value: 'manager', label: 'Manager' },
   { value: 'owner', label: 'Owner (Full Privileges)' },
 ];
+
+type InviteInput = z.input<typeof StaffInviteInputSchema>;
+type InviteOutput = z.output<typeof StaffInviteInputSchema>;
 
 export function InviteStaffDialog({
   isOpen,
@@ -46,57 +53,65 @@ export function InviteStaffDialog({
   onSuccess: (message: string) => void;
   onRequestStepUp: (onVerified: () => void) => void;
 }) {
-  const [form, setForm] = useState<StaffInviteInput>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    role: 'reception',
-    phone: '',
-  });
-
-  const [submitting, setSubmitting] = useState(false);
+  const inviteStaff = useInviteStaff();
   const [error, setError] = useState<string | null>(null);
+  const form = useForm<InviteInput, unknown, InviteOutput>({
+    resolver: zodResolver(StaffInviteInputSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      role: 'reception',
+      phone: '',
+    },
+    mode: 'onBlur',
+  });
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    handleSubmit,
+    register,
+    setError: setFieldError,
+  } = form;
 
   if (!isOpen) return null;
 
-  const executeInvite = async () => {
+  const busy = isSubmitting || inviteStaff.isPending;
+
+  const executeInvite = async (input: InviteOutput) => {
     try {
-      setSubmitting(true);
       setError(null);
-      const res = await adminService.inviteStaff(form);
-      if (res.data?.success) {
-        onSuccess(res.data.message || SUCCESS_MESSAGES.INVITATION_SENT);
+      const res = await inviteStaff.mutateAsync(input);
+      if (res.success) {
+        onSuccess(res.message || SUCCESS_MESSAGES.INVITATION_SENT);
         onClose();
       } else {
-        setError(res.data?.message || ERROR_MESSAGES.FAILED_TO_SEND_INVITATION);
+        setError(res.message || ERROR_MESSAGES.FAILED_TO_SEND_INVITATION);
       }
-    } catch (err: unknown) {
-      const errorObj = err as {
-        response?: { data?: { data?: { code?: string }; message?: string } };
-        message?: string;
-      };
-      if (
-        errorObj?.response?.data?.data?.code === ERROR_CODES.STEP_UP_REQUIRED
-      ) {
-        onRequestStepUp(() => executeInvite());
-        return;
+    } catch (caught: unknown) {
+      if (caught instanceof ServiceError) {
+        if (caught.body?.code === ERROR_CODES.STEP_UP_REQUIRED) {
+          onRequestStepUp(() => executeInvite(input));
+          return;
+        }
+        setError(caught.message || ERROR_MESSAGES.FAILED_TO_SEND_INVITATION);
+        applyServerFieldErrors(setFieldError, caught);
+      } else {
+        setError(
+          caught instanceof Error
+            ? caught.message
+            : ERROR_MESSAGES.FAILED_TO_SEND_INVITATION,
+        );
       }
-      setError(
-        errorObj?.response?.data?.message ||
-          errorObj?.message ||
-          ERROR_MESSAGES.FAILED_TO_SEND_INVITATION,
-      );
-    } finally {
-      setSubmitting(false);
     }
   };
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
-    if (form.role === 'owner') {
-      onRequestStepUp(() => executeInvite());
+  const handleFormSubmit = async (input: InviteOutput) => {
+    setError(null);
+    if (input.role === 'owner') {
+      onRequestStepUp(() => executeInvite(input));
     } else {
-      await executeInvite();
+      await executeInvite(input);
     }
   };
 
@@ -104,7 +119,7 @@ export function InviteStaffDialog({
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        if (!open && !submitting) onClose();
+        if (!open && !busy) onClose();
       }}
     >
       <DialogContent className="rounded-card border-line bg-card max-w-lg gap-0 border p-0 shadow-xl sm:max-w-lg">
@@ -117,83 +132,118 @@ export function InviteStaffDialog({
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="text-small space-y-4 p-6">
+        <form
+          onSubmit={handleSubmit(handleFormSubmit)}
+          className="text-small space-y-4 p-6"
+          noValidate
+        >
           <DialogDescription className="text-caption text-muted-foreground">
             The invited staff member will receive a secure 72-hour single-use
             link to set their password and enrol in 2FA.
           </DialogDescription>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="invite-first-name">First Name</Label>
-              <Input
-                id="invite-first-name"
-                type="text"
-                required
-                placeholder="Ada"
-                value={form.firstName}
-                onChange={(e) =>
-                  setForm({ ...form, firstName: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="invite-last-name">Last Name</Label>
-              <Input
-                id="invite-last-name"
-                type="text"
-                required
-                placeholder="Okafor"
-                value={form.lastName}
-                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-              />
-            </div>
+            <Field
+              id="invite-first-name"
+              label="First Name"
+              error={errors.firstName?.message}
+            >
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  {...register('firstName')}
+                  type="text"
+                  required
+                  placeholder="Ada"
+                  className={inputClass(errors.firstName?.message)}
+                />
+              )}
+            </Field>
+            <Field
+              id="invite-last-name"
+              label="Last Name"
+              error={errors.lastName?.message}
+            >
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  {...register('lastName')}
+                  type="text"
+                  required
+                  placeholder="Okafor"
+                  className={inputClass(errors.lastName?.message)}
+                />
+              )}
+            </Field>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="invite-email">Email Address</Label>
-            <Input
-              id="invite-email"
-              type="email"
-              required
-              placeholder="staff@hoteldela.com"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-          </div>
+          <Field
+            id="invite-email"
+            label="Email Address"
+            error={errors.email?.message}
+          >
+            {(a11y) => (
+              <Input
+                {...a11y}
+                {...register('email')}
+                type="email"
+                required
+                placeholder="staff@hoteldela.com"
+                className={inputClass(errors.email?.message)}
+              />
+            )}
+          </Field>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="invite-role">Role</Label>
-              <Select
-                items={ROLE_OPTIONS}
-                value={form.role}
-                onValueChange={(val) => {
-                  if (val) setForm({ ...form, role: val as AdminRole });
-                }}
-              >
-                <SelectTrigger id="invite-role" className="w-full">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROLE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="invite-phone">Phone Number (Optional)</Label>
-              <Input
-                id="invite-phone"
-                type="tel"
-                placeholder="+234..."
-                value={form.phone || ''}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-            </div>
+            <Field id="invite-role" label="Role" error={errors.role?.message}>
+              {(a11y) => (
+                <Controller
+                  control={control}
+                  name="role"
+                  render={({ field }) => (
+                    <Select
+                      items={ROLE_OPTIONS}
+                      value={field.value}
+                      onValueChange={(val) => {
+                        if (val) field.onChange(val);
+                      }}
+                    >
+                      <SelectTrigger
+                        id={a11y.id}
+                        aria-describedby={a11y['aria-describedby']}
+                        aria-invalid={a11y['aria-invalid']}
+                        onBlur={field.onBlur}
+                        className={inputClass(errors.role?.message)}
+                      >
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ROLE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              )}
+            </Field>
+            <Field
+              id="invite-phone"
+              label="Phone Number (Optional)"
+              error={errors.phone?.message}
+            >
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  {...register('phone')}
+                  type="tel"
+                  placeholder="+234..."
+                  className={inputClass(errors.phone?.message)}
+                />
+              )}
+            </Field>
           </div>
 
           {error && (
@@ -211,11 +261,11 @@ export function InviteStaffDialog({
               variant="outline"
               size="sm"
               onClick={onClose}
-              disabled={submitting}
+              disabled={busy}
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" loading={submitting}>
+            <Button type="submit" size="sm" loading={busy}>
               Send Invitation
             </Button>
           </DialogFooter>

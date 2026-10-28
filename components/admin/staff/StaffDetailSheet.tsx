@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ExternalLink,
   History,
@@ -12,13 +13,15 @@ import {
   UserCheck,
   UserX,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
+import { ServiceError } from '@/app/api/services/base.service';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -37,17 +40,30 @@ import { toast } from '@/components/ui/toast';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
-import type { AdminRole } from '@/types/auth.types';
-import type {
-  StaffDetailResponse,
-  StaffUpdateInput,
-} from '@/types/staff-admin.types';
+import {
+  useDeactivateStaff,
+  useReactivateStaff,
+  useResendStaffInvite,
+  useResetStaff2FA,
+  useRevokeStaffSessions,
+  useSendStaffPasswordReset,
+  useUnlockStaff,
+  useUpdateStaff,
+} from '@/hooks/services/admin/use-staff';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import { StaffUpdateInputSchema } from '@/schemas/staff-admin.schema';
+import type { StaffDetailResponse } from '@/types/staff-admin.types';
 
 const ROLE_OPTIONS = [
   { value: 'reception', label: 'Reception' },
   { value: 'manager', label: 'Manager' },
   { value: 'owner', label: 'Owner' },
 ];
+
+const StaffProfileFormSchema = StaffUpdateInputSchema.omit({ version: true });
+
+type ProfileInput = z.input<typeof StaffProfileFormSchema>;
+type ProfileOutput = z.output<typeof StaffProfileFormSchema>;
 
 export function StaffDetailSheet({
   staff,
@@ -60,33 +76,65 @@ export function StaffDetailSheet({
   onReload: () => Promise<void>;
   onRequestStepUp: (onVerified: () => void) => void;
 }) {
-  const [form, setForm] = useState<StaffUpdateInput>(() => ({
-    firstName: staff?.firstName || '',
-    lastName: staff?.lastName || '',
-    phone: staff?.phone || '',
-    role: staff?.role || 'reception',
-    version: staff?.updatedAt || '0',
-  }));
+  const updateStaff = useUpdateStaff();
+  const resendStaffInvite = useResendStaffInvite();
+  const unlockStaff = useUnlockStaff();
+  const sendStaffPasswordReset = useSendStaffPasswordReset();
+  const revokeStaffSessions = useRevokeStaffSessions();
+  const resetStaff2FA = useResetStaff2FA();
+  const deactivateStaff = useDeactivateStaff();
+  const reactivateStaff = useReactivateStaff();
 
-  const [saving, setSaving] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [message, setMessage] = useState<{
     text: string;
     isError?: boolean;
   } | null>(null);
 
+  const form = useForm<ProfileInput, unknown, ProfileOutput>({
+    resolver: zodResolver(StaffProfileFormSchema),
+    defaultValues: {
+      firstName: staff?.firstName || '',
+      lastName: staff?.lastName || '',
+      phone: staff?.phone || '',
+      role: staff?.role || 'reception',
+    },
+    mode: 'onBlur',
+  });
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    handleSubmit,
+    register,
+    reset,
+    setError: setFieldError,
+  } = form;
+
+  useEffect(() => {
+    if (!staff) return;
+    reset({
+      firstName: staff.firstName,
+      lastName: staff.lastName,
+      phone: staff.phone || '',
+      role: staff.role,
+    });
+  }, [staff, reset]);
+
   if (!staff) return null;
 
-  const handleSaveProfile = async (e: React.SubmitEvent) => {
-    e.preventDefault();
-    const isRoleChange = form.role !== staff.role;
+  const busy = isSubmitting || updateStaff.isPending;
 
-    const performSave = async () => {
+  const handleSaveProfile = async (input: ProfileOutput) => {
+    const isRoleChange = input.role !== staff.role;
+
+    const performSave = async (values: ProfileOutput) => {
       try {
-        setSaving(true);
         setMessage(null);
-        const res = await adminService.updateStaff(staff.id, form);
-        if (res.data?.success) {
+        const res = await updateStaff.mutateAsync({
+          id: staff.id,
+          body: { ...values, version: staff.updatedAt },
+        });
+        if (res.success) {
           toast.add({
             title: SUCCESS_MESSAGES.STAFF_PROFILE_UPDATED,
             type: 'success',
@@ -94,45 +142,43 @@ export function StaffDetailSheet({
           await onReload();
         } else {
           setMessage({
-            text:
-              res.data?.message ||
-              ERROR_MESSAGES.FAILED_TO_UPDATE_STAFF_PROFILE,
+            text: res.message || ERROR_MESSAGES.FAILED_TO_UPDATE_STAFF_PROFILE,
             isError: true,
           });
         }
-      } catch (err: unknown) {
-        const errorObj = err as {
-          response?: { data?: { data?: { code?: string }; message?: string } };
-          message?: string;
-        };
+      } catch (caught: unknown) {
         if (
-          errorObj?.response?.data?.data?.code === ERROR_CODES.STEP_UP_REQUIRED
+          caught instanceof ServiceError &&
+          caught.body?.code === ERROR_CODES.STEP_UP_REQUIRED
         ) {
-          onRequestStepUp(() => performSave());
+          onRequestStepUp(() => performSave(values));
           return;
         }
         setMessage({
           text:
-            errorObj?.response?.data?.message ||
-            errorObj?.message ||
-            ERROR_MESSAGES.FAILED_TO_UPDATE_STAFF_PROFILE,
+            caught instanceof ServiceError
+              ? caught.message
+              : caught instanceof Error
+                ? caught.message
+                : ERROR_MESSAGES.FAILED_TO_UPDATE_STAFF_PROFILE,
           isError: true,
         });
-      } finally {
-        setSaving(false);
+        if (caught instanceof ServiceError) {
+          applyServerFieldErrors(setFieldError, caught);
+        }
       }
     };
 
     if (isRoleChange) {
-      onRequestStepUp(() => performSave());
+      onRequestStepUp(() => performSave(input));
     } else {
-      await performSave();
+      await performSave(input);
     }
   };
 
   const handleAction = async (
     actionName: string,
-    actionFn: () => Promise<{ data?: { success?: boolean; message?: string } }>,
+    actionFn: () => Promise<{ success: boolean; message: string }>,
     needsStepUp = false,
   ) => {
     const execute = async () => {
@@ -140,34 +186,33 @@ export function StaffDetailSheet({
         setActionLoading(actionName);
         setMessage(null);
         const res = await actionFn();
-        if (res.data?.success) {
+        if (res.success) {
           toast.add({
-            title: res.data.message || SUCCESS_MESSAGES.ACTION_COMPLETED,
+            title: res.message || SUCCESS_MESSAGES.ACTION_COMPLETED,
             type: 'success',
           });
           await onReload();
         } else {
           setMessage({
-            text: res.data?.message || ERROR_MESSAGES.FAILED_TO_COMPLETE_ACTION,
+            text: res.message || ERROR_MESSAGES.FAILED_TO_COMPLETE_ACTION,
             isError: true,
           });
         }
-      } catch (err: unknown) {
-        const errorObj = err as {
-          response?: { data?: { data?: { code?: string }; message?: string } };
-          message?: string;
-        };
+      } catch (caught: unknown) {
         if (
-          errorObj?.response?.data?.data?.code === ERROR_CODES.STEP_UP_REQUIRED
+          caught instanceof ServiceError &&
+          caught.body?.code === ERROR_CODES.STEP_UP_REQUIRED
         ) {
           onRequestStepUp(() => execute());
           return;
         }
         setMessage({
           text:
-            errorObj?.response?.data?.message ||
-            errorObj?.message ||
-            ERROR_MESSAGES.FAILED_TO_COMPLETE_ACTION,
+            caught instanceof ServiceError
+              ? caught.message
+              : caught instanceof Error
+                ? caught.message
+                : ERROR_MESSAGES.FAILED_TO_COMPLETE_ACTION,
           isError: true,
         });
       } finally {
@@ -241,73 +286,98 @@ export function StaffDetailSheet({
 
           {/* Edit Form */}
           <form
-            onSubmit={handleSaveProfile}
+            onSubmit={handleSubmit(handleSaveProfile)}
             className="border-line bg-paper/30 space-y-4 rounded-lg border p-4"
+            noValidate
           >
             <h3 className="text-ink font-semibold">Account Profile</h3>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="staff-first-name">First Name</Label>
-                <Input
-                  id="staff-first-name"
-                  type="text"
-                  required
-                  value={form.firstName}
-                  onChange={(e) =>
-                    setForm({ ...form, firstName: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="staff-last-name">Last Name</Label>
-                <Input
-                  id="staff-last-name"
-                  type="text"
-                  required
-                  value={form.lastName}
-                  onChange={(e) =>
-                    setForm({ ...form, lastName: e.target.value })
-                  }
-                />
-              </div>
+              <Field
+                id="staff-first-name"
+                label="First Name"
+                error={errors.firstName?.message}
+              >
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    {...register('firstName')}
+                    type="text"
+                    required
+                    className={inputClass(errors.firstName?.message)}
+                  />
+                )}
+              </Field>
+              <Field
+                id="staff-last-name"
+                label="Last Name"
+                error={errors.lastName?.message}
+              >
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    {...register('lastName')}
+                    type="text"
+                    required
+                    className={inputClass(errors.lastName?.message)}
+                  />
+                )}
+              </Field>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="staff-role">Role</Label>
-                <Select
-                  items={ROLE_OPTIONS}
-                  value={form.role}
-                  onValueChange={(val) => {
-                    if (val) setForm({ ...form, role: val as AdminRole });
-                  }}
-                >
-                  <SelectTrigger id="staff-role" className="w-full">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ROLE_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="staff-phone">Phone Number</Label>
-                <Input
-                  id="staff-phone"
-                  type="tel"
-                  value={form.phone || ''}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                />
-              </div>
+              <Field id="staff-role" label="Role" error={errors.role?.message}>
+                {(a11y) => (
+                  <Controller
+                    control={control}
+                    name="role"
+                    render={({ field }) => (
+                      <Select
+                        items={ROLE_OPTIONS}
+                        value={field.value}
+                        onValueChange={(val) => {
+                          if (val) field.onChange(val);
+                        }}
+                      >
+                        <SelectTrigger
+                          id={a11y.id}
+                          aria-describedby={a11y['aria-describedby']}
+                          aria-invalid={a11y['aria-invalid']}
+                          onBlur={field.onBlur}
+                          className={`${inputClass(errors.role?.message)} w-full`}
+                        >
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLE_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                )}
+              </Field>
+              <Field
+                id="staff-phone"
+                label="Phone Number"
+                error={errors.phone?.message}
+              >
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    {...register('phone')}
+                    type="tel"
+                    className={inputClass(errors.phone?.message)}
+                  />
+                )}
+              </Field>
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" size="sm" loading={saving}>
+              <Button type="submit" size="sm" loading={busy}>
                 Save Changes
               </Button>
             </div>
@@ -327,7 +397,7 @@ export function StaffDetailSheet({
                   size="sm"
                   onClick={() =>
                     handleAction('resend', () =>
-                      adminService.resendStaffInvite(staff.id),
+                      resendStaffInvite.mutateAsync(staff.id),
                     )
                   }
                   loading={actionLoading === 'resend'}
@@ -346,7 +416,7 @@ export function StaffDetailSheet({
                   size="sm"
                   onClick={() =>
                     handleAction('unlock', () =>
-                      adminService.unlockStaff(staff.id),
+                      unlockStaff.mutateAsync(staff.id),
                     )
                   }
                   loading={actionLoading === 'unlock'}
@@ -364,7 +434,7 @@ export function StaffDetailSheet({
                 size="sm"
                 onClick={() =>
                   handleAction('reset_pwd', () =>
-                    adminService.sendStaffPasswordReset(staff.id),
+                    sendStaffPasswordReset.mutateAsync(staff.id),
                   )
                 }
                 loading={actionLoading === 'reset_pwd'}
@@ -381,7 +451,7 @@ export function StaffDetailSheet({
                 size="sm"
                 onClick={() =>
                   handleAction('revoke_sess', () =>
-                    adminService.revokeStaffSessions(staff.id),
+                    revokeStaffSessions.mutateAsync(staff.id),
                   )
                 }
                 loading={actionLoading === 'revoke_sess'}
@@ -400,7 +470,7 @@ export function StaffDetailSheet({
                   onClick={() =>
                     handleAction(
                       'reset_2fa',
-                      () => adminService.resetStaff2FA(staff.id),
+                      () => resetStaff2FA.mutateAsync(staff.id),
                       true,
                     )
                   }
@@ -421,7 +491,7 @@ export function StaffDetailSheet({
                   onClick={() =>
                     handleAction(
                       'deactivate',
-                      () => adminService.deactivateStaff(staff.id),
+                      () => deactivateStaff.mutateAsync(staff.id),
                       true,
                     )
                   }
@@ -438,7 +508,7 @@ export function StaffDetailSheet({
                   size="sm"
                   onClick={() =>
                     handleAction('reactivate', () =>
-                      adminService.reactivateStaff(staff.id),
+                      reactivateStaff.mutateAsync(staff.id),
                     )
                   }
                   loading={actionLoading === 'reactivate'}

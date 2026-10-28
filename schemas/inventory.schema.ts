@@ -90,31 +90,34 @@ export const AdminImageUpdateSchema = z.object({
 export type AdminImageUpdate = z.infer<typeof AdminImageUpdateSchema>;
 
 // Rate Rule Schema
-export const AdminRateRuleInputSchema = z
-  .object({
-    name: z.string().trim().min(2, ERROR_MESSAGES.NAME_MIN_TWO).max(150),
-    roomTypeId: z.string().uuid().nullable().optional(),
-    startDate: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, ERROR_MESSAGES.DATE_FORMAT_REQUIRED),
-    endDate: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, ERROR_MESSAGES.DATE_FORMAT_REQUIRED),
-    daysOfWeek: z
-      .array(z.coerce.number().int().min(0).max(6))
-      .nullable()
-      .optional(),
-    adjustmentType: RateAdjustmentTypeSchema,
-    adjustmentValue: z.coerce.number().int(),
-    minNights: z.coerce.number().int().min(1).nullable().optional(),
-    maxNights: z.coerce.number().int().min(1).nullable().optional(),
-    priority: z.coerce.number().int().default(0),
-    isActive: z.boolean().default(true),
-  })
-  .refine((data) => data.endDate >= data.startDate, {
+export const AdminRateRuleFieldsSchema = z.object({
+  name: z.string().trim().min(2, ERROR_MESSAGES.NAME_MIN_TWO).max(150),
+  roomTypeId: z.string().uuid().nullable().optional(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, ERROR_MESSAGES.DATE_FORMAT_REQUIRED),
+  endDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, ERROR_MESSAGES.DATE_FORMAT_REQUIRED),
+  daysOfWeek: z
+    .array(z.coerce.number().int().min(0).max(6))
+    .nullable()
+    .optional(),
+  adjustmentType: RateAdjustmentTypeSchema,
+  adjustmentValue: z.coerce.number().int(),
+  minNights: z.coerce.number().int().min(1).nullable().optional(),
+  maxNights: z.coerce.number().int().min(1).nullable().optional(),
+  priority: z.coerce.number().int().default(0),
+  isActive: z.boolean().default(true),
+});
+
+export const AdminRateRuleInputSchema = AdminRateRuleFieldsSchema.refine(
+  (data) => data.endDate >= data.startDate,
+  {
     message: ERROR_MESSAGES.END_DATE_ON_OR_AFTER_START,
     path: ['endDate'],
-  });
+  },
+);
 export type AdminRateRuleInput = z.infer<typeof AdminRateRuleInputSchema>;
 
 // Extra Schema

@@ -1,11 +1,5 @@
 'use client';
 
-import {
-  KeyRound,
-  MonitorSmartphone,
-  ShieldCheck,
-  UserRound,
-} from 'lucide-react';
 import { useState } from 'react';
 
 import { PasswordPanel } from '@/components/admin/account/PasswordPanel';
@@ -20,26 +14,10 @@ import type { AdminRole } from '@/types/auth.types';
 export type AccountTab = 'profile' | 'password' | 'two-factor' | 'sessions';
 
 const tabs = [
-  {
-    id: 'profile' as const,
-    label: 'Profile',
-    icon: UserRound,
-  },
-  {
-    id: 'password' as const,
-    label: 'Password',
-    icon: KeyRound,
-  },
-  {
-    id: 'two-factor' as const,
-    label: 'Two-factor',
-    icon: ShieldCheck,
-  },
-  {
-    id: 'sessions' as const,
-    label: 'Devices',
-    icon: MonitorSmartphone,
-  },
+  { id: 'profile' as const, label: 'Profile' },
+  { id: 'password' as const, label: 'Password' },
+  { id: 'two-factor' as const, label: 'Two-factor' },
+  { id: 'sessions' as const, label: 'Devices' },
 ];
 
 export function AccountView({
@@ -67,7 +45,8 @@ export function AccountView({
     <div className="space-y-4">
       {pending && (
         <StatusBanner tone="error">
-          Finish two-factor setup before using the rest of the admin.
+          Owners must set up two-factor authentication before opening the
+          dashboard.
         </StatusBanner>
       )}
 
@@ -76,21 +55,22 @@ export function AccountView({
         onValueChange={(val) => setTab(val as AccountTab)}
         className="w-full space-y-4"
       >
-        <TabsList className="border-line bg-card flex h-auto w-full justify-start gap-1 overflow-x-auto border p-1">
-          {visibleTabs.map((item) => {
-            const Icon = item.icon;
-            return (
+        <div className="border-line border-b pb-2">
+          <TabsList
+            variant="line"
+            className="h-auto max-w-full gap-1 p-0 sm:gap-2"
+          >
+            {visibleTabs.map((item) => (
               <TabsTrigger
                 key={item.id}
                 value={item.id}
-                className="gap-2 px-3 py-2 text-sm font-semibold"
+                className="px-1 pb-2 text-xs font-semibold sm:px-2.5 sm:text-sm"
               >
-                <Icon className="size-4" aria-hidden />
                 {item.label}
               </TabsTrigger>
-            );
-          })}
-        </TabsList>
+            ))}
+          </TabsList>
+        </div>
 
         <TabsContent value="profile">
           <ProfilePanel staff={staff} />

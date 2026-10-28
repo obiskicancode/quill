@@ -7,9 +7,12 @@ import { useRef, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
-import { manageService } from '@/app/api/services/manage.service';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import {
+  useInitChangePayment,
+  useUploadChangeProof,
+} from '@/hooks/services/guest/use-manage';
 import { formatCountdown, formatMinor } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import { checkProofFile, MAX_PROOF_BYTES } from '@/schemas/checkout.schema';
@@ -54,6 +57,8 @@ export function ChangePayment({
   onRefresh,
   onSessionExpired,
 }: ChangePaymentProps) {
+  const initChangePayment = useInitChangePayment();
+  const uploadChangeProof = useUploadChangeProof();
   const [method, setMethod] = useState<PaymentMethod>(
     change.acceptedMethods[0] ?? 'online',
   );
@@ -91,13 +96,15 @@ export function ChangePayment({
     setBusy(true);
     setError(null);
     try {
-      const init = (
-        await manageService.initChangePayment(
-          reference,
-          { changeId: change.changeId, method, idempotencyKey: key.current },
-          csrf,
-        )
-      ).data;
+      const init = await initChangePayment.mutateAsync({
+        reference,
+        body: {
+          changeId: change.changeId,
+          method,
+          idempotencyKey: key.current,
+        },
+        csrf,
+      });
       if (init.kind === 'redirect') {
         window.location.assign(init.url); // the provider's hosted checkout. Only its verified webhook confirms the payment.
         return;
@@ -118,12 +125,12 @@ export function ChangePayment({
     setFileError(null);
     setBusy(true);
     try {
-      await manageService.uploadChangeProof(
+      await uploadChangeProof.mutateAsync({
         reference,
-        change.changeId,
+        changeId: change.changeId,
         file,
         csrf,
-      );
+      });
       await onRefresh();
     } catch (e) {
       fail(e);

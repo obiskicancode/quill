@@ -1,86 +1,90 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import {
+  usePriceCalendar,
+  usePricingQuote,
+  type PricingQuoteInput,
+} from '@/hooks/services/admin/use-inventory';
 import { addDays, todayISO } from '@/lib/dates';
 import { minorToNaira } from '@/lib/rate-resolution';
-import type { CheckoutQuoteResponse } from '@/types/checkout.types';
-import type { PriceCalendarDay } from '@/types/inventory.types';
+
+import { priceQuoteFormSchema } from './form-schemas';
 
 interface TabPricePreviewProps {
   roomTypeId: string;
 }
 
+type PriceQuoteFormInput = z.input<typeof priceQuoteFormSchema>;
+type PriceQuoteFormOutput = z.output<typeof priceQuoteFormSchema>;
+
 export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
-  const [calendarDays, setCalendarDays] = useState<PriceCalendarDay[]>([]);
-  const [loadingCalendar, setLoadingCalendar] = useState(true);
+  const today = todayISO();
+  const calendarQuery = usePriceCalendar(roomTypeId, today, 90);
+  const calendarDays = calendarQuery.data ?? [];
 
   // Month navigation
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0); // 0 = first 30 days, 1 = next 30, 2 = next 30
 
   // Stay Calculator State
-  const today = todayISO();
-  const [calcCheckIn, setCalcCheckIn] = useState(today);
-  const [calcCheckOut, setCalcCheckOut] = useState(addDays(today, 2));
-  const [calcAdults, setCalcAdults] = useState(2);
-  const [calcChildren, setCalcChildren] = useState(0);
-  const [calcExtraBed, setCalcExtraBed] = useState(false);
+  const [quoteInput, setQuoteInput] = useState<PricingQuoteInput | null>(null);
+  const [localCalcError, setLocalCalcError] = useState<string | null>(null);
 
-  const [calculating, setCalculating] = useState(false);
-  const [quoteResult, setQuoteResult] = useState<CheckoutQuoteResponse | null>(
-    null,
-  );
-  const [calcError, setCalcError] = useState<string | null>(null);
+  const quoteQuery = usePricingQuote(quoteInput);
+  const quoteResult = quoteQuery.data ?? null;
+  const calculating = quoteQuery.isFetching;
 
-  useEffect(() => {
-    async function loadCalendar() {
-      setLoadingCalendar(true);
-      try {
-        const res = await adminService.getPriceCalendar(roomTypeId, today, 90);
-        if (res.data) {
-          setCalendarDays(res.data);
-        }
-      } catch {
-        // Handled silently
-      } finally {
-        setLoadingCalendar(false);
-      }
+  const form = useForm<PriceQuoteFormInput, unknown, PriceQuoteFormOutput>({
+    resolver: zodResolver(priceQuoteFormSchema),
+    defaultValues: {
+      checkIn: today,
+      checkOut: addDays(today, 2),
+      adults: 2,
+      children: 0,
+      extraBed: false,
+    },
+    mode: 'onBlur',
+  });
+  const {
+    control,
+    formState: { errors },
+    handleSubmit,
+    register,
+  } = form;
+
+  async function handleCalculateStay(input: PriceQuoteFormOutput) {
+    setLocalCalcError(null);
+    const payload: PricingQuoteInput = {
+      roomTypeId,
+      ...input,
+    };
+
+    const isSame =
+      quoteInput !== null &&
+      quoteInput.roomTypeId === payload.roomTypeId &&
+      quoteInput.checkIn === payload.checkIn &&
+      quoteInput.checkOut === payload.checkOut &&
+      quoteInput.adults === payload.adults &&
+      quoteInput.children === payload.children &&
+      quoteInput.extraBed === payload.extraBed;
+
+    if (isSame) {
+      await quoteQuery.refetch();
+      return;
     }
-    loadCalendar();
-  }, [roomTypeId, today]);
 
-  async function handleCalculateStay() {
-    setCalculating(true);
-    setCalcError(null);
-    try {
-      const res = await adminService.previewPricingQuote({
-        roomTypeId,
-        checkIn: calcCheckIn,
-        checkOut: calcCheckOut,
-        adults: calcAdults,
-        children: calcChildren,
-        extraBed: calcExtraBed,
-      });
-
-      if (res.data) {
-        setQuoteResult(res.data);
-      } else {
-        setCalcError(ERROR_MESSAGES.INVALID_QUOTE_OR_PARAMS);
-      }
-    } catch (err) {
-      setCalcError(
-        err instanceof Error ? err.message : ERROR_MESSAGES.CALCULATION_ERROR,
-      );
-    } finally {
-      setCalculating(false);
-    }
+    setQuoteInput(payload);
   }
 
   // Slice into 30-day views
@@ -88,6 +92,11 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
     currentMonthIndex * 30,
     (currentMonthIndex + 1) * 30,
   );
+  const calcError = quoteQuery.isError
+    ? quoteQuery.error instanceof Error
+      ? quoteQuery.error.message
+      : ERROR_MESSAGES.CALCULATION_ERROR
+    : localCalcError;
 
   return (
     <div className="space-y-8">
@@ -132,7 +141,7 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
           </div>
         </div>
 
-        {loadingCalendar ? (
+        {calendarQuery.isLoading ? (
           <div className="flex justify-center p-8">
             <Loader2 className="text-muted-foreground size-6 animate-spin" />
           </div>
@@ -207,57 +216,90 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
           charges via the shared pricing engine.
         </p>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="space-y-1.5">
-            <Label htmlFor="preview-checkin">Check-In</Label>
-            <Input
-              id="preview-checkin"
-              type="date"
-              value={calcCheckIn}
-              onChange={(e) => setCalcCheckIn(e.target.value)}
-            />
-          </div>
+        <form
+          onSubmit={handleSubmit(handleCalculateStay)}
+          className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5"
+          noValidate
+        >
+          <Field
+            id="preview-checkin"
+            label="Check-In"
+            error={errors.checkIn?.message}
+          >
+            {(a11y) => (
+              <Input
+                {...a11y}
+                type="date"
+                className={inputClass(errors.checkIn?.message)}
+                {...register('checkIn')}
+              />
+            )}
+          </Field>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="preview-checkout">Check-Out</Label>
-            <Input
-              id="preview-checkout"
-              type="date"
-              value={calcCheckOut}
-              onChange={(e) => setCalcCheckOut(e.target.value)}
-            />
-          </div>
+          <Field
+            id="preview-checkout"
+            label="Check-Out"
+            error={errors.checkOut?.message}
+          >
+            {(a11y) => (
+              <Input
+                {...a11y}
+                type="date"
+                className={inputClass(errors.checkOut?.message)}
+                {...register('checkOut')}
+              />
+            )}
+          </Field>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="preview-adults">Adults</Label>
-            <Input
-              id="preview-adults"
-              type="number"
-              min="1"
-              value={calcAdults}
-              onChange={(e) => setCalcAdults(parseInt(e.target.value, 10) || 1)}
-            />
-          </div>
+          <Field
+            id="preview-adults"
+            label="Adults"
+            error={errors.adults?.message}
+          >
+            {(a11y) => (
+              <Input
+                {...a11y}
+                type="number"
+                min="1"
+                className={inputClass(errors.adults?.message)}
+                {...register('adults', { valueAsNumber: true })}
+              />
+            )}
+          </Field>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="preview-children">Children</Label>
-            <Input
-              id="preview-children"
-              type="number"
-              min="0"
-              value={calcChildren}
-              onChange={(e) =>
-                setCalcChildren(parseInt(e.target.value, 10) || 0)
-              }
-            />
-          </div>
+          <Field
+            id="preview-children"
+            label="Children"
+            error={errors.children?.message}
+          >
+            {(a11y) => (
+              <Input
+                {...a11y}
+                type="number"
+                min="0"
+                className={inputClass(errors.children?.message)}
+                {...register('children', { valueAsNumber: true })}
+              />
+            )}
+          </Field>
 
           <div className="flex flex-col justify-end space-y-1.5">
             <div className="flex items-center gap-2 pb-1.5">
-              <Checkbox
-                id="preview-extra-bed"
-                checked={calcExtraBed}
-                onCheckedChange={(checked) => setCalcExtraBed(!!checked)}
+              <Controller
+                control={control}
+                name="extraBed"
+                render={({ field }) => (
+                  <Checkbox
+                    id="preview-extra-bed"
+                    name={field.name}
+                    ref={field.ref}
+                    checked={field.value === true}
+                    onCheckedChange={(checked) =>
+                      field.onChange(checked === true)
+                    }
+                    onBlur={field.onBlur}
+                  />
+                )}
               />
               <Label
                 htmlFor="preview-extra-bed"
@@ -267,9 +309,8 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
               </Label>
             </div>
             <Button
-              type="button"
+              type="submit"
               size="sm"
-              onClick={handleCalculateStay}
               disabled={calculating}
               loading={calculating}
               className="w-full"
@@ -277,7 +318,7 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
               Calculate Quote
             </Button>
           </div>
-        </div>
+        </form>
 
         {calcError && (
           <p className="text-small text-destructive mt-4">{calcError}</p>
@@ -330,6 +371,12 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
               </div>
             </div>
           </div>
+        )}
+
+        {!quoteResult && quoteInput !== null && !calculating && !calcError && (
+          <p className="text-small text-muted-foreground mt-4">
+            {ERROR_MESSAGES.INVALID_QUOTE_OR_PARAMS}
+          </p>
         )}
       </section>
     </div>

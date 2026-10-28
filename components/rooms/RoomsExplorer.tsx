@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
 import { useCallback, useMemo, useState, useTransition } from 'react';
 
+import { useAvailability } from '@/hooks/services/guest/use-availability';
 import { todayISO } from '@/lib/dates';
 import {
   countActiveFilters,
@@ -33,7 +34,6 @@ import { FilterPanel, FilterSheet } from './FilterPanel';
 import { SkeletonCard } from './SkeletonCard';
 import { SortMenu } from './SortMenu';
 import { StaySelector } from './StaySelector';
-import { useAvailability } from './useAvailability';
 
 /** Owns the URL state (dates, guests, sort, filters) and renders the selector, toolbar, filters and room list. */
 export function RoomsExplorer({ rooms }: { rooms: RoomType[] }) {

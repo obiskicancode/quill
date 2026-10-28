@@ -5,9 +5,9 @@ import { Mail } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
-import { bookingService } from '@/app/api/services/booking.service';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { useResendConfirmation } from '@/hooks/services/guest/use-booking';
 import { formatCountdown } from '@/lib/format';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
@@ -31,6 +31,7 @@ export function ResendEmail({
   lead,
 }: ResendEmailProps) {
   const site = useSite();
+  const resendConfirmation = useResendConfirmation();
   const [state, setState] = useState<State>('idle');
   const [cooldown, setCooldown] = useState(0);
   const reduced = useReducedMotion();
@@ -48,7 +49,7 @@ export function ResendEmail({
     if (state === 'sending' || cooldown > 0) return;
     setState('sending');
     try {
-      const r = (await bookingService.resend(reference)).data;
+      const r = await resendConfirmation.mutateAsync(reference);
       setCooldown(r.cooldownSeconds);
       setState('sent');
     } catch (e) {

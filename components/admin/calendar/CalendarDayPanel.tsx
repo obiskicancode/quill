@@ -9,9 +9,7 @@ import {
   ShieldAlert,
   Users,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
 import {
   Sheet,
@@ -21,8 +19,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { useCalendarDay } from '@/hooks/services/admin/use-calendar';
 import { formatLong, formatShort } from '@/lib/dates';
-import type { CalendarDayResponse } from '@/types/calendar.types';
 import type { AdminReservationStatus } from '@/types/reservation.types';
 
 interface CalendarDayPanelProps {
@@ -31,40 +29,14 @@ interface CalendarDayPanelProps {
 }
 
 export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
-  const [data, setData] = useState<CalendarDayResponse | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!date) return;
-
-    let active = true;
-    const fetchDay = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await adminService.getCalendarDay(date);
-        if (active) {
-          setData(res.data);
-        }
-      } catch (err) {
-        if (active) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : ERROR_MESSAGES.FAILED_TO_LOAD_DAY_DETAILS,
-          );
-        }
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    fetchDay();
-    return () => {
-      active = false;
-    };
-  }, [date]);
+  const dayQuery = useCalendarDay(date);
+  const data = dayQuery.data ?? null;
+  const loading = Boolean(date) && dayQuery.isPending && !dayQuery.data;
+  const error = dayQuery.error
+    ? dayQuery.error instanceof Error
+      ? dayQuery.error.message
+      : ERROR_MESSAGES.FAILED_TO_LOAD_DAY_DETAILS
+    : null;
 
   if (!date) return null;
 

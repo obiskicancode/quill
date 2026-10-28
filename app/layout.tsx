@@ -16,6 +16,7 @@ import {
   getPublicSite,
 } from '@/lib/content/data';
 import { ConsentProvider } from '@/providers/consent.provider';
+import { QueryProvider } from '@/providers/query.provider';
 import { SiteProvider } from '@/providers/site.provider';
 
 import './globals.css';
@@ -70,35 +71,37 @@ export default async function RootLayout({
   return (
     <html lang="en-NG" className={`${display.variable} ${body.variable}`}>
       <body className="text-body min-w-62.5 font-sans antialiased">
-        <SiteProvider site={site}>
-          <ConsentProvider>
-            <a
-              href="#main"
-              className="focus:rounded-control focus:bg-ink sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-3 focus:text-white"
-            >
-              Skip to main content
-            </a>
-            <HideOnCheckout>
-              <Header />
-            </HideOnCheckout>
-            <main id="main">{children}</main>
-            <HideOnCheckout>
-              <Footer site={site} />
-              <StickyBookBar />
-            </HideOnCheckout>
-            <HideOnCheckout>
-              <WhatsAppFab />
-            </HideOnCheckout>
-            <HideOnCheckout>
-              <ConsentBanner
-                enabled={consent.enabled}
-                privacyHref={consent.privacyPolicyHref}
-              />
-              <AnalyticsScripts settings={analytics} />
-            </HideOnCheckout>
-          </ConsentProvider>
-        </SiteProvider>
-        <Toaster />
+        <QueryProvider>
+          <SiteProvider site={site}>
+            <ConsentProvider>
+              <a
+                href="#main"
+                className="focus:rounded-control focus:bg-ink sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-3 focus:text-white"
+              >
+                Skip to main content
+              </a>
+              <HideOnCheckout>
+                <Header />
+              </HideOnCheckout>
+              <main id="main">{children}</main>
+              <HideOnCheckout>
+                <Footer site={site} />
+                <StickyBookBar />
+              </HideOnCheckout>
+              <HideOnCheckout>
+                <WhatsAppFab />
+              </HideOnCheckout>
+              <HideOnCheckout>
+                <ConsentBanner
+                  enabled={consent.enabled}
+                  privacyHref={consent.privacyPolicyHref}
+                />
+                <AnalyticsScripts settings={analytics} />
+              </HideOnCheckout>
+            </ConsentProvider>
+          </SiteProvider>
+          <Toaster />
+        </QueryProvider>
       </body>
     </html>
   );

@@ -1,20 +1,29 @@
 'use client';
 
 import Link from 'next/link';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, MessageCircle } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
-import { contentService } from '@/app/api/services/content.service';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { enquiryFormSchema, MAX_MESSAGE } from '@/schemas/content.schema';
+import { useSubmitEnquiry } from '@/hooks/services/content/use-submit-enquiry';
+import { useFormDraft } from '@/hooks/use-form-draft';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import {
+  enquiryFormSchema,
+  MAX_MESSAGE,
+  type EnquiryFormInput,
+  type EnquiryFormOutput,
+} from '@/schemas/content.schema';
 import type { DateRange, ISODate } from '@/types/dates.types';
 import type { RoomType, StayParams } from '@/types/rooms.types';
 
 import { Banner } from '../checkout/CheckoutStates';
-import { Field, inputClass } from '../checkout/Field';
 import { DatePicker } from '../DatePicker';
 import { GuestStepper } from '../GuestStepper';
 import { EASE_OUT } from '../motion/variants';
@@ -33,18 +42,7 @@ import {
 import { Textarea } from '../ui/textarea';
 import { AvailabilityHint } from './AvailabilityHint';
 
-type FieldName =
-  | 'name'
-  | 'email'
-  | 'phone'
-  | 'roomType'
-  | 'checkIn'
-  | 'checkOut'
-  | 'adults'
-  | 'children'
-  | 'message'
-  | 'consent';
-type Status = 'idle' | 'submitting' | 'success' | 'ratelimited' | 'error';
+type Failure = { kind: 'ratelimited' | 'error'; message: string };
 
 interface EnquiryFormProps {
   rooms: RoomType[];
@@ -56,36 +54,26 @@ interface EnquiryFormProps {
   sourcePage: string;
 }
 
-type FormValues = {
-  name: string;
-  email: string;
-  phone: string;
-  roomType: string;
-  checkIn: string;
-  checkOut: string;
-  adults: string;
-  children: string;
-  message: string;
-  consent: boolean;
-};
+const ENQUIRY_DRAFT_EXCLUDE = [
+  'consent',
+] as const satisfies readonly (keyof EnquiryFormInput)[];
 
-/** The booking enquiry always uses the same topic, so the form never asks for it. */
-function build(v: FormValues, sourcePage: string) {
+function formDefaults(roomType: string, sourcePage: string): EnquiryFormInput {
   return {
-    name: v.name,
-    email: v.email,
-    phone: v.phone,
+    name: '',
+    email: '',
+    phone: '',
+    topic: 'booking_enquiry',
     subject: '',
-    topic: 'booking_enquiry' as const,
-    message: v.message,
-    checkIn: v.checkIn,
-    checkOut: v.checkOut,
+    message: '',
+    checkIn: '',
+    checkOut: '',
     guests: '',
-    adults: v.adults,
-    children: v.children,
-    roomType: v.roomType,
+    adults: '2',
+    children: '0',
+    roomType,
     source_page: sourcePage,
-    consent: v.consent,
+    consent: false,
   };
 }
 
@@ -100,56 +88,33 @@ export function EnquiryForm({
   initialRoom,
   sourcePage,
 }: EnquiryFormProps) {
-  const source = sourcePage;
-  const [values, setValues] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    roomType: rooms.some((r) => r.slug === initialRoom)
-      ? (initialRoom as string)
-      : '',
-    checkIn: '',
-    checkOut: '',
-    adults: '2',
-    children: '0',
-    message: '',
-    consent: false,
+  const initialRoomType = rooms.some((room) => room.slug === initialRoom)
+    ? (initialRoom as string)
+    : '';
+  const form = useForm<EnquiryFormInput, unknown, EnquiryFormOutput>({
+    resolver: zodResolver(enquiryFormSchema),
+    defaultValues: formDefaults(initialRoomType, sourcePage),
+    mode: 'onBlur',
   });
+  const { clearDraft } = useFormDraft(form, 'public-enquiry', {
+    exclude: ENQUIRY_DRAFT_EXCLUDE,
+  });
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    register,
+    setValue,
+    watch,
+  } = form;
+  const values = watch();
+  const submitEnquiry = useSubmitEnquiry();
   const [website, setWebsite] = useState('');
-  const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
-  const [status, setStatus] = useState<Status>('idle');
-  const [serverMessage, setServerMessage] = useState('');
+  const [failure, setFailure] = useState<Failure | null>(null);
   const [reference, setReference] = useState('');
   const key = useRef(newKey());
-  const submitting = useRef(false);
+  const inFlight = useRef(false);
   const reduced = useReducedMotion();
-
-  const parse = (v: typeof values) => {
-    const r = enquiryFormSchema.safeParse(build(v, source));
-    const out: Partial<Record<FieldName, string>> = {};
-    if (!r.success)
-      for (const i of r.error.issues) out[i.path[0] as FieldName] ??= i.message;
-    return out;
-  };
-
-  const set = (name: FieldName, value: string | boolean) => {
-    setValues((v) => ({ ...v, [name]: value }));
-    if (errors[name]) setErrors((e) => ({ ...e, [name]: undefined }));
-  };
-  const blur = (name: FieldName) =>
-    setErrors((e) => ({ ...e, [name]: parse(values)[name] }));
-  const bind = (
-    name: Exclude<
-      FieldName,
-      'consent' | 'adults' | 'children' | 'checkIn' | 'checkOut'
-    >,
-  ) => ({
-    name,
-    value: values[name],
-    disabled: status === 'submitting',
-    onChange: (e: { target: { value: string } }) => set(name, e.target.value),
-    onBlur: () => blur(name),
-  });
+  const busy = isSubmitting || submitEnquiry.isPending;
 
   const range: DateRange = {
     checkIn: (values.checkIn || null) as ISODate | null,
@@ -165,66 +130,71 @@ export function EnquiryForm({
         }
       : null;
 
-  async function submit() {
-    if (submitting.current) return;
-    const found = parse(values);
-    setErrors(found);
-    if (Object.keys(found).length > 0) {
-      return;
-    }
-    submitting.current = true;
-    setStatus('submitting');
+  const onSubmit = async (input: EnquiryFormOutput) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setFailure(null);
     try {
-      const { data } = await contentService.sendEnquiry({
-        ...build(values, source),
+      const data = await submitEnquiry.mutateAsync({
+        ...input,
         idempotencyKey: key.current,
         website,
       });
+      clearDraft();
       setReference(data.reference);
-      setStatus('success');
     } catch (e) {
-      const err = e instanceof ServiceError ? e : null;
-      if (err?.status === 422 && err.body?.fieldErrors) {
-        setErrors(err.body.fieldErrors as Partial<Record<FieldName, string>>);
-        setStatus('idle');
-      } else if (err?.status === 429) {
-        setServerMessage(
-          err.body?.message ?? ERROR_MESSAGES.ENQUIRY_RATE_LIMITED,
-        );
-        setStatus('ratelimited');
-      } else if (err?.network) {
-        setServerMessage(ERROR_MESSAGES.COULD_NOT_REACH_SERVER);
-        setStatus('error');
+      if (applyServerFieldErrors(form.setError, e)) {
+        setFailure(null);
       } else {
-        setServerMessage(
-          err?.body?.message ??
-            err?.message ??
-            ERROR_MESSAGES.COULD_NOT_SEND_ENQUIRY,
-        );
-        setStatus('error');
+        const err = e instanceof ServiceError ? e : null;
+        if (err?.status === 429) {
+          setFailure({
+            kind: 'ratelimited',
+            message: err.body?.message ?? ERROR_MESSAGES.ENQUIRY_RATE_LIMITED,
+          });
+        } else if (err?.network) {
+          setFailure({
+            kind: 'error',
+            message: ERROR_MESSAGES.COULD_NOT_REACH_SERVER,
+          });
+        } else {
+          setFailure({
+            kind: 'error',
+            message:
+              err?.body?.message ??
+              err?.message ??
+              ERROR_MESSAGES.COULD_NOT_SEND_ENQUIRY,
+          });
+        }
       }
     } finally {
-      submitting.current = false;
+      inFlight.current = false;
     }
-  }
+  };
+  const submit = form.handleSubmit(onSubmit);
 
   function reset() {
     key.current = newKey();
-    setValues((v) => ({
-      ...v,
-      name: '',
-      email: '',
-      phone: '',
-      message: '',
-      checkIn: '',
-      checkOut: '',
-      adults: '2',
-      children: '0',
-      consent: false,
-    }));
-    setErrors({});
-    setStatus('idle');
+    submitEnquiry.reset();
+    setReference('');
+    setFailure(null);
+    setWebsite('');
+    form.reset(formDefaults(initialRoomType, sourcePage));
+    clearDraft();
   }
+
+  const validateDates = form.formState.isSubmitted;
+  const setDates = (next: DateRange) => {
+    setValue('checkIn', next.checkIn ?? '', {
+      shouldDirty: true,
+      shouldValidate: validateDates,
+    });
+    setValue('checkOut', next.checkOut ?? '', {
+      shouldDirty: true,
+      shouldValidate: validateDates,
+    });
+  };
+  const dateError = errors.checkIn?.message || errors.checkOut?.message;
 
   const panelMotion = reduced
     ? {}
@@ -274,7 +244,7 @@ export function EnquiryForm({
       className="space-y-6"
     >
       <AnimatePresence mode="wait" initial={false}>
-        {status === 'success' ? (
+        {reference ? (
           <motion.div
             key="success"
             {...panelMotion}
@@ -297,12 +267,12 @@ export function EnquiryForm({
             </p>
 
             <div className="mt-6 space-y-6" aria-live="polite">
-              {status === 'ratelimited' && (
+              {failure?.kind === 'ratelimited' && (
                 <Banner role="alert" tone="warn" title="Please wait a little">
-                  <p>{serverMessage} Your enquiry is kept below.</p>
+                  <p>{failure.message} Your enquiry is kept below.</p>
                 </Banner>
               )}
-              {status === 'error' && (
+              {failure?.kind === 'error' && (
                 <Banner
                   role="alert"
                   tone="danger"
@@ -318,44 +288,47 @@ export function EnquiryForm({
                   }
                 >
                   <p>
-                    {serverMessage} Your enquiry is kept below. Trying again is
-                    safe: it will not send twice.
+                    {failure.message} Your enquiry is kept below. Trying again
+                    is safe: it will not send twice.
                   </p>
                 </Banner>
               )}
             </div>
 
-            <form
-              noValidate
-              onSubmit={(e) => {
-                e.preventDefault();
-                void submit();
-              }}
-              className="mt-8 space-y-5"
-            >
+            <form noValidate onSubmit={submit} className="mt-8 space-y-5">
               <div className="grid gap-5 md:grid-cols-2">
-                <Field id="enquiry-name" label="Name" error={errors.name}>
+                <Field
+                  id="enquiry-name"
+                  label="Name"
+                  error={errors.name?.message}
+                >
                   {(a) => (
                     <Input
                       {...a}
-                      {...bind('name')}
+                      {...register('name')}
                       type="text"
                       autoComplete="name"
-                      className={inputClass(errors.name)}
+                      disabled={busy}
+                      className={inputClass(errors.name?.message)}
                     />
                   )}
                 </Field>
-                <Field id="enquiry-email" label="Email" error={errors.email}>
+                <Field
+                  id="enquiry-email"
+                  label="Email"
+                  error={errors.email?.message}
+                >
                   {(a) => (
                     <Input
                       {...a}
-                      {...bind('email')}
+                      {...register('email')}
                       type="email"
                       inputMode="email"
                       autoComplete="email"
                       autoCapitalize="none"
                       spellCheck={false}
-                      className={inputClass(errors.email)}
+                      disabled={busy}
+                      className={inputClass(errors.email?.message)}
                     />
                   )}
                 </Field>
@@ -365,17 +338,18 @@ export function EnquiryForm({
                   id="enquiry-phone"
                   label="Phone"
                   optional
-                  error={errors.phone}
+                  error={errors.phone?.message}
                   hint="Add the country code if it is not a Nigerian number."
                 >
                   {(a) => (
                     <Input
                       {...a}
-                      {...bind('phone')}
+                      {...register('phone')}
                       type="tel"
                       inputMode="tel"
                       autoComplete="tel"
-                      className={inputClass(errors.phone)}
+                      disabled={busy}
+                      className={inputClass(errors.phone?.message)}
                     />
                   )}
                 </Field>
@@ -383,39 +357,45 @@ export function EnquiryForm({
                   id="enquiry-roomType"
                   label="Preferred room type"
                   optional
-                  error={errors.roomType}
+                  error={errors.roomType?.message}
                 >
                   {(a) => (
-                    <Select
-                      items={[
-                        { value: '', label: 'No preference' },
-                        ...rooms.map((r) => ({
-                          value: r.slug,
-                          label: r.name,
-                        })),
-                      ]}
-                      value={values.roomType}
-                      onValueChange={(val) => {
-                        set('roomType', val ?? '');
-                      }}
-                      disabled={status === 'submitting'}
-                    >
-                      <SelectTrigger
-                        id={a.id}
-                        aria-describedby={a['aria-describedby']}
-                        className={inputClass(errors.roomType)}
-                      >
-                        <SelectValue placeholder="No preference" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">No preference</SelectItem>
-                        {rooms.map((r) => (
-                          <SelectItem key={r.slug} value={r.slug}>
-                            {r.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Controller
+                      control={control}
+                      name="roomType"
+                      render={({ field }) => (
+                        <Select
+                          items={[
+                            { value: '', label: 'No preference' },
+                            ...rooms.map((room) => ({
+                              value: room.slug,
+                              label: room.name,
+                            })),
+                          ]}
+                          value={field.value}
+                          onValueChange={(value) => field.onChange(value ?? '')}
+                          disabled={busy}
+                        >
+                          <SelectTrigger
+                            id={a.id}
+                            aria-describedby={a['aria-describedby']}
+                            aria-invalid={a['aria-invalid']}
+                            onBlur={field.onBlur}
+                            className={inputClass(errors.roomType?.message)}
+                          >
+                            <SelectValue placeholder="No preference" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">No preference</SelectItem>
+                            {rooms.map((room) => (
+                              <SelectItem key={room.slug} value={room.slug}>
+                                {room.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   )}
                 </Field>
               </div>
@@ -434,29 +414,22 @@ export function EnquiryForm({
                   <div
                     aria-labelledby="enquiry-dates-label"
                     aria-describedby={
-                      errors.checkIn || errors.checkOut
-                        ? 'enquiry-dates-error'
-                        : undefined
+                      dateError ? 'enquiry-dates-error' : undefined
                     }
-                    aria-invalid={
-                      errors.checkIn || errors.checkOut ? true : undefined
-                    }
+                    aria-invalid={dateError ? true : undefined}
                   >
                     <DatePicker
                       value={range}
                       monthsShown={1}
-                      onChange={(next) => {
-                        set('checkIn', next.checkIn ?? '');
-                        set('checkOut', next.checkOut ?? '');
-                      }}
+                      onChange={setDates}
                     />
                   </div>
-                  {(errors.checkIn || errors.checkOut) && (
+                  {dateError && (
                     <p
                       id="enquiry-dates-error"
                       className="text-small text-destructive mt-1.5 font-medium"
                     >
-                      {errors.checkIn || errors.checkOut}
+                      {dateError}
                     </p>
                   )}
                 </div>
@@ -467,7 +440,12 @@ export function EnquiryForm({
                     min={1}
                     max={12}
                     value={Number(values.adults) || 0}
-                    onChange={(n) => set('adults', String(n))}
+                    onChange={(count) =>
+                      setValue('adults', String(count), {
+                        shouldDirty: true,
+                        shouldValidate: validateDates,
+                      })
+                    }
                   />
                   <GuestStepper
                     label="Children"
@@ -475,12 +453,17 @@ export function EnquiryForm({
                     min={0}
                     max={8}
                     value={Number(values.children) || 0}
-                    onChange={(n) => set('children', String(n))}
+                    onChange={(count) =>
+                      setValue('children', String(count), {
+                        shouldDirty: true,
+                        shouldValidate: validateDates,
+                      })
+                    }
                   />
                 </div>
                 <AvailabilityHint
                   rooms={rooms}
-                  roomSlug={values.roomType}
+                  roomSlug={values.roomType ?? ''}
                   stay={stay}
                 />
               </FieldSet>
@@ -488,18 +471,19 @@ export function EnquiryForm({
               <Field
                 id="enquiry-message"
                 label="Message"
-                error={errors.message}
-                hint={`${values.message.length.toLocaleString('en-NG')} / ${MAX_MESSAGE.toLocaleString('en-NG')} characters`}
+                error={errors.message?.message}
+                hint={`${(values.message?.length ?? 0).toLocaleString('en-NG')} / ${MAX_MESSAGE.toLocaleString('en-NG')} characters`}
               >
                 {(a) => (
                   <Textarea
                     {...a}
-                    {...bind('message')}
+                    {...register('message')}
                     rows={6}
                     maxLength={MAX_MESSAGE + 200}
                     autoComplete="off"
                     placeholder="Anything we should know about your stay?"
-                    className={`${inputClass(errors.message)} py-3`}
+                    disabled={busy}
+                    className={`${inputClass(errors.message?.message)} py-3`}
                   />
                 )}
               </Field>
@@ -517,24 +501,33 @@ export function EnquiryForm({
                   tabIndex={-1}
                   autoComplete="off"
                   value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
+                  onChange={(event) => setWebsite(event.target.value)}
                 />
               </div>
 
               <div>
                 <div className="flex items-start gap-3 py-1">
-                  <Checkbox
-                    id="enquiry-consent"
-                    checked={values.consent}
-                    disabled={status === 'submitting'}
-                    aria-invalid={errors.consent ? true : undefined}
-                    aria-describedby={
-                      errors.consent ? 'enquiry-consent-error' : undefined
-                    }
-                    onCheckedChange={(checked) =>
-                      set('consent', checked === true)
-                    }
-                    className="mt-0.5"
+                  <Controller
+                    control={control}
+                    name="consent"
+                    render={({ field }) => (
+                      <Checkbox
+                        id="enquiry-consent"
+                        name={field.name}
+                        ref={field.ref}
+                        checked={field.value === true}
+                        disabled={busy}
+                        aria-invalid={errors.consent ? true : undefined}
+                        aria-describedby={
+                          errors.consent ? 'enquiry-consent-error' : undefined
+                        }
+                        onCheckedChange={(checked) =>
+                          field.onChange(checked === true)
+                        }
+                        onBlur={field.onBlur}
+                        className="mt-0.5"
+                      />
+                    )}
                   />
                   <Label
                     htmlFor="enquiry-consent"
@@ -558,7 +551,7 @@ export function EnquiryForm({
                     id="enquiry-consent-error"
                     className="text-small text-destructive mt-1.5 font-medium"
                   >
-                    {errors.consent}
+                    {errors.consent.message}
                   </p>
                 )}
               </div>
@@ -566,10 +559,10 @@ export function EnquiryForm({
               <Button
                 type="submit"
                 size="lg"
-                loading={status === 'submitting'}
-                disabled={status === 'ratelimited'}
+                loading={busy}
+                disabled={failure?.kind === 'ratelimited'}
               >
-                {status === 'submitting' ? 'Sending' : 'Send enquiry'}
+                {busy ? 'Sending' : 'Send enquiry'}
               </Button>
             </form>
           </motion.div>

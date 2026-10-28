@@ -292,6 +292,7 @@ export const ERROR_MESSAGES = {
   COULD_NOT_CONFIRM_CODE: "We couldn't confirm the code. Try again.",
   COULD_NOT_COPY_CODES:
     "We couldn't copy automatically. Save each code manually.",
+  COULD_NOT_COPY_SETUP_KEY: "We couldn't copy the setup key. Copy it manually.",
   COULD_NOT_LOAD_SESSIONS: "We couldn't load your sessions. Please try again.",
   COULD_NOT_RESET_PASSWORD: "We couldn't reset your password. Try again.",
   COULD_NOT_SAVE_PROFILE: "We couldn't save your profile. Try again.",

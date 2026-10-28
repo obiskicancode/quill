@@ -1,9 +1,8 @@
 'use client';
 
 import { Search, ShieldCheck, UserPlus } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 
-import { adminService } from '@/app/api/services/admin.service';
 import {
   AdminEmpty,
   AdminError,
@@ -29,6 +28,7 @@ import {
 } from '@/components/ui/table';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { useStaffDetail, useStaffList } from '@/hooks/services/admin/use-staff';
 import type {
   StaffDetailResponse,
   StaffListItem,
@@ -54,19 +54,26 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'locked', label: 'Locked' },
 ];
 
-export function StaffClient() {
-  const [staffList, setStaffList] = useState<StaffListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+function buildFallbackDetail(staff: StaffListItem): StaffDetailResponse {
+  return {
+    ...staff,
+    invitedByName: null,
+    deactivatedByName: null,
+    activeSessions: [],
+    recentAudits: [],
+  };
+}
 
+export function StaffClient() {
   const [filters, setFilters] = useState<StaffQueryParams>({
     role: 'all',
     status: 'all',
     q: '',
   });
 
-  const [selectedStaff, setSelectedStaff] =
-    useState<StaffDetailResponse | null>(null);
+  const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
+  const [selectedStaffFallback, setSelectedStaffFallback] =
+    useState<StaffListItem | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
 
   // Step-up authentication coordinator
@@ -78,74 +85,27 @@ export function StaffClient() {
     onVerified: () => {},
   });
 
-  const loadStaff = useCallback(() => {
-    setLoading(true);
-    adminService
-      .listStaff(filters)
-      .then((res) => {
-        if (res.data) setStaffList(res.data);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        const msg =
-          err instanceof Error
-            ? err.message
-            : ERROR_MESSAGES.FAILED_TO_LOAD_STAFF_MEMBERS;
-        setError(msg);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [filters]);
+  const staffQuery = useStaffList(filters);
+  const detailQuery = useStaffDetail(selectedStaffId);
 
-  useEffect(() => {
-    let active = true;
-    adminService
-      .listStaff(filters)
-      .then((res) => {
-        if (!active) return;
-        if (res.data) setStaffList(res.data);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        if (!active) return;
-        const msg =
-          err instanceof Error
-            ? err.message
-            : ERROR_MESSAGES.FAILED_TO_LOAD_STAFF_MEMBERS;
-        setError(msg);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [filters]);
+  const staffList = staffQuery.data ?? [];
+  const loading =
+    staffQuery.isPending ||
+    (staffQuery.isFetching && Boolean(staffQuery.error));
+  const error = staffQuery.error
+    ? staffQuery.error instanceof Error
+      ? staffQuery.error.message
+      : ERROR_MESSAGES.FAILED_TO_LOAD_STAFF_MEMBERS
+    : null;
+  const selectedStaff =
+    detailQuery.data ??
+    (selectedStaffFallback && detailQuery.isError
+      ? buildFallbackDetail(selectedStaffFallback)
+      : null);
 
-  const handleRowClick = async (staffItem: StaffListItem) => {
-    try {
-      const res = await adminService.getStaffDetail(staffItem.id);
-      if (res.data) {
-        setSelectedStaff(res.data);
-      } else {
-        setSelectedStaff({
-          ...staffItem,
-          invitedByName: null,
-          deactivatedByName: null,
-          activeSessions: [],
-          recentAudits: [],
-        });
-      }
-    } catch {
-      setSelectedStaff({
-        ...staffItem,
-        invitedByName: null,
-        deactivatedByName: null,
-        activeSessions: [],
-        recentAudits: [],
-      });
-    }
+  const handleRowClick = (staffItem: StaffListItem) => {
+    setSelectedStaffFallback(staffItem);
+    setSelectedStaffId(staffItem.id);
   };
 
   const handleTriggerStepUp = (onVerified: () => void) => {
@@ -239,7 +199,10 @@ export function StaffClient() {
         <AdminError
           message={error}
           action={
-            <Button variant="secondary" onClick={loadStaff}>
+            <Button
+              variant="secondary"
+              onClick={() => void staffQuery.refetch()}
+            >
               Retry
             </Button>
           }
@@ -343,13 +306,12 @@ export function StaffClient() {
       {selectedStaff && (
         <StaffDetailSheet
           staff={selectedStaff}
-          onClose={() => setSelectedStaff(null)}
+          onClose={() => {
+            setSelectedStaffId(null);
+            setSelectedStaffFallback(null);
+          }}
           onReload={async () => {
-            await loadStaff();
-            const refreshed = await adminService.getStaffDetail(
-              selectedStaff.id,
-            );
-            if (refreshed.data) setSelectedStaff(refreshed.data);
+            await Promise.all([staffQuery.refetch(), detailQuery.refetch()]);
           }}
           onRequestStepUp={handleTriggerStepUp}
         />
@@ -361,7 +323,6 @@ export function StaffClient() {
         onClose={() => setInviteOpen(false)}
         onSuccess={(msg) => {
           toast.add({ title: msg, type: 'success' });
-          loadStaff();
         }}
         onRequestStepUp={handleTriggerStepUp}
       />

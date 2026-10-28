@@ -1,57 +1,72 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Save } from 'lucide-react';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { ServiceError } from '@/app/api/services/base.service';
 import { AdminCard } from '@/components/admin/AdminCard';
 import { StatusBanner } from '@/components/admin/StatusBanner';
-import { Field, inputClass } from '@/components/checkout/Field';
 import { Button } from '@/components/ui/button';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { useUpdateProfile } from '@/hooks/services/admin/use-account';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import {
+  adminProfileSchema,
+  type AdminProfileInput,
+} from '@/schemas/admin-account.schema';
 import type { AdminStaff } from '@/types/admin.types';
+
+type ProfileOutput = z.output<typeof adminProfileSchema>;
 
 export function ProfilePanel({ staff }: { staff: AdminStaff }) {
   const router = useRouter();
-  const [firstName, setFirstName] = useState(staff.firstName);
-  const [lastName, setLastName] = useState(staff.lastName);
-  const [phone, setPhone] = useState(staff.phone ?? '');
-  const [busy, setBusy] = useState(false);
+  const updateProfile = useUpdateProfile();
+  const form = useForm<AdminProfileInput, unknown, ProfileOutput>({
+    resolver: zodResolver(adminProfileSchema),
+    defaultValues: {
+      firstName: staff.firstName,
+      lastName: staff.lastName,
+      phone: staff.phone ?? '',
+    },
+    mode: 'onBlur',
+  });
+  const {
+    formState: { errors, isSubmitting },
+    register,
+    reset,
+    setError: setFieldError,
+  } = form;
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const busy = isSubmitting || updateProfile.isPending;
 
-  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
+  const onSubmit = async (input: ProfileOutput) => {
     setError(null);
-    setFieldErrors({});
     try {
-      const result = await adminService.updateProfile({
-        firstName,
-        lastName,
-        phone,
+      const result = await updateProfile.mutateAsync(input);
+      reset({
+        firstName: result.staff.firstName,
+        lastName: result.staff.lastName,
+        phone: result.staff.phone ?? '',
       });
-      setFirstName(result.data.staff.firstName);
-      setLastName(result.data.staff.lastName);
-      setPhone(result.data.staff.phone ?? '');
       toast.add({ title: SUCCESS_MESSAGES.PROFILE_UPDATED, type: 'success' });
       router.refresh();
     } catch (caught) {
       if (caught instanceof ServiceError) {
         setError(caught.message);
-        setFieldErrors(caught.body?.fieldErrors ?? {});
+        applyServerFieldErrors(setFieldError, caught);
       } else {
         setError(ERROR_MESSAGES.COULD_NOT_SAVE_PROFILE);
       }
-    } finally {
-      setBusy(false);
     }
-  }
+  };
 
   return (
     <AdminCard
@@ -62,37 +77,39 @@ export function ProfilePanel({ staff }: { staff: AdminStaff }) {
         {error && <StatusBanner tone="error">{error}</StatusBanner>}
       </div>
 
-      <form onSubmit={submit} className="mt-4 space-y-4" noValidate>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="mt-4 space-y-4"
+        noValidate
+      >
         <div className="grid gap-4 sm:grid-cols-2">
           <Field
             id="admin-first-name"
             label="First name"
-            error={fieldErrors.firstName}
+            error={errors.firstName?.message}
           >
             {(a11y) => (
               <Input
                 {...a11y}
-                value={firstName}
-                onChange={(event) => setFirstName(event.target.value)}
+                {...register('firstName')}
                 autoComplete="given-name"
-                required
-                className={inputClass(fieldErrors.firstName)}
+                disabled={busy}
+                className={inputClass(errors.firstName?.message)}
               />
             )}
           </Field>
           <Field
             id="admin-last-name"
             label="Last name"
-            error={fieldErrors.lastName}
+            error={errors.lastName?.message}
           >
             {(a11y) => (
               <Input
                 {...a11y}
-                value={lastName}
-                onChange={(event) => setLastName(event.target.value)}
+                {...register('lastName')}
                 autoComplete="family-name"
-                required
-                className={inputClass(fieldErrors.lastName)}
+                disabled={busy}
+                className={inputClass(errors.lastName?.message)}
               />
             )}
           </Field>
@@ -102,16 +119,16 @@ export function ProfilePanel({ staff }: { staff: AdminStaff }) {
           id="admin-phone"
           label="Phone"
           optional
-          error={fieldErrors.phone}
+          error={errors.phone?.message}
         >
           {(a11y) => (
             <Input
               {...a11y}
+              {...register('phone')}
               type="tel"
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
               autoComplete="tel"
-              className={inputClass(fieldErrors.phone)}
+              disabled={busy}
+              className={inputClass(errors.phone?.message)}
             />
           )}
         </Field>

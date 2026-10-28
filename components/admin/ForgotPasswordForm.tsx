@@ -1,44 +1,60 @@
 'use client';
 
 import Link from 'next/link';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail } from 'lucide-react';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { ServiceError } from '@/app/api/services/base.service';
 import { StatusBanner } from '@/components/admin/StatusBanner';
-import { Field, inputClass } from '@/components/checkout/Field';
 import { Button } from '@/components/ui/button';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { useAdminForgotPassword } from '@/hooks/services/admin/use-auth';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import {
+  adminForgotPasswordSchema,
+  type AdminForgotPasswordInput,
+} from '@/schemas/admin-auth.schema';
+
+type ForgotPasswordOutput = z.output<typeof adminForgotPasswordSchema>;
 
 export function ForgotPasswordForm() {
-  const [email, setEmail] = useState('');
-  const [busy, setBusy] = useState(false);
+  const forgotPassword = useAdminForgotPassword();
+  const form = useForm<AdminForgotPasswordInput, unknown, ForgotPasswordOutput>(
+    {
+      resolver: zodResolver(adminForgotPasswordSchema),
+      defaultValues: { email: '' },
+      mode: 'onBlur',
+    },
+  );
+  const {
+    formState: { errors, isSubmitting },
+    register,
+    setError: setFieldError,
+  } = form;
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldError, setFieldError] = useState<string | undefined>();
+  const busy = isSubmitting || forgotPassword.isPending;
 
-  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
+  const onSubmit = async (input: ForgotPasswordOutput) => {
     setError(null);
-    setFieldError(undefined);
     try {
-      await adminService.forgotPassword({ email });
+      await forgotPassword.mutateAsync(input);
       setSent(true);
     } catch (caught) {
       if (caught instanceof ServiceError) {
         setError(caught.message);
-        setFieldError(caught.body?.fieldErrors?.email);
+        applyServerFieldErrors(setFieldError, caught);
       } else {
         setError(ERROR_MESSAGES.COULD_NOT_SEND_REQUEST);
       }
-    } finally {
-      setBusy(false);
     }
-  }
+  };
 
   return (
     <div>
@@ -74,22 +90,25 @@ export function ForgotPasswordForm() {
               <StatusBanner tone="error">{error}</StatusBanner>
             </div>
           )}
-          <form onSubmit={submit} className="mt-5 space-y-4" noValidate>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="mt-5 space-y-4"
+            noValidate
+          >
             <Field
               id="admin-forgot-email"
               label="Email address"
-              error={fieldError}
+              error={errors.email?.message}
             >
               {(a11y) => (
                 <Input
                   {...a11y}
+                  {...register('email')}
                   type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
                   autoComplete="email"
                   autoFocus
-                  required
-                  className={inputClass(fieldError)}
+                  disabled={busy}
+                  className={inputClass(errors.email?.message)}
                 />
               )}
             </Field>

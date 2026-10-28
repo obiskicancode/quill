@@ -3,10 +3,10 @@
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { useAvailability } from '@/hooks/services/guest/use-availability';
 import { formatNaira } from '@/lib/format';
 import type { RoomType, StayParams } from '@/types/rooms.types';
 
-import { useAvailability } from '../rooms/useAvailability';
 import { Button } from '../ui/button';
 
 interface AvailabilityHintProps {

@@ -1,11 +1,13 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -16,9 +18,21 @@ import {
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { useResendReservationConfirmation } from '@/hooks/services/admin/use-reservations';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import { adminResendConfirmationSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
+
+const resendFormSchema = adminResendConfirmationSchema
+  .omit({ idempotencyKey: true })
+  .extend({
+    recipient: z.email(ERROR_MESSAGES.VALID_RECIPIENT_EMAIL),
+  });
+
+type ResendFormInput = z.input<typeof resendFormSchema>;
+type ResendFormOutput = z.output<typeof resendFormSchema>;
 
 interface ResendConfirmationModalProps {
   open: boolean;
@@ -35,28 +49,35 @@ export function ResendConfirmationModal({
   onSuccess,
   onRefresh,
 }: ResendConfirmationModalProps) {
-  const [templateKey, setTemplateKey] = useState<
-    'booking_confirmation' | 'payment_receipt' | 'cancellation_notice'
-  >('booking_confirmation');
-  const [recipient, setRecipient] = useState(reservation.guestEmail ?? '');
-  const [submitting, setSubmitting] = useState(false);
+  const resendConfirmation = useResendReservationConfirmation();
+  const form = useForm<ResendFormInput, unknown, ResendFormOutput>({
+    resolver: zodResolver(resendFormSchema),
+    defaultValues: {
+      templateKey: 'booking_confirmation',
+      recipient: reservation.guestEmail ?? '',
+    },
+    mode: 'onBlur',
+  });
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    register,
+    setError: setFieldError,
+  } = form;
+  const busy = isSubmitting || resendConfirmation.isPending;
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
-    if (!recipient || !recipient.includes('@')) {
-      setError(ERROR_MESSAGES.VALID_RECIPIENT_EMAIL);
-      return;
-    }
-
+  const onSubmit = async (input: ResendFormOutput) => {
     setError(null);
-    setSubmitting(true);
 
     try {
-      await adminService.resendConfirmation(reservation.id, {
-        templateKey,
-        recipient: recipient.trim(),
-        idempotencyKey: crypto.randomUUID(),
+      await resendConfirmation.mutateAsync({
+        id: reservation.id,
+        body: {
+          templateKey: input.templateKey,
+          recipient: input.recipient.trim(),
+          idempotencyKey: crypto.randomUUID(),
+        },
       });
 
       toast.add({
@@ -65,14 +86,13 @@ export function ResendConfirmationModal({
       });
       onSuccess();
       onClose();
-    } catch (err) {
+    } catch (caught) {
       setError(
-        err instanceof Error
-          ? err.message
+        caught instanceof Error
+          ? caught.message
           : ERROR_MESSAGES.FAILED_TO_RESEND_CONFIRMATION,
       );
-    } finally {
-      setSubmitting(false);
+      applyServerFieldErrors(setFieldError, caught);
     }
   };
 
@@ -85,69 +105,92 @@ export function ResendConfirmationModal({
       error={error}
       onRefresh={onRefresh}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="resend-template">
-            Template Type <span className="text-destructive">*</span>
-          </Label>
-          <Select
-            items={[
-              {
-                value: 'booking_confirmation',
-                label: 'Booking Confirmation',
-              },
-              {
-                value: 'payment_receipt',
-                label: 'Payment Receipt',
-              },
-              {
-                value: 'cancellation_notice',
-                label: 'Cancellation Notice',
-              },
-            ]}
-            value={templateKey}
-            onValueChange={(val) => {
-              if (val) {
-                setTemplateKey(
-                  val as
-                    | 'booking_confirmation'
-                    | 'payment_receipt'
-                    | 'cancellation_notice',
-                );
-              }
-            }}
-          >
-            <SelectTrigger id="resend-template" className="w-full">
-              <SelectValue placeholder="Select template" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="booking_confirmation">
-                Booking Confirmation
-              </SelectItem>
-              <SelectItem value="payment_receipt">Payment Receipt</SelectItem>
-              <SelectItem value="cancellation_notice">
-                Cancellation Notice
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <form
+        noValidate
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4"
+      >
+        <Field
+          id="resend-template"
+          label="Template Type *"
+          error={errors.templateKey?.message}
+        >
+          {(a) => (
+            <Controller
+              control={control}
+              name="templateKey"
+              render={({ field }) => (
+                <Select
+                  items={[
+                    {
+                      value: 'booking_confirmation',
+                      label: 'Booking Confirmation',
+                    },
+                    {
+                      value: 'payment_receipt',
+                      label: 'Payment Receipt',
+                    },
+                    {
+                      value: 'cancellation_notice',
+                      label: 'Cancellation Notice',
+                    },
+                  ]}
+                  value={field.value}
+                  onValueChange={(val) => {
+                    if (val) {
+                      field.onChange(
+                        val as
+                          | 'booking_confirmation'
+                          | 'payment_receipt'
+                          | 'cancellation_notice',
+                      );
+                    }
+                  }}
+                  disabled={busy}
+                >
+                  <SelectTrigger
+                    id={a.id}
+                    aria-describedby={a['aria-describedby']}
+                    aria-invalid={a['aria-invalid']}
+                    onBlur={field.onBlur}
+                    className={inputClass(errors.templateKey?.message)}
+                  >
+                    <SelectValue placeholder="Select template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="booking_confirmation">
+                      Booking Confirmation
+                    </SelectItem>
+                    <SelectItem value="payment_receipt">
+                      Payment Receipt
+                    </SelectItem>
+                    <SelectItem value="cancellation_notice">
+                      Cancellation Notice
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          )}
+        </Field>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="resend-recipient">
-            Recipient Email <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="resend-recipient"
-            type="email"
-            required
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-            placeholder="guest@example.com"
-          />
-          <p className="text-caption text-muted-foreground">
-            You can send to the guest&apos;s email or an alternative address.
-          </p>
-        </div>
+        <Field
+          id="resend-recipient"
+          label="Recipient Email *"
+          error={errors.recipient?.message}
+          hint="You can send to the guest's email or an alternative address."
+        >
+          {(a) => (
+            <Input
+              {...a}
+              {...register('recipient')}
+              type="email"
+              disabled={busy}
+              placeholder="guest@example.com"
+              className={inputClass(errors.recipient?.message)}
+            />
+          )}
+        </Field>
 
         <div className="bg-muted rounded-control border-line text-caption text-muted-foreground border p-3">
           Resend cooldown: to prevent mail provider throttling, requests are
@@ -160,11 +203,11 @@ export function ResendConfirmationModal({
             variant="outline"
             size="sm"
             onClick={onClose}
-            disabled={submitting}
+            disabled={busy}
           >
             Cancel
           </Button>
-          <Button type="submit" size="sm" loading={submitting}>
+          <Button type="submit" size="sm" loading={busy}>
             Send notification
           </Button>
         </div>

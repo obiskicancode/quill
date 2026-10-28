@@ -1,58 +1,68 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, KeyRound } from 'lucide-react';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { ServiceError } from '@/app/api/services/base.service';
 import { AdminCard } from '@/components/admin/AdminCard';
 import { StatusBanner } from '@/components/admin/StatusBanner';
-import { Field, inputClass } from '@/components/checkout/Field';
 import { Button } from '@/components/ui/button';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { useChangePassword } from '@/hooks/services/admin/use-account';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import {
+  adminPasswordChangeSchema,
+  type AdminPasswordChangeInput,
+} from '@/schemas/admin-auth.schema';
+
+type PasswordOutput = z.output<typeof adminPasswordChangeSchema>;
 
 export function PasswordPanel() {
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const changePassword = useChangePassword();
+  const form = useForm<AdminPasswordChangeInput, unknown, PasswordOutput>({
+    resolver: zodResolver(adminPasswordChangeSchema),
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    },
+    mode: 'onBlur',
+  });
+  const {
+    formState: { errors, isSubmitting },
+    register,
+    reset,
+    setError: setFieldError,
+  } = form;
   const [showNew, setShowNew] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const busy = isSubmitting || changePassword.isPending;
 
-  async function submit(event: React.SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
+  const onSubmit = async (input: PasswordOutput) => {
     setError(null);
-    setFieldErrors({});
     try {
-      const result = await adminService.changePassword({
-        currentPassword,
-        newPassword,
-        confirmPassword,
-      });
-      const revoked = result.data.revokedSessions;
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      const result = await changePassword.mutateAsync(input);
+      reset();
       toast.add({
-        title: SUCCESS_MESSAGES.PASSWORD_CHANGED(revoked),
+        title: SUCCESS_MESSAGES.PASSWORD_CHANGED(result.revokedSessions),
         type: 'success',
       });
     } catch (caught) {
       if (caught instanceof ServiceError) {
         setError(caught.message);
-        setFieldErrors(caught.body?.fieldErrors ?? {});
+        applyServerFieldErrors(setFieldError, caught);
       } else {
         setError(ERROR_MESSAGES.COULD_NOT_CHANGE_PASSWORD);
       }
-    } finally {
-      setBusy(false);
     }
-  }
+  };
 
   return (
     <AdminCard
@@ -63,21 +73,24 @@ export function PasswordPanel() {
         {error && <StatusBanner tone="error">{error}</StatusBanner>}
       </div>
 
-      <form onSubmit={submit} className="mt-4 max-w-xl space-y-4" noValidate>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="mt-4 max-w-xl space-y-4"
+        noValidate
+      >
         <Field
           id="admin-current-password"
           label="Current password"
-          error={fieldErrors.currentPassword}
+          error={errors.currentPassword?.message}
         >
           {(a11y) => (
             <Input
               {...a11y}
+              {...register('currentPassword')}
               type="password"
-              value={currentPassword}
-              onChange={(event) => setCurrentPassword(event.target.value)}
               autoComplete="current-password"
-              required
-              className={inputClass(fieldErrors.currentPassword)}
+              disabled={busy}
+              className={inputClass(errors.currentPassword?.message)}
             />
           )}
         </Field>
@@ -86,18 +99,17 @@ export function PasswordPanel() {
           id="admin-new-password"
           label="New password"
           hint="At least 10 characters. Avoid a password used elsewhere."
-          error={fieldErrors.newPassword}
+          error={errors.newPassword?.message}
         >
           {(a11y) => (
             <div className="relative">
               <Input
                 {...a11y}
+                {...register('newPassword')}
                 type={showNew ? 'text' : 'password'}
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
                 autoComplete="new-password"
-                required
-                className={`${inputClass(fieldErrors.newPassword)} pr-12`}
+                disabled={busy}
+                className={`${inputClass(errors.newPassword?.message)} pr-12`}
               />
               <Button
                 type="button"
@@ -120,17 +132,16 @@ export function PasswordPanel() {
         <Field
           id="admin-confirm-password"
           label="Confirm new password"
-          error={fieldErrors.confirmPassword}
+          error={errors.confirmPassword?.message}
         >
           {(a11y) => (
             <Input
               {...a11y}
+              {...register('confirmPassword')}
               type={showNew ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
               autoComplete="new-password"
-              required
-              className={inputClass(fieldErrors.confirmPassword)}
+              disabled={busy}
+              className={inputClass(errors.confirmPassword?.message)}
             />
           )}
         </Field>

@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, Edit2, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,8 +17,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -36,12 +38,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useCreateRoom,
+  useDeleteRoom,
+  useRoomImpact,
+  useUpdateRoom,
+} from '@/hooks/services/admin/use-inventory';
 import type {
   AdminRoomUnit,
-  AdminRoomUnitInput,
   RoomImpactCheckResponse,
   RoomStatus,
 } from '@/types/inventory.types';
+
+import { roomUnitFormSchema } from './form-schemas';
 
 interface TabRoomsProps {
   roomTypeId: string;
@@ -49,22 +58,45 @@ interface TabRoomsProps {
   onRefresh: () => Promise<void>;
 }
 
+type RoomUnitFormInput = z.input<typeof roomUnitFormSchema>;
+type RoomUnitFormOutput = z.output<typeof roomUnitFormSchema>;
+
 export function TabRooms({
   roomTypeId,
   initialRooms,
   onRefresh,
 }: TabRoomsProps) {
   const rooms = initialRooms;
+  const createRoom = useCreateRoom(roomTypeId);
+  const updateRoom = useUpdateRoom(roomTypeId);
+  const deleteRoom = useDeleteRoom(roomTypeId);
+
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Dialog State
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<AdminRoomUnit | null>(null);
-  const [roomNumber, setRoomNumber] = useState('');
-  const [floor, setFloor] = useState('');
-  const [status, setStatus] = useState<RoomStatus>('active');
-  const [notes, setNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  const checkRoomImpact = useRoomImpact();
+
+  const form = useForm<RoomUnitFormInput, unknown, RoomUnitFormOutput>({
+    resolver: zodResolver(roomUnitFormSchema),
+    defaultValues: {
+      roomNumber: '',
+      floor: '',
+      status: 'active',
+      notes: '',
+    },
+    mode: 'onBlur',
+  });
+  const {
+    control,
+    formState: { errors },
+    handleSubmit,
+    register,
+    setValue,
+  } = form;
 
   // Impact Warning Dialog State
   const [impactModalOpen, setImpactModalOpen] = useState(false);
@@ -76,26 +108,31 @@ export function TabRooms({
 
   function openCreateDialog() {
     setEditingUnit(null);
-    setRoomNumber('');
-    setFloor('');
-    setStatus('active');
-    setNotes('');
+    form.reset({
+      roomNumber: '',
+      floor: '',
+      status: 'active',
+      notes: '',
+    });
     setErrorMessage(null);
     setDialogOpen(true);
   }
 
   function openEditDialog(unit: AdminRoomUnit) {
     setEditingUnit(unit);
-    setRoomNumber(unit.roomNumber);
-    setFloor(unit.floor || '');
-    setStatus(unit.status);
-    setNotes(unit.notes || '');
+    form.reset({
+      roomNumber: unit.roomNumber,
+      floor: unit.floor || '',
+      status: unit.status,
+      notes: unit.notes || '',
+    });
     setErrorMessage(null);
     setDialogOpen(true);
   }
 
   async function handleStatusSelect(newStatus: RoomStatus) {
-    setStatus(newStatus);
+    setValue('status', newStatus, { shouldValidate: true });
+
     // If editing existing unit and switching to maintenance or inactive
     if (
       editingUnit &&
@@ -103,9 +140,9 @@ export function TabRooms({
       editingUnit.status !== newStatus
     ) {
       try {
-        const res = await adminService.checkRoomImpact(editingUnit.id);
-        if (res.data?.hasImpact) {
-          setImpactData(res.data);
+        const impact = await checkRoomImpact.mutateAsync(editingUnit.id);
+        if (impact.hasImpact) {
+          setImpactData(impact);
           setPendingTargetStatus(newStatus);
           setImpactModalOpen(true);
         }
@@ -115,35 +152,24 @@ export function TabRooms({
     }
   }
 
-  async function handleSaveUnit(e: React.SubmitEvent) {
-    e.preventDefault();
-    if (!roomNumber.trim()) {
-      setErrorMessage(ERROR_MESSAGES.ROOM_NUMBER_REQUIRED);
-      return;
-    }
-
+  async function handleSaveUnit(input: RoomUnitFormOutput) {
     setIsSaving(true);
     setErrorMessage(null);
 
-    const input: AdminRoomUnitInput = {
-      roomNumber: roomNumber.trim(),
-      floor: floor.trim() || null,
-      status,
-      notes: notes.trim() || null,
-      isActive: status === 'active',
-    };
-
     try {
       if (editingUnit) {
-        await adminService.updateRoom(editingUnit.id, input);
+        await updateRoom.mutateAsync({
+          roomId: editingUnit.id,
+          input,
+        });
         toast.add({
-          title: SUCCESS_MESSAGES.ROOM_UPDATED_WITH_NUMBER(roomNumber),
+          title: SUCCESS_MESSAGES.ROOM_UPDATED_WITH_NUMBER(input.roomNumber),
           type: 'success',
         });
       } else {
-        await adminService.createRoom({ ...input, roomTypeId });
+        await createRoom.mutateAsync(input);
         toast.add({
-          title: SUCCESS_MESSAGES.ROOM_ADDED_WITH_NUMBER(roomNumber),
+          title: SUCCESS_MESSAGES.ROOM_ADDED_WITH_NUMBER(input.roomNumber),
           type: 'success',
         });
       }
@@ -170,7 +196,7 @@ export function TabRooms({
     }
 
     try {
-      await adminService.deleteRoom(unit.id);
+      await deleteRoom.mutateAsync(unit.id);
       toast.add({
         title: SUCCESS_MESSAGES.ROOM_DELETED_WITH_NUMBER(unit.roomNumber),
         type: 'success',
@@ -357,81 +383,111 @@ export function TabRooms({
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSaveUnit} className="space-y-4 p-6">
-            <div className="space-y-1.5">
-              <Label htmlFor="unit-room-number">
-                Room Number <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="unit-room-number"
-                type="text"
-                required
-                value={roomNumber}
-                onChange={(e) => setRoomNumber(e.target.value)}
-                placeholder="e.g. 101, 204B"
-              />
-            </div>
+          <form
+            onSubmit={handleSubmit(handleSaveUnit)}
+            className="space-y-4 p-6"
+            noValidate
+          >
+            <Field
+              id="unit-room-number"
+              label="Room Number *"
+              error={errors.roomNumber?.message}
+            >
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  type="text"
+                  placeholder="e.g. 101, 204B"
+                  className={inputClass(errors.roomNumber?.message)}
+                  {...register('roomNumber')}
+                />
+              )}
+            </Field>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="unit-floor">Floor</Label>
-              <Input
-                id="unit-floor"
-                type="text"
-                value={floor}
-                onChange={(e) => setFloor(e.target.value)}
-                placeholder="e.g. 1st Floor, Ground Floor"
-              />
-            </div>
+            <Field id="unit-floor" label="Floor" error={errors.floor?.message}>
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  type="text"
+                  placeholder="e.g. 1st Floor, Ground Floor"
+                  className={inputClass(errors.floor?.message)}
+                  {...register('floor')}
+                />
+              )}
+            </Field>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="unit-status">Service Status</Label>
-              <Select
-                items={[
-                  {
-                    value: 'active',
-                    label: 'Active (Available for guest bookings)',
-                  },
-                  {
-                    value: 'maintenance',
-                    label: 'Maintenance (Out of order)',
-                  },
-                  {
-                    value: 'inactive',
-                    label: 'Inactive (Decommissioned)',
-                  },
-                ]}
-                value={status}
-                onValueChange={(val) => {
-                  if (val) handleStatusSelect(val as RoomStatus);
-                }}
-              >
-                <SelectTrigger id="unit-status" className="w-full">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">
-                    Active (Available for guest bookings)
-                  </SelectItem>
-                  <SelectItem value="maintenance">
-                    Maintenance (Out of order)
-                  </SelectItem>
-                  <SelectItem value="inactive">
-                    Inactive (Decommissioned)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Field
+              id="unit-status"
+              label="Service Status"
+              error={errors.status?.message}
+            >
+              {(a11y) => (
+                <Controller
+                  control={control}
+                  name="status"
+                  render={({ field }) => (
+                    <Select
+                      items={[
+                        {
+                          value: 'active',
+                          label: 'Active (Available for guest bookings)',
+                        },
+                        {
+                          value: 'maintenance',
+                          label: 'Maintenance (Out of order)',
+                        },
+                        {
+                          value: 'inactive',
+                          label: 'Inactive (Decommissioned)',
+                        },
+                      ]}
+                      value={field.value}
+                      onValueChange={(val) => {
+                        if (val) handleStatusSelect(val as RoomStatus);
+                      }}
+                      name={field.name}
+                    >
+                      <SelectTrigger
+                        id={a11y.id}
+                        aria-describedby={a11y['aria-describedby']}
+                        aria-invalid={a11y['aria-invalid']}
+                        onBlur={field.onBlur}
+                        className="w-full"
+                      >
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">
+                          Active (Available for guest bookings)
+                        </SelectItem>
+                        <SelectItem value="maintenance">
+                          Maintenance (Out of order)
+                        </SelectItem>
+                        <SelectItem value="inactive">
+                          Inactive (Decommissioned)
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              )}
+            </Field>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="unit-notes">Internal Notes</Label>
-              <Textarea
-                id="unit-notes"
-                rows={2}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="e.g. Adjoining door to 102, corner window"
-              />
-            </div>
+            <Field
+              id="unit-notes"
+              label="Internal Notes"
+              error={errors.notes?.message}
+            >
+              {(a11y) => (
+                <Textarea
+                  {...a11y}
+                  rows={2}
+                  placeholder="e.g. Adjoining door to 102, corner window"
+                  className={inputClass(errors.notes?.message)}
+                  {...register('notes')}
+                />
+              )}
+            </Field>
 
             <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
               <Button
@@ -457,7 +513,11 @@ export function TabRooms({
           onOpenChange={(nextOpen) => {
             if (!nextOpen) {
               setImpactModalOpen(false);
-              if (editingUnit) setStatus(editingUnit.status);
+              if (editingUnit) {
+                setValue('status', editingUnit.status, {
+                  shouldValidate: true,
+                });
+              }
             }
           }}
         >
@@ -529,7 +589,11 @@ export function TabRooms({
                   type="button"
                   onClick={() => {
                     setImpactModalOpen(false);
-                    if (editingUnit) setStatus(editingUnit.status);
+                    if (editingUnit) {
+                      setValue('status', editingUnit.status, {
+                        shouldValidate: true,
+                      });
+                    }
                   }}
                 >
                   Understood (Keep Active)

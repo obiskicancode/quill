@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   AlertCircle,
   ArrowDown,
@@ -11,16 +12,25 @@ import {
   Trash2,
   UploadCloud,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useDeleteImage,
+  useReorderRoomImages,
+  useUpdateImage,
+  useUploadRoomImage,
+} from '@/hooks/services/admin/use-inventory';
 import type { AdminRoomImage } from '@/types/inventory.types';
+
+import { photoEditFormSchema, photoUploadFormSchema } from './form-schemas';
 
 interface TabPhotosProps {
   roomTypeId: string;
@@ -28,42 +38,72 @@ interface TabPhotosProps {
   onRefresh: () => Promise<void>;
 }
 
+type PhotoUploadInput = z.input<typeof photoUploadFormSchema>;
+type PhotoUploadOutput = z.output<typeof photoUploadFormSchema>;
+type PhotoEditInput = z.input<typeof photoEditFormSchema>;
+type PhotoEditOutput = z.output<typeof photoEditFormSchema>;
+
 export function TabPhotos({
   roomTypeId,
   initialPhotos,
   onRefresh,
 }: TabPhotosProps) {
+  const uploadImage = useUploadRoomImage(roomTypeId);
+  const updateImage = useUpdateImage(roomTypeId);
+  const deleteImage = useDeleteImage(roomTypeId);
+  const reorderImages = useReorderRoomImages(roomTypeId);
   const [photos, setPhotos] = useState<AdminRoomImage[]>(initialPhotos);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Upload inputs
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [pendingAltText, setPendingAltText] = useState('');
-  const [pendingCaption, setPendingCaption] = useState('');
-
   // Editing alt text inline
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editAlt, setEditAlt] = useState('');
-  const [editCaption, setEditCaption] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
+  useEffect(() => {
+    setPhotos(initialPhotos);
+  }, [initialPhotos]);
+
+  const uploadForm = useForm<PhotoUploadInput, unknown, PhotoUploadOutput>({
+    resolver: zodResolver(photoUploadFormSchema),
+    defaultValues: {
+      file: null,
+      altText: '',
+      caption: '',
+    },
+    mode: 'onBlur',
+  });
+  const editForm = useForm<PhotoEditInput, unknown, PhotoEditOutput>({
+    resolver: zodResolver(photoEditFormSchema),
+    defaultValues: {
+      altText: '',
+      caption: '',
+    },
+    mode: 'onBlur',
+  });
+
+  const pendingFile = uploadForm.watch('file');
   const atMaxPhotos = photos.length >= 8;
 
-  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileSelect(
+    event: React.ChangeEvent<HTMLInputElement>,
+    onChange: (file: File | null) => void,
+  ) {
     setErrorMessage(null);
-    const file = e.target.files?.[0];
+    const file = event.target.files?.[0];
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
       setErrorMessage(ERROR_MESSAGES.FILE_TOO_LARGE);
+      onChange(null);
       return;
     }
 
-    setPendingFile(file);
+    onChange(file);
     // Suggest default alt text from filename
-    setPendingAltText(
+    uploadForm.setValue(
+      'altText',
       file.name
         .replace(/\.[^/.]+$/, '')
         .replace(/[-_]/g, ' ')
@@ -71,12 +111,8 @@ export function TabPhotos({
     );
   }
 
-  async function handleUpload() {
-    if (!pendingFile) return;
-    if (!pendingAltText.trim()) {
-      setErrorMessage(ERROR_MESSAGES.ALT_TEXT_REQUIRED_PUBLISHING);
-      return;
-    }
+  async function handleUpload(input: PhotoUploadOutput) {
+    if (!input.file) return;
 
     setUploading(true);
     setUploadProgress(20);
@@ -84,22 +120,18 @@ export function TabPhotos({
 
     try {
       const formData = new FormData();
-      formData.append('file', pendingFile);
-      formData.append('altText', pendingAltText.trim());
-      formData.append('caption', pendingCaption.trim());
+      formData.append('file', input.file);
+      formData.append('altText', input.altText.trim());
+      formData.append('caption', input.caption.trim());
       formData.append('isCover', photos.length === 0 ? 'true' : 'false');
 
       setUploadProgress(60);
-      const res = await adminService.uploadRoomImage(roomTypeId, formData);
+      await uploadImage.mutateAsync(formData);
       setUploadProgress(100);
 
-      if (res.data) {
-        toast.add({ title: SUCCESS_MESSAGES.PHOTO_UPLOADED, type: 'success' });
-        setPendingFile(null);
-        setPendingAltText('');
-        setPendingCaption('');
-        await onRefresh();
-      }
+      toast.add({ title: SUCCESS_MESSAGES.PHOTO_UPLOADED, type: 'success' });
+      uploadForm.reset({ file: null, altText: '', caption: '' });
+      await onRefresh();
     } catch (err) {
       setErrorMessage(
         err instanceof Error
@@ -128,7 +160,7 @@ export function TabPhotos({
     setPhotos(updated);
 
     try {
-      await adminService.reorderRoomImages(roomTypeId, items);
+      await reorderImages.mutateAsync(items);
       toast.add({ title: SUCCESS_MESSAGES.PHOTOS_REORDERED, type: 'success' });
     } catch {
       setErrorMessage(ERROR_MESSAGES.FAILED_TO_REORDER_PHOTOS);
@@ -138,10 +170,13 @@ export function TabPhotos({
 
   async function handleSetCover(photo: AdminRoomImage) {
     try {
-      await adminService.updateImage(photo.id, {
-        altText: photo.altText,
-        caption: photo.caption,
-        isCover: true,
+      await updateImage.mutateAsync({
+        imageId: photo.id,
+        input: {
+          altText: photo.altText,
+          caption: photo.caption,
+          isCover: true,
+        },
       });
       toast.add({ title: SUCCESS_MESSAGES.COVER_PHOTO_SET, type: 'success' });
       await onRefresh();
@@ -150,17 +185,14 @@ export function TabPhotos({
     }
   }
 
-  async function handleSaveEdit(photoId: string) {
-    if (!editAlt.trim()) {
-      setErrorMessage(ERROR_MESSAGES.ALT_TEXT_CANNOT_BE_EMPTY);
-      return;
-    }
+  async function handleSaveEdit(input: PhotoEditOutput) {
+    if (!editingId) return;
 
     setIsUpdating(true);
     try {
-      await adminService.updateImage(photoId, {
-        altText: editAlt.trim(),
-        caption: editCaption.trim() || null,
+      await updateImage.mutateAsync({
+        imageId: editingId,
+        input,
       });
       toast.add({ title: SUCCESS_MESSAGES.IMAGE_UPDATED, type: 'success' });
       setEditingId(null);
@@ -175,7 +207,7 @@ export function TabPhotos({
   async function handleDelete(photoId: string) {
     if (!confirm('Are you sure you want to delete this photo?')) return;
     try {
-      await adminService.deleteImage(photoId);
+      await deleteImage.mutateAsync(photoId);
       toast.add({ title: SUCCESS_MESSAGES.IMAGE_DELETED, type: 'success' });
       await onRefresh();
     } catch {
@@ -207,12 +239,21 @@ export function TabPhotos({
             formats with EXIF stripped.
           </p>
 
-          <Input
-            type="file"
-            id="photoUploadInput"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleFileSelect}
-            className="hidden"
+          <Controller
+            control={uploadForm.control}
+            name="file"
+            render={({ field }) => (
+              <Input
+                type="file"
+                id="photoUploadInput"
+                accept="image/jpeg,image/png,image/webp"
+                name={field.name}
+                ref={field.ref}
+                onBlur={field.onBlur}
+                onChange={(event) => handleFileSelect(event, field.onChange)}
+                className="hidden"
+              />
+            )}
           />
 
           {!pendingFile ? (
@@ -228,44 +269,54 @@ export function TabPhotos({
               </Button>
             </div>
           ) : (
-            <div className="border-line bg-paper mx-auto mt-4 max-w-lg rounded border p-4 text-left">
+            <form
+              onSubmit={uploadForm.handleSubmit(handleUpload)}
+              className="border-line bg-paper mx-auto mt-4 max-w-lg rounded border p-4 text-left text-sm"
+              noValidate
+            >
               <p className="text-foreground text-small font-semibold">
                 Selected: {pendingFile.name} (
                 {(pendingFile.size / 1024 / 1024).toFixed(2)} MB)
               </p>
 
-              <div className="mt-3 space-y-1.5">
-                <Label
-                  htmlFor="upload-alt-text"
-                  className="text-foreground text-xs font-medium"
-                >
-                  Alt Text (Required for accessibility & active status){' '}
-                  <span className="text-destructive">*</span>
-                </Label>
-                <Input
+              <div className="mt-3">
+                <Field
                   id="upload-alt-text"
-                  type="text"
-                  required
-                  value={pendingAltText}
-                  onChange={(e) => setPendingAltText(e.target.value)}
-                  placeholder="e.g. Spacious king bedroom with ocean-facing balcony"
-                />
+                  label="Alt Text (Required for accessibility & active status) *"
+                  error={uploadForm.formState.errors.altText?.message}
+                >
+                  {(a11y) => (
+                    <Input
+                      {...a11y}
+                      type="text"
+                      placeholder="e.g. Spacious king bedroom with ocean-facing balcony"
+                      className={inputClass(
+                        uploadForm.formState.errors.altText?.message,
+                      )}
+                      {...uploadForm.register('altText')}
+                    />
+                  )}
+                </Field>
               </div>
 
-              <div className="mt-3 space-y-1.5">
-                <Label
-                  htmlFor="upload-caption"
-                  className="text-foreground text-xs font-medium"
-                >
-                  Caption (Optional)
-                </Label>
-                <Input
+              <div className="mt-3">
+                <Field
                   id="upload-caption"
-                  type="text"
-                  value={pendingCaption}
-                  onChange={(e) => setPendingCaption(e.target.value)}
-                  placeholder="e.g. Balcony sunset view"
-                />
+                  label="Caption (Optional)"
+                  error={uploadForm.formState.errors.caption?.message}
+                >
+                  {(a11y) => (
+                    <Input
+                      {...a11y}
+                      type="text"
+                      placeholder="e.g. Balcony sunset view"
+                      className={inputClass(
+                        uploadForm.formState.errors.caption?.message,
+                      )}
+                      {...uploadForm.register('caption')}
+                    />
+                  )}
+                </Field>
               </div>
 
               {uploadProgress !== null && (
@@ -287,17 +338,14 @@ export function TabPhotos({
                   type="button"
                   size="sm"
                   variant="secondary"
-                  onClick={() => setPendingFile(null)}
+                  onClick={() =>
+                    uploadForm.reset({ file: null, altText: '', caption: '' })
+                  }
                   disabled={uploading}
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleUpload}
-                  disabled={uploading}
-                >
+                <Button type="submit" size="sm" disabled={uploading}>
                   {uploading ? (
                     <>
                       <Loader2 className="mr-1.5 size-4 animate-spin" />{' '}
@@ -308,7 +356,7 @@ export function TabPhotos({
                   )}
                 </Button>
               </div>
-            </div>
+            </form>
           )}
         </div>
       ) : (
@@ -364,38 +412,42 @@ export function TabPhotos({
                 {/* Details & controls */}
                 <div className="flex flex-1 flex-col justify-between p-3">
                   {editingId === p.id ? (
-                    <div className="space-y-2">
+                    <form
+                      onSubmit={editForm.handleSubmit(handleSaveEdit)}
+                      className="space-y-2"
+                      noValidate
+                    >
                       <Input
                         type="text"
-                        value={editAlt}
-                        onChange={(e) => setEditAlt(e.target.value)}
                         placeholder="Alt text"
                         className="h-7 text-xs"
+                        {...editForm.register('altText')}
                       />
+                      {editForm.formState.errors.altText?.message && (
+                        <p className="text-destructive text-xs">
+                          {editForm.formState.errors.altText.message}
+                        </p>
+                      )}
                       <Input
                         type="text"
-                        value={editCaption}
-                        onChange={(e) => setEditCaption(e.target.value)}
                         placeholder="Caption"
                         className="h-7 text-xs"
+                        {...editForm.register('caption')}
                       />
                       <div className="flex justify-end gap-1">
                         <Button
+                          type="button"
                           size="sm"
                           variant="secondary"
                           onClick={() => setEditingId(null)}
                         >
                           Cancel
                         </Button>
-                        <Button
-                          size="sm"
-                          disabled={isUpdating}
-                          onClick={() => handleSaveEdit(p.id)}
-                        >
+                        <Button type="submit" size="sm" disabled={isUpdating}>
                           Save
                         </Button>
                       </div>
-                    </div>
+                    </form>
                   ) : (
                     <div>
                       <p className="text-foreground line-clamp-2 text-xs font-medium">
@@ -412,8 +464,10 @@ export function TabPhotos({
                         size="xs"
                         onClick={() => {
                           setEditingId(p.id);
-                          setEditAlt(p.altText);
-                          setEditCaption(p.caption || '');
+                          editForm.reset({
+                            altText: p.altText,
+                            caption: p.caption || '',
+                          });
                         }}
                         className="h-auto p-0 text-xs"
                       >

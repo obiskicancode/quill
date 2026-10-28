@@ -1,17 +1,41 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, X } from 'lucide-react';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
+import { ServiceError } from '@/app/api/services/base.service';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Textarea } from '@/components/ui/textarea';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { useApproveDeclineReservation } from '@/hooks/services/admin/use-reservations';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import { adminApproveDeclineSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
+
+const approveDeclineFormSchema = adminApproveDeclineSchema
+  .omit({ version: true, idempotencyKey: true })
+  .superRefine((value, ctx) => {
+    if (
+      value.action === 'decline' &&
+      (!value.reason || value.reason.trim().length < 3)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['reason'],
+        message: ERROR_MESSAGES.DECLINE_REASON_PROMPT,
+      });
+    }
+  });
+
+type ApproveDeclineFormInput = z.input<typeof approveDeclineFormSchema>;
+type ApproveDeclineFormOutput = z.output<typeof approveDeclineFormSchema>;
 
 interface ApproveDeclineModalProps {
   open: boolean;
@@ -30,49 +54,61 @@ export function ApproveDeclineModal({
   onSuccess,
   onRefresh,
 }: ApproveDeclineModalProps) {
-  const [action, setAction] = useState<'approve' | 'decline'>(initialAction);
-  const [reason, setReason] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const approveDecline = useApproveDeclineReservation();
+  const form = useForm<
+    ApproveDeclineFormInput,
+    unknown,
+    ApproveDeclineFormOutput
+  >({
+    resolver: zodResolver(approveDeclineFormSchema),
+    defaultValues: {
+      action: initialAction,
+      reason: '',
+    },
+    mode: 'onBlur',
+  });
+  const {
+    clearErrors,
+    formState: { errors, isSubmitting },
+    register,
+    setError: setFieldError,
+    setValue,
+    watch,
+  } = form;
+  const action = watch('action');
+  const busy = isSubmitting || approveDecline.isPending;
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
-    if (action === 'decline' && (!reason || reason.trim().length < 3)) {
-      setError(ERROR_MESSAGES.DECLINE_REASON_PROMPT);
-      return;
-    }
-
+  const onSubmit = async (input: ApproveDeclineFormOutput) => {
     setError(null);
-    setSubmitting(true);
 
     try {
-      const payload = {
-        action,
-        reason: reason.trim() || undefined,
-        version: reservation.updatedAt,
-        idempotencyKey: crypto.randomUUID(),
-      };
-
-      const updated =
-        action === 'approve'
-          ? await adminService.approveReservation(reservation.id, payload)
-          : await adminService.declineReservation(reservation.id, payload);
+      const updated = await approveDecline.mutateAsync({
+        id: reservation.id,
+        body: {
+          action: input.action,
+          reason: input.reason?.trim() || undefined,
+          version: reservation.updatedAt,
+          idempotencyKey: crypto.randomUUID(),
+        },
+      });
 
       onSuccess(
-        updated.data,
-        action === 'approve'
+        updated,
+        input.action === 'approve'
           ? SUCCESS_MESSAGES.RESERVATION_APPROVED
           : SUCCESS_MESSAGES.RESERVATION_DECLINED,
       );
       onClose();
-    } catch (err) {
+    } catch (caught) {
       setError(
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_PROCESS_APPROVAL,
+        caught instanceof ServiceError
+          ? caught.message
+          : caught instanceof Error
+            ? caught.message
+            : ERROR_MESSAGES.FAILED_TO_PROCESS_APPROVAL,
       );
-    } finally {
-      setSubmitting(false);
+      applyServerFieldErrors(setFieldError, caught);
     }
   };
 
@@ -87,14 +123,21 @@ export function ApproveDeclineModal({
       error={error}
       onRefresh={onRefresh}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        noValidate
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4"
+      >
         {/* Action Toggle */}
         <div className="grid grid-cols-2 gap-2">
           <Button
             type="button"
             variant={action === 'approve' ? 'default' : 'outline'}
             size="md"
-            onClick={() => setAction('approve')}
+            onClick={() => {
+              setValue('action', 'approve');
+              clearErrors('reason');
+            }}
             className={
               action === 'approve'
                 ? 'bg-success hover:bg-success/90 text-white'
@@ -108,7 +151,7 @@ export function ApproveDeclineModal({
             type="button"
             variant={action === 'decline' ? 'destructive' : 'outline'}
             size="md"
-            onClick={() => setAction('decline')}
+            onClick={() => setValue('action', 'decline')}
           >
             <X className="size-4" aria-hidden="true" />
             <span>Decline Request</span>
@@ -143,23 +186,23 @@ export function ApproveDeclineModal({
             payment instructions.
           </p>
         ) : (
-          <div className="space-y-1.5">
-            <Label htmlFor="decline-reason">
-              Decline Reason <span className="text-destructive">*</span>
-            </Label>
-            <Textarea
-              id="decline-reason"
-              rows={3}
-              required
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Hotel fully committed for private event, maintenance shutdown..."
-            />
-            <p className="text-caption text-muted-foreground">
-              Declining cancels the booking and frees the assigned room
-              immediately.
-            </p>
-          </div>
+          <Field
+            id="decline-reason"
+            label="Decline Reason *"
+            error={errors.reason?.message}
+            hint="Declining cancels the booking and frees the assigned room immediately."
+          >
+            {(a) => (
+              <Textarea
+                {...a}
+                {...register('reason')}
+                rows={3}
+                disabled={busy}
+                placeholder="e.g. Hotel fully committed for private event, maintenance shutdown..."
+                className={inputClass(errors.reason?.message)}
+              />
+            )}
+          </Field>
         )}
 
         <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
@@ -168,7 +211,7 @@ export function ApproveDeclineModal({
             variant="outline"
             size="sm"
             onClick={onClose}
-            disabled={submitting}
+            disabled={busy}
           >
             Cancel
           </Button>
@@ -176,7 +219,7 @@ export function ApproveDeclineModal({
             type="submit"
             variant={action === 'approve' ? 'default' : 'destructive'}
             size="sm"
-            loading={submitting}
+            loading={busy}
           >
             {action === 'approve'
               ? 'Confirm approval'

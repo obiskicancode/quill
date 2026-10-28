@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { adminService } from '@/app/api/services/admin.service';
 import {
   AdminEmpty,
   AdminError,
@@ -42,6 +41,10 @@ import {
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useAmenities,
+  useDeleteAmenity,
+} from '@/hooks/services/admin/use-inventory';
 import type { AdminAmenity } from '@/types/inventory.types';
 
 import { AmenityDialog } from './AmenityDialog';
@@ -68,9 +71,16 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
-  const [amenities, setAmenities] = useState<AdminAmenity[]>(initialAmenities);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const amenitiesQuery = useAmenities(initialAmenities);
+  const deleteAmenity = useDeleteAmenity();
+  const amenities = amenitiesQuery.data ?? [];
+  const loading = amenitiesQuery.isFetching;
+  const error =
+    amenitiesQuery.error instanceof Error
+      ? amenitiesQuery.error.message
+      : amenitiesQuery.error
+        ? ERROR_MESSAGES.FAILED_TO_RELOAD_AMENITIES
+        : null;
 
   // Dialog State
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -79,22 +89,7 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
   );
 
   async function refresh() {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await adminService.listAmenities();
-      if (res.data) {
-        setAmenities(res.data);
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_RELOAD_AMENITIES,
-      );
-    } finally {
-      setLoading(false);
-    }
+    await amenitiesQuery.refetch();
   }
 
   async function handleDelete(item: AdminAmenity) {
@@ -115,7 +110,7 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
     }
 
     try {
-      await adminService.deleteAmenity(item.id);
+      await deleteAmenity.mutateAsync(item.id);
       toast.add({
         title: SUCCESS_MESSAGES.AMENITY_DELETED_WITH_NAME(item.label),
         type: 'success',

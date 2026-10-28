@@ -6,9 +6,9 @@ import { FileCheck, Upload, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
-import { checkoutService } from '@/app/api/services/checkout.service';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { useUploadBookingProof } from '@/hooks/services/guest/use-booking';
 import { formatMinor } from '@/lib/format';
 import { checkProofFile, MAX_PROOF_BYTES } from '@/schemas/checkout.schema';
 import type { GuestReservation } from '@/types/booking.types';
@@ -36,6 +36,7 @@ export function TransferPanel({
   v: GuestReservation;
   onUploaded: () => void;
 }) {
+  const uploadProof = useUploadBookingProof();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +59,7 @@ export function TransferPanel({
     setError(null);
     setBusy(true);
     try {
-      await checkoutService.uploadProof(v.reference, file);
+      await uploadProof.mutateAsync({ reference: v.reference, file });
       onUploaded();
     } catch (e) {
       setError(

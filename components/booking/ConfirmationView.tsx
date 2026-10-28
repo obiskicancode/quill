@@ -4,8 +4,11 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { bookingService } from '@/app/api/services/booking.service';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import {
+  useGuestBooking,
+  useGuestBookingStatus,
+} from '@/hooks/services/guest/use-booking';
 import { trackBookingConfirmedOnce } from '@/lib/booking/analytics';
 import { headerKind } from '@/lib/booking/status';
 import type { GuestReservation } from '@/types/booking.types';
@@ -27,7 +30,6 @@ import { StatusHeader } from './StatusHeader';
 import { StayDetailsCard } from './StayDetailsCard';
 import { TransferPanel } from './TransferPanel';
 
-const POLL_INTERVAL_MS = 2000;
 const POLL_TIMEOUT_MS = 30_000;
 
 const emailLead = {
@@ -45,13 +47,18 @@ const emailLead = {
  * While a payment is still being verified it polls the status endpoint and updates in place.
  */
 export function ConfirmationView({ initial }: { initial: GuestReservation }) {
-  const [v, setV] = useState(initial);
+  const bookingQuery = useGuestBooking(initial.reference, initial);
+  const { refetch } = bookingQuery;
+  const v = bookingQuery.data;
   const [timedOut, setTimedOut] = useState(false);
-  const [pollNonce, setPollNonce] = useState(0);
   const [announcement, setAnnouncement] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState(false);
   const kind = headerKind(v);
+  const statusQuery = useGuestBookingStatus(
+    v.reference,
+    kind === 'confirming' && !timedOut,
+  );
   const reduced = useReducedMotion();
   const presence = reduced
     ? {}
@@ -66,46 +73,36 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
   const refresh = useCallback(async () => {
     setRefreshing(true);
     setRefreshError(false);
+    const before = v;
     try {
-      const next = (await bookingService.get(v.reference)).data;
-      setV((prev) => {
-        if (prev.status !== next.status)
-          setAnnouncement(ERROR_MESSAGES.BOOKING_STATUS_CHANGED);
-        return next;
-      });
+      const result = await refetch();
+      if (result.error) throw result.error;
+      if (result.data && result.data.status !== before.status)
+        setAnnouncement(ERROR_MESSAGES.BOOKING_STATUS_CHANGED);
     } catch {
       setRefreshError(true);
     } finally {
       setRefreshing(false);
     }
-  }, [v.reference]);
+  }, [refetch, v]);
 
   // Poll while the payment is being verified.
+  const status = statusQuery.data;
   useEffect(() => {
-    if (kind !== 'confirming') return;
-    let stopped = false;
-    let timer: number | undefined;
-    const started = Date.now();
-    const tick = async () => {
-      try {
-        const s = (await bookingService.status(v.reference)).data;
-        if (stopped) return;
-        if (s.status !== v.status || s.paymentStatus !== v.paymentStatus)
-          return void (await refresh());
-      } catch {
-        /* keep polling until the timeout */
-      }
-      if (stopped) return;
-      if (Date.now() - started > POLL_TIMEOUT_MS) return setTimedOut(true);
-      timer = window.setTimeout(tick, POLL_INTERVAL_MS);
-    };
-    void tick();
-    return () => {
-      stopped = true;
-      window.clearTimeout(timer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kind, v.status, v.paymentStatus, pollNonce]);
+    if (!status) return;
+    if (
+      status.status !== v.status ||
+      status.paymentStatus !== v.paymentStatus
+    ) {
+      void refetch();
+    }
+  }, [status, v.status, v.paymentStatus, refetch]);
+
+  useEffect(() => {
+    if (kind !== 'confirming' || timedOut) return;
+    const timer = window.setTimeout(() => setTimedOut(true), POLL_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [kind, timedOut]);
 
   // Once, and never from a reload: no personal data in the event.
   useEffect(() => {
@@ -135,7 +132,8 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
               loading={refreshing}
               onClick={() => {
                 setTimedOut(false);
-                setPollNonce((n) => n + 1);
+                void refetch();
+                void statusQuery.refetch();
               }}
             >
               Check again

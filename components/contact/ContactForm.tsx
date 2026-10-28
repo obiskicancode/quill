@@ -1,25 +1,32 @@
 'use client';
 
 import Link from 'next/link';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, MessageCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
-import { contentService } from '@/app/api/services/content.service';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { CONTACT_TOPICS } from '@/constants/content';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { useSubmitEnquiry } from '@/hooks/services/content/use-submit-enquiry';
+import { useFormDraft } from '@/hooks/use-form-draft';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import {
   enquiryFormSchema,
   MAX_MESSAGE,
   normalizeTopic,
   STAY_TOPICS,
   topicLabels,
+  type EnquiryFormInput,
+  type EnquiryFormOutput,
 } from '@/schemas/content.schema';
+import type { EnquiryTopic } from '@/types/content.types';
 
 import { Banner } from '../checkout/CheckoutStates';
-import { Field, inputClass } from '../checkout/Field';
 import { Reveal } from '../motion';
 import { EASE_OUT } from '../motion/variants';
 import { Button, ButtonLink } from '../ui/button';
@@ -36,19 +43,7 @@ import {
 } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 
-type FieldName =
-  | 'name'
-  | 'email'
-  | 'phone'
-  | 'topic'
-  | 'subject'
-  | 'message'
-  | 'checkIn'
-  | 'checkOut'
-  | 'guests'
-  | 'roomType'
-  | 'consent';
-type Status = 'idle' | 'submitting' | 'success' | 'ratelimited' | 'error';
+type Failure = { kind: 'ratelimited' | 'error'; message: string };
 
 interface ContactFormProps {
   initialTopic: string | null;
@@ -62,12 +57,40 @@ interface ContactFormProps {
 }
 
 /** A topic the contact form can actually show (the booking enquiry has its own page). */
-function contactTopic(raw: string | null): string {
-  const t = normalizeTopic(raw);
-  return (CONTACT_TOPICS as string[]).includes(t) ? t : 'general';
+function contactTopic(raw: string | null): EnquiryTopic {
+  const topic = normalizeTopic(raw);
+  return (CONTACT_TOPICS as readonly EnquiryTopic[]).includes(topic)
+    ? topic
+    : 'general';
 }
 
-/** Contact form. Same Zod schema as the server. Input is never lost: errors, rate limits and server failures all keep it. */
+const CONTACT_DRAFT_EXCLUDE = [
+  'consent',
+] as const satisfies readonly (keyof EnquiryFormInput)[];
+
+function formDefaults(
+  topic: EnquiryTopic,
+  roomType: string,
+  message: string,
+): EnquiryFormInput {
+  return {
+    name: '',
+    email: '',
+    phone: '',
+    topic,
+    subject: '',
+    message,
+    checkIn: '',
+    checkOut: '',
+    guests: '',
+    adults: '',
+    children: '',
+    roomType,
+    source_page: '',
+    consent: false,
+  };
+}
+
 export function ContactForm({
   initialTopic,
   initialRoom,
@@ -78,120 +101,95 @@ export function ContactForm({
 }: ContactFormProps) {
   const safeRef =
     initialRef && /^[A-Za-z0-9-]{4,30}$/.test(initialRef) ? initialRef : null;
-  const [values, setValues] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    topic: contactTopic(initialTopic),
-    subject: '',
-    message: safeRef ? `Booking reference: ${safeRef}\n\n` : '',
-    checkIn: '',
-    checkOut: '',
-    guests: '',
-    roomType: rooms.some((r) => r.slug === initialRoom)
-      ? (initialRoom as string)
-      : '',
-    consent: false,
+  const initialRoomType = rooms.some((room) => room.slug === initialRoom)
+    ? (initialRoom as string)
+    : '';
+  const initialMessage = safeRef ? `Booking reference: ${safeRef}\n\n` : '';
+  const defaults = () =>
+    formDefaults(contactTopic(initialTopic), initialRoomType, initialMessage);
+  const form = useForm<EnquiryFormInput, unknown, EnquiryFormOutput>({
+    resolver: zodResolver(enquiryFormSchema),
+    defaultValues: defaults(),
+    mode: 'onBlur',
   });
+  const { clearDraft } = useFormDraft(form, 'public-contact', {
+    exclude: CONTACT_DRAFT_EXCLUDE,
+  });
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    register,
+    watch,
+  } = form;
+  const values = watch();
+  const submitEnquiry = useSubmitEnquiry();
   const [website, setWebsite] = useState('');
-  const [errors, setErrors] = useState<Partial<Record<FieldName, string>>>({});
-  const [status, setStatus] = useState<Status>('idle');
-  const [serverMessage, setServerMessage] = useState('');
+  const [failure, setFailure] = useState<Failure | null>(null);
   const [reference, setReference] = useState('');
   const [today, setToday] = useState('');
   const key = useRef(newKey());
-  const submitting = useRef(false);
+  const inFlight = useRef(false);
   const reduced = useReducedMotion();
+  const busy = isSubmitting || submitEnquiry.isPending;
+  const showStay = STAY_TOPICS.includes(values.topic);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time date probe after mount; must not run during SSR
   useEffect(() => setToday(new Date().toISOString().slice(0, 10)), []);
 
-  const showStay = (STAY_TOPICS as string[]).includes(values.topic);
-  const parse = (v: typeof values) => {
-    const r = enquiryFormSchema.safeParse(v);
-    const out: Partial<Record<FieldName, string>> = {};
-    if (!r.success)
-      for (const i of r.error.issues) out[i.path[0] as FieldName] ??= i.message;
-    return out;
-  };
-
-  const set = (name: FieldName, value: string | boolean) => {
-    setValues((v) => ({ ...v, [name]: value }));
-    if (errors[name]) setErrors((e) => ({ ...e, [name]: undefined }));
-  };
-  const blur = (name: FieldName) =>
-    setErrors((e) => ({ ...e, [name]: parse(values)[name] }));
-  const bind = (name: Exclude<FieldName, 'consent'>) => ({
-    name,
-    value: values[name],
-    disabled: status === 'submitting',
-    onChange: (e: { target: { value: string } }) => set(name, e.target.value),
-    onBlur: () => blur(name),
-  });
-
-  async function submit() {
-    if (submitting.current) return;
-    const found = parse(values);
-    // Stay fields only matter for group and event topics.
-    if (!showStay)
-      for (const f of ['checkIn', 'checkOut', 'guests', 'roomType'] as const)
-        delete found[f];
-    setErrors(found);
-    if (Object.keys(found).length > 0) {
-      return;
-    }
-    submitting.current = true;
-    setStatus('submitting');
+  const onSubmit = async (input: EnquiryFormOutput) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setFailure(null);
+    const includeStay = STAY_TOPICS.includes(input.topic);
     try {
-      const { data } = await contentService.sendEnquiry({
-        ...values,
-        ...(showStay
+      const data = await submitEnquiry.mutateAsync({
+        ...input,
+        ...(includeStay
           ? {}
           : { checkIn: '', checkOut: '', guests: '', roomType: '' }),
         idempotencyKey: key.current,
         website,
       });
+      clearDraft();
       setReference(data.reference);
-      setStatus('success');
     } catch (e) {
-      const err = e instanceof ServiceError ? e : null;
-      if (err?.status === 422 && err.body?.fieldErrors) {
-        setErrors(err.body.fieldErrors as Partial<Record<FieldName, string>>);
-        setStatus('idle');
-      } else if (err?.status === 429) {
-        setServerMessage(
-          err.body?.message ?? ERROR_MESSAGES.CONTACT_RATE_LIMITED,
-        );
-        setStatus('ratelimited');
-      } else if (err?.network) {
-        setServerMessage(ERROR_MESSAGES.COULD_NOT_REACH_SERVER);
-        setStatus('error');
+      if (applyServerFieldErrors(form.setError, e)) {
+        setFailure(null);
       } else {
-        setServerMessage(
-          err?.body?.message ??
-            err?.message ??
-            ERROR_MESSAGES.COULD_NOT_SEND_MESSAGE,
-        );
-        setStatus('error');
+        const err = e instanceof ServiceError ? e : null;
+        if (err?.status === 429) {
+          setFailure({
+            kind: 'ratelimited',
+            message: err.body?.message ?? ERROR_MESSAGES.CONTACT_RATE_LIMITED,
+          });
+        } else if (err?.network) {
+          setFailure({
+            kind: 'error',
+            message: ERROR_MESSAGES.COULD_NOT_REACH_SERVER,
+          });
+        } else {
+          setFailure({
+            kind: 'error',
+            message:
+              err?.body?.message ??
+              err?.message ??
+              ERROR_MESSAGES.COULD_NOT_SEND_MESSAGE,
+          });
+        }
       }
     } finally {
-      submitting.current = false;
+      inFlight.current = false;
     }
-  }
+  };
+  const submit = form.handleSubmit(onSubmit);
 
   function reset() {
     key.current = newKey();
-    setValues((v) => ({
-      ...v,
-      subject: '',
-      message: '',
-      checkIn: '',
-      checkOut: '',
-      guests: '',
-      consent: false,
-    }));
-    setErrors({});
-    setStatus('idle');
+    submitEnquiry.reset();
+    setReference('');
+    setFailure(null);
+    setWebsite('');
+    form.reset(defaults());
+    clearDraft();
   }
 
   const panelMotion = reduced
@@ -240,7 +238,7 @@ export function ContactForm({
     <section id="enquiry" aria-labelledby="form-title" className="section-y">
       <div className="container-page max-w-3xl">
         <AnimatePresence mode="wait" initial={false}>
-          {status === 'success' ? (
+          {reference ? (
             <motion.div
               key="success"
               {...panelMotion}
@@ -263,12 +261,12 @@ export function ContactForm({
               </p>
 
               <div className="mt-6 space-y-6" aria-live="polite">
-                {status === 'ratelimited' && (
+                {failure?.kind === 'ratelimited' && (
                   <Banner role="alert" tone="warn" title="Please wait a little">
-                    <p>{serverMessage} Your message is kept below.</p>
+                    <p>{failure.message} Your message is kept below.</p>
                   </Banner>
                 )}
-                {status === 'error' && (
+                {failure?.kind === 'error' && (
                   <Banner
                     role="alert"
                     tone="danger"
@@ -284,44 +282,47 @@ export function ContactForm({
                     }
                   >
                     <p>
-                      {serverMessage} Your message is kept below. Trying again
+                      {failure.message} Your message is kept below. Trying again
                       is safe: it will not send twice.
                     </p>
                   </Banner>
                 )}
               </div>
 
-              <form
-                noValidate
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void submit();
-                }}
-                className="mt-8 space-y-5"
-              >
+              <form noValidate onSubmit={submit} className="mt-8 space-y-5">
                 <Reveal className="grid gap-5 md:grid-cols-2">
-                  <Field id="contact-name" label="Name" error={errors.name}>
+                  <Field
+                    id="contact-name"
+                    label="Name"
+                    error={errors.name?.message}
+                  >
                     {(a) => (
                       <Input
                         {...a}
-                        {...bind('name')}
+                        {...register('name')}
                         type="text"
                         autoComplete="name"
-                        className={inputClass(errors.name)}
+                        disabled={busy}
+                        className={inputClass(errors.name?.message)}
                       />
                     )}
                   </Field>
-                  <Field id="contact-email" label="Email" error={errors.email}>
+                  <Field
+                    id="contact-email"
+                    label="Email"
+                    error={errors.email?.message}
+                  >
                     {(a) => (
                       <Input
                         {...a}
-                        {...bind('email')}
+                        {...register('email')}
                         type="email"
                         inputMode="email"
                         autoComplete="email"
                         autoCapitalize="none"
                         spellCheck={false}
-                        className={inputClass(errors.email)}
+                        disabled={busy}
+                        className={inputClass(errors.email?.message)}
                       />
                     )}
                   </Field>
@@ -331,52 +332,63 @@ export function ContactForm({
                     id="contact-phone"
                     label="Phone"
                     optional
-                    error={errors.phone}
+                    error={errors.phone?.message}
                     hint="Add the country code if it is not a Nigerian number."
                   >
                     {(a) => (
                       <Input
                         {...a}
-                        {...bind('phone')}
+                        {...register('phone')}
                         type="tel"
                         inputMode="tel"
                         autoComplete="tel"
-                        className={inputClass(errors.phone)}
+                        disabled={busy}
+                        className={inputClass(errors.phone?.message)}
                       />
                     )}
                   </Field>
                   <Field
                     id="contact-topic"
                     label="What is this about?"
-                    error={errors.topic}
+                    error={errors.topic?.message}
                   >
                     {(a) => (
-                      <Select
-                        items={CONTACT_TOPICS.map((t) => ({
-                          value: t,
-                          label: topicLabels[t],
-                        }))}
-                        value={values.topic}
-                        onValueChange={(val) => {
-                          if (val) set('topic', val);
-                        }}
-                        disabled={status === 'submitting'}
-                      >
-                        <SelectTrigger
-                          id={a.id}
-                          aria-describedby={a['aria-describedby']}
-                          className={inputClass(errors.topic)}
-                        >
-                          <SelectValue placeholder="Select topic" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CONTACT_TOPICS.map((t) => (
-                            <SelectItem key={t} value={t}>
-                              {topicLabels[t]}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Controller
+                        control={control}
+                        name="topic"
+                        render={({ field }) => (
+                          <Select
+                            items={CONTACT_TOPICS.map((topic) => ({
+                              value: topic,
+                              label: topicLabels[topic],
+                            }))}
+                            value={field.value}
+                            onValueChange={(value) =>
+                              field.onChange(
+                                (value ?? 'general') as EnquiryTopic,
+                              )
+                            }
+                            disabled={busy}
+                          >
+                            <SelectTrigger
+                              id={a.id}
+                              aria-describedby={a['aria-describedby']}
+                              aria-invalid={a['aria-invalid']}
+                              onBlur={field.onBlur}
+                              className={inputClass(errors.topic?.message)}
+                            >
+                              <SelectValue placeholder="Select topic" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CONTACT_TOPICS.map((topic) => (
+                                <SelectItem key={topic} value={topic}>
+                                  {topicLabels[topic]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                     )}
                   </Field>
                 </Reveal>
@@ -384,15 +396,16 @@ export function ContactForm({
                   id="contact-subject"
                   label="Subject"
                   optional
-                  error={errors.subject}
+                  error={errors.subject?.message}
                 >
                   {(a) => (
                     <Input
                       {...a}
-                      {...bind('subject')}
+                      {...register('subject')}
                       type="text"
                       autoComplete="off"
-                      className={inputClass(errors.subject)}
+                      disabled={busy}
+                      className={inputClass(errors.subject?.message)}
                     />
                   )}
                 </Field>
@@ -407,15 +420,16 @@ export function ContactForm({
                         id="contact-checkIn"
                         label="Check-in"
                         optional
-                        error={errors.checkIn}
+                        error={errors.checkIn?.message}
                       >
                         {(a) => (
                           <Input
                             {...a}
-                            {...bind('checkIn')}
+                            {...register('checkIn')}
                             type="date"
                             min={today || undefined}
-                            className={inputClass(errors.checkIn)}
+                            disabled={busy}
+                            className={inputClass(errors.checkIn?.message)}
                           />
                         )}
                       </Field>
@@ -423,15 +437,16 @@ export function ContactForm({
                         id="contact-checkOut"
                         label="Check-out"
                         optional
-                        error={errors.checkOut}
+                        error={errors.checkOut?.message}
                       >
                         {(a) => (
                           <Input
                             {...a}
-                            {...bind('checkOut')}
+                            {...register('checkOut')}
                             type="date"
                             min={values.checkIn || today || undefined}
-                            className={inputClass(errors.checkOut)}
+                            disabled={busy}
+                            className={inputClass(errors.checkOut?.message)}
                           />
                         )}
                       </Field>
@@ -439,16 +454,17 @@ export function ContactForm({
                         id="contact-guests"
                         label="Number of guests"
                         optional
-                        error={errors.guests}
+                        error={errors.guests?.message}
                       >
                         {(a) => (
                           <Input
                             {...a}
-                            {...bind('guests')}
+                            {...register('guests')}
                             type="text"
                             inputMode="numeric"
                             autoComplete="off"
-                            className={inputClass(errors.guests)}
+                            disabled={busy}
+                            className={inputClass(errors.guests?.message)}
                           />
                         )}
                       </Field>
@@ -456,39 +472,54 @@ export function ContactForm({
                         id="contact-roomType"
                         label="Preferred room type"
                         optional
-                        error={errors.roomType}
+                        error={errors.roomType?.message}
                       >
                         {(a) => (
-                          <Select
-                            items={[
-                              { value: '', label: 'No preference' },
-                              ...rooms.map((r) => ({
-                                value: r.slug,
-                                label: r.name,
-                              })),
-                            ]}
-                            value={values.roomType}
-                            onValueChange={(val) => {
-                              set('roomType', val ?? '');
-                            }}
-                            disabled={status === 'submitting'}
-                          >
-                            <SelectTrigger
-                              id={a.id}
-                              aria-describedby={a['aria-describedby']}
-                              className={inputClass(errors.roomType)}
-                            >
-                              <SelectValue placeholder="No preference" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="">No preference</SelectItem>
-                              {rooms.map((r) => (
-                                <SelectItem key={r.slug} value={r.slug}>
-                                  {r.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Controller
+                            control={control}
+                            name="roomType"
+                            render={({ field }) => (
+                              <Select
+                                items={[
+                                  { value: '', label: 'No preference' },
+                                  ...rooms.map((room) => ({
+                                    value: room.slug,
+                                    label: room.name,
+                                  })),
+                                ]}
+                                value={field.value}
+                                onValueChange={(value) =>
+                                  field.onChange(value ?? '')
+                                }
+                                disabled={busy}
+                              >
+                                <SelectTrigger
+                                  id={a.id}
+                                  aria-describedby={a['aria-describedby']}
+                                  aria-invalid={a['aria-invalid']}
+                                  onBlur={field.onBlur}
+                                  className={inputClass(
+                                    errors.roomType?.message,
+                                  )}
+                                >
+                                  <SelectValue placeholder="No preference" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="">
+                                    No preference
+                                  </SelectItem>
+                                  {rooms.map((room) => (
+                                    <SelectItem
+                                      key={room.slug}
+                                      value={room.slug}
+                                    >
+                                      {room.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
                         )}
                       </Field>
                     </Reveal>
@@ -498,17 +529,18 @@ export function ContactForm({
                 <Field
                   id="contact-message"
                   label="Message"
-                  error={errors.message}
-                  hint={`${values.message.length.toLocaleString('en-NG')} / ${MAX_MESSAGE.toLocaleString('en-NG')} characters`}
+                  error={errors.message?.message}
+                  hint={`${(values.message?.length ?? 0).toLocaleString('en-NG')} / ${MAX_MESSAGE.toLocaleString('en-NG')} characters`}
                 >
                   {(a) => (
                     <Textarea
                       {...a}
-                      {...bind('message')}
+                      {...register('message')}
                       rows={6}
                       maxLength={MAX_MESSAGE + 200}
                       autoComplete="off"
-                      className={`${inputClass(errors.message)} py-3`}
+                      disabled={busy}
+                      className={`${inputClass(errors.message?.message)} py-3`}
                     />
                   )}
                 </Field>
@@ -526,24 +558,33 @@ export function ContactForm({
                     tabIndex={-1}
                     autoComplete="off"
                     value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
+                    onChange={(event) => setWebsite(event.target.value)}
                   />
                 </div>
 
                 <div>
                   <div className="flex items-start gap-3 py-1">
-                    <Checkbox
-                      id="contact-consent"
-                      checked={values.consent}
-                      disabled={status === 'submitting'}
-                      aria-invalid={errors.consent ? true : undefined}
-                      aria-describedby={
-                        errors.consent ? 'contact-consent-error' : undefined
-                      }
-                      onCheckedChange={(checked) =>
-                        set('consent', checked === true)
-                      }
-                      className="mt-0.5"
+                    <Controller
+                      control={control}
+                      name="consent"
+                      render={({ field }) => (
+                        <Checkbox
+                          id="contact-consent"
+                          name={field.name}
+                          ref={field.ref}
+                          checked={field.value === true}
+                          disabled={busy}
+                          aria-invalid={errors.consent ? true : undefined}
+                          aria-describedby={
+                            errors.consent ? 'contact-consent-error' : undefined
+                          }
+                          onCheckedChange={(checked) =>
+                            field.onChange(checked === true)
+                          }
+                          onBlur={field.onBlur}
+                          className="mt-0.5"
+                        />
+                      )}
                     />
                     <Label
                       htmlFor="contact-consent"
@@ -567,7 +608,7 @@ export function ContactForm({
                       id="contact-consent-error"
                       className="text-small text-destructive mt-1.5 font-medium"
                     >
-                      {errors.consent}
+                      {errors.consent.message}
                     </p>
                   )}
                 </div>
@@ -575,10 +616,10 @@ export function ContactForm({
                 <Button
                   type="submit"
                   size="lg"
-                  loading={status === 'submitting'}
-                  disabled={status === 'ratelimited'}
+                  loading={busy}
+                  disabled={failure?.kind === 'ratelimited'}
                 >
-                  {status === 'submitting' ? 'Sending' : 'Send message'}
+                  {busy ? 'Sending' : 'Send message'}
                 </Button>
               </form>
             </motion.div>

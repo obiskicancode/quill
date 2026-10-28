@@ -10,10 +10,12 @@ import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import {
+  useCheckInReservation,
+  useCheckOutReservation,
   useDashboardOccupancy,
   useDashboardRevenue,
   useDashboardSummary,
-} from '@/hooks/admin/use-dashboard';
+} from '@/hooks/services/admin/use-dashboard';
 import type { AdminRole, Permission } from '@/types/auth.types';
 import type { RevenueRange } from '@/types/dashboard.types';
 
@@ -44,6 +46,8 @@ export function DashboardClient({
   const canViewRevenue = permissions.includes('revenue.view');
 
   const [revenueRange, setRevenueRange] = useState<RevenueRange>('7d');
+  const checkInReservation = useCheckInReservation();
+  const checkOutReservation = useCheckOutReservation();
 
   // 1. Fetch Summary (KPI, attention, arrivals, departures, activity)
   const {
@@ -54,7 +58,6 @@ export function DashboardClient({
     liveAnnouncement,
     refresh: refreshSummary,
     setHovering,
-    setData: setSummaryData,
   } = useDashboardSummary();
 
   // 2. Fetch Occupancy (14 days)
@@ -78,39 +81,10 @@ export function DashboardClient({
     id: string,
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { adminService } = await import('@/app/api/services/admin.service');
-      const res = await adminService.checkInReservation(id);
-      if (res.data?.row) {
-        const updated = res.data.row;
-        // In-place update of summary data
-        setSummaryData((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            arrivals: prev.arrivals.map((r) => (r.id === id ? updated : r)),
-            kpi: {
-              ...prev.kpi,
-              inHouseTonight: prev.kpi.inHouseTonight + 1,
-              occupiedRooms: Math.min(
-                prev.kpi.sellableRooms,
-                prev.kpi.occupiedRooms + 1,
-              ),
-              occupancyPercent:
-                prev.kpi.sellableRooms > 0
-                  ? Math.round(
-                      (Math.min(
-                        prev.kpi.sellableRooms,
-                        prev.kpi.occupiedRooms + 1,
-                      ) /
-                        prev.kpi.sellableRooms) *
-                        100,
-                    )
-                  : 0,
-            },
-          };
-        });
+      const result = await checkInReservation.mutateAsync(id);
+      if (result?.row) {
         toast.add({
-          title: SUCCESS_MESSAGES.GUEST_CHECKED_IN(updated.guestName),
+          title: SUCCESS_MESSAGES.GUEST_CHECKED_IN(result.row.guestName),
           type: 'success',
         });
         return { success: true };
@@ -127,33 +101,10 @@ export function DashboardClient({
     id: string,
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { adminService } = await import('@/app/api/services/admin.service');
-      const res = await adminService.checkOutReservation(id);
-      if (res.data?.row) {
-        const updated = res.data.row;
-        // In-place update of departures list
-        setSummaryData((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            departures: prev.departures.map((r) => (r.id === id ? updated : r)),
-            kpi: {
-              ...prev.kpi,
-              inHouseTonight: Math.max(0, prev.kpi.inHouseTonight - 1),
-              occupiedRooms: Math.max(0, prev.kpi.occupiedRooms - 1),
-              occupancyPercent:
-                prev.kpi.sellableRooms > 0
-                  ? Math.round(
-                      (Math.max(0, prev.kpi.occupiedRooms - 1) /
-                        prev.kpi.sellableRooms) *
-                        100,
-                    )
-                  : 0,
-            },
-          };
-        });
+      const result = await checkOutReservation.mutateAsync(id);
+      if (result?.row) {
         toast.add({
-          title: SUCCESS_MESSAGES.GUEST_CHECKED_OUT(updated.guestName),
+          title: SUCCESS_MESSAGES.GUEST_CHECKED_OUT(result.row.guestName),
           type: 'success',
         });
         return { success: true };

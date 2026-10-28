@@ -11,6 +11,7 @@ import {
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { useQuote } from '@/hooks/services/guest/use-room-quote';
 import { bookingHref, stayParams } from '@/lib/booking/links';
 import { formatShort } from '@/lib/dates';
 import { formatMinor, formatNaira } from '@/lib/format';
@@ -35,7 +36,6 @@ import {
 } from '../ui/sheet';
 import { Switch } from '../ui/switch';
 import { BreakdownSkeleton, PriceBreakdown } from './PriceBreakdown';
-import { useQuote } from './useQuote';
 
 interface BookingCardProps {
   room: RoomBookingSummary;

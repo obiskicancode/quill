@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Download, Plus } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { AdminEmpty, AdminError } from '@/components/admin/AdminStates';
 import { StaleBanner } from '@/components/admin/dashboard/StaleBanner';
@@ -11,9 +11,9 @@ import { PageHeader } from '@/components/admin/PageHeader';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { useReservationsList } from '@/hooks/services/admin/use-reservations-data';
 import type { AdminRole, Permission } from '@/types/auth.types';
 import type {
-  ReservationsListResponse,
   ReservationSortField,
   SortOrder,
 } from '@/types/reservation.types';
@@ -36,10 +36,6 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
 
   const canExportCsv = permissions.includes('payments.view');
 
-  const [data, setData] = useState<ReservationsListResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isStale, setIsStale] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
   const isInteractingRef = useRef(false);
@@ -47,65 +43,30 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
   // Parse filters from URL
   const currentParamsString = searchParams.toString();
 
-  const fetchReservations = useCallback(
-    async (isQuiet = false) => {
-      if (!isQuiet) setIsLoading(true);
-      try {
-        const { adminService } =
-          await import('@/app/api/services/admin.service');
-        const res = await adminService.getReservationsList(currentParamsString);
-        if (res.data) {
-          setData(res.data);
-          setError(null);
-          setIsStale(false);
-        }
-      } catch (err: unknown) {
-        const msg =
-          err instanceof Error
-            ? err.message
-            : ERROR_MESSAGES.FAILED_TO_LOAD_RESERVATIONS_UI;
-        if (data) {
-          setIsStale(true);
-        } else {
-          setError(msg);
-        }
-      } finally {
-        if (!isQuiet) setIsLoading(false);
-      }
-    },
-    [currentParamsString, data],
-  );
+  const {
+    data: reservationsData,
+    error: reservationsError,
+    isError,
+    isPending,
+    refetch,
+  } = useReservationsList(currentParamsString);
 
-  // Refetch when searchParams change
-  useEffect(() => {
-    let isMounted = true;
+  const data = reservationsData ?? null;
+  const isLoading = isPending;
+  const error = reservationsError
+    ? reservationsError instanceof Error
+      ? reservationsError.message
+      : ERROR_MESSAGES.FAILED_TO_LOAD_RESERVATIONS_UI
+    : null;
+  const isStale = isError && Boolean(data);
 
-    import('@/app/api/services/admin.service').then(({ adminService }) => {
-      adminService
-        .getReservationsList(currentParamsString)
-        .then((res) => {
-          if (!isMounted || !res.data) return;
-          setData(res.data);
-          setError(null);
-          setIsStale(false);
-        })
-        .catch((err: unknown) => {
-          if (!isMounted) return;
-          setError(
-            err instanceof Error
-              ? err.message
-              : ERROR_MESSAGES.FAILED_TO_LOAD_RESERVATIONS_UI,
-          );
-        })
-        .finally(() => {
-          if (isMounted) setIsLoading(false);
-        });
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [currentParamsString]);
+  const fetchReservations = (isQuiet = false) => {
+    if (!isQuiet) {
+      void refetch();
+      return;
+    }
+    void refetch({ cancelRefetch: false });
+  };
 
   // 60-second silent auto-refresh
   useEffect(() => {
@@ -119,12 +80,12 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
       if (isInteractingRef.current) {
         return;
       }
-      fetchReservations(true);
+      void refetch({ cancelRefetch: false });
     }, 60000);
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        fetchReservations(true);
+        void refetch({ cancelRefetch: false });
       }
     };
 
@@ -134,7 +95,7 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
       clearInterval(timer);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [fetchReservations]);
+  }, [refetch]);
 
   // Update URL Search Params helper
   const updateUrlParams = (
@@ -158,7 +119,8 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
       params.delete('page');
     }
 
-    router.replace(`${pathname}?${params.toString()}`);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
   };
 
   const handleSortChange = (field: ReservationSortField, order: SortOrder) => {

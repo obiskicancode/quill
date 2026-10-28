@@ -1,18 +1,27 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
-import { manageService } from '@/app/api/services/manage.service';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { CANCEL_REASONS } from '@/constants/manage';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useCancelBooking,
+  useCancellationPreview,
+} from '@/hooks/services/guest/use-manage';
 import { formatMinor } from '@/lib/format';
-import type { CancelRequest } from '@/schemas/manage.schema';
+import {
+  cancelRequestSchema,
+  type CancelRequest,
+} from '@/schemas/manage.schema';
 import type { GuestReservation } from '@/types/booking.types';
 import type { CancellationPreview } from '@/types/manage.types';
 
@@ -31,6 +40,14 @@ import {
 } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { FlowDialog } from './FlowDialog';
+
+const cancelFormSchema = cancelRequestSchema.pick({
+  reason: true,
+  note: true,
+  acknowledged: true,
+});
+type CancelFormInput = z.input<typeof cancelFormSchema>;
+type CancelFormOutput = z.output<typeof cancelFormSchema>;
 
 interface CancelFlowProps {
   open: boolean;
@@ -117,16 +134,29 @@ export function CancelFlow({
   onSessionExpired,
   onReverified,
 }: CancelFlowProps) {
+  const previewQuery = useCancellationPreview(v.reference, open);
+  const cancelBooking = useCancelBooking();
   const [step, setStep] = useState<'review' | 'confirm' | 'done'>('review');
-  const [preview, setPreview] = useState<CancellationPreview | null>(null);
-  const [loadState, setLoadState] = useState<'loading' | 'ready' | 'error'>(
-    'loading',
-  );
-  const [reason, setReason] = useState('');
-  const [note, setNote] = useState('');
-  const [ack, setAck] = useState(false);
-  const [ackError, setAckError] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const preview = previewQuery.data ?? null;
+  const loadState = previewQuery.isPending
+    ? 'loading'
+    : previewQuery.isError
+      ? 'error'
+      : 'ready';
+  const form = useForm<CancelFormInput, unknown, CancelFormOutput>({
+    resolver: zodResolver(cancelFormSchema),
+    defaultValues: { reason: null, note: '', acknowledged: false },
+    mode: 'onBlur',
+  });
+  const {
+    control,
+    formState: { errors: formErrors, isSubmitting },
+    register,
+    reset,
+    watch,
+  } = form;
+  const note = watch('note') ?? '';
+  const busy = isSubmitting || cancelBooking.isPending;
   const [error, setError] = useState<{
     message: string;
     retryable: boolean;
@@ -144,57 +174,40 @@ export function CancelFlow({
         transition: { duration: 0.2, ease: EASE_OUT },
       };
 
-  async function loadPreview() {
-    setLoadState('loading');
-    try {
-      setPreview((await manageService.cancellationPreview(v.reference)).data);
-      setLoadState('ready');
-    } catch (e) {
-      if (
-        e instanceof ServiceError &&
-        e.body?.code === ERROR_CODES.SESSION_EXPIRED
-      )
-        onSessionExpired();
-      setLoadState('error');
-    }
-  }
+  useEffect(() => {
+    if (
+      previewQuery.error instanceof ServiceError &&
+      previewQuery.error.body?.code === ERROR_CODES.SESSION_EXPIRED
+    )
+      onSessionExpired();
+  }, [previewQuery.error, onSessionExpired]);
 
   useEffect(() => {
     if (!open) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset the flow each time the dialog opens
     setStep('review');
-    setReason('');
-    setNote('');
-    setAck(false);
-    setAckError(false);
+    reset();
     setError(null);
     setResult(null);
     setNotice(null);
     key.current = newKey();
-    void loadPreview();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  async function submit() {
+  const submit = async (input: CancelFormOutput) => {
     if (busy || !preview) return;
-    if (!ack) return setAckError(true);
-    setAckError(false);
     setError(null);
-    setBusy(true);
     try {
-      const next = (
-        await manageService.cancel(
-          v.reference,
-          {
-            idempotencyKey: key.current,
-            reason: (reason || null) as CancelRequest['reason'],
-            note: note.trim() || null,
-            acknowledged: true,
-            expectedRefundMinor: preview.refundMinor,
-          },
-          csrf,
-        )
-      ).data;
+      const next = await cancelBooking.mutateAsync({
+        reference: v.reference,
+        body: {
+          idempotencyKey: key.current,
+          reason: (input.reason || null) as CancelRequest['reason'],
+          note: input.note?.trim() || null,
+          acknowledged: true,
+          expectedRefundMinor: preview.refundMinor,
+        },
+        csrf,
+      });
       setResult(next);
       setStep('done');
       onUpdated(next, SUCCESS_MESSAGES.BOOKING_CANCELLED);
@@ -206,7 +219,8 @@ export function CancelFlow({
         f.body.preview
       ) {
         key.current = newKey();
-        setPreview(f.body.preview as CancellationPreview);
+        /* The preview query is refreshed after the server rejects the stale amount. */
+        void previewQuery.refetch();
         setStep('review');
         setNotice(ERROR_MESSAGES.REFUND_AMOUNT_CHANGED_REVIEW);
       } else if (!f || f.network || f.status >= 500) {
@@ -221,10 +235,9 @@ export function CancelFlow({
           retryable: false,
         });
       }
-    } finally {
-      setBusy(false);
     }
-  }
+  };
+  const submitForm = form.handleSubmit(submit);
 
   const c = result?.cancellation;
   const panelKey = sessionExpired
@@ -315,7 +328,7 @@ export function CancelFlow({
                 <Button
                   variant="secondary"
                   size="sm"
-                  onClick={() => void loadPreview()}
+                  onClick={() => void previewQuery.refetch()}
                 >
                   Try again
                 </Button>
@@ -356,14 +369,7 @@ export function CancelFlow({
               </div>
             </div>
           ) : (
-            <form
-              noValidate
-              onSubmit={(e) => {
-                e.preventDefault();
-                void submit();
-              }}
-              className="space-y-5"
-            >
+            <form noValidate onSubmit={submitForm} className="space-y-5">
               <p className="rounded-control bg-paper text-small p-4">
                 You will get back{' '}
                 <span className="font-semibold">
@@ -385,31 +391,38 @@ export function CancelFlow({
                     (optional)
                   </span>
                 </Label>
-                <Select
-                  items={[
-                    { value: 'none', label: 'Choose a reason' },
-                    ...CANCEL_REASONS.map((r) => ({ value: r, label: r })),
-                  ]}
-                  value={reason || 'none'}
-                  onValueChange={(val) =>
-                    setReason(val === 'none' || !val ? '' : val)
-                  }
-                >
-                  <SelectTrigger
-                    id="cancel-reason"
-                    className="bg-card min-h-12 w-full"
-                  >
-                    <SelectValue placeholder="Choose a reason" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Choose a reason</SelectItem>
-                    {CANCEL_REASONS.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={control}
+                  name="reason"
+                  render={({ field }) => (
+                    <Select
+                      items={[
+                        { value: 'none', label: 'Choose a reason' },
+                        ...CANCEL_REASONS.map((r) => ({ value: r, label: r })),
+                      ]}
+                      value={field.value ?? 'none'}
+                      onValueChange={(val) =>
+                        field.onChange(val === 'none' || !val ? null : val)
+                      }
+                      disabled={busy}
+                    >
+                      <SelectTrigger
+                        id="cancel-reason"
+                        className="bg-card min-h-12 w-full"
+                      >
+                        <SelectValue placeholder="Choose a reason" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Choose a reason</SelectItem>
+                        {CANCEL_REASONS.map((r) => (
+                          <SelectItem key={r} value={r}>
+                            {r}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label
@@ -423,11 +436,12 @@ export function CancelFlow({
                 </Label>
                 <Textarea
                   id="cancel-note"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
+                  {...register('note')}
                   maxLength={300}
                   rows={3}
+                  disabled={busy}
                   aria-describedby="cancel-note-count"
+                  aria-invalid={formErrors.note ? true : undefined}
                   className="bg-card w-full"
                 />
                 <p
@@ -442,27 +456,42 @@ export function CancelFlow({
                   htmlFor="cancel-ack"
                   className="flex cursor-pointer items-start gap-3 py-1 font-normal"
                 >
-                  <Checkbox
-                    id="cancel-ack"
-                    checked={ack}
-                    onCheckedChange={(checked) => {
-                      setAck(!!checked);
-                      if (checked) setAckError(false);
-                    }}
-                    aria-invalid={ackError || undefined}
-                    aria-describedby={ackError ? 'cancel-ack-error' : undefined}
-                    className="mt-0.5"
+                  <Controller
+                    control={control}
+                    name="acknowledged"
+                    render={({ field }) => (
+                      <Checkbox
+                        id="cancel-ack"
+                        name={field.name}
+                        ref={field.ref}
+                        checked={field.value === true}
+                        disabled={busy}
+                        onCheckedChange={(checked) =>
+                          field.onChange(checked === true)
+                        }
+                        onBlur={field.onBlur}
+                        aria-invalid={
+                          formErrors.acknowledged ? true : undefined
+                        }
+                        aria-describedby={
+                          formErrors.acknowledged
+                            ? 'cancel-ack-error'
+                            : undefined
+                        }
+                        className="mt-0.5"
+                      />
+                    )}
                   />
                   <span className="text-small">
                     I understand this cannot be undone.
                   </span>
                 </Label>
-                {ackError && (
+                {formErrors.acknowledged && (
                   <p
                     id="cancel-ack-error"
                     className="text-small text-destructive mt-1.5 font-medium"
                   >
-                    Please confirm that you understand this cannot be undone.
+                    {formErrors.acknowledged.message}
                   </p>
                 )}
               </div>
@@ -478,7 +507,7 @@ export function CancelFlow({
                         variant="secondary"
                         size="sm"
                         loading={busy}
-                        onClick={() => void submit()}
+                        onClick={() => void form.handleSubmit(submit)()}
                       >
                         Try again
                       </Button>

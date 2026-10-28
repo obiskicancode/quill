@@ -42,6 +42,11 @@ import type {
   StoredCancellation,
 } from '@/types/manage.types';
 
+type QueryExecutor = Pick<
+  typeof db,
+  'select' | 'insert' | 'update' | 'delete' | 'execute'
+>;
+
 export interface StoredReservation {
   id: string;
   roomId: string;
@@ -176,8 +181,9 @@ function historyType(status: Reservation['status']): HistoryType {
 
 export async function loadStoredReservation(
   reference: string,
+  executor: QueryExecutor = db,
 ): Promise<StoredReservation | null> {
-  const [row] = await db
+  const [row] = await executor
     .select()
     .from(reservations)
     .where(eq(reservations.reference, reference))
@@ -192,27 +198,27 @@ export async function loadStoredReservation(
     refundRows,
     changeRows,
   ] = await Promise.all([
-    db
+    executor
       .select()
       .from(roomTypes)
       .where(eq(roomTypes.id, row.roomTypeId))
       .limit(1),
-    db
+    executor
       .select()
       .from(reservationExtras)
       .where(eq(reservationExtras.reservationId, row.id)),
-    db
+    executor
       .select()
       .from(payments)
       .where(eq(payments.reservationId, row.id))
       .orderBy(payments.createdAt),
-    db
+    executor
       .select()
       .from(reservationStatusHistory)
       .where(eq(reservationStatusHistory.reservationId, row.id))
       .orderBy(reservationStatusHistory.createdAt),
-    db.select().from(refunds).where(eq(refunds.reservationId, row.id)),
-    db
+    executor.select().from(refunds).where(eq(refunds.reservationId, row.id)),
+    executor
       .select()
       .from(reservationChanges)
       .where(eq(reservationChanges.reservationId, row.id))
@@ -223,7 +229,7 @@ export async function loadStoredReservation(
   if (!room) return null;
   const latestPayment = paymentRows.at(-1) ?? null;
   const proofRows = latestPayment
-    ? await db
+    ? await executor
         .select()
         .from(paymentProofs)
         .where(eq(paymentProofs.paymentId, latestPayment.id))
@@ -814,105 +820,116 @@ export async function insertReservation(input: {
   guest: GuestInfo;
   snapshot: ReservationSnapshot;
 }): Promise<StoredReservation | null> {
-  const found = await findRoomForStay(
-    input.roomSlug,
-    input.stay.checkIn,
-    input.stay.checkOut,
-  );
-  if (!found) return null;
-  const { roomType, room } = found;
+  const roomType = await findRoomTypeBySlug(input.roomSlug);
+  if (!roomType) return null;
+
   const now = new Date();
   const id = randomUUID();
-  const row: typeof reservations.$inferInsert = {
-    id,
-    reference: input.reference,
-    roomId: room.id,
-    roomTypeId: roomType.id,
-    guestName: input.guest.fullName,
-    guestEmail: input.guest.email || null,
-    guestEmailMissing: !input.guest.email,
-    guestPhone: input.guest.phone,
-    guestCountry: input.guest.country || null,
-    arrivalTime: input.guest.arrivalTime || null,
-    specialRequests: input.guest.specialRequests || null,
-    checkIn: input.stay.checkIn,
-    checkOut: input.stay.checkOut,
-    adults: input.stay.adults,
-    children: input.stay.children,
-    nights: input.quote.breakdown.nights,
-    status: 'pending',
-    bookingSource: 'website',
-    paymentMode: dbPaymentModeOf(input.settings.paymentMode),
-    confirmationMode:
-      input.settings.confirmationMode === 'manual'
-        ? 'manual_approval'
-        : 'instant',
-    subtotalMinor:
-      input.quote.breakdown.roomSubtotalMinor +
-      (input.quote.breakdown.extraBed?.totalMinor ?? 0),
-    extrasMinor: input.quote.breakdown.extras.reduce(
-      (sum, e) => sum + e.totalMinor,
-      0,
-    ),
-    discountMinor: input.quote.breakdown.discount?.amountMinor ?? 0,
-    taxMinor: input.quote.breakdown.taxMinor,
-    serviceChargeMinor: input.quote.breakdown.serviceChargeMinor,
-    totalMinor: input.quote.breakdown.totalMinor,
-    depositRequiredMinor: input.quote.payment.dueNowMinor,
-    amountPaidMinor: 0,
-    amountRefundedMinor: 0,
-    balanceMinor: input.quote.payment.totalMinor,
-    currency: 'NGN',
-    holdExpiresAt: new Date(Date.now() + input.settings.holdSeconds * 1000),
-    termsAcceptedAt: now,
-    snapshot: input.snapshot as unknown as Record<string, unknown>,
-  };
-  await db.insert(reservations).values(row);
 
-  if (input.quote.breakdown.lines.length > 0)
-    await db.insert(reservationNights).values(
-      input.quote.breakdown.lines.map((line) => ({
-        reservationId: id,
-        date: line.date,
-        rateMinor: line.rateMinor,
-      })),
+  const createdId = await db.transaction(async (tx) => {
+    const room = await findAvailableRoom(
+      roomType.id,
+      input.stay.checkIn,
+      input.stay.checkOut,
+      tx,
     );
+    if (!room) return null;
 
-  if (input.quote.breakdown.extras.length > 0) {
-    const extraRows = await db
-      .select()
-      .from(extras)
-      .where(
-        inArray(
-          extras.slug,
-          input.quote.breakdown.extras.map((e) => e.id),
-        ),
-      );
-    const bySlug = new Map(extraRows.map((e) => [e.slug, e]));
-    await db.insert(reservationExtras).values(
-      input.quote.breakdown.extras.map((line) => {
-        const extra = bySlug.get(line.id);
-        return {
+    const row: typeof reservations.$inferInsert = {
+      id,
+      reference: input.reference,
+      roomId: room.id,
+      roomTypeId: roomType.id,
+      guestName: input.guest.fullName,
+      guestEmail: input.guest.email || null,
+      guestEmailMissing: !input.guest.email,
+      guestPhone: input.guest.phone,
+      guestCountry: input.guest.country || null,
+      arrivalTime: input.guest.arrivalTime || null,
+      specialRequests: input.guest.specialRequests || null,
+      checkIn: input.stay.checkIn,
+      checkOut: input.stay.checkOut,
+      adults: input.stay.adults,
+      children: input.stay.children,
+      nights: input.quote.breakdown.nights,
+      status: 'pending',
+      bookingSource: 'website',
+      paymentMode: dbPaymentModeOf(input.settings.paymentMode),
+      confirmationMode:
+        input.settings.confirmationMode === 'manual'
+          ? 'manual_approval'
+          : 'instant',
+      subtotalMinor:
+        input.quote.breakdown.roomSubtotalMinor +
+        (input.quote.breakdown.extraBed?.totalMinor ?? 0),
+      extrasMinor: input.quote.breakdown.extras.reduce(
+        (sum, e) => sum + e.totalMinor,
+        0,
+      ),
+      discountMinor: input.quote.breakdown.discount?.amountMinor ?? 0,
+      taxMinor: input.quote.breakdown.taxMinor,
+      serviceChargeMinor: input.quote.breakdown.serviceChargeMinor,
+      totalMinor: input.quote.breakdown.totalMinor,
+      depositRequiredMinor: input.quote.payment.dueNowMinor,
+      amountPaidMinor: 0,
+      amountRefundedMinor: 0,
+      balanceMinor: input.quote.payment.totalMinor,
+      currency: 'NGN',
+      holdExpiresAt: new Date(Date.now() + input.settings.holdSeconds * 1000),
+      termsAcceptedAt: now,
+      snapshot: input.snapshot as unknown as Record<string, unknown>,
+    };
+    await tx.insert(reservations).values(row);
+
+    if (input.quote.breakdown.lines.length > 0)
+      await tx.insert(reservationNights).values(
+        input.quote.breakdown.lines.map((line) => ({
           reservationId: id,
-          extraId: extra?.id ?? null,
-          name: line.name,
-          quantity: line.quantity,
-          unitPriceMinor:
-            extra?.priceMinor ??
-            Math.round(line.totalMinor / Math.max(1, line.quantity)),
-          totalMinor: line.totalMinor,
-          pricingUnit: extra?.pricingUnit ?? 'per_stay',
-        };
-      }),
-    );
-  }
+          date: line.date,
+          rateMinor: line.rateMinor,
+        })),
+      );
 
-  await db.insert(reservationStatusHistory).values({
-    reservationId: id,
-    fromStatus: null,
-    toStatus: 'pending',
-    reason: 'created',
-    metadata: { type: 'created' },
+    if (input.quote.breakdown.extras.length > 0) {
+      const extraRows = await tx
+        .select()
+        .from(extras)
+        .where(
+          inArray(
+            extras.slug,
+            input.quote.breakdown.extras.map((e) => e.id),
+          ),
+        );
+      const bySlug = new Map(extraRows.map((e) => [e.slug, e]));
+      await tx.insert(reservationExtras).values(
+        input.quote.breakdown.extras.map((line) => {
+          const extra = bySlug.get(line.id);
+          return {
+            reservationId: id,
+            extraId: extra?.id ?? null,
+            name: line.name,
+            quantity: line.quantity,
+            unitPriceMinor:
+              extra?.priceMinor ??
+              Math.round(line.totalMinor / Math.max(1, line.quantity)),
+            totalMinor: line.totalMinor,
+            pricingUnit: extra?.pricingUnit ?? 'per_stay',
+          };
+        }),
+      );
+    }
+
+    await tx.insert(reservationStatusHistory).values({
+      reservationId: id,
+      fromStatus: null,
+      toStatus: 'pending',
+      reason: 'created',
+      metadata: { type: 'created' },
+    });
+
+    return id;
   });
+
+  if (!createdId) return null;
   return loadStoredReservation(input.reference);
 }

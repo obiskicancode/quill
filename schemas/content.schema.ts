@@ -89,9 +89,9 @@ export const enquiryFields = z.object({
   roomType: z.string().max(80).default(''),
   /** Which page sent this. Helps the hotel spot a broken link. */
   source_page: z.string().trim().max(40).default(''),
-  consent: z.literal(true, {
-    message: ERROR_MESSAGES.CONSENT_REQUIRED,
-  }),
+  consent: z
+    .boolean()
+    .refine((value) => value, { message: ERROR_MESSAGES.CONSENT_REQUIRED }),
 });
 
 type Fields = z.infer<typeof enquiryFields>;
@@ -160,6 +160,7 @@ export const enquirySchema = enquiryFields
   .superRefine(refine);
 
 export type EnquiryFormInput = z.input<typeof enquiryFormSchema>;
+export type EnquiryFormOutput = z.output<typeof enquiryFormSchema>;
 export type EnquiryRequest = z.output<typeof enquirySchema>;
 
 export interface EnquiryResponse {

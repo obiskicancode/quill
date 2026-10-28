@@ -1,13 +1,16 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { format, parseISO } from 'date-fns';
 import { AlertCircle, CalendarDays, Check, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -17,10 +20,49 @@ import {
 } from '@/components/ui/popover';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useChangeDatesQuote,
+  useChangeReservationDates,
+} from '@/hooks/services/admin/use-reservations';
 import { formatNaira } from '@/lib/format';
+import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import { adminChangeDatesSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
+
+const changeDatesFormSchema = adminChangeDatesSchema
+  .omit({ version: true, idempotencyKey: true })
+  .extend({
+    checkIn: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, ERROR_MESSAGES.INVALID_CHECKIN_DATE),
+    checkOut: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, ERROR_MESSAGES.INVALID_CHECKOUT_DATE),
+  })
+  .superRefine((value, ctx) => {
+    if (value.checkOut <= value.checkIn) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['checkOut'],
+        message: ERROR_MESSAGES.CHECKOUT_AFTER_CHECKIN_UI,
+      });
+    }
+    if (
+      value.overrideRules &&
+      (!value.overrideReason || value.overrideReason.trim().length < 3)
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['overrideReason'],
+        message: ERROR_MESSAGES.OVERRIDE_REASON_REQUIRED,
+      });
+    }
+  });
+
+type ChangeDatesFormInput = z.input<typeof changeDatesFormSchema>;
+type ChangeDatesFormOutput = z.output<typeof changeDatesFormSchema>;
 
 interface ChangeDatesModalProps {
   open: boolean;
@@ -37,105 +79,112 @@ export function ChangeDatesModal({
   onSuccess,
   onRefresh,
 }: ChangeDatesModalProps) {
-  const [checkIn, setCheckIn] = useState(reservation.checkIn);
-  const [checkOut, setCheckOut] = useState(reservation.checkOut);
-  const [selectedRoomId, setSelectedRoomId] = useState<string>(
-    reservation.roomId,
-  );
-  const [overrideRules, setOverrideRules] = useState(false);
-  const [overrideReason, setOverrideReason] = useState('');
-
-  const [quoteData, setQuoteData] = useState<{
-    currentRoomAvailable: boolean;
-    candidateRooms: { id: string; roomNumber: string; floor: number | null }[];
-    comparison: {
-      currentTotalMinor: number;
-      newTotalMinor: number;
-      diffMinor: number;
-      guestOwesMinor: number;
-      refundDueMinor: number;
-      noDifference: boolean;
-    };
+  const [quoteRequest, setQuoteRequest] = useState<{
+    checkIn: string;
+    checkOut: string;
   } | null>(null);
-
-  const [quoting, setQuoting] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const quoteQuery = useChangeDatesQuote(
+    reservation.id,
+    quoteRequest ?? { checkIn: '', checkOut: '' },
+    Boolean(quoteRequest),
+  );
+  const changeDates = useChangeReservationDates();
+  const form = useForm<ChangeDatesFormInput, unknown, ChangeDatesFormOutput>({
+    resolver: zodResolver(changeDatesFormSchema),
+    defaultValues: {
+      checkIn: reservation.checkIn,
+      checkOut: reservation.checkOut,
+      roomId: reservation.roomId,
+      overrideRules: false,
+      overrideReason: '',
+    },
+    mode: 'onBlur',
+  });
+  const {
+    control,
+    formState: { errors, isSubmitting },
+    register,
+    setError: setFieldError,
+    setValue,
+    watch,
+  } = form;
+  const checkIn = watch('checkIn');
+  const checkOut = watch('checkOut');
+  const selectedRoomId = watch('roomId');
+  const overrideRules = watch('overrideRules');
+  const busy = isSubmitting || changeDates.isPending;
   const [error, setError] = useState<string | null>(null);
+  const quoteData = quoteRequest ? (quoteQuery.data ?? null) : null;
+  const quoting = quoteQuery.isFetching;
+  const quoteError = quoteQuery.error
+    ? quoteQuery.error instanceof Error
+      ? quoteQuery.error.message
+      : ERROR_MESSAGES.FAILED_TO_QUOTE_DATES
+    : null;
 
-  const handleFetchQuote = async () => {
+  useEffect(() => {
+    if (!quoteRequest || !quoteQuery.data) return;
+
+    if (
+      !quoteQuery.data.currentRoomAvailable &&
+      quoteQuery.data.candidateRooms.length > 0
+    ) {
+      setValue('roomId', quoteQuery.data.candidateRooms[0].id);
+    } else {
+      setValue('roomId', reservation.roomId);
+    }
+  }, [quoteRequest, quoteQuery.data, reservation.roomId, setValue]);
+
+  const handleFetchQuote = () => {
     if (checkOut <= checkIn) {
       setError(ERROR_MESSAGES.CHECKOUT_AFTER_CHECKIN_UI);
       return;
     }
 
     setError(null);
-    setQuoting(true);
 
-    try {
-      const res = await adminService.quoteChangeDates(reservation.id, {
-        checkIn,
-        checkOut,
-      });
-
-      setQuoteData(res.data);
-      if (
-        !res.data.currentRoomAvailable &&
-        res.data.candidateRooms.length > 0
-      ) {
-        setSelectedRoomId(res.data.candidateRooms[0].id);
-      } else {
-        setSelectedRoomId(reservation.roomId);
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_QUOTE_DATES,
-      );
-    } finally {
-      setQuoting(false);
+    if (
+      quoteRequest &&
+      quoteRequest.checkIn === checkIn &&
+      quoteRequest.checkOut === checkOut
+    ) {
+      void quoteQuery.refetch();
+    } else {
+      setQuoteRequest({ checkIn, checkOut });
     }
   };
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
+  const onSubmit = async (input: ChangeDatesFormOutput) => {
     if (!quoteData) {
       setError(ERROR_MESSAGES.CHECK_PRICE_AVAILABILITY_FIRST);
       return;
     }
 
-    if (
-      overrideRules &&
-      (!overrideReason || overrideReason.trim().length < 3)
-    ) {
-      setError(ERROR_MESSAGES.OVERRIDE_REASON_REQUIRED);
-      return;
-    }
-
     setError(null);
-    setSubmitting(true);
 
     try {
-      const updated = await adminService.changeDates(reservation.id, {
-        checkIn,
-        checkOut,
-        roomId: selectedRoomId,
-        overrideRules,
-        overrideReason: overrideReason.trim() || undefined,
-        version: reservation.updatedAt,
-        idempotencyKey: crypto.randomUUID(),
+      const updated = await changeDates.mutateAsync({
+        id: reservation.id,
+        body: {
+          checkIn: input.checkIn,
+          checkOut: input.checkOut,
+          roomId: input.roomId,
+          overrideRules: input.overrideRules,
+          overrideReason: input.overrideReason?.trim() || undefined,
+          version: reservation.updatedAt,
+          idempotencyKey: crypto.randomUUID(),
+        },
       });
 
-      onSuccess(updated.data, SUCCESS_MESSAGES.RESERVATION_DATES_CHANGED);
+      onSuccess(updated, SUCCESS_MESSAGES.RESERVATION_DATES_CHANGED);
       onClose();
-    } catch (err) {
+    } catch (caught) {
       setError(
-        err instanceof Error
-          ? err.message
+        caught instanceof Error
+          ? caught.message
           : ERROR_MESSAGES.FAILED_TO_CHANGE_DATES_UI,
       );
-    } finally {
-      setSubmitting(false);
+      applyServerFieldErrors(setFieldError, caught);
     }
   };
 
@@ -145,52 +194,70 @@ export function ChangeDatesModal({
       onClose={onClose}
       title="Change Stay Dates"
       description={`Modify arrival and departure dates for ${reservation.reference}.`}
-      error={error}
+      error={error ?? quoteError}
       maxWidth="xl"
       onRefresh={onRefresh}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        noValidate
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4"
+      >
         {/* Date Inputs */}
-        <div className="space-y-1.5">
-          <Label className="text-small text-ink font-semibold">
-            New Stay Dates <span className="text-destructive">*</span>
-          </Label>
-          <Popover>
-            <PopoverTrigger
-              render={
-                <Button
-                  variant="outline"
-                  size="md"
-                  className="w-full justify-start gap-2.5 text-left font-normal"
+        <Field
+          id="change-dates"
+          label="New Stay Dates *"
+          error={errors.checkIn?.message ?? errors.checkOut?.message}
+        >
+          {(a) => (
+            <Popover>
+              <PopoverTrigger
+                render={
+                  <Button
+                    id={a.id}
+                    aria-describedby={a['aria-describedby']}
+                    aria-invalid={a['aria-invalid']}
+                    variant="outline"
+                    size="md"
+                    className="w-full justify-start gap-2.5 text-left font-normal"
+                  />
+                }
+              >
+                <CalendarDays className="text-muted-foreground size-4 shrink-0" />
+                <span>
+                  {checkIn && checkOut
+                    ? `${format(parseISO(checkIn), 'LLL dd, y')} - ${format(parseISO(checkOut), 'LLL dd, y')}`
+                    : checkIn
+                      ? `From ${format(parseISO(checkIn), 'LLL dd, y')}`
+                      : 'Select new stay dates'}
+                </span>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-auto p-0">
+                <Controller
+                  control={control}
+                  name="checkIn"
+                  render={({ field }) => (
+                    <Calendar
+                      mode="range"
+                      selected={{
+                        from: checkIn ? parseISO(checkIn) : undefined,
+                        to: checkOut ? parseISO(checkOut) : undefined,
+                      }}
+                      onSelect={(range) => {
+                        if (range?.from)
+                          field.onChange(format(range.from, 'yyyy-MM-dd'));
+                        if (range?.to)
+                          setValue('checkOut', format(range.to, 'yyyy-MM-dd'));
+                        setQuoteRequest(null);
+                      }}
+                      numberOfMonths={1}
+                    />
+                  )}
                 />
-              }
-            >
-              <CalendarDays className="text-muted-foreground size-4 shrink-0" />
-              <span>
-                {checkIn && checkOut
-                  ? `${format(parseISO(checkIn), 'LLL dd, y')} - ${format(parseISO(checkOut), 'LLL dd, y')}`
-                  : checkIn
-                    ? `From ${format(parseISO(checkIn), 'LLL dd, y')}`
-                    : 'Select new stay dates'}
-              </span>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-auto p-0">
-              <Calendar
-                mode="range"
-                selected={{
-                  from: checkIn ? parseISO(checkIn) : undefined,
-                  to: checkOut ? parseISO(checkOut) : undefined,
-                }}
-                onSelect={(range) => {
-                  if (range?.from) setCheckIn(format(range.from, 'yyyy-MM-dd'));
-                  if (range?.to) setCheckOut(format(range.to, 'yyyy-MM-dd'));
-                  setQuoteData(null);
-                }}
-                numberOfMonths={1}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+              </PopoverContent>
+            </Popover>
+          )}
+        </Field>
 
         <div>
           <Button
@@ -280,7 +347,7 @@ export function ChangeDatesModal({
                             selectedRoomId === r.id ? 'default' : 'outline'
                           }
                           size="sm"
-                          onClick={() => setSelectedRoomId(r.id)}
+                          onClick={() => setValue('roomId', r.id)}
                         >
                           Room {r.roomNumber}
                         </Button>
@@ -307,30 +374,44 @@ export function ChangeDatesModal({
             htmlFor="override-rules-toggle"
             className="text-small text-ink flex cursor-pointer items-center gap-2"
           >
-            <Checkbox
-              id="override-rules-toggle"
-              checked={overrideRules}
-              onCheckedChange={(checked) => setOverrideRules(!!checked)}
+            <Controller
+              control={control}
+              name="overrideRules"
+              render={({ field }) => (
+                <Checkbox
+                  id="override-rules-toggle"
+                  name={field.name}
+                  ref={field.ref}
+                  checked={field.value === true}
+                  onCheckedChange={(checked) =>
+                    field.onChange(checked === true)
+                  }
+                  onBlur={field.onBlur}
+                  disabled={busy}
+                />
+              )}
             />
             <span>Override hotel policies (min notice, same-day cut-off)</span>
           </Label>
 
           {overrideRules && (
             <div className="space-y-1.5 pt-2">
-              <Label
-                htmlFor="override-reason-input"
-                className="text-small text-ink font-semibold"
-              >
-                Override Reason <span className="text-destructive">*</span>
-              </Label>
-              <Input
+              <Field
                 id="override-reason-input"
-                type="text"
-                required
-                value={overrideReason}
-                onChange={(e) => setOverrideReason(e.target.value)}
-                placeholder="e.g. VIP guest request approved by General Manager..."
-              />
+                label="Override Reason *"
+                error={errors.overrideReason?.message}
+              >
+                {(a) => (
+                  <Input
+                    {...a}
+                    {...register('overrideReason')}
+                    type="text"
+                    disabled={busy}
+                    placeholder="e.g. VIP guest request approved by General Manager..."
+                    className={inputClass(errors.overrideReason?.message)}
+                  />
+                )}
+              </Field>
             </div>
           )}
         </div>
@@ -341,15 +422,15 @@ export function ChangeDatesModal({
             variant="outline"
             size="sm"
             onClick={onClose}
-            disabled={submitting}
+            disabled={busy}
           >
             Cancel
           </Button>
           <Button
             type="submit"
             size="sm"
-            disabled={submitting || !quoteData}
-            loading={submitting}
+            disabled={busy || !quoteData}
+            loading={busy}
           >
             Confirm date change
           </Button>

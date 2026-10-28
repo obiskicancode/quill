@@ -1,3 +1,5 @@
+import { getWebStorage } from '@/hooks/use-web-storage';
+
 /**
  * Fires the purchase event once per booking, even across reloads (guarded in sessionStorage).
  * It sends no personal data: only an opaque transaction id, the amount and the currency.
@@ -10,11 +12,13 @@ export function trackBookingConfirmedOnce(
   reference: string,
   valueMinor: number,
 ): void {
-  if (typeof window === 'undefined') return;
+  const storage = getWebStorage('sessionStorage');
+  if (!storage) return;
+
   const key = `dea_tracked_${reference}`;
   try {
-    if (window.sessionStorage.getItem(key)) return;
-    window.sessionStorage.setItem(key, '1');
+    if (storage.getItem(key)) return;
+    storage.setItem(key, '1');
   } catch {
     return; // storage blocked: skip rather than risk a duplicate event
   }

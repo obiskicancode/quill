@@ -20,9 +20,8 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, type CSSProperties, type ReactNode } from 'react';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +40,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { useAdminLogout } from '@/hooks/services/admin/use-auth';
 import { ADMIN_NAV, ROLE_LABELS } from '@/lib/auth/permissions';
 import type { AdminIdentity } from '@/types/admin.types';
 import type { AdminRole, Permission } from '@/types/auth.types';
@@ -130,11 +130,12 @@ function AdminSidebar({
 
         <SidebarContent>
           {mfaPending && (
-            <div className="p-3 pb-0">
+            <div className="p-3 pb-0 md:max-lg:p-1 md:max-lg:pb-0">
               <Link
                 href="/admin/account?setup=required"
                 onClick={closeMobile}
                 aria-label="Finish two-factor setup"
+                title="Finish two-factor setup"
                 className="rounded-control border-primary/40 bg-primary/10 text-small text-paper hover:bg-primary/20 block border p-3 md:max-lg:flex md:max-lg:size-10 md:max-lg:items-center md:max-lg:justify-center md:max-lg:p-0"
               >
                 <ShieldAlert
@@ -242,7 +243,8 @@ export function AdminShell({
   children: ReactNode;
 }) {
   const router = useRouter();
-  const [signingOut, setSigningOut] = useState(false);
+  const logout = useAdminLogout();
+  const signingOut = logout.isPending;
 
   useEffect(() => {
     const handler = () => router.replace('/admin/login?expired=1');
@@ -251,9 +253,8 @@ export function AdminShell({
   }, [router]);
 
   async function signOut() {
-    setSigningOut(true);
     try {
-      await adminService.logout();
+      await logout.mutateAsync();
     } catch {
       // The cookies are cleared server-side whenever possible; continue to login.
     } finally {

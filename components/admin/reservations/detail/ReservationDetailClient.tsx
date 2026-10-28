@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -9,16 +10,20 @@ import {
   ChevronRight,
   RefreshCw,
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { AdminError, AdminLoading } from '@/components/admin/AdminStates';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import {
+  useReservationDetail,
+  useReservationNeighbors,
+} from '@/hooks/services/admin/use-reservations-data';
+import { queryKeys } from '@/hooks/services/query-keys';
 import type { AdminRole, Permission } from '@/types/auth.types';
 import type {
   ReservationDetail,
-  ReservationNeighbors,
   ReservationPaymentItem,
 } from '@/types/reservation.types';
 
@@ -70,81 +75,43 @@ export function ReservationDetailClient({
 }: ReservationDetailClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
-  const [detail, setDetail] = useState<ReservationDetail | null>(initialDetail);
-  const [isLoading, setIsLoading] = useState(!initialDetail);
-  const [error, setError] = useState<string | null>(null);
+  const [appliedDetail, setAppliedDetail] = useState<ReservationDetail | null>(
+    initialDetail,
+  );
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
 
-  const [neighbors, setNeighbors] = useState<ReservationNeighbors>({
-    prevId: null,
-    nextId: null,
-  });
-
-  const [hasNewerVersion, setHasNewerVersion] = useState(false);
-
-  // Load detail if not provided initially
-  const loadDetail = useCallback(
-    async (isQuiet = false) => {
-      if (!isQuiet) setIsLoading(true);
-      try {
-        const { adminService } =
-          await import('@/app/api/services/admin.service');
-        const res = await adminService.getReservationDetail(reservationId);
-        if (res.data) {
-          if (detail && res.data.updatedAt !== detail.updatedAt) {
-            setHasNewerVersion(true);
-          } else {
-            setDetail(res.data);
-            setHasNewerVersion(false);
-            setError(null);
-          }
-        }
-      } catch (err: unknown) {
-        const msg =
-          err instanceof Error
-            ? err.message
-            : ERROR_MESSAGES.FAILED_TO_LOAD_BOOKING;
-        setError(msg);
-      } finally {
-        if (!isQuiet) setIsLoading(false);
-      }
-    },
-    [reservationId, detail],
+  const detailQuery = useReservationDetail(reservationId, initialDetail);
+  const neighborsQuery = useReservationNeighbors(
+    reservationId,
+    searchParams.toString(),
   );
 
-  // Fetch neighbors
-  useEffect(() => {
-    let isMounted = true;
-    import('@/app/api/services/admin.service').then(({ adminService }) => {
-      adminService
-        .getReservationNeighbors(reservationId, searchParams.toString())
-        .then((res) => {
-          if (isMounted && res.data) {
-            setNeighbors(res.data);
-          }
-        })
-        .catch(() => {});
-    });
+  const latestDetail = detailQuery.data ?? null;
+  const hasNewerVersion = Boolean(
+    latestDetail &&
+    appliedDetail &&
+    latestDetail.updatedAt !== appliedDetail.updatedAt,
+  );
+  const detail = hasNewerVersion
+    ? appliedDetail
+    : (latestDetail ?? appliedDetail);
+  const neighbors = neighborsQuery.data ?? { prevId: null, nextId: null };
+  const isLoading = detailQuery.isPending;
+  const error = detailQuery.error
+    ? detailQuery.error instanceof Error
+      ? detailQuery.error.message
+      : ERROR_MESSAGES.FAILED_TO_LOAD_BOOKING
+    : null;
 
-    return () => {
-      isMounted = false;
-    };
-  }, [reservationId, searchParams]);
-
-  // Silent 45-second concurrency polling
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        loadDetail(true);
-      }
-    }, 45000);
-
-    return () => clearInterval(timer);
-  }, [loadDetail]);
+  const loadDetail = () => {
+    void detailQuery.refetch();
+  };
 
   const handleApplyUpdate = () => {
-    loadDetail(false);
+    setAppliedDetail(latestDetail ?? appliedDetail);
+    void detailQuery.refetch();
   };
 
   const handleActionSuccess = (
@@ -155,15 +122,37 @@ export function ReservationDetailClient({
       toast.add({ title: message, type: 'success' });
     }
     if (updated) {
-      setDetail(updated);
+      setAppliedDetail(updated);
+      queryClient.setQueryData(
+        queryKeys.admin.reservations.detail(reservationId),
+        updated,
+      );
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.admin.reservations.lists(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.admin.reservations.neighbors(
+          reservationId,
+          searchParams.toString(),
+        ),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.admin.calendar.all,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.admin.dashboard.all,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.admin.payments.all,
+      });
     } else {
-      loadDetail(false);
+      loadDetail();
     }
   };
 
-  const backUrl = `/admin/reservations${
-    searchParams.toString() ? `?${searchParams.toString()}` : ''
-  }`;
+  const query = searchParams.toString();
+  const querySuffix = query ? `?${query}` : '';
+  const backUrl = `/admin/reservations${querySuffix}`;
 
   return (
     <div className="space-y-5">
@@ -186,7 +175,7 @@ export function ReservationDetailClient({
             onClick={() => {
               if (neighbors.prevId) {
                 router.push(
-                  `/admin/reservations/${neighbors.prevId}?${searchParams.toString()}`,
+                  `/admin/reservations/${neighbors.prevId}${querySuffix}`,
                 );
               }
             }}
@@ -247,11 +236,7 @@ export function ReservationDetailClient({
         <AdminError
           message={error}
           action={
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => loadDetail(false)}
-            >
+            <Button variant="secondary" size="sm" onClick={() => loadDetail()}>
               Retry
             </Button>
           }
@@ -334,7 +319,7 @@ export function ReservationDetailClient({
               onClose={() => setActiveModal(null)}
               reservation={detail}
               onSuccess={handleActionSuccess}
-              onRefresh={() => loadDetail(false)}
+              onRefresh={() => loadDetail()}
             />
           )}
 
@@ -344,7 +329,7 @@ export function ReservationDetailClient({
               onClose={() => setActiveModal(null)}
               reservation={detail}
               onSuccess={handleActionSuccess}
-              onRefresh={() => loadDetail(false)}
+              onRefresh={() => loadDetail()}
             />
           )}
 
@@ -354,7 +339,7 @@ export function ReservationDetailClient({
               onClose={() => setActiveModal(null)}
               reservation={detail}
               onSuccess={handleActionSuccess}
-              onRefresh={() => loadDetail(false)}
+              onRefresh={() => loadDetail()}
             />
           )}
 
@@ -364,7 +349,7 @@ export function ReservationDetailClient({
               onClose={() => setActiveModal(null)}
               reservation={detail}
               onSuccess={handleActionSuccess}
-              onRefresh={() => loadDetail(false)}
+              onRefresh={() => loadDetail()}
             />
           )}
 
@@ -374,7 +359,7 @@ export function ReservationDetailClient({
               onClose={() => setActiveModal(null)}
               reservation={detail}
               onSuccess={handleActionSuccess}
-              onRefresh={() => loadDetail(false)}
+              onRefresh={() => loadDetail()}
             />
           )}
 
@@ -384,7 +369,7 @@ export function ReservationDetailClient({
               onClose={() => setActiveModal(null)}
               reservation={detail}
               onSuccess={handleActionSuccess}
-              onRefresh={() => loadDetail(false)}
+              onRefresh={() => loadDetail()}
             />
           )}
 
@@ -394,7 +379,7 @@ export function ReservationDetailClient({
               onClose={() => setActiveModal(null)}
               reservation={detail}
               onSuccess={() => handleActionSuccess()}
-              onRefresh={() => loadDetail(false)}
+              onRefresh={() => loadDetail()}
             />
           )}
 
@@ -406,7 +391,7 @@ export function ReservationDetailClient({
                 reservation={detail}
                 payment={activeModal.payment}
                 onSuccess={handleActionSuccess}
-                onRefresh={() => loadDetail(false)}
+                onRefresh={() => loadDetail()}
               />
             )}
 
@@ -418,7 +403,7 @@ export function ReservationDetailClient({
                 reservation={detail}
                 payment={activeModal.payment}
                 onSuccess={handleActionSuccess}
-                onRefresh={() => loadDetail(false)}
+                onRefresh={() => loadDetail()}
               />
             )}
 
@@ -430,7 +415,7 @@ export function ReservationDetailClient({
                 reservation={detail}
                 initialAction={activeModal.initialAction}
                 onSuccess={handleActionSuccess}
-                onRefresh={() => loadDetail(false)}
+                onRefresh={() => loadDetail()}
               />
             )}
         </div>

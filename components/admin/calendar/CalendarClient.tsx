@@ -1,13 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AlertCircle, BedDouble, Loader2, RefreshCw } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import { adminService } from '@/app/api/services/admin.service';
 import { Button } from '@/components/ui/button';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { useCalendarRange } from '@/hooks/services/admin/use-calendar';
 import type { AdminRole } from '@/types/auth.types';
 import type {
   CalendarBlockBar,
@@ -27,6 +27,7 @@ interface CalendarClientProps {
 
 export function CalendarClient({ initialData, role }: CalendarClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   // URL state
@@ -35,29 +36,7 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
   const roomTypeParam = searchParams.get('roomTypeId');
   const viewParam = searchParams.get('view');
   const dayParam = searchParams.get('day');
-
-  const [from, setFrom] = useState(() =>
-    fromParam && /^\d{4}-\d{2}-\d{2}$/.test(fromParam)
-      ? fromParam
-      : initialData.from,
-  );
-  const [days, setDays] = useState(() =>
-    daysParam ? Number(daysParam) : initialData.days,
-  );
-  const [roomTypeId, setRoomTypeId] = useState<string | undefined>(
-    () => roomTypeParam || undefined,
-  );
-  const [view, setView] = useState<'grid' | 'agenda'>(() =>
-    viewParam === 'agenda' ? 'agenda' : 'grid',
-  );
-  const [selectedDay, setSelectedDay] = useState<string | null>(() =>
-    dayParam && /^\d{4}-\d{2}-\d{2}$/.test(dayParam) ? dayParam : null,
-  );
-
-  // Calendar Data
-  const [data, setData] = useState<CalendarResponse>(initialData);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const parsedDays = daysParam ? Number(daysParam) : NaN;
 
   // Block Modal state
   const [blockModalOpen, setBlockModalOpen] = useState(false);
@@ -68,111 +47,103 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
     endDate: string;
   } | null>(null);
 
+  const from =
+    fromParam && /^\d{4}-\d{2}-\d{2}$/.test(fromParam)
+      ? fromParam
+      : initialData.from;
+  const days =
+    Number.isInteger(parsedDays) && parsedDays > 0 && parsedDays <= 90
+      ? parsedDays
+      : initialData.days;
+  const roomTypeId = initialData.roomTypes.some((rt) => rt.id === roomTypeParam)
+    ? (roomTypeParam ?? undefined)
+    : undefined;
+  const view: 'grid' | 'agenda' = viewParam === 'agenda' ? 'agenda' : 'grid';
+  const selectedDay =
+    dayParam && /^\d{4}-\d{2}-\d{2}$/.test(dayParam) ? dayParam : null;
+
   // Sync state to URL search parameters
   const updateUrl = useCallback(
-    (
-      newFrom: string,
-      newDays: number,
-      newRt?: string,
-      newView?: string,
-      newDay?: string | null,
-    ) => {
+    (patch: {
+      from?: string;
+      days?: number;
+      roomTypeId?: string;
+      view?: 'grid' | 'agenda';
+      day?: string | null;
+    }) => {
+      const nextFrom = patch.from ?? from;
+      const nextDays = patch.days ?? days;
+      const nextRoomTypeId =
+        'roomTypeId' in patch ? patch.roomTypeId : roomTypeId;
+      const nextView = patch.view ?? view;
+      const nextDay = 'day' in patch ? patch.day : selectedDay;
+
       const q = new URLSearchParams();
-      if (newFrom !== initialData.today) q.set('from', newFrom);
-      if (newDays !== 14) q.set('days', String(newDays));
-      if (newRt) q.set('roomTypeId', newRt);
-      if (newView && newView !== 'grid') q.set('view', newView);
-      if (newDay) q.set('day', newDay);
+      if (nextFrom !== initialData.today) q.set('from', nextFrom);
+      if (nextDays !== 14) q.set('days', String(nextDays));
+      if (nextRoomTypeId) q.set('roomTypeId', nextRoomTypeId);
+      if (nextView !== 'grid') q.set('view', nextView);
+      if (nextDay) q.set('day', nextDay);
 
       const str = q.toString();
-      router.replace(`/admin/calendar${str ? `?${str}` : ''}`, {
+      router.replace(str ? `${pathname}?${str}` : pathname, {
         scroll: false,
       });
     },
-    [router, initialData.today],
+    [
+      days,
+      from,
+      initialData.today,
+      pathname,
+      roomTypeId,
+      router,
+      selectedDay,
+      view,
+    ],
   );
 
-  // Refresh when range parameters change
-  useEffect(() => {
-    let active = true;
-    updateUrl(from, days, roomTypeId, view, selectedDay);
+  const calendarQuery = useCalendarRange(
+    { from, days, roomTypeId },
+    {
+      initialData,
+      poll: !blockModalOpen && !selectedDay,
+    },
+  );
+  const [refreshing, setRefreshing] = useState(false);
 
-    const run = async () => {
-      try {
-        const res = await adminService.getCalendar({
-          from,
-          days,
-          roomTypeId,
-        });
-        if (active) {
-          setData(res.data);
-          setError(null);
-        }
-      } catch (err) {
-        if (active) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : ERROR_MESSAGES.FAILED_TO_REFRESH_CALENDAR,
-          );
-        }
-      }
-    };
-
-    run();
-
-    return () => {
-      active = false;
-    };
-  }, [from, days, roomTypeId, view, selectedDay, updateUrl]);
-
-  // Silent 60-second auto-refresh
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      if (document.hidden || blockModalOpen || selectedDay) return;
-      try {
-        const res = await adminService.getCalendar({ from, days, roomTypeId });
-        setData(res.data);
-      } catch {
-        // Silent failure in background
-      }
-    }, 60_000);
-
-    return () => clearInterval(interval);
-  }, [from, days, roomTypeId, blockModalOpen, selectedDay]);
+  const data = calendarQuery.data ?? initialData;
+  const loading =
+    refreshing || (calendarQuery.isPending && !calendarQuery.data);
+  const error = calendarQuery.error
+    ? calendarQuery.error instanceof Error
+      ? calendarQuery.error.message
+      : ERROR_MESSAGES.FAILED_TO_REFRESH_CALENDAR
+    : null;
 
   const handleManualRefresh = async () => {
-    setLoading(true);
-    setError(null);
+    setRefreshing(true);
     try {
-      const res = await adminService.getCalendar({ from, days, roomTypeId });
-      setData(res.data);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_REFRESH_CALENDAR,
-      );
+      await calendarQuery.refetch();
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
   };
 
   // Handle Header Changes
   const handleFromChange = (newFrom: string) => {
-    setFrom(newFrom);
+    updateUrl({ from: newFrom });
   };
 
   const handleDaysChange = (newDays: number) => {
-    setDays(newDays);
+    updateUrl({ days: newDays });
   };
 
   const handleRoomTypeChange = (newRt: string | undefined) => {
-    setRoomTypeId(newRt);
+    updateUrl({ roomTypeId: newRt });
   };
 
   const handleViewChange = (newView: 'grid' | 'agenda') => {
-    setView(newView);
+    updateUrl({ view: newView });
   };
 
   // Block Modal triggers
@@ -263,7 +234,7 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
         <CalendarGrid
           data={data}
           today={data.today}
-          onSelectDate={(d) => setSelectedDay(d)}
+          onSelectDate={(d) => updateUrl({ day: d })}
           onEditBlock={handleEditBlock}
           onStartBlockWithRange={handleStartBlockWithRange}
         />
@@ -271,7 +242,7 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
         <CalendarAgendaView
           data={data}
           today={data.today}
-          onSelectDate={(d) => setSelectedDay(d)}
+          onSelectDate={(d) => updateUrl({ day: d })}
         />
       )}
 
@@ -279,7 +250,7 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
       {selectedDay && (
         <CalendarDayPanel
           date={selectedDay}
-          onClose={() => setSelectedDay(null)}
+          onClose={() => updateUrl({ day: null })}
         />
       )}
 

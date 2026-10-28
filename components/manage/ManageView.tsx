@@ -1,14 +1,19 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { MessageSquare } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
-import { manageService } from '@/app/api/services/manage.service';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useManageBooking,
+  useManageSignOut,
+} from '@/hooks/services/guest/use-manage';
+import { queryKeys } from '@/hooks/services/query-keys';
 import { headerKind } from '@/lib/booking/status';
 import { formatCountdown } from '@/lib/format';
 import type { GuestReservation } from '@/types/booking.types';
@@ -35,7 +40,6 @@ import { ChangePayment } from './ChangePayment';
 import { EditDetailsPanel } from './EditDetailsPanel';
 import { SessionBar } from './SessionBar';
 
-const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 90_000;
 
 const emailLead = {
@@ -63,12 +67,17 @@ export function ManageView({
   onSignedOut,
   onExpired,
 }: ManageViewProps) {
-  const [v, setV] = useState(initial);
+  const queryClient = useQueryClient();
+  const bookingQuery = useManageBooking(initial.reference, initial);
+  const { refetch } = bookingQuery;
+  const v = bookingQuery.data;
+  const [pollTimedOut, setPollTimedOut] = useState(false);
   const [announcement, setAnnouncement] = useState('');
   const [expired, setExpired] = useState(false);
   const [refreshError, setRefreshError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
+  const manageSignOut = useManageSignOut();
+  const signingOut = manageSignOut.isPending;
   const [cancelOpen, setCancelOpen] = useState(false);
   const [changeOpen, setChangeOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -94,18 +103,23 @@ export function ManageView({
     0,
   );
 
-  const applyView = useCallback((next: GuestReservation, message?: string) => {
-    if (!next.manage) return setExpired(true);
-    setV(next);
-    if (message) setAnnouncement(message);
-  }, []);
+  const applyView = useCallback(
+    (next: GuestReservation, message?: string) => {
+      if (!next.manage) return setExpired(true);
+      queryClient.setQueryData(queryKeys.guest.manage(next.reference), next);
+      if (message) setAnnouncement(message);
+    },
+    [queryClient],
+  );
 
   /** A read-only reload. Retrying it can never change the booking. */
   const refresh = useCallback(async () => {
     setRefreshing(true);
     setRefreshError(false);
     try {
-      applyView((await manageService.get(v.reference)).data);
+      const result = await refetch();
+      if (result.error) throw result.error;
+      if (result.data) applyView(result.data);
     } catch (e) {
       if (
         e instanceof ServiceError &&
@@ -116,7 +130,7 @@ export function ManageView({
     } finally {
       setRefreshing(false);
     }
-  }, [v.reference, applyView]);
+  }, [refetch, applyView]);
 
   // Session countdown: when the 30 minutes are up, ask the guest to verify again.
   useEffect(() => {
@@ -135,40 +149,42 @@ export function ManageView({
   // Poll while a payment is being confirmed (the booking's, or the extra payment for new dates).
   const waiting =
     kind === 'confirming' || pending?.status === 'awaiting_payment';
+  const previous = useRef(v);
   useEffect(() => {
-    if (!waiting) return;
-    let stopped = false;
-    let timer: number | undefined;
+    previous.current = v;
+  }, [v]);
+  useEffect(() => {
+    if (!waiting) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restart the 90 second window when polling stops
+      setPollTimedOut(false);
+      return;
+    }
+    if (pollTimedOut) return;
     const started = Date.now();
-    const tick = async () => {
-      try {
-        const next = (await manageService.get(v.reference)).data;
-        if (stopped) return;
-        if (!next.manage) return setExpired(true);
-        const changed =
-          next.status !== v.status ||
-          next.manage.pendingChange?.status !== pending?.status ||
-          Boolean(next.manage.pendingChange) !== Boolean(pending);
-        setV(next);
-        if (changed) return setAnnouncement(SUCCESS_MESSAGES.BOOKING_UPDATED);
-      } catch {
-        /* keep polling until the timeout */
+    const timer = window.setInterval(async () => {
+      if (Date.now() - started >= POLL_TIMEOUT_MS) {
+        setPollTimedOut(true);
+        return;
       }
-      if (!stopped && Date.now() - started < POLL_TIMEOUT_MS)
-        timer = window.setTimeout(tick, POLL_INTERVAL_MS);
-    };
-    timer = window.setTimeout(tick, POLL_INTERVAL_MS);
-    return () => {
-      stopped = true;
-      window.clearTimeout(timer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [waiting, v.status, pending?.status]);
+      const result = await refetch();
+      const next = result.data;
+      if (!next) return;
+      if (!next.manage) return setExpired(true);
+      const changed =
+        next.status !== previous.current.status ||
+        next.manage.pendingChange?.status !==
+          previous.current.manage?.pendingChange?.status ||
+        Boolean(next.manage.pendingChange) !==
+          Boolean(previous.current.manage?.pendingChange);
+      previous.current = next;
+      if (changed) setAnnouncement(SUCCESS_MESSAGES.BOOKING_UPDATED);
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [waiting, pollTimedOut, refetch]);
 
   async function signOut() {
-    setSigningOut(true);
     try {
-      await manageService.signOut(v.reference, csrf);
+      await manageSignOut.mutateAsync({ reference: v.reference, csrf });
     } catch {
       /* the session ends on the server either way */
     }

@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useWebStorage } from '@/hooks/use-web-storage';
 import { addDays, formatShort, nightsBetween } from '@/lib/dates';
 import type {
   CalendarBlockBar,
@@ -41,28 +42,15 @@ export function CalendarGrid({
   onStartBlockWithRange,
 }: CalendarGridProps) {
   // Collapsible groups stored in localStorage
-  const [collapsedGroups, setCollapsedGroups] = useState<
+  const [collapsedGroups, setCollapsedGroups] = useWebStorage<
     Record<string, boolean>
-  >(() => {
-    if (typeof window === 'undefined') return {};
-    try {
-      const stored = localStorage.getItem('dela_calendar_collapsed');
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  });
+  >('localStorage', 'dela_calendar_collapsed', {});
 
   const toggleGroup = (groupId: string) => {
-    setCollapsedGroups((prev) => {
-      const next = { ...prev, [groupId]: !prev[groupId] };
-      try {
-        localStorage.setItem('dela_calendar_collapsed', JSON.stringify(next));
-      } catch {
-        // Ignore storage errors
-      }
-      return next;
-    });
+    setCollapsedGroups((prev) => ({
+      ...prev,
+      [groupId]: !prev[groupId],
+    }));
   };
 
   // Range selection state
@@ -322,7 +310,7 @@ export function CalendarGrid({
                             className="hover:bg-muted/20 relative flex h-14 items-center transition-colors"
                           >
                             {/* Sticky Room Column */}
-                            <div className="border-line bg-paper sticky left-0 z-20 flex h-full w-48 shrink-0 items-center justify-between border-r px-3 shadow-xs">
+                            <div className="border-line bg-paper sticky left-0 z-20 flex h-full w-52 shrink-0 items-center justify-between border-r px-3 shadow-xs">
                               <div>
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-small text-ink font-mono font-semibold">

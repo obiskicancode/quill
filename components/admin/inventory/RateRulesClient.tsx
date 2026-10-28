@@ -3,7 +3,6 @@
 import { Edit2, Filter, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-import { adminService } from '@/app/api/services/admin.service';
 import {
   AdminEmpty,
   AdminError,
@@ -29,6 +28,10 @@ import {
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  useDeleteRateRule,
+  useRateRules,
+} from '@/hooks/services/admin/use-inventory';
 import { bpsToPercentage, minorToNaira } from '@/lib/rate-resolution';
 import type {
   AdminRateRule,
@@ -46,9 +49,18 @@ export function RateRulesClient({
   initialRules,
   roomTypes,
 }: RateRulesClientProps) {
-  const [rules, setRules] = useState<AdminRateRule[]>(initialRules);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const rulesQuery = useRateRules(undefined, initialRules);
+  const deleteRateRule = useDeleteRateRule();
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const rules = rulesQuery.data ?? [];
+  const loading = rulesQuery.isFetching;
+  const error =
+    deleteError ??
+    (rulesQuery.error instanceof Error
+      ? rulesQuery.error.message
+      : rulesQuery.error
+        ? ERROR_MESSAGES.FAILED_TO_LOAD_RATE_RULES_UI
+        : null);
 
   // Filters
   const [selectedRoomTypeId, setSelectedRoomTypeId] = useState<string>('all');
@@ -61,23 +73,8 @@ export function RateRulesClient({
   const [editingRule, setEditingRule] = useState<AdminRateRule | null>(null);
 
   async function refresh() {
-    setLoading(true);
-    setError(null);
-    try {
-      const q = selectedRoomTypeId !== 'all' ? selectedRoomTypeId : undefined;
-      const res = await adminService.listRateRules(q);
-      if (res.data) {
-        setRules(res.data);
-      }
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : ERROR_MESSAGES.FAILED_TO_LOAD_RATE_RULES_UI,
-      );
-    } finally {
-      setLoading(false);
-    }
+    setDeleteError(null);
+    await rulesQuery.refetch();
   }
 
   const filteredRules = rules.filter((r) => {
@@ -114,11 +111,11 @@ export function RateRulesClient({
     }
 
     try {
-      await adminService.deleteRateRule(rule.id);
+      await deleteRateRule.mutateAsync(rule.id);
       toast.add({ title: SUCCESS_MESSAGES.RATE_RULE_DELETED, type: 'success' });
       await refresh();
     } catch (err) {
-      setError(
+      setDeleteError(
         err instanceof Error
           ? err.message
           : ERROR_MESSAGES.FAILED_TO_DELETE_RATE_RULE,

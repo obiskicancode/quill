@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 
+import { Field, inputClass } from '@/components/ui/form-field';
 import { countries } from '@/constants/countries';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
@@ -21,7 +22,6 @@ import {
   SelectValue,
 } from '../ui/select';
 import { Textarea } from '../ui/textarea';
-import { Field, inputClass } from './Field';
 
 export type GuestField = keyof GuestInput;
 

@@ -1,16 +1,19 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
-import { manageService } from '@/app/api/services/manage.service';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { useSaveDetails } from '@/hooks/services/guest/use-manage';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
-import { detailsPatchSchema, type GuestInput } from '@/schemas/checkout.schema';
+import { detailsPatchSchema } from '@/schemas/checkout.schema';
 import type { GuestReservation } from '@/types/booking.types';
 
 import { VerifyForm } from '../booking/VerifyForm';
@@ -18,14 +21,6 @@ import { Banner } from '../checkout/CheckoutStates';
 import { DetailsStep, type GuestField } from '../checkout/DetailsStep';
 import { EASE_OUT } from '../motion/variants';
 import { Button, ButtonLink } from '../ui/button';
-
-const EDITABLE: GuestField[] = [
-  'fullName',
-  'country',
-  'phone',
-  'arrivalTime',
-  'specialRequests',
-];
 
 interface EditDetailsPanelProps {
   v: GuestReservation;
@@ -49,11 +44,23 @@ export function EditDetailsPanel({
 }: EditDetailsPanelProps) {
   const site = useSite();
   const m = v.manage!;
-  const initial: GuestInput = { ...m.editable, email: m.contact.email };
-  const [values, setValues] = useState<GuestInput>(initial);
-  const [saved, setSaved] = useState<GuestInput>(initial);
-  const [errors, setErrors] = useState<Partial<Record<GuestField, string>>>({});
-  const [busy, setBusy] = useState(false);
+  const saveDetails = useSaveDetails();
+  type DetailsInput = z.input<typeof detailsPatchSchema>;
+  type DetailsOutput = z.output<typeof detailsPatchSchema>;
+  const form = useForm<DetailsInput, unknown, DetailsOutput>({
+    resolver: zodResolver(detailsPatchSchema),
+    defaultValues: m.editable,
+    mode: 'onBlur',
+  });
+  const {
+    formState: { errors: formErrors, isDirty, isSubmitting },
+    reset,
+    setError: setFieldError,
+    setValue,
+    trigger,
+    watch,
+  } = form;
+  const values = watch();
   const [error, setError] = useState<{
     message: string;
     retryable: boolean;
@@ -61,6 +68,11 @@ export function EditDetailsPanel({
   const [justSaved, setJustSaved] = useState(false);
   const key = useRef(newKey());
   const reduced = useReducedMotion();
+  const busy = isSubmitting || saveDetails.isPending;
+  const dirty = isDirty;
+  const detailsErrors = Object.fromEntries(
+    Object.entries(formErrors).map(([field, issue]) => [field, issue?.message]),
+  ) as Partial<Record<GuestField, string>>;
   const panelMotion = reduced
     ? {}
     : {
@@ -70,53 +82,41 @@ export function EditDetailsPanel({
         transition: { duration: 0.2, ease: EASE_OUT },
       };
 
-  const dirty = EDITABLE.some((f) => (values[f] ?? '') !== (saved[f] ?? ''));
-  const issues = (val: GuestInput) => {
-    const out: Partial<Record<GuestField, string>> = {};
-    const r = detailsPatchSchema.safeParse(val);
-    if (!r.success)
-      for (const i of r.error.issues)
-        out[i.path[0] as GuestField] ??= i.message;
-    return out;
-  };
-
-  async function save() {
+  const save = async (details: DetailsOutput) => {
     if (busy || !dirty) return;
-    const found = issues(values);
-    setErrors(found);
-    const first = EDITABLE.find((f) => found[f]);
-    if (first) return void document.getElementById(`field-${first}`)?.focus();
-    setBusy(true);
     setError(null);
     setJustSaved(false);
     try {
-      const next = (
-        await manageService.saveDetails(
-          v.reference,
-          {
-            idempotencyKey: key.current,
-            details: {
-              fullName: values.fullName,
-              country: values.country,
-              phone: values.phone,
-              arrivalTime: values.arrivalTime,
-              specialRequests: values.specialRequests,
-            },
-          },
-          csrf,
-        )
-      ).data;
-      setSaved(values);
+      const next = await saveDetails.mutateAsync({
+        reference: v.reference,
+        body: { idempotencyKey: key.current, details },
+        csrf,
+      });
+      reset(details);
       key.current = newKey();
       setJustSaved(true);
       onSaved(next);
     } catch (e) {
-      const f = e instanceof ServiceError ? e : null;
-      if (f?.body?.code === ERROR_CODES.SESSION_EXPIRED) onSessionExpired();
-      else if (f?.body?.code === ERROR_CODES.VALIDATION && f.body.fieldErrors) {
-        setErrors(f.body.fieldErrors as Partial<Record<GuestField, string>>);
+      const failure = e instanceof ServiceError ? e : null;
+      if (failure?.body?.code === ERROR_CODES.SESSION_EXPIRED)
+        onSessionExpired();
+      else if (
+        failure?.body?.code === ERROR_CODES.VALIDATION &&
+        failure.body.fieldErrors
+      ) {
+        for (const [field, message] of Object.entries(
+          failure.body.fieldErrors,
+        )) {
+          const name = field.startsWith('details.')
+            ? field.slice('details.'.length)
+            : field;
+          setFieldError(name as keyof DetailsInput, {
+            type: 'server',
+            message,
+          });
+        }
         key.current = newKey();
-      } else if (!f || f.network || f.status >= 500)
+      } else if (!failure || failure.network || failure.status >= 500)
         setError({
           message: ERROR_MESSAGES.COULD_NOT_REACH_SERVER_SAVE_UNKNOWN,
           retryable: true,
@@ -124,14 +124,13 @@ export function EditDetailsPanel({
       else {
         key.current = newKey();
         setError({
-          message: f.body?.message ?? ERROR_MESSAGES.COULD_NOT_SAVE_CHANGES,
+          message:
+            failure.body?.message ?? ERROR_MESSAGES.COULD_NOT_SAVE_CHANGES,
           retryable: false,
         });
       }
-    } finally {
-      setBusy(false);
     }
-  }
+  };
 
   if (sessionExpired) {
     return (
@@ -164,30 +163,30 @@ export function EditDetailsPanel({
 
       <form
         noValidate
-        onSubmit={(e) => {
-          e.preventDefault();
-          void save();
-        }}
+        onSubmit={form.handleSubmit(save)}
         className="mt-5 space-y-6"
       >
         <DetailsStep
           mode="edit"
           reference={v.reference}
-          values={values}
-          errors={errors}
+          values={{ ...values, email: m.contact.email }}
+          errors={detailsErrors}
           disabled={busy}
           onChange={(name, val) => {
-            setValues((x) => ({ ...x, [name]: val }));
+            if (name === 'email') return;
+            setValue(name, val, {
+              shouldDirty: true,
+              shouldValidate:
+                form.formState.isSubmitted || Boolean(formErrors[name]),
+            });
             setJustSaved(false);
-            if (errors[name]) setErrors((x) => ({ ...x, [name]: undefined }));
           }}
           onBlur={(name) => {
-            if (name !== 'email')
-              setErrors((x) => ({ ...x, [name]: issues(values)[name] }));
+            if (name !== 'email') void trigger(name);
           }}
         />
 
-        {Object.values(errors).some(Boolean) && (
+        {Object.values(detailsErrors).some(Boolean) && (
           <p role="alert" className="text-small text-destructive font-medium">
             Please fix the highlighted fields.
           </p>
@@ -205,7 +204,7 @@ export function EditDetailsPanel({
                       variant="secondary"
                       size="sm"
                       loading={busy}
-                      onClick={() => void save()}
+                      onClick={() => void form.handleSubmit(save)()}
                     >
                       Try again
                     </Button>
