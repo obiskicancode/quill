@@ -1,17 +1,15 @@
 import type { NextResponse } from 'next/server';
 
 import type { StaffUser } from '@/db/types';
-import {
-  ACCESS_TTL_SECONDS,
-  ADMIN_ACCESS_COOKIE,
-  ADMIN_REFRESH_COOKIE,
-  clearAuthCookies,
-  REFRESH_TTL_SECONDS,
-  setAccessCookie,
-  setRefreshCookie,
-} from '@/lib/auth/cookies';
 import { hashToken, randomToken } from '@/lib/auth/crypto';
 import { createAccessToken, readAccessToken } from '@/lib/auth/tokens';
+import {
+  clearAdminAuthCookies,
+  COOKIE_NAMES,
+  COOKIE_TTLS,
+  setAdminAccessCookie,
+  setAdminRefreshCookie,
+} from '@/lib/cookies';
 import {
   findAnySessionByTokenHash,
   findSessionById,
@@ -56,7 +54,7 @@ export async function issueAdminSession(
   options: { stepUpVerifiedAt?: Date | null } = {},
 ): Promise<void> {
   const refreshToken = randomToken(32);
-  const expiresAt = new Date(Date.now() + REFRESH_TTL_SECONDS * 1000);
+  const expiresAt = new Date(Date.now() + COOKIE_TTLS.ADMIN_REFRESH * 1000);
   const stepUpVerifiedAt =
     options.stepUpVerifiedAt === undefined
       ? user.mfaEnabled
@@ -75,16 +73,18 @@ export async function issueAdminSession(
 
   const accessToken = createAccessToken(
     { sub: user.id, sid: session.id, role: user.role },
-    ACCESS_TTL_SECONDS,
+    COOKIE_TTLS.ADMIN_ACCESS,
   );
-  setAccessCookie(response, accessToken);
-  setRefreshCookie(response, refreshToken);
+  setAdminAccessCookie(response, accessToken);
+  setAdminRefreshCookie(response, refreshToken);
 }
 
 export async function resolveAdminSession(
   request: Request,
 ): Promise<AdminContext | null> {
-  const access = readAccessToken(cookieValue(request, ADMIN_ACCESS_COOKIE));
+  const access = readAccessToken(
+    cookieValue(request, COOKIE_NAMES.ADMIN_ACCESS),
+  );
   if (access) {
     const [session, user] = await Promise.all([
       findSessionById(access.sid),
@@ -104,7 +104,7 @@ export async function resolveAdminSession(
     return toContext(user, session.id, session.stepUpVerifiedAt);
   }
 
-  const refreshToken = cookieValue(request, ADMIN_REFRESH_COOKIE);
+  const refreshToken = cookieValue(request, COOKIE_NAMES.ADMIN_REFRESH);
   if (!refreshToken) return null;
   const session = await findSessionByTokenHash(hashToken(refreshToken));
   if (!session) return null;
@@ -117,34 +117,34 @@ export async function rotateAdminSession(
   request: Request,
   response: NextResponse,
 ): Promise<AdminContext | null> {
-  const refreshToken = cookieValue(request, ADMIN_REFRESH_COOKIE);
+  const refreshToken = cookieValue(request, COOKIE_NAMES.ADMIN_REFRESH);
   if (!refreshToken) {
-    clearAuthCookies(response);
+    clearAdminAuthCookies(response);
     return null;
   }
 
   const tokenHash = hashToken(refreshToken);
   const session = await findAnySessionByTokenHash(tokenHash);
   if (!session) {
-    clearAuthCookies(response);
+    clearAdminAuthCookies(response);
     return null;
   }
 
   if (session.revokedAt) {
     await revokeAllSessionsForUser(session.staffUserId);
-    clearAuthCookies(response);
+    clearAdminAuthCookies(response);
     return null;
   }
 
   if (session.expiresAt <= new Date()) {
-    clearAuthCookies(response);
+    clearAdminAuthCookies(response);
     return null;
   }
 
   const user = await findStaffById(session.staffUserId);
   if (!user || !user.isActive) {
     await revokeSession(session.id);
-    clearAuthCookies(response);
+    clearAdminAuthCookies(response);
     return null;
   }
 
@@ -155,16 +155,16 @@ export async function rotateAdminSession(
     sessionTokenHash: hashToken(nextRefreshToken),
     userAgent: userAgent(request),
     ipAddress: clientIp(request),
-    expiresAt: new Date(Date.now() + REFRESH_TTL_SECONDS * 1000),
+    expiresAt: new Date(Date.now() + COOKIE_TTLS.ADMIN_REFRESH * 1000),
     stepUpVerifiedAt: session.stepUpVerifiedAt,
   });
 
   const accessToken = createAccessToken(
     { sub: user.id, sid: nextSession.id, role: user.role },
-    ACCESS_TTL_SECONDS,
+    COOKIE_TTLS.ADMIN_ACCESS,
   );
-  setAccessCookie(response, accessToken);
-  setRefreshCookie(response, nextRefreshToken);
+  setAdminAccessCookie(response, accessToken);
+  setAdminRefreshCookie(response, nextRefreshToken);
   return toContext(user, nextSession.id, nextSession.stepUpVerifiedAt);
 }
 
@@ -179,7 +179,7 @@ export async function revokeAdminSession(
   response: NextResponse,
 ): Promise<void> {
   await revokeSession(context.sessionId);
-  clearAuthCookies(response);
+  clearAdminAuthCookies(response);
 }
 
 export async function revokeAllAdminSessions(

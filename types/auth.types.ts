@@ -21,6 +21,7 @@ export type Permission =
   | 'blocks.backdate'
   | 'enquiries.view'
   | 'enquiries.manage'
+  | 'enquiries.anonymise'
   | 'rooms.view'
   | 'rooms.manage'
   | 'rates.manage'

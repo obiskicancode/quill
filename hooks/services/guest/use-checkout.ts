@@ -17,6 +17,13 @@ const TERMINAL_STATUSES = new Set([
   'pending_approval',
   'payment_failed',
   'cancelled',
+  'expired',
+  'awaiting_transfer',
+  'awaiting_verification',
+  'reserved_pay_at_hotel',
+  'checked_in',
+  'checked_out',
+  'no_show',
 ]);
 
 export function useCheckoutQuote() {

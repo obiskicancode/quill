@@ -47,6 +47,7 @@ export async function POST(
       id,
       paymentId,
       'reject',
+      parsed.data.version,
       undefined,
       parsed.data.rejectionReason,
       parsed.data.note,

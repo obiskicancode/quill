@@ -1,11 +1,20 @@
+import { assertAdminCsrfSecret, assertBookingSecret } from '@/config';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { ADMIN_CSRF_COOKIE } from '@/lib/auth/cookies';
-import { safeEqual } from '@/lib/auth/crypto';
+import { hmacSign, randomToken, safeEqual } from '@/lib/auth/crypto';
+import {
+  COOKIE_NAMES,
+  COOKIE_TTLS,
+  CSRF_HEADER_NAME,
+} from '@/lib/cookies/constants';
+import { getCookieValue } from '@/lib/cookies/server';
 
 import { apiFail } from './envelope';
-import { cookieValue } from './request';
 
+/**
+ * Validates that the request origin matches the request host / x-forwarded-host.
+ * Requests without an origin header (e.g., standard same-origin GET/fetch) are permitted.
+ */
 export function sameOrigin(request: Request): boolean {
   const origin = request.headers.get('origin');
   if (!origin) return true;
@@ -20,7 +29,112 @@ export function sameOrigin(request: Request): boolean {
   }
 }
 
-export function checkCsrf(request: Request): Response | null {
+/**
+ * Generates an HMAC-derived CSRF token containing: nonce.expiry.hmacSignature
+ * Bound to the application secret and validated via verifyAdminCsrfToken.
+ */
+export function createAdminCsrfToken(
+  ttl: number = COOKIE_TTLS.ADMIN_CSRF,
+): string {
+  const nonce = randomToken(16);
+  const exp = Math.floor(Date.now() / 1000) + ttl;
+  const payload = `${nonce}.${exp}`;
+  const sig = hmacSign(`admin.csrf.${payload}`, assertAdminCsrfSecret()).slice(
+    0,
+    32,
+  );
+  return `${payload}.${sig}`;
+}
+
+/**
+ * Validates the HMAC signature and expiration timestamp of an admin CSRF token.
+ */
+export function verifyAdminCsrfToken(token: string): boolean {
+  if (!token) return false;
+  const parts = token.split('.');
+  if (parts.length === 3) {
+    const [nonce, expStr, sig] = parts;
+    const exp = Number(expStr);
+    if (!nonce || !exp || Number.isNaN(exp) || exp < Date.now() / 1000) {
+      return false;
+    }
+    const payload = `${nonce}.${exp}`;
+    const expectedSig = hmacSign(
+      `admin.csrf.${payload}`,
+      assertAdminCsrfSecret(),
+    ).slice(0, 32);
+    return safeEqual(sig, expectedSig);
+  }
+  return /^[a-zA-Z0-9_-]{32,}$/.test(token);
+}
+
+/**
+ * Generates an HMAC-derived CSRF token for guest manage booking,
+ * bound to the reservation reference and expiry timestamp.
+ */
+export function createManageCsrfToken(reference: string, exp: number): string {
+  return hmacSign(`${reference}.csrf.${exp}`, assertBookingSecret()).slice(
+    0,
+    32,
+  );
+}
+
+/**
+ * Verifies an HMAC-derived guest manage booking CSRF token.
+ */
+export function verifyManageCsrfToken(
+  reference: string,
+  exp: number,
+  token: string,
+): boolean {
+  if (!token || !reference || !exp) return false;
+  const expected = createManageCsrfToken(reference, exp);
+  return safeEqual(token, expected);
+}
+
+/**
+ * Verifies a CSRF token from the `x-csrf-token` header against an expected token.
+ * Validates request origin first to protect against cross-origin attacks.
+ */
+export function verifyCsrf(
+  request: Request,
+  expectedToken: string,
+  errorMessage: string = ERROR_MESSAGES.CSRF_FAILED,
+): Response | null {
+  if (!sameOrigin(request)) {
+    return apiFail(
+      403,
+      errorMessage,
+      { code: ERROR_CODES.CSRF, message: errorMessage },
+      { noCache: true },
+    );
+  }
+  const header = request.headers.get(CSRF_HEADER_NAME);
+  if (!header || !safeEqual(header, expectedToken)) {
+    return apiFail(
+      403,
+      errorMessage,
+      { code: ERROR_CODES.CSRF, message: errorMessage },
+      { noCache: true },
+    );
+  }
+  return null;
+}
+
+/**
+ * Validates CSRF for guest manage booking requests against their active session CSRF token.
+ */
+export function checkManageCsrf(
+  request: Request,
+  sessionCsrf: string,
+): Response | null {
+  return verifyCsrf(request, sessionCsrf, ERROR_MESSAGES.CSRF_FAILED);
+}
+
+/**
+ * Validates CSRF for admin requests against the ADMIN_CSRF cookie and x-csrf-token header.
+ */
+export function checkAdminCsrf(request: Request): Response | null {
   if (!sameOrigin(request)) {
     return apiFail(
       403,
@@ -29,9 +143,17 @@ export function checkCsrf(request: Request): Response | null {
       { noCache: true },
     );
   }
-  const cookie = cookieValue(request, ADMIN_CSRF_COOKIE);
-  const header = request.headers.get('x-csrf-token');
+  const cookie = getCookieValue(request, COOKIE_NAMES.ADMIN_CSRF);
+  const header = request.headers.get(CSRF_HEADER_NAME);
   if (!cookie || !header || !safeEqual(cookie, header)) {
+    return apiFail(
+      403,
+      ERROR_MESSAGES.ADMIN_CSRF_FAILED,
+      { code: ERROR_CODES.CSRF },
+      { noCache: true },
+    );
+  }
+  if (!verifyAdminCsrfToken(cookie)) {
     return apiFail(
       403,
       ERROR_MESSAGES.ADMIN_CSRF_FAILED,

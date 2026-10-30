@@ -1,4 +1,4 @@
-import { clearManageCookie } from '@/lib/booking/session';
+import { clearBookingManageCookie } from '@/lib/cookies';
 import { createAuditLog } from '@/lib/db/repositories/audit.repo';
 import { apiOk } from '@/lib/http/envelope';
 
@@ -15,6 +15,6 @@ export async function POST(
     changes: { actor: 'guest' },
   });
   const res = apiOk({ ok: true }, { noCache: true });
-  clearManageCookie(res, reference);
+  clearBookingManageCookie(res, reference);
   return res;
 }

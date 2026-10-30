@@ -44,6 +44,12 @@ export interface PaymentRefundInput {
   amountMinor: number;
 }
 
+export interface PaymentVerificationResult {
+  status: 'paid' | 'failed' | 'pending';
+  amountMinor: number;
+  payload?: Record<string, unknown>;
+}
+
 /** Every online payment provider implements this contract. Add a provider by registering a factory. */
 export interface PaymentProviderAdapter {
   readonly id: PaymentProvider;
@@ -52,6 +58,9 @@ export interface PaymentProviderAdapter {
   initialize(input: PaymentInitialization): Promise<InitializedPayment>;
   verifyWebhook(input: PaymentWebhookInput): Promise<WebhookVerification>;
   refund(input: PaymentRefundInput): Promise<boolean>;
+  verifyTransaction?(
+    reference: string,
+  ): Promise<PaymentVerificationResult | null>;
 }
 
 export type PaymentProviderFactory = () => PaymentProviderAdapter;

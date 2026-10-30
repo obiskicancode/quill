@@ -10,10 +10,10 @@ import {
   resolveNightlyRate,
 } from '../lib/rate-resolution';
 
-console.log('=== RUNNING SECTION 2 & 3 INVENTORY & PRICING TESTS ===\n');
+console.log('=== RUNNING INVENTORY & PRICING TESTS ===\n');
 
 // ---------------------------------------------------------------------
-// SECTION 2: NAIRA & BASIS POINTS HELPER TESTS
+// NAIRA & BASIS POINTS HELPER TESTS
 // ---------------------------------------------------------------------
 
 console.log('Test 2.1: nairaToMinor string with commas and decimals');
@@ -38,7 +38,7 @@ assert.strictEqual(bpsToPercentage(1250), 12.5);
 assert.strictEqual(bpsToPercentage(-1500), -15);
 
 // ---------------------------------------------------------------------
-// SECTION 3: RATE-RULE RESOLUTION TEST CASES
+// RATE-RULE RESOLUTION TEST CASES
 // ---------------------------------------------------------------------
 
 const ROOM_TYPE_A = '11111111-1111-1111-1111-111111111111';

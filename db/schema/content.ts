@@ -13,6 +13,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 
+import { reservations } from './bookings';
 import {
   enquiryStatusEnum,
   enquiryTypeEnum,
@@ -44,6 +45,12 @@ export const enquiries = pgTable(
     isSpam: boolean('is_spam').notNull().default(false),
     readAt: timestamp('read_at', { withTimezone: true }),
     anonymisedAt: timestamp('anonymised_at', { withTimezone: true }),
+    assignedTo: uuid('assigned_to').references(() => staffUsers.id, {
+      onDelete: 'set null',
+    }),
+    reservationId: uuid('reservation_id').references(() => reservations.id, {
+      onDelete: 'set null',
+    }),
     convertedReservationId: uuid('converted_reservation_id'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
@@ -56,8 +63,15 @@ export const enquiries = pgTable(
     index('idx_enq_status').on(table.status),
     index('idx_enq_type').on(table.type),
     index('idx_enq_email').on(table.email),
+    index('idx_enq_phone').on(table.phone),
     index('idx_enq_created').on(table.createdAt),
     index('idx_enq_spam').on(table.isSpam),
+    index('idx_enq_assigned_to').on(table.assignedTo),
+    index('idx_enq_status_spam_created').on(
+      table.status,
+      table.isSpam,
+      table.createdAt,
+    ),
   ],
 );
 
@@ -69,6 +83,8 @@ export const enquiryReplies = pgTable('enquiry_replies', {
     .notNull()
     .references(() => enquiries.id, { onDelete: 'cascade' }),
   staffUserId: uuid('staff_user_id').references(() => staffUsers.id),
+  sentBy: uuid('sent_by').references(() => staffUsers.id),
+  channel: varchar('channel', { length: 20 }).default('email'),
   message: text('message').notNull(),
   sentVia: varchar('sent_via', { length: 20 }).default('email'),
   createdAt: timestamp('created_at', { withTimezone: true })
@@ -84,7 +100,11 @@ export const enquiryNotes = pgTable('enquiry_notes', {
     .notNull()
     .references(() => enquiries.id, { onDelete: 'cascade' }),
   staffUserId: uuid('staff_user_id').references(() => staffUsers.id),
-  note: text('note').notNull(),
+  createdBy: uuid('created_by').references(() => staffUsers.id, {
+    onDelete: 'cascade',
+  }),
+  note: text('note').notNull().default(''),
+  body: text('body'),
   createdAt: timestamp('created_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -114,20 +134,31 @@ export const sitePages = pgTable('site_pages', {
     .defaultNow(),
 });
 
-export const sitePageRevisions = pgTable('site_page_revisions', {
-  id: uuid('id')
-    .primaryKey()
-    .default(sql`gen_random_uuid()`),
-  pageId: uuid('page_id')
-    .notNull()
-    .references(() => sitePages.id, { onDelete: 'cascade' }),
-  content: jsonb('content').notNull(),
-  editedBy: uuid('edited_by').references(() => staffUsers.id),
-  note: varchar('note', { length: 255 }),
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const sitePageRevisions = pgTable(
+  'site_page_revisions',
+  {
+    id: uuid('id')
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    pageId: uuid('page_id')
+      .notNull()
+      .references(() => sitePages.id, { onDelete: 'cascade' }),
+    title: varchar('title', { length: 200 }),
+    body: text('body'),
+    content: jsonb('content').notNull(),
+    editedBy: uuid('edited_by').references(() => staffUsers.id),
+    note: varchar('note', { length: 255 }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index('idx_site_page_revisions_page_created').on(
+      table.pageId,
+      table.createdAt.desc(),
+    ),
+  ],
+);
 
 export const facilities = pgTable('facilities', {
   id: uuid('id')

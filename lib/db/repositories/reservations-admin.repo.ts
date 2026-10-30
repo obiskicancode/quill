@@ -1,13 +1,16 @@
-import { and, desc, eq, gte, lte, or, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lte, ne, or, sql } from 'drizzle-orm';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { db } from '@/db';
 import {
   auditLogs,
+  enquiries,
   hotelSettings,
   notificationLogs,
   paymentProofs,
   payments,
+  refunds,
+  reservationChanges,
   reservationExtras,
   reservationNights,
   reservations,
@@ -17,14 +20,27 @@ import {
   roomTypes,
   staffUsers,
 } from '@/db/schema';
+import { buildSnapshot } from '@/lib/booking/snapshot';
+import {
+  applyStayChange,
+  loadStoredReservation,
+  saveStoredReservation,
+} from '@/lib/booking/store';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
+import { getCheckoutSettings } from '@/lib/checkout/settings';
 import { addDays, fromISO, nightsBetween } from '@/lib/dates';
 import { createReference } from '@/lib/db/reference';
 import { findAvailableRoom } from '@/lib/db/repositories/rooms.repo';
+import { isPaymentProviderId } from '@/lib/payments/provider';
+import {
+  insertRefundPayment,
+  recomputeReservationFinancials,
+} from '@/lib/reservations/payment-ledger';
 import {
   computeBalanceDue,
   computePaymentState,
 } from '@/lib/reservations/payment-state';
+import { getRoomDetail } from '@/lib/rooms/detail';
 import type { AdminRole } from '@/types/auth.types';
 import type { ISODate } from '@/types/dates.types';
 import type {
@@ -455,10 +471,7 @@ export function computeAllowedActions(
     checkInReason = ERROR_MESSAGES.GUEST_ALREADY_CHECKED_IN;
   } else if (isCheckedOut || isCancelled || isExpired || isNoShow) {
     checkInReason = ERROR_MESSAGES.RESERVATION_COMPLETED_OR_CANCELLED;
-  } else if (
-    !isConfirmed &&
-    !(isPending && res.confirmationMode === 'manual_approval')
-  ) {
+  } else if (!isConfirmed) {
     checkInReason = ERROR_MESSAGES.CHECKIN_REQUIRES_CONFIRMATION;
   } else if (res.checkIn > today) {
     checkInReason = ERROR_MESSAGES.CHECKIN_ON_OR_AFTER_ARRIVAL;
@@ -1087,7 +1100,13 @@ export async function reassignReservationRoom(
     const [targetRoom] = await tx
       .select()
       .from(rooms)
-      .where(and(eq(rooms.id, newRoomId), eq(rooms.isActive, true)))
+      .where(
+        and(
+          eq(rooms.id, newRoomId),
+          eq(rooms.isActive, true),
+          eq(rooms.status, 'active'),
+        ),
+      )
       .limit(1);
 
     if (!targetRoom) throw new Error(ERROR_MESSAGES.ROOM_REASSIGN_NOT_FOUND);
@@ -1214,7 +1233,8 @@ export async function recordAdminPayment(
       paidAt: data.paidAt ? new Date(data.paidAt) : new Date(),
     });
 
-    const newPaidMinor = res.amountPaidMinor + data.amountMinor;
+    const ledger = await recomputeReservationFinancials(tx, id, res.totalMinor);
+    const newPaidMinor = ledger?.paidMinor ?? res.amountPaidMinor;
     const shouldConfirm =
       res.status === 'pending' &&
       (newPaidMinor >= res.depositRequiredMinor ||
@@ -1223,7 +1243,6 @@ export async function recordAdminPayment(
     const [updated] = await tx
       .update(reservations)
       .set({
-        amountPaidMinor: newPaidMinor,
         status: shouldConfirm ? 'confirmed' : res.status,
         confirmedAt: shouldConfirm ? new Date() : res.confirmedAt,
         confirmedBy: shouldConfirm ? staffId : res.confirmedBy,
@@ -1279,6 +1298,7 @@ export async function verifyBankTransfer(
   id: string,
   paymentId: string,
   action: 'verify' | 'reject',
+  version: string,
   verifiedAmountMinor: number | undefined,
   reason: string | undefined,
   note: string | undefined,
@@ -1290,7 +1310,8 @@ export async function verifyBankTransfer(
       .select()
       .from(payments)
       .where(and(eq(payments.id, paymentId), eq(payments.reservationId, id)))
-      .limit(1);
+      .limit(1)
+      .for('update');
 
     if (!pay) throw new Error(ERROR_MESSAGES.PAYMENT_RECORD_NOT_FOUND);
     if (pay.status !== 'pending') {
@@ -1301,8 +1322,12 @@ export async function verifyBankTransfer(
       .select()
       .from(reservations)
       .where(eq(reservations.id, id))
-      .limit(1);
+      .limit(1)
+      .for('update');
     if (!res) throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND);
+    verifyVersion(res.updatedAt, version);
+    if (res.status === 'expired' || res.status === 'cancelled')
+      throw new Error(ERROR_MESSAGES.HOLD_EXPIRED);
 
     if (action === 'verify') {
       const verifiedMinor = verifiedAmountMinor ?? pay.amountMinor;
@@ -1321,7 +1346,117 @@ export async function verifyBankTransfer(
         })
         .where(eq(payments.id, paymentId));
 
-      const newPaidMinor = res.amountPaidMinor + verifiedMinor;
+      const [pendingChange] = pay.note
+        ? await tx
+            .select()
+            .from(reservationChanges)
+            .where(
+              and(
+                eq(reservationChanges.id, pay.note),
+                eq(reservationChanges.reservationId, id),
+                inArray(reservationChanges.status, [
+                  'awaiting_payment',
+                  'awaiting_transfer',
+                  'awaiting_verification',
+                  'payment_failed',
+                ]),
+              ),
+            )
+            .limit(1)
+        : [];
+
+      if (pendingChange) {
+        const available = await findAvailableRoom(
+          res.roomTypeId,
+          pendingChange.checkIn,
+          pendingChange.checkOut,
+          tx,
+          id,
+        );
+        if (!available)
+          throw new Error(ERROR_MESSAGES.ROOM_NOT_AVAILABLE_NEW_DATES);
+
+        const stored = await loadStoredReservation(res.reference, tx);
+        if (!stored) throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND);
+
+        const changeBreakdown =
+          pendingChange.breakdown as unknown as Parameters<
+            typeof applyStayChange
+          >[1]['breakdown'];
+
+        applyStayChange(stored, {
+          checkIn: pendingChange.checkIn,
+          checkOut: pendingChange.checkOut,
+          breakdown: changeBreakdown,
+          totalMinor: pendingChange.totalMinor,
+          paidDeltaMinor: verifiedMinor,
+          policy: pendingChange.policy as unknown as Parameters<
+            typeof applyStayChange
+          >[1]['policy'],
+        });
+        stored.pendingChange = null;
+
+        await tx
+          .delete(reservationNights)
+          .where(eq(reservationNights.reservationId, id));
+        if (changeBreakdown.lines.length > 0)
+          await tx.insert(reservationNights).values(
+            changeBreakdown.lines.map((line) => ({
+              reservationId: id,
+              date: line.date,
+              rateMinor: line.rateMinor,
+            })),
+          );
+
+        await tx
+          .update(reservationChanges)
+          .set({
+            status: 'completed',
+            paymentId,
+            updatedAt: new Date(),
+          })
+          .where(eq(reservationChanges.id, pendingChange.id));
+
+        await saveStoredReservation(stored, tx);
+
+        if (res.guestEmail) {
+          await tx.insert(notificationLogs).values({
+            reservationId: id,
+            templateKey: 'dates_changed',
+            channel: 'email',
+            recipient: res.guestEmail,
+            subject: `Your Booking Dates Have Changed: ${res.reference}`,
+            status: 'queued',
+            dedupeKey: `${res.reference}:dates_changed:${Date.now()}`,
+          });
+        }
+
+        const [updated] = await tx
+          .select()
+          .from(reservations)
+          .where(eq(reservations.id, id))
+          .limit(1);
+        if (!updated) throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND);
+
+        await tx.insert(auditLogs).values({
+          actorId: staffId,
+          actorRole: staffRole,
+          entity: 'reservation_payment',
+          entityId: paymentId,
+          action: 'verify_transfer',
+          reason: note || 'Verified bank transfer payment',
+          changes: { verifiedMinor, changeId: pendingChange.id },
+        });
+
+        return updated;
+      }
+
+      const ledger = await recomputeReservationFinancials(
+        tx,
+        id,
+        res.totalMinor,
+      );
+      const newPaidMinor = ledger?.paidMinor ?? res.amountPaidMinor;
       const shouldConfirm =
         res.status === 'pending' &&
         (newPaidMinor >= res.depositRequiredMinor ||
@@ -1330,7 +1465,6 @@ export async function verifyBankTransfer(
       const [updated] = await tx
         .update(reservations)
         .set({
-          amountPaidMinor: newPaidMinor,
           status: shouldConfirm ? 'confirmed' : res.status,
           confirmedAt: shouldConfirm ? new Date() : res.confirmedAt,
           confirmedBy: shouldConfirm ? staffId : res.confirmedBy,
@@ -1387,6 +1521,21 @@ export async function verifyBankTransfer(
         })
         .where(eq(payments.id, paymentId));
 
+      if (pay.note)
+        await tx
+          .update(reservationChanges)
+          .set({
+            status: 'payment_failed',
+            paymentId,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(reservationChanges.id, pay.note),
+              eq(reservationChanges.reservationId, id),
+            ),
+          );
+
       if (res.guestEmail) {
         await tx.insert(notificationLogs).values({
           reservationId: id,
@@ -1440,6 +1589,21 @@ export async function approveOrDeclineBooking(
     }
 
     if (action === 'approve') {
+      if (
+        res.paymentMode !== 'pay_at_hotel' &&
+        res.holdExpiresAt &&
+        res.holdExpiresAt < new Date() &&
+        res.amountPaidMinor === 0
+      ) {
+        const [proof] = await tx
+          .select({ id: paymentProofs.id })
+          .from(paymentProofs)
+          .innerJoin(payments, eq(payments.id, paymentProofs.paymentId))
+          .where(eq(payments.reservationId, id))
+          .limit(1);
+        if (!proof) throw new Error(ERROR_MESSAGES.HOLD_EXPIRED);
+      }
+
       const [updated] = await tx
         .update(reservations)
         .set({
@@ -1579,6 +1743,7 @@ export async function changeReservationDates(
       checkOut: data.checkOut,
       adults: res.res.adults,
       children: res.res.children,
+      excludeReservationId: res.res.id,
       extraBed: false,
       extras: [],
     });
@@ -1619,6 +1784,8 @@ export async function changeReservationDates(
       })
       .where(eq(reservations.id, id))
       .returning();
+
+    await recomputeReservationFinancials(tx, id, b.totalMinor);
 
     await tx.insert(auditLogs).values({
       actorId: staffId,
@@ -1687,23 +1854,55 @@ export async function cancelReservationAdmin(
       );
     }
 
+    let providerRefund = false;
+    let refundPaymentId: string | null = null;
     if (data.refundAmountMinor > 0) {
+      const [original] = await tx
+        .select()
+        .from(payments)
+        .where(
+          and(
+            eq(payments.reservationId, id),
+            eq(payments.status, 'paid'),
+            ne(payments.type, 'refund'),
+          ),
+        )
+        .orderBy(desc(payments.paidAt))
+        .limit(1);
+      providerRefund = Boolean(
+        original && isPaymentProviderId(original.provider),
+      );
+      refundPaymentId = crypto.randomUUID();
       const refundRef = createReference();
       await tx.insert(payments).values({
+        id: refundPaymentId,
         reservationId: id,
+        refundOfPaymentId: providerRefund ? original!.id : null,
         reference: refundRef,
-        provider: 'cash',
+        provider: providerRefund ? original!.provider : 'cash',
         type: 'refund',
-        status: 'paid',
+        status: providerRefund ? 'pending' : 'paid',
         amountMinor: data.refundAmountMinor,
         currency: 'NGN',
+        channel: providerRefund ? 'provider' : 'cash',
         note: `Cancellation refund: ${data.reason}`,
-        reconciled: true,
-        reconciledAt: new Date(),
-        reconciledBy: staffId,
-        paidAt: new Date(),
+        reconciled: !providerRefund,
+        reconciledAt: providerRefund ? null : new Date(),
+        reconciledBy: providerRefund ? null : staffId,
+        paidAt: providerRefund ? null : new Date(),
+      });
+      await tx.insert(refunds).values({
+        reservationId: id,
+        paymentId: refundPaymentId,
+        amountMinor: data.refundAmountMinor,
+        method: providerRefund ? 'provider' : 'cash',
+        status: providerRefund ? 'initiated' : 'processed',
+        reason: data.reason,
+        processedAt: providerRefund ? null : new Date(),
       });
     }
+
+    await recomputeReservationFinancials(tx, id, res.totalMinor);
 
     const [updated] = await tx
       .update(reservations)
@@ -1711,7 +1910,6 @@ export async function cancelReservationAdmin(
         status: 'cancelled',
         cancelledAt: new Date(),
         cancellationReason: data.reason,
-        amountRefundedMinor: res.amountRefundedMinor + data.refundAmountMinor,
         updatedAt: new Date(),
       })
       .where(eq(reservations.id, id))
@@ -1811,6 +2009,10 @@ export async function issueRefundAdmin(
     const refundPaymentId = crypto.randomUUID();
     const refundRef = data.reference || createReference();
     const isManual = data.method.startsWith('manual');
+    if (!isManual && !isPaymentProviderId(targetPayment.provider))
+      throw new Error(
+        'Provider refunds are only available for online payments. Use a manual refund method.',
+      );
     const refundProvider = isManual
       ? data.method === 'manual_bank'
         ? 'bank_transfer'
@@ -1835,12 +2037,21 @@ export async function issueRefundAdmin(
       paidAt: isManual ? new Date() : null,
     });
 
+    await tx.insert(refunds).values({
+      reservationId: id,
+      paymentId: refundPaymentId,
+      amountMinor: data.amountMinor,
+      method: data.method,
+      status: isManual ? 'processed' : 'initiated',
+      reason: data.reason,
+      providerRef: data.reference ?? null,
+      processedAt: isManual ? new Date() : null,
+    });
+
+    await recomputeReservationFinancials(tx, id, res.totalMinor);
     const [updated] = await tx
       .update(reservations)
-      .set({
-        amountRefundedMinor: res.amountRefundedMinor + data.amountMinor,
-        updatedAt: new Date(),
-      })
+      .set({ updatedAt: new Date() })
       .where(eq(reservations.id, id))
       .returning();
 
@@ -1898,27 +2109,22 @@ export async function markReservationNoShow(
         throw new Error(ERROR_MESSAGES.REFUND_EXCEEDS_BALANCE);
       }
 
-      await tx.insert(payments).values({
+      await insertRefundPayment(tx, {
         reservationId: id,
-        reference: createReference(),
-        provider: 'cash',
-        type: 'refund',
-        status: 'paid',
         amountMinor: refundAmount,
-        currency: 'NGN',
-        note: `No-show refund: ${data.reason || 'Staff override'}`,
-        reconciled: true,
-        reconciledAt: new Date(),
-        reconciledBy: staffId,
-        paidAt: new Date(),
+        method: 'manual_bank',
+        provider: 'cash',
+        status: 'paid',
+        reason: `No-show refund: ${data.reason || 'Staff override'}`,
       });
     }
+
+    await recomputeReservationFinancials(tx, id, res.totalMinor);
 
     const [updated] = await tx
       .update(reservations)
       .set({
         status: 'no_show',
-        amountRefundedMinor: res.amountRefundedMinor + refundAmount,
         updatedAt: new Date(),
       })
       .where(eq(reservations.id, id))
@@ -2011,6 +2217,7 @@ export async function adminCreateReservation(
         rt.id,
         input.checkIn,
         input.checkOut,
+        tx,
       );
       if (!available) {
         throw new Error(ERROR_MESSAGES.NO_ROOMS_SELECTED_DATES);
@@ -2065,6 +2272,30 @@ export async function adminCreateReservation(
       totalMinor = Math.max(0, totalMinor - discountMinor);
     }
 
+    const [roomDetail, checkoutSettings] = await Promise.all([
+      getRoomDetail(rt.slug),
+      getCheckoutSettings(),
+    ]);
+    if (!roomDetail) throw new Error(ERROR_MESSAGES.ROOM_TYPE_NOT_FOUND);
+
+    const totalDiscountMinor =
+      (quote.breakdown.discount?.amountMinor ?? 0) + discountMinor;
+    const snapshot = await buildSnapshot(
+      roomDetail,
+      {
+        ...quote,
+        breakdown: {
+          ...quote.breakdown,
+          discount:
+            totalDiscountMinor > 0
+              ? { label: 'Discount', amountMinor: totalDiscountMinor }
+              : null,
+          totalMinor,
+        },
+      },
+      checkoutSettings,
+    );
+
     const reference = createReference();
     const nights = nightsBetween(input.checkIn, input.checkOut);
     const reservationId = crypto.randomUUID();
@@ -2084,6 +2315,31 @@ export async function adminCreateReservation(
     } else if (input.paymentChoice.mode === 'pay_at_hotel') {
       initialStatus = 'confirmed';
     }
+
+    if (
+      input.paymentChoice.mode === 'record_payment' &&
+      initialPaidMinor > totalMinor
+    )
+      throw new Error(
+        ERROR_MESSAGES.PAYMENT_EXCEEDS_BALANCE(
+          (initialPaidMinor / 100).toLocaleString(),
+          (totalMinor / 100).toLocaleString(),
+        ),
+      );
+
+    const fullyPaid = initialPaidMinor >= totalMinor && totalMinor > 0;
+    const paymentMode =
+      input.paymentChoice.mode === 'pay_at_hotel'
+        ? 'pay_at_hotel'
+        : initialPaidMinor > 0 && !fullyPaid
+          ? 'deposit_online'
+          : 'full_online';
+    const depositRequiredMinor =
+      input.paymentChoice.mode === 'pay_at_hotel'
+        ? 0
+        : fullyPaid
+          ? totalMinor
+          : Math.round(totalMinor * 0.3);
 
     // 4. Insert Reservation
     const [res] = await tx
@@ -2107,21 +2363,20 @@ export async function adminCreateReservation(
         nights,
         status: initialStatus,
         bookingSource: input.source,
-        paymentMode:
-          input.paymentChoice.mode === 'pay_at_hotel'
-            ? 'pay_at_hotel'
-            : 'full_online',
+        paymentMode,
         confirmationMode: 'instant',
         subtotalMinor,
         discountMinor,
         serviceChargeMinor,
         taxMinor,
         totalMinor,
-        depositRequiredMinor: Math.round(totalMinor * 0.3),
+        depositRequiredMinor,
         amountPaidMinor: initialPaidMinor,
+        balanceMinor: Math.max(0, totalMinor - initialPaidMinor),
         currency: 'NGN',
         holdExpiresAt,
         staffTermsAccepted: true,
+        snapshot: snapshot as unknown as Record<string, unknown>,
         confirmedAt: initialStatus === 'confirmed' ? new Date() : null,
         confirmedBy: initialStatus === 'confirmed' ? staffId : null,
         notes: input.internalNotes,
@@ -2160,7 +2415,7 @@ export async function adminCreateReservation(
             : pChoice.method === 'bank_transfer'
               ? 'bank_transfer'
               : 'paystack',
-        type: 'full',
+        type: fullyPaid ? 'full' : 'deposit',
         status: 'paid',
         amountMinor: pChoice.amountMinor,
         currency: 'NGN',
@@ -2195,6 +2450,32 @@ export async function adminCreateReservation(
         discount: input.discount,
       },
     });
+
+    // 8.1 Link Enquiry if converted from an enquiry
+    if (input.enquiryId) {
+      await tx
+        .update(enquiries)
+        .set({
+          reservationId: reservationId,
+          convertedReservationId: reservationId,
+          status: 'converted',
+          updatedAt: new Date(),
+        })
+        .where(eq(enquiries.id, input.enquiryId));
+
+      await tx.insert(auditLogs).values({
+        actorId: staffId,
+        actorRole: staffRole,
+        entity: 'enquiry',
+        entityId: input.enquiryId,
+        action: 'convert_to_booking',
+        reason: `Converted enquiry to reservation ${reference}`,
+        changes: {
+          reservationId,
+          reference,
+        },
+      });
+    }
 
     // 9. Queue Email
     if (!input.noEmail && input.guest.email) {

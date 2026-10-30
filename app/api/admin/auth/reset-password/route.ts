@@ -3,13 +3,13 @@ import { z } from 'zod';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { writeAdminAudit } from '@/lib/auth/audit';
-import { clearAuthCookies } from '@/lib/auth/cookies';
 import { hashToken } from '@/lib/auth/crypto';
 import {
   hashPassword,
   validatePassword,
   verifyPassword,
 } from '@/lib/auth/password';
+import { clearAdminAuthCookies } from '@/lib/cookies';
 import {
   findStaffById,
   findValidPasswordResetToken,
@@ -17,14 +17,14 @@ import {
   revokeAllSessionsForUser,
   updateStaff,
 } from '@/lib/db/repositories/staff.repo';
-import { checkCsrf } from '@/lib/http/csrf';
+import { checkAdminCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, tooManyRequests, userAgent } from '@/lib/http/request';
 import { rateLimit } from '@/lib/rate-limit';
 import { adminResetPasswordSchema } from '@/schemas/admin-auth.schema';
 
 export async function POST(request: Request) {
-  const csrfError = checkCsrf(request);
+  const csrfError = checkAdminCsrf(request);
   if (csrfError) return csrfError;
 
   const body = await request.json().catch(() => null);
@@ -124,6 +124,6 @@ export async function POST(request: Request) {
   });
 
   const response = apiOk({ redirectTo: '/admin/login' }, { noCache: true });
-  clearAuthCookies(response);
+  clearAdminAuthCookies(response);
   return response;
 }

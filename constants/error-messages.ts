@@ -533,6 +533,8 @@ export const ERROR_MESSAGES = {
   ALREADY_CHECKED_IN_EARLY_LEAVE:
     "You've already checked in. Please speak to reception if you need to leave early.",
   BOOKING_ALREADY_CANCELLED: 'This booking is already cancelled.',
+  RESERVATION_CANCELLED:
+    'This booking has been cancelled and can no longer be paid.',
   BOOKING_EXPIRED_CANNOT_CANCEL:
     "This booking expired because it wasn't paid in time, so there's nothing to cancel.",
   CANNOT_CANCEL_CHECKED_IN:
@@ -720,6 +722,11 @@ export const ERROR_MESSAGES = {
   REFUND_EXCEEDS_AVAILABLE_BALANCE: (amount: string, available: string) =>
     `The refund (₦${amount}) is more than the available refundable balance (₦${available}).`,
   REFUND_PAYMENT_NOT_FOUND: "We couldn't find that refund payment.",
+  REFUND_ALREADY_PROCESSED: 'This refund has already been processed.',
+  REFUND_PROVIDER_IN_PROGRESS:
+    'This refund is being processed by the payment provider. Check its status before paying it out manually.',
+  PROVIDER_RECHECK_FAILED:
+    "We couldn't recheck this payment with the provider.",
   TARGET_PAYMENT_NOT_FOUND: "We couldn't find that payment.",
   UNKNOWN_PAYMENT_PROVIDER: "That payment method isn't available right now.",
   UNSUPPORTED_PAYMENT_PROVIDER: (_provider: string) =>
@@ -728,6 +735,8 @@ export const ERROR_MESSAGES = {
   WEBHOOK_EVENT_NOT_FOUND: "We couldn't find that payment event.",
 
   // Validation and request details
+  REQUEST_IN_PROGRESS:
+    'This request is already being processed. Please wait a moment and try again.',
   IDEMPOTENCY_KEY_MISSING: 'Please refresh the page and try again.',
   IDEMPOTENCY_KEY_REQUIRED: 'Please refresh the page and try again.',
   INVALID_AMENITIES_LIST: 'Choose valid amenities and try again.',

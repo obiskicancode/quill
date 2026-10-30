@@ -21,13 +21,18 @@ export async function findActiveRoomTypeBySlug(slug: string) {
   return row ?? null;
 }
 
+type QueryExecutor = Pick<typeof db, 'execute'>;
+
 export async function findAvailableRoom(
   roomTypeId: string,
   checkIn: string,
   checkOut: string,
+  executor: QueryExecutor = db,
+  excludeReservationId?: string,
 ) {
+  const exclude = excludeReservationId ?? null;
   // find active room not overlapping reservations/blocks
-  const result = await db.execute(sql`
+  const result = await executor.execute(sql`
     SELECT r.* FROM rooms r
     WHERE r.room_type_id = ${roomTypeId}
       AND r.status = 'active'
@@ -35,6 +40,7 @@ export async function findAvailableRoom(
       AND NOT EXISTS (
         SELECT 1 FROM reservations x
         WHERE x.room_id = r.id
+          AND (${exclude}::uuid IS NULL OR x.id <> ${exclude}::uuid)
           AND (
             x.status IN ('confirmed','checked_in')
             OR (
@@ -103,8 +109,10 @@ export async function countAvailableRoomsByType(
   roomTypeIds: string[],
   checkIn: string,
   checkOut: string,
+  excludeReservationId?: string,
 ): Promise<Map<string, { total: number; available: number }>> {
   if (roomTypeIds.length === 0) return new Map();
+  const exclude = excludeReservationId ?? null;
   const result = await db.execute(sql`
     SELECT rt.id AS room_type_id,
            COUNT(r.id)::int AS total,
@@ -113,6 +121,7 @@ export async function countAvailableRoomsByType(
              AND NOT EXISTS (
                SELECT 1 FROM reservations x
                WHERE x.room_id = r.id
+                 AND (${exclude}::uuid IS NULL OR x.id <> ${exclude}::uuid)
                  AND (
                    x.status IN ('confirmed','checked_in')
                    OR (

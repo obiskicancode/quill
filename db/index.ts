@@ -4,8 +4,6 @@ import { Pool } from 'pg';
 import { assertDbUrl, config } from '../config';
 import * as schema from './schema';
 
-assertDbUrl();
-
 const globalForDb = globalThis as unknown as {
   conn: Pool | undefined;
 };
@@ -13,7 +11,7 @@ const globalForDb = globalThis as unknown as {
 const pool =
   globalForDb.conn ??
   new Pool({
-    connectionString: config.DB.URL,
+    connectionString: assertDbUrl(),
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,

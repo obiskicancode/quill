@@ -1,7 +1,10 @@
+import { eq } from 'drizzle-orm';
+
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { db } from '@/db';
-import { paymentProofs } from '@/db/schema';
+import { paymentProofs, reservationChanges } from '@/db/schema';
+import { getAccess } from '@/lib/booking/session';
 import {
   createReference,
   insertPayment,
@@ -10,7 +13,9 @@ import {
 } from '@/lib/booking/store';
 import { loadReservation, statusOf } from '@/lib/booking/view';
 import { apiFail, apiOk } from '@/lib/http/envelope';
+import { clientIp } from '@/lib/http/request';
 import { requireManage } from '@/lib/manage/auth';
+import { rateLimit } from '@/lib/rate-limit';
 import { proofStorageConfigured, uploadProof } from '@/lib/storage/proofs';
 import { checkProofFile } from '@/schemas/checkout.schema';
 import type { ApiError } from '@/types/checkout.types';
@@ -24,6 +29,13 @@ export async function POST(
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
+  const client = clientIp(req) ?? 'local';
+  if (!(await rateLimit(`proof:${client}`, 10, 60_000)).allowed)
+    return fail(429, {
+      code: ERROR_CODES.RATE_LIMITED,
+      message: ERROR_MESSAGES.RATE_LIMITED,
+    });
+
   const url = new URL(req.url);
   const form = await req.formData().catch(() => null);
   const file = form?.get('file');
@@ -72,7 +84,12 @@ export async function POST(
       method: 'bank_transfer',
       amountMinor: pc.amountDueMinor,
       provider: 'bank_transfer',
+      note: pc.changeId,
     });
+    await db
+      .update(reservationChanges)
+      .set({ paymentId, updatedAt: new Date() })
+      .where(eq(reservationChanges.id, pc.changeId));
     await db.insert(paymentProofs).values({
       paymentId,
       storageKey,
@@ -91,6 +108,14 @@ export async function POST(
       code: ERROR_CODES.NOT_FOUND,
       message: ERROR_MESSAGES.RESERVATION_NOT_FOUND,
     });
+
+  const access = await getAccess(reference);
+  if (!access)
+    return fail(401, {
+      code: ERROR_CODES.UNAUTHORISED,
+      message: ERROR_MESSAGES.SESSION_EXPIRED,
+    });
+
   if (reservation.status === 'expired')
     return fail(410, {
       code: ERROR_CODES.HOLD_EXPIRED,

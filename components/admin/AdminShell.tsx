@@ -20,7 +20,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { useEffect, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,7 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
@@ -80,6 +81,39 @@ function AdminSidebar({
 }: AdminSidebarProps) {
   const pathname = usePathname();
   const { isMobile, setOpenMobile } = useSidebar();
+  const [newEnquiriesCount, setNewEnquiriesCount] = useState<number>(0);
+
+  // TODO: Update to use hooks
+  useEffect(() => {
+    let active = true;
+    async function loadCount() {
+      try {
+        const res = await fetch('/api/admin/enquiries/counts');
+        const data = await res.json();
+        if (active && data.data?.count !== undefined) {
+          setNewEnquiriesCount(data.data.count);
+        }
+      } catch {
+        // quiet background refresh
+      }
+    }
+
+    loadCount();
+
+    const interval = setInterval(() => {
+      if (
+        typeof document !== 'undefined' &&
+        document.visibilityState === 'visible'
+      ) {
+        loadCount();
+      }
+    }, 60_000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   const groups = mfaPending
     ? []
@@ -184,6 +218,12 @@ function AdminSidebar({
                             {item.label}
                           </span>
                         </SidebarMenuButton>
+                        {item.href === '/admin/enquiries' &&
+                          newEnquiriesCount > 0 && (
+                            <SidebarMenuBadge className="bg-brand text-paper rounded-full px-1.5 py-0.5 text-[11px] font-bold">
+                              {newEnquiriesCount}
+                            </SidebarMenuBadge>
+                          )}
                       </SidebarMenuItem>
                     );
                   })}

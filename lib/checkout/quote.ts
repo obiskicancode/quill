@@ -98,7 +98,12 @@ export async function buildCheckoutQuote(
     children: req.children,
     extraBed: req.extraBed,
   };
-  const base = await getQuoteResponse(room, stay, clock);
+  const base = await getQuoteResponse(
+    room,
+    stay,
+    clock,
+    req.excludeReservationId,
+  );
 
   if (base.status === 'invalid')
     return {

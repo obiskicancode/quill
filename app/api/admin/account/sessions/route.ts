@@ -9,7 +9,7 @@ import {
   revokeOtherSessionsForUser,
   revokeSession,
 } from '@/lib/db/repositories/staff.repo';
-import { checkCsrf } from '@/lib/http/csrf';
+import { checkAdminCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
 
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const csrfError = checkCsrf(request);
+  const csrfError = checkAdminCsrf(request);
   if (csrfError) return csrfError;
 
   const guard = await guardAdminApi(request);

@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
+import { requireStepUp } from '@/lib/auth/step-up';
 import {
   getIdempotencyRecord,
   setIdempotency,
@@ -21,6 +22,9 @@ export async function POST(
     permission: 'payments.refund',
   });
   if (!guard.ok) return guard.response;
+
+  const stepUp = requireStepUp(guard.context);
+  if (!stepUp.ok) return stepUp.response;
 
   const { id } = await params;
   if (!id) return apiFail(400, ERROR_MESSAGES.MISSING_RESERVATION_ID);

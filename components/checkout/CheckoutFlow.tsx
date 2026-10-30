@@ -8,10 +8,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { ServiceError } from '@/app/api/services/base.service';
-import {
-  loadProviderScript,
-  newKey,
-} from '@/app/api/services/checkout.service';
+import { newKey } from '@/app/api/services/checkout.service';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import {
@@ -276,6 +273,21 @@ export function CheckoutFlow({
       return router.push(confirmationHref(reservation.reference));
     if (status.status === 'pending_approval')
       return setPhase({ name: 'request-received', reason: 'manual' });
+    if (status.status === 'expired') {
+      setReservation(null);
+      setPhase({ name: 'form' });
+      router.replace(checkoutHref(stay));
+      return;
+    }
+    if (
+      status.status === 'awaiting_transfer' ||
+      status.status === 'awaiting_verification' ||
+      status.status === 'reserved_pay_at_hotel' ||
+      status.status === 'checked_in' ||
+      status.status === 'checked_out' ||
+      status.status === 'no_show'
+    )
+      return router.push(confirmationHref(reservation.reference));
     if (status.status === 'payment_failed' || status.paymentStatus === 'failed')
       return setPhase({ name: 'failed', reason: 'failed' });
     if (status.status === 'cancelled' || status.paymentStatus === 'cancelled')
@@ -410,10 +422,8 @@ export function CheckoutFlow({
         clearDraft();
       }
       if (ok.payment.mode === 'pay_at_hotel') {
-        setPhase({
-          name: 'request-received',
-          reason: ok.confirmationMode === 'manual' ? 'manual' : 'pay_at_hotel',
-        });
+        router.push(confirmationHref(current.reference));
+        return;
       } else if (method === 'bank_transfer' && bank) {
         await submitProof(current.reference);
       } else {
@@ -476,7 +486,6 @@ export function CheckoutFlow({
     setMethod(next);
     if (next !== 'bank_transfer') setBank(null);
     payKey.current = null;
-    if (next === 'online' && ok) loadProviderScript(ok.payment.provider);
   }
 
   // --- full-width states ---

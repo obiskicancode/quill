@@ -217,6 +217,9 @@ export const payments = pgTable(
     note: text('note'),
     paidAt: timestamp('paid_at', { withTimezone: true }),
     failedAt: timestamp('failed_at', { withTimezone: true }),
+    refundClaimedAt: timestamp('refund_claimed_at', { withTimezone: true }),
+    refundAttempts: integer('refund_attempts').notNull().default(0),
+    refundLastError: text('refund_last_error'),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),

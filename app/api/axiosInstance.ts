@@ -1,7 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 import { config } from '@/config';
-import { ADMIN_CSRF_COOKIE } from '@/lib/auth/cookies';
+import { COOKIE_NAMES, CSRF_HEADER_NAME } from '@/lib/cookies/constants';
 
 declare module 'axios' {
   interface AxiosRequestConfig {
@@ -19,7 +19,7 @@ const BASE_PATH = '/api';
 const baseURL = isServer ? config.API.BASE_URL + BASE_PATH : BASE_PATH;
 
 // Utility to parse specific CSRF cookies from document context
-function readCsrfToken(cookieName: string = ADMIN_CSRF_COOKIE): string {
+function readCsrfToken(cookieName: string = COOKIE_NAMES.ADMIN_CSRF): string {
   if (typeof document === 'undefined') return '';
   for (const part of document.cookie.split(';')) {
     const [key, ...rest] = part.trim().split('=');
@@ -62,7 +62,16 @@ function processQueue(error: unknown) {
 apiClient.interceptors.request.use((request) => {
   const method = request.method?.toUpperCase() ?? 'GET';
   if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-    request.headers['x-csrf-token'] = readCsrfToken(ADMIN_CSRF_COOKIE);
+    const existing =
+      (typeof request.headers?.get === 'function'
+        ? request.headers.get(CSRF_HEADER_NAME)
+        : undefined) ?? request.headers?.[CSRF_HEADER_NAME];
+    if (!existing) {
+      const token = readCsrfToken(COOKIE_NAMES.ADMIN_CSRF);
+      if (token) {
+        request.headers[CSRF_HEADER_NAME] = token;
+      }
+    }
   }
   return request;
 });
@@ -101,7 +110,11 @@ apiClient.interceptors.response.use(
       await refreshClient.post(
         '/admin/auth/refresh',
         {},
-        { headers: { 'x-csrf-token': readCsrfToken(ADMIN_CSRF_COOKIE) } },
+        {
+          headers: {
+            [CSRF_HEADER_NAME]: readCsrfToken(COOKIE_NAMES.ADMIN_CSRF),
+          },
+        },
       );
 
       processQueue(null);

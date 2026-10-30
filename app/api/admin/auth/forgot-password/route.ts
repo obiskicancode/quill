@@ -9,7 +9,7 @@ import {
   findStaffByEmail,
   invalidatePasswordResetTokensForUser,
 } from '@/lib/db/repositories/staff.repo';
-import { checkCsrf } from '@/lib/http/csrf';
+import { checkAdminCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, tooManyRequests, userAgent } from '@/lib/http/request';
 import { sendAdminPasswordResetEmail } from '@/lib/mail';
@@ -19,7 +19,7 @@ import { adminForgotPasswordSchema } from '@/schemas/admin-auth.schema';
 const RESET_TOKEN_TTL_MS = 60 * 60_000;
 
 export async function POST(request: Request) {
-  const csrfError = checkCsrf(request);
+  const csrfError = checkAdminCsrf(request);
   if (csrfError) return csrfError;
 
   const body = await request.json().catch(() => null);

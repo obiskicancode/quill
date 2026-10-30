@@ -15,14 +15,14 @@ import {
   replaceRecoveryCodes,
   setMfaEnabled,
 } from '@/lib/db/repositories/staff.repo';
-import { checkCsrf } from '@/lib/http/csrf';
+import { checkAdminCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, tooManyRequests, userAgent } from '@/lib/http/request';
 import { rateLimit } from '@/lib/rate-limit';
 import { adminConfirm2faSchema } from '@/schemas/admin-auth.schema';
 
 export async function POST(request: Request) {
-  const csrfError = checkCsrf(request);
+  const csrfError = checkAdminCsrf(request);
   if (csrfError) return csrfError;
 
   const guard = await guardAdminApi(request, { allowPending: true });

@@ -769,24 +769,25 @@ export async function checkInReservation(
   reservationId: string,
   staffUserId: string,
 ): Promise<DashboardReservationRow> {
-  const [res] = await db
-    .select()
-    .from(reservations)
-    .where(eq(reservations.id, reservationId))
-    .limit(1);
-
-  if (!res) {
-    throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND_BARE);
-  }
-
-  if (res.status !== 'confirmed') {
-    throw new Error(ERROR_MESSAGES.CANNOT_CHECK_IN_STATUS(res.status));
-  }
-
   const now = new Date();
 
   // Run update + status history + audit log in transaction
   await db.transaction(async (tx) => {
+    const [res] = await tx
+      .select()
+      .from(reservations)
+      .where(eq(reservations.id, reservationId))
+      .limit(1)
+      .for('update');
+
+    if (!res) {
+      throw new Error(ERROR_MESSAGES.RESERVATION_NOT_FOUND_BARE);
+    }
+
+    if (res.status !== 'confirmed') {
+      throw new Error(ERROR_MESSAGES.CANNOT_CHECK_IN_STATUS(res.status));
+    }
+
     await tx
       .update(reservations)
       .set({

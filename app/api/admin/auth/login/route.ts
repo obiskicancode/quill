@@ -3,16 +3,16 @@ import { z } from 'zod';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { writeAdminAudit } from '@/lib/auth/audit';
-import { CHALLENGE_TTL_SECONDS, setChallengeCookie } from '@/lib/auth/cookies';
 import { verifyDummyPassword, verifyPassword } from '@/lib/auth/password';
 import { issueAdminSession } from '@/lib/auth/session';
 import { createChallengeToken } from '@/lib/auth/tokens';
+import { CHALLENGE_TTL_SECONDS, setAdminChallengeCookie } from '@/lib/cookies';
 import {
   findStaffByEmail,
   recordSuccessfulLogin,
   registerFailedLogin,
 } from '@/lib/db/repositories/staff.repo';
-import { checkCsrf } from '@/lib/http/csrf';
+import { checkAdminCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, tooManyRequests, userAgent } from '@/lib/http/request';
 import { rateLimit } from '@/lib/rate-limit';
@@ -26,7 +26,7 @@ function safeNext(value: string | undefined): string {
 }
 
 export async function POST(request: Request) {
-  const csrfError = checkCsrf(request);
+  const csrfError = checkAdminCsrf(request);
   if (csrfError) return csrfError;
 
   const body = await request.json().catch(() => null);
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
 
   if (user.mfaEnabled) {
     const response = apiOk({ mfaRequired: true }, { noCache: true });
-    setChallengeCookie(
+    setAdminChallengeCookie(
       response,
       createChallengeToken(user.id, CHALLENGE_TTL_SECONDS),
     );

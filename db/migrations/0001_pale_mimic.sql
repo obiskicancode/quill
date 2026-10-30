@@ -13,8 +13,6 @@ CREATE TABLE "quotes" (
   "created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
---> statement-breakpoint
 CREATE INDEX "idx_quotes_ref" ON "quotes" USING btree ("reference");
 
---> statement-breakpoint
 CREATE INDEX "idx_quotes_expires" ON "quotes" USING btree ("expires_at");

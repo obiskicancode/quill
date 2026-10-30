@@ -6,17 +6,24 @@ import { db } from '@/db';
 import {
   payments,
   paymentWebhookEvents,
+  refunds,
   reservations,
   reservationStatusHistory,
+  roomTypes,
   staffUsers,
 } from '@/db/schema';
+import { completeOnlinePayment } from '@/lib/booking/store';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
 import { sendRefundIssuedEmail } from '@/lib/mail';
+import { getPaymentProvider } from '@/lib/payments/factory';
+import { isPaymentProviderId } from '@/lib/payments/provider';
 import {
   computePaymentSummary,
   unreconcilePayment,
   validateManualRefundPayout,
 } from '@/lib/payments/reconciliation';
+import { applyStoredWebhookEvent } from '@/lib/payments/webhook';
+import { recomputeReservationFinancials } from '@/lib/reservations/payment-ledger';
 import type {
   DailyPaymentStripItem,
   ManualRefundItem,
@@ -389,16 +396,19 @@ export async function getPaymentDetailRepo(
     .select({
       payment: payments,
       reservation: reservations,
+      roomType: roomTypes,
       staff: staffUsers,
     })
     .from(payments)
     .leftJoin(reservations, eq(payments.reservationId, reservations.id))
+    .leftJoin(roomTypes, eq(reservations.roomTypeId, roomTypes.id))
     .leftJoin(staffUsers, eq(payments.reconciledBy, staffUsers.id))
     .where(eq(payments.id, id))
     .limit(1);
 
   if (!row) return null;
-  const { payment: p, reservation: r, staff: u } = row;
+  const { payment: p, reservation: r, roomType, staff: u } = row;
+  if (!r) return null;
 
   // Query linked webhook events for this payment reference
   const relatedWebhooks = await db
@@ -440,18 +450,18 @@ export async function getPaymentDetailRepo(
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
     reservation: {
-      id: r?.id || p.reservationId,
-      reference: r?.reference || 'N/A',
-      guestName: r?.guestName || 'Guest',
-      guestEmail: r?.guestEmail || '',
-      roomTypeName: 'Hotel Room',
-      checkIn: r?.checkIn || '2026-11-01',
-      checkOut: r?.checkOut || '2026-11-04',
-      nights: 3,
-      status: r?.status || 'confirmed',
-      totalMinor: r?.totalMinor || p.amountMinor,
-      amountPaidMinor: r?.amountPaidMinor || p.amountMinor,
-      amountRefundedMinor: r?.amountRefundedMinor || 0,
+      id: r.id,
+      reference: r.reference,
+      guestName: r.guestName,
+      guestEmail: r.guestEmail ?? '',
+      roomTypeName: roomType?.name ?? 'Unknown room type',
+      checkIn: r.checkIn,
+      checkOut: r.checkOut,
+      nights: r.nights,
+      status: r.status,
+      totalMinor: r.totalMinor,
+      amountPaidMinor: r.amountPaidMinor,
+      amountRefundedMinor: r.amountRefundedMinor,
     },
     webhooks: relatedWebhooks.map((wh) => ({
       id: wh.id,
@@ -472,20 +482,154 @@ export async function reconcilePaymentsBulkRepo(params: {
   paymentIds: string[];
   staffUserId: string;
   note?: string;
-}): Promise<{ reconciledCount: number }> {
-  const updated = await db
-    .update(payments)
-    .set({
-      reconciled: true,
-      reconciledAt: new Date(),
-      reconciledBy: params.staffUserId,
-      note: params.note || undefined,
-      updatedAt: new Date(),
+}): Promise<{
+  reconciledCount: number;
+  skippedCount: number;
+  missingCount: number;
+}> {
+  const rows = await db
+    .select({
+      id: payments.id,
+      status: payments.status,
+      type: payments.type,
+      provider: payments.provider,
+      providerRef: payments.providerRef,
+      reference: payments.reference,
     })
-    .where(inArray(payments.id, params.paymentIds))
-    .returning({ id: payments.id });
+    .from(payments)
+    .where(inArray(payments.id, params.paymentIds));
 
-  return { reconciledCount: updated.length };
+  const eligible: string[] = [];
+  for (const row of rows) {
+    if (row.status !== 'paid') continue;
+
+    if (row.type !== 'refund' && isPaymentProviderId(row.provider)) {
+      const provider = getPaymentProvider(row.provider);
+      if (provider.isConfigured() && provider.verifyTransaction) {
+        const verified = await provider
+          .verifyTransaction(row.providerRef ?? row.reference)
+          .catch(() => null);
+        if (!verified || verified.status !== 'paid') continue;
+      }
+    }
+    eligible.push(row.id);
+  }
+
+  if (eligible.length > 0)
+    await db
+      .update(payments)
+      .set({
+        reconciled: true,
+        reconciledAt: new Date(),
+        reconciledBy: params.staffUserId,
+        note: params.note || undefined,
+        updatedAt: new Date(),
+      })
+      .where(inArray(payments.id, eligible));
+
+  return {
+    reconciledCount: eligible.length,
+    skippedCount: rows.length - eligible.length,
+    missingCount: params.paymentIds.length - rows.length,
+  };
+}
+
+export async function recheckPaymentRepo(paymentId: string): Promise<{
+  ok: boolean;
+  error?: string;
+  providerStatus: string;
+  paymentStatus?: string;
+}> {
+  const [p] = await db
+    .select()
+    .from(payments)
+    .where(eq(payments.id, paymentId))
+    .limit(1);
+  if (!p)
+    return {
+      ok: false,
+      error: ERROR_MESSAGES.PAYMENT_NOT_FOUND,
+      providerStatus: 'not_found',
+    };
+
+  if (p.type === 'refund')
+    return {
+      ok: true,
+      providerStatus:
+        p.status === 'paid'
+          ? 'completed'
+          : p.status === 'failed'
+            ? 'failed'
+            : 'processing',
+      paymentStatus: p.status,
+    };
+
+  if (!isPaymentProviderId(p.provider))
+    return {
+      ok: true,
+      providerStatus: 'manual',
+      paymentStatus: p.status,
+    };
+
+  const provider = getPaymentProvider(p.provider);
+  if (!provider.isConfigured() || !provider.verifyTransaction)
+    return {
+      ok: true,
+      providerStatus: 'unavailable',
+      paymentStatus: p.status,
+    };
+
+  const verification = await provider.verifyTransaction(
+    p.providerRef ?? p.reference,
+  );
+  if (!verification)
+    return {
+      ok: true,
+      providerStatus: 'unavailable',
+      paymentStatus: p.status,
+    };
+
+  if (verification.status === 'paid') {
+    const result = await completeOnlinePayment({
+      provider: p.provider,
+      reference: p.reference,
+      amountMinor: verification.amountMinor,
+      payload: {
+        ...(verification.payload ?? {}),
+        source: 'admin_recheck',
+      },
+    });
+    if (!result.ok)
+      return {
+        ok: false,
+        error: ERROR_MESSAGES.PAYMENT_NOT_APPLIED(p.reference),
+        providerStatus: 'paid',
+        paymentStatus: p.status,
+      };
+    return {
+      ok: true,
+      providerStatus: 'completed',
+      paymentStatus: 'paid',
+    };
+  }
+
+  if (verification.status === 'failed') {
+    await db
+      .update(payments)
+      .set({ status: 'failed', updatedAt: new Date() })
+      .where(eq(payments.id, p.id));
+    return {
+      ok: true,
+      providerStatus: 'failed',
+      paymentStatus: 'failed',
+    };
+  }
+
+  return {
+    ok: true,
+    providerStatus: 'pending',
+    paymentStatus: p.status,
+  };
 }
 
 export async function unreconcilePaymentRepo(params: {
@@ -576,71 +720,116 @@ export async function markManualRefundPaidOutRepo(params: {
   input: ManualRefundPayoutInput;
   staffUserId: string;
   actorRole: string;
-}): Promise<{ ok: boolean; error?: string }> {
-  const [p] = await db
-    .select()
-    .from(payments)
-    .where(eq(payments.id, params.paymentId))
-    .limit(1);
+}): Promise<{ ok: boolean; error?: string; already?: boolean }> {
+  const result = await db.transaction(async (tx) => {
+    const [p] = await tx
+      .select()
+      .from(payments)
+      .where(eq(payments.id, params.paymentId))
+      .for('update')
+      .limit(1);
 
-  if (!p) {
-    return { ok: false, error: ERROR_MESSAGES.REFUND_PAYMENT_NOT_FOUND };
-  }
+    if (!p) {
+      return {
+        ok: false as const,
+        error: ERROR_MESSAGES.REFUND_PAYMENT_NOT_FOUND,
+      };
+    }
+    if (p.type !== 'refund') {
+      return {
+        ok: false as const,
+        error: ERROR_MESSAGES.REFUND_PAYMENT_NOT_FOUND,
+      };
+    }
+    if (p.status === 'paid') {
+      if (p.providerRef === params.input.reference)
+        return { ok: true as const, already: true };
+      return {
+        ok: false as const,
+        error: ERROR_MESSAGES.REFUND_ALREADY_PROCESSED,
+      };
+    }
+    if (p.status !== 'pending')
+      return {
+        ok: false as const,
+        error: ERROR_MESSAGES.REFUND_ALREADY_PROCESSED,
+      };
 
-  const [r] = await db
-    .select()
-    .from(reservations)
-    .where(eq(reservations.id, p.reservationId))
-    .limit(1);
+    if (p.refundOfPaymentId && isPaymentProviderId(p.provider))
+      return {
+        ok: false as const,
+        error: ERROR_MESSAGES.REFUND_PROVIDER_IN_PROGRESS,
+      };
 
-  if (!r) {
+    const [r] = await tx
+      .select()
+      .from(reservations)
+      .where(eq(reservations.id, p.reservationId))
+      .for('update')
+      .limit(1);
+
+    if (!r) {
+      return {
+        ok: false as const,
+        error: ERROR_MESSAGES.ASSOCIATED_RESERVATION_NOT_FOUND,
+      };
+    }
+
+    const validation = validateManualRefundPayout({
+      refundDueMinor: p.amountMinor,
+      payoutAmountMinor: params.input.amountMinor,
+      reservationTotalPaidMinor: r.amountPaidMinor,
+      reservationTotalRefundedMinor: r.amountRefundedMinor,
+    });
+
+    if (!validation.ok) return validation;
+
+    await tx
+      .update(payments)
+      .set({
+        status: 'paid',
+        paidAt: new Date(params.input.paidDate),
+        channel: params.input.method,
+        providerRef: params.input.reference,
+        reconciled: true,
+        reconciledAt: new Date(),
+        reconciledBy: params.staffUserId,
+        note: params.input.note,
+        updatedAt: new Date(),
+      })
+      .where(eq(payments.id, params.paymentId));
+
+    await recomputeReservationFinancials(tx, r.id, r.totalMinor);
+
+    await tx
+      .update(refunds)
+      .set({
+        status: 'processed',
+        method: params.input.method,
+        providerRef: params.input.reference,
+        processedAt: new Date(params.input.paidDate),
+      })
+      .where(eq(refunds.paymentId, params.paymentId));
+
+    await tx.insert(reservationStatusHistory).values({
+      reservationId: r.id,
+      fromStatus: r.status,
+      toStatus: r.status,
+      reason: `Manual refund paid out: ₦${(params.input.amountMinor / 100).toLocaleString()} via ${params.input.method}`,
+      changedBy: params.staffUserId,
+    });
+
+    return { ok: true as const, reservation: r, payment: p };
+  });
+
+  if (!result.ok) return result;
+  if ('already' in result && result.already) return result;
+  if (!('reservation' in result) || !result.reservation)
     return {
       ok: false,
       error: ERROR_MESSAGES.ASSOCIATED_RESERVATION_NOT_FOUND,
     };
-  }
-
-  const validation = validateManualRefundPayout({
-    refundDueMinor: p.amountMinor,
-    payoutAmountMinor: params.input.amountMinor,
-    reservationTotalPaidMinor: r.amountPaidMinor,
-    reservationTotalRefundedMinor: r.amountRefundedMinor,
-  });
-
-  if (!validation.ok) return validation;
-
-  const newRefunded = r.amountRefundedMinor + params.input.amountMinor;
-
-  await db
-    .update(payments)
-    .set({
-      status: 'paid',
-      paidAt: new Date(params.input.paidDate),
-      channel: params.input.method,
-      providerRef: params.input.reference,
-      reconciled: true,
-      reconciledAt: new Date(),
-      reconciledBy: params.staffUserId,
-      note: params.input.note,
-      updatedAt: new Date(),
-    })
-    .where(eq(payments.id, params.paymentId));
-
-  await db
-    .update(reservations)
-    .set({
-      amountRefundedMinor: newRefunded,
-      updatedAt: new Date(),
-    })
-    .where(eq(reservations.id, r.id));
-
-  await db.insert(reservationStatusHistory).values({
-    reservationId: r.id,
-    fromStatus: r.status,
-    toStatus: r.status,
-    reason: `Manual refund paid out: ₦${(params.input.amountMinor / 100).toLocaleString()} via ${params.input.method}`,
-    changedBy: params.staffUserId,
-  });
+  const r = result.reservation;
 
   if (!params.input.doNotEmailGuest && r.guestEmail) {
     await sendRefundIssuedEmail({
@@ -722,9 +911,31 @@ export async function reprocessWebhookEventRepo(
     };
   }
 
+  try {
+    if (isPaymentProviderId(evt.provider))
+      await applyStoredWebhookEvent(
+        evt.provider,
+        evt.eventType ?? '',
+        evt.payload as Record<string, unknown>,
+      );
+  } catch (error) {
+    await db
+      .update(paymentWebhookEvents)
+      .set({
+        processed: false,
+        processedAt: null,
+        error: error instanceof Error ? error.message : String(error),
+      })
+      .where(eq(paymentWebhookEvents.id, id));
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : String(error),
+    };
+  }
+
   await db
     .update(paymentWebhookEvents)
-    .set({ processed: true, processedAt: new Date() })
+    .set({ processed: true, processedAt: new Date(), error: null })
     .where(eq(paymentWebhookEvents.id, id));
 
   await recordAuditLog({

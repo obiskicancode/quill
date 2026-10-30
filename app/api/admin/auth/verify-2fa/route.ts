@@ -3,20 +3,17 @@ import { z } from 'zod';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { writeAdminAudit } from '@/lib/auth/audit';
-import {
-  ADMIN_CHALLENGE_COOKIE,
-  clearChallengeCookie,
-} from '@/lib/auth/cookies';
 import { safeEqual } from '@/lib/auth/crypto';
 import { decryptMfaSecret, recoveryCodeHash, verifyTotp } from '@/lib/auth/mfa';
 import { issueAdminSession } from '@/lib/auth/session';
 import { readChallengeToken } from '@/lib/auth/tokens';
+import { clearAdminChallengeCookie, COOKIE_NAMES } from '@/lib/cookies';
 import {
   findStaffById,
   findUnusedRecoveryCodesForUser,
   markRecoveryCodeUsed,
 } from '@/lib/db/repositories/staff.repo';
-import { checkCsrf } from '@/lib/http/csrf';
+import { checkAdminCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import {
   clientIp,
@@ -28,7 +25,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { adminVerify2faSchema } from '@/schemas/admin-auth.schema';
 
 export async function POST(request: Request) {
-  const csrfError = checkCsrf(request);
+  const csrfError = checkAdminCsrf(request);
   if (csrfError) return csrfError;
 
   const body = await request.json().catch(() => null);
@@ -46,7 +43,7 @@ export async function POST(request: Request) {
   }
 
   const challenge = readChallengeToken(
-    cookieValue(request, ADMIN_CHALLENGE_COOKIE),
+    cookieValue(request, COOKIE_NAMES.ADMIN_CHALLENGE),
   );
   if (!challenge) {
     return apiFail(
@@ -113,7 +110,7 @@ export async function POST(request: Request) {
   }
 
   const response = apiOk({ redirectTo: '/admin' }, { noCache: true });
-  clearChallengeCookie(response);
+  clearAdminChallengeCookie(response);
   await issueAdminSession(response, user, request, {
     stepUpVerifiedAt: new Date(),
   });

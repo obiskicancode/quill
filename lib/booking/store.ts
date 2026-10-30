@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { db } from '@/db';
@@ -24,6 +24,8 @@ import {
   findAvailableRoom,
   findRoomTypeBySlug,
 } from '@/lib/db/repositories/rooms.repo';
+import { logStructured } from '@/lib/observability';
+import { recomputeReservationFinancials } from '@/lib/reservations/payment-ledger';
 import type { GuestInfo, ReservationSnapshot } from '@/types/booking.types';
 import type {
   CheckoutBreakdown,
@@ -77,6 +79,7 @@ export interface StoredReservation {
   guest: GuestInfo;
   snapshot: ReservationSnapshot;
   paidMinor: number;
+  refundedMinor: number;
   paymentReference: string | null;
   paymentProvider: PaymentProvider | 'bank_transfer' | 'cash' | null;
   paidAt: number | null;
@@ -227,7 +230,9 @@ export async function loadStoredReservation(
 
   const room = roomType[0];
   if (!room) return null;
-  const latestPayment = paymentRows.at(-1) ?? null;
+  const latestPayment =
+    [...paymentRows].reverse().find((payment) => payment.type !== 'refund') ??
+    null;
   const proofRows = latestPayment
     ? await executor
         .select()
@@ -320,6 +325,7 @@ export async function loadStoredReservation(
     },
     snapshot,
     paidMinor: row.amountPaidMinor,
+    refundedMinor: row.amountRefundedMinor,
     paymentReference: latestPayment?.reference ?? null,
     paymentProvider: latestPayment?.provider ?? null,
     paidAt: latestPayment?.paidAt?.getTime() ?? null,
@@ -339,7 +345,7 @@ export async function loadStoredReservation(
   let dirty = false;
   const pc = stored.pendingChange;
   if (pc && now > pc.holdExpiresAt && pc.status !== 'awaiting_verification') {
-    await db
+    await executor
       .update(reservationChanges)
       .set({ status: 'expired', updatedAt: new Date() })
       .where(eq(reservationChanges.id, pc.changeId));
@@ -351,22 +357,27 @@ export async function loadStoredReservation(
     );
     dirty = true;
   }
-  if (
-    now > stored.holdExpiresAt &&
+  const expirable =
     ['pending_payment', 'awaiting_transfer', 'payment_failed'].includes(
       stored.status,
-    )
+    ) ||
+    (stored.status === 'pending_approval' && stored.paidMinor === 0);
+  if (
+    now > stored.holdExpiresAt &&
+    stored.mode !== 'pay_at_hotel' &&
+    expirable
   ) {
     stored.status = 'expired';
     logEvent(stored, 'expired');
     dirty = true;
   }
-  if (dirty) await saveStoredReservation(stored);
+  if (dirty) await saveStoredReservation(stored, executor);
   return stored;
 }
 
 export async function saveStoredReservation(
   r: StoredReservation,
+  executor: QueryExecutor = db,
 ): Promise<void> {
   const breakdown = r.snapshot.breakdown;
   const snapshot = {
@@ -374,7 +385,7 @@ export async function saveStoredReservation(
     cancellation: r.cancellation,
     pendingChange: r.pendingChange,
   };
-  await db
+  await executor
     .update(reservations)
     .set({
       guestName: r.guest.fullName,
@@ -409,7 +420,11 @@ export async function saveStoredReservation(
       totalMinor: r.totals.totalMinor,
       depositRequiredMinor: r.totals.dueNowMinor,
       amountPaidMinor: r.paidMinor,
-      balanceMinor: Math.max(0, r.totals.totalMinor - r.paidMinor),
+      amountRefundedMinor: r.refundedMinor,
+      balanceMinor: Math.max(
+        0,
+        r.totals.totalMinor - r.paidMinor + r.refundedMinor,
+      ),
       holdExpiresAt: new Date(r.holdExpiresAt),
       changeCount: r.changeCount,
       cancelledAt:
@@ -423,15 +438,15 @@ export async function saveStoredReservation(
     })
     .where(eq(reservations.id, r.id));
 
-  if (r.cancellation && r.cancellation.refund.refundMinor > 0) {
-    const existing = await db
+  if (r.refunds.length > 0) {
+    const existing = await executor
       .select({ id: refunds.id })
       .from(refunds)
       .where(eq(refunds.reservationId, r.id));
     const ids = new Set(existing.map((e) => e.id));
     const additions = r.refunds.filter((refund) => !ids.has(refund.id));
     if (additions.length > 0)
-      await db.insert(refunds).values(
+      await executor.insert(refunds).values(
         additions.map((refund) => ({
           id: refund.id,
           reservationId: r.id,
@@ -439,32 +454,57 @@ export async function saveStoredReservation(
           method: refund.method,
           status: refund.status,
           timeline: r.cancellation?.refund.timeline ?? null,
-          reason: r.cancellation?.reason ?? null,
+          reason: r.cancellation?.reason ?? 'Refund issued',
         })),
       );
   }
 
-  const existingHistory = await db
-    .select({ id: reservationStatusHistory.id })
+  const existingHistory = await executor
+    .select({
+      id: reservationStatusHistory.id,
+      toStatus: reservationStatusHistory.toStatus,
+      createdAt: reservationStatusHistory.createdAt,
+    })
     .from(reservationStatusHistory)
-    .where(eq(reservationStatusHistory.reservationId, r.id));
+    .where(eq(reservationStatusHistory.reservationId, r.id))
+    .orderBy(reservationStatusHistory.createdAt);
   const historyIds = new Set(existingHistory.map((h) => h.id));
-  const newHistory = r.history.filter((h) => !historyIds.has(h.id));
-  if (newHistory.length > 0)
-    await db.insert(reservationStatusHistory).values(
-      newHistory.map((h) => ({
-        id: h.id,
-        reservationId: r.id,
-        fromStatus: null,
-        toStatus: dbStatusOf(r.status),
-        reason: h.detail ?? h.type,
-        metadata: { type: h.type },
-        createdAt: new Date(h.at),
-      })),
+  const newHistory = r.history
+    .filter((h) => !historyIds.has(h.id))
+    .sort((a, b) => a.at - b.at);
+  if (newHistory.length > 0) {
+    let previousStatus: Reservation['status'] | null =
+      existingHistory.at(-1)?.toStatus ?? null;
+    const statusFor: Partial<Record<HistoryType, Reservation['status']>> = {
+      created: 'pending',
+      approved: 'confirmed',
+      cancelled: 'cancelled',
+      expired: 'expired',
+      checked_in: 'checked_in',
+      checked_out: 'checked_out',
+      no_show: 'no_show',
+    };
+    await executor.insert(reservationStatusHistory).values(
+      newHistory.map((h) => {
+        const nextStatus =
+          statusFor[h.type] ?? previousStatus ?? dbStatusOf(r.status);
+        const fromStatus = previousStatus;
+        previousStatus = nextStatus;
+        return {
+          id: h.id,
+          reservationId: r.id,
+          fromStatus,
+          toStatus: nextStatus,
+          reason: h.detail ?? h.type,
+          metadata: { type: h.type },
+          createdAt: new Date(h.at),
+        };
+      }),
     );
+  }
 
   if (r.notifications?.length) {
-    await db.insert(notificationLogs).values(
+    await executor.insert(notificationLogs).values(
       r.notifications.map((n) => ({
         reservationId: r.id,
         templateKey: n.kind,
@@ -475,7 +515,7 @@ export async function saveStoredReservation(
         dedupeKey: `${r.reference}:${n.kind}:${Date.now()}`,
       })),
     );
-    await db.insert(auditLogs).values(
+    await executor.insert(auditLogs).values(
       r.notifications.map((n) => ({
         entity: 'reservation',
         entityId: r.reference,
@@ -488,7 +528,7 @@ export async function saveStoredReservation(
 
   if (r.pendingChange) {
     const pc = r.pendingChange;
-    const existing = await db
+    const existing = await executor
       .select({ id: reservationChanges.id })
       .from(reservationChanges)
       .where(eq(reservationChanges.id, pc.changeId))
@@ -508,16 +548,16 @@ export async function saveStoredReservation(
       updatedAt: new Date(),
     };
     if (existing.length > 0)
-      await db
+      await executor
         .update(reservationChanges)
         .set(values)
         .where(eq(reservationChanges.id, pc.changeId));
     else
-      await db
+      await executor
         .insert(reservationChanges)
         .values({ id: pc.changeId, ...values });
   } else {
-    await db
+    await executor
       .update(reservationChanges)
       .set({ status: 'cancelled', updatedAt: new Date() })
       .where(
@@ -532,6 +572,17 @@ export async function saveStoredReservation(
         ),
       );
   }
+
+  const ledger = await recomputeReservationFinancials(
+    executor,
+    r.id,
+    r.totals.totalMinor,
+  );
+  if (ledger) {
+    r.paidMinor = ledger.paidMinor;
+    r.refundedMinor = ledger.refundedMinor;
+    r.totals.balanceAtHotelMinor = ledger.balanceMinor;
+  }
 }
 
 export function toReservationResponse(r: StoredReservation) {
@@ -544,7 +595,10 @@ export function toReservationResponse(r: StoredReservation) {
     amounts: {
       totalMinor: r.totals.totalMinor,
       dueNowMinor: r.totals.dueNowMinor,
-      balanceAtHotelMinor: Math.max(0, r.totals.totalMinor - r.paidMinor),
+      balanceAtHotelMinor: Math.max(
+        0,
+        r.totals.totalMinor - r.paidMinor + r.refundedMinor,
+      ),
     },
   };
 }
@@ -608,7 +662,10 @@ export function applyStayChange(
         : r.mode === 'deposit'
           ? r.totals.dueNowMinor
           : 0,
-    balanceAtHotelMinor: Math.max(0, c.totalMinor - r.paidMinor),
+    balanceAtHotelMinor: Math.max(
+      0,
+      c.totalMinor - r.paidMinor + r.refundedMinor,
+    ),
   };
   r.changeCount += 1;
   logEvent(r, 'dates_changed');
@@ -727,84 +784,330 @@ export async function insertPayment(input: {
   return id;
 }
 
+async function recordLatePaymentRefund(
+  executor: QueryExecutor,
+  r: StoredReservation,
+  payment: typeof payments.$inferSelect,
+  reason: string,
+): Promise<void> {
+  const [existing] = await executor
+    .select({ id: payments.id })
+    .from(payments)
+    .where(
+      and(
+        eq(payments.refundOfPaymentId, payment.id),
+        eq(payments.type, 'refund'),
+      ),
+    )
+    .limit(1);
+  if (existing) return;
+
+  const refundPaymentId = randomUUID();
+  await executor.insert(payments).values({
+    id: refundPaymentId,
+    reservationId: r.id,
+    refundOfPaymentId: payment.id,
+    reference: createReference(),
+    provider: payment.provider,
+    type: 'refund',
+    status: 'pending',
+    amountMinor: payment.amountMinor,
+    currency: payment.currency,
+    channel: 'provider',
+    note: reason,
+  });
+  await executor.insert(refunds).values({
+    reservationId: r.id,
+    paymentId: refundPaymentId,
+    amountMinor: payment.amountMinor,
+    method: 'original_payment',
+    status: 'initiated',
+    reason,
+  });
+}
+
+export async function findReusableOnlinePayment(input: {
+  reservationId: string;
+  provider: PaymentProvider;
+  amountMinor: number;
+  changeId?: string | null;
+}) {
+  const [row] = await db
+    .select()
+    .from(payments)
+    .where(
+      and(
+        eq(payments.reservationId, input.reservationId),
+        eq(payments.provider, input.provider),
+        eq(payments.status, 'pending'),
+        eq(payments.amountMinor, input.amountMinor),
+        input.changeId
+          ? eq(payments.note, input.changeId)
+          : isNull(payments.note),
+      ),
+    )
+    .orderBy(desc(payments.createdAt))
+    .limit(1);
+  return row ?? null;
+}
+
 export async function completeOnlinePayment(input: {
   provider: PaymentProvider;
   reference: string;
   amountMinor: number;
   payload: Record<string, unknown>;
 }): Promise<{ ok: boolean; already?: boolean }> {
-  const [payment] = await db
-    .select()
-    .from(payments)
-    .where(eq(payments.reference, input.reference))
-    .limit(1);
-  if (!payment || payment.provider !== input.provider) return { ok: false };
-  if (payment.status === 'paid') return { ok: true, already: true };
-  if (payment.amountMinor !== input.amountMinor) return { ok: false };
+  return db.transaction(async (tx) => {
+    const [payment] = await tx
+      .select()
+      .from(payments)
+      .where(eq(payments.reference, input.reference))
+      .limit(1)
+      .for('update');
+    if (!payment || payment.provider !== input.provider) return { ok: false };
 
-  await db
-    .update(payments)
-    .set({
-      status: 'paid',
-      paidAt: new Date(),
-      netAmountMinor: input.amountMinor,
-      providerResponse: input.payload,
-      updatedAt: new Date(),
-    })
-    .where(eq(payments.id, payment.id));
+    const alreadyPaid = payment.status === 'paid';
+    if (!alreadyPaid && payment.amountMinor !== input.amountMinor)
+      return { ok: false };
 
-  const [row] = await db
-    .select({ reference: reservations.reference })
-    .from(reservations)
-    .where(eq(reservations.id, payment.reservationId))
-    .limit(1);
-  if (!row) return { ok: false };
-  const r = await loadStoredReservation(row.reference);
-  if (!r) return { ok: false };
+    const [row] = await tx
+      .select({ id: reservations.id, reference: reservations.reference })
+      .from(reservations)
+      .where(eq(reservations.id, payment.reservationId))
+      .limit(1)
+      .for('update');
+    if (!row) return { ok: false };
 
-  if (r.status === 'cancelled') {
-    logEvent(r, 'payment_received', 'Payment received after cancellation.');
-    await saveStoredReservation(r);
-    return { ok: true };
-  }
+    const r = await loadStoredReservation(row.reference, tx);
+    if (!r) return { ok: false };
 
-  const change = r.pendingChange;
-  if (payment.note && change && change.changeId === payment.note) {
-    applyStayChange(r, {
-      checkIn: change.checkIn,
-      checkOut: change.checkOut,
-      breakdown: change.breakdown,
-      totalMinor: change.totalMinor,
-      paidDeltaMinor: input.amountMinor,
-      policy: change.policy,
-    });
-    r.pendingChange = null;
-    await db
-      .update(reservationChanges)
+    const [changeRow] = payment.note
+      ? await tx
+          .select()
+          .from(reservationChanges)
+          .where(
+            and(
+              eq(reservationChanges.id, payment.note),
+              eq(reservationChanges.reservationId, r.id),
+            ),
+          )
+          .limit(1)
+          .for('update')
+      : [];
+
+    const activeChange =
+      changeRow &&
+      ['awaiting_payment', 'awaiting_transfer'].includes(changeRow.status)
+        ? changeRow
+        : null;
+    const isChangePayment = Boolean(changeRow);
+
+    const markPaid = async () => {
+      if (alreadyPaid) return;
+      await tx
+        .update(payments)
+        .set({
+          status: 'paid',
+          paidAt: new Date(),
+          netAmountMinor: input.amountMinor,
+          providerResponse: input.payload,
+          updatedAt: new Date(),
+        })
+        .where(eq(payments.id, payment.id));
+    };
+
+    if (r.status === 'cancelled' || r.status === 'expired') {
+      await markPaid();
+      if (changeRow) {
+        await tx
+          .update(reservationChanges)
+          .set({ status: 'cancelled', updatedAt: new Date() })
+          .where(eq(reservationChanges.id, changeRow.id));
+      }
+      logEvent(
+        r,
+        'payment_received',
+        r.status === 'cancelled'
+          ? 'Payment received after cancellation.'
+          : 'Payment received after the hold expired.',
+      );
+      await recordLatePaymentRefund(
+        tx,
+        r,
+        payment,
+        r.status === 'cancelled'
+          ? 'Payment received after cancellation'
+          : 'Payment received after hold expiry',
+      );
+      await saveStoredReservation(r, tx);
+      logStructured(
+        'payment.unapplied',
+        {
+          reference: payment.reference,
+          reservation: r.reference,
+          reservationStatus: r.status,
+          alreadyPaid,
+        },
+        'warn',
+      );
+      return { ok: true, already: alreadyPaid || undefined };
+    }
+
+    if (isChangePayment && !activeChange) {
+      await markPaid();
+      await recordLatePaymentRefund(
+        tx,
+        r,
+        payment,
+        'Payment received after the change hold expired',
+      );
+      await saveStoredReservation(r, tx);
+      logStructured(
+        'payment.change_expired',
+        {
+          reference: payment.reference,
+          reservation: r.reference,
+          changeId: changeRow?.id,
+        },
+        'warn',
+      );
+      return { ok: true, already: alreadyPaid || undefined };
+    }
+
+    const change = r.pendingChange;
+    if (activeChange && change && change.changeId === activeChange.id) {
+      if (!alreadyPaid && payment.amountMinor !== change.amountDueMinor)
+        return { ok: false };
+
+      const available = await findAvailableRoom(
+        r.roomTypeId,
+        change.checkIn,
+        change.checkOut,
+        tx,
+        r.id,
+      );
+      if (!available) {
+        await markPaid();
+        await recordLatePaymentRefund(
+          tx,
+          r,
+          payment,
+          'New dates unavailable at payment completion',
+        );
+        await tx
+          .update(reservationChanges)
+          .set({ status: 'rejected', updatedAt: new Date() })
+          .where(eq(reservationChanges.id, change.changeId));
+        r.pendingChange = null;
+        await saveStoredReservation(r, tx);
+        logStructured(
+          'payment.change_unavailable',
+          {
+            reference: payment.reference,
+            reservation: r.reference,
+            changeId: change.changeId,
+          },
+          'warn',
+        );
+        return { ok: true, already: alreadyPaid || undefined };
+      }
+
+      await markPaid();
+      applyStayChange(r, {
+        checkIn: change.checkIn,
+        checkOut: change.checkOut,
+        breakdown: change.breakdown,
+        totalMinor: change.totalMinor,
+        paidDeltaMinor: payment.amountMinor,
+        policy: change.policy,
+      });
+      r.pendingChange = null;
+      await tx
+        .delete(reservationNights)
+        .where(eq(reservationNights.reservationId, r.id));
+      if (change.breakdown.lines.length > 0)
+        await tx.insert(reservationNights).values(
+          change.breakdown.lines.map((line) => ({
+            reservationId: r.id,
+            date: line.date,
+            rateMinor: line.rateMinor,
+          })),
+        );
+      await tx
+        .update(reservationChanges)
+        .set({
+          status: 'completed',
+          paymentId: payment.id,
+          updatedAt: new Date(),
+        })
+        .where(eq(reservationChanges.id, change.changeId));
+      notify(r, 'dates_changed', SUCCESS_MESSAGES.UPDATED_BOOKING_EMAILED);
+    } else {
+      await markPaid();
+      if (!alreadyPaid) {
+        logEvent(r, 'payment_received', 'Payment received online.');
+        if (r.confirmationMode === 'instant') {
+          r.status = 'confirmed';
+          logEvent(r, 'approved');
+        }
+        notify(r, 'paid', SUCCESS_MESSAGES.PAYMENT_RECEIVED);
+      }
+      r.paymentReference = payment.reference;
+      r.paidAt = payment.paidAt?.getTime() ?? Date.now();
+      r.method =
+        payment.channel === 'bank_transfer' ? 'bank_transfer' : 'online';
+      if (
+        r.confirmationMode === 'instant' &&
+        ['pending_payment', 'awaiting_transfer', 'payment_failed'].includes(
+          r.status,
+        )
+      ) {
+        r.status = 'confirmed';
+        logEvent(r, 'approved');
+      }
+    }
+    await saveStoredReservation(r, tx);
+    if (alreadyPaid)
+      logStructured('payment.repaired', {
+        reference: payment.reference,
+        reservation: r.reference,
+      });
+    return { ok: true, already: alreadyPaid || undefined };
+  });
+}
+
+export async function failOnlinePayment(input: {
+  provider: PaymentProvider;
+  reference: string;
+  payload: Record<string, unknown>;
+}): Promise<boolean> {
+  return db.transaction(async (tx) => {
+    const [payment] = await tx
+      .select()
+      .from(payments)
+      .where(eq(payments.reference, input.reference))
+      .limit(1)
+      .for('update');
+    if (!payment || payment.provider !== input.provider) return false;
+    if (payment.status !== 'pending') return false;
+
+    await tx
+      .update(payments)
       .set({
-        status: 'completed',
-        paymentId: payment.id,
+        status: 'failed',
+        failedAt: new Date(),
+        providerResponse: input.payload,
         updatedAt: new Date(),
       })
-      .where(eq(reservationChanges.id, change.changeId));
-    notify(r, 'dates_changed', SUCCESS_MESSAGES.UPDATED_BOOKING_EMAILED);
-  } else {
-    r.paidMinor = Math.min(
-      r.totals.totalMinor,
-      r.paidMinor + input.amountMinor,
-    );
-    r.paymentReference = payment.reference;
-    r.paidAt = Date.now();
-    r.method = payment.channel === 'bank_transfer' ? 'bank_transfer' : 'online';
-    logEvent(r, 'payment_received', 'Payment received online.');
-    if (r.confirmationMode === 'instant') {
-      r.status = 'confirmed';
-      logEvent(r, 'approved');
-    }
-    notify(r, 'paid', SUCCESS_MESSAGES.PAYMENT_RECEIVED);
-  }
-  await saveStoredReservation(r);
-  return { ok: true };
+      .where(eq(payments.id, payment.id));
+
+    logStructured('payment.failed', {
+      reference: payment.reference,
+      reservationId: payment.reservationId,
+      provider: payment.provider,
+    });
+    return true;
+  });
 }
 
 export async function insertReservation(input: {
@@ -827,6 +1130,28 @@ export async function insertReservation(input: {
   const id = randomUUID();
 
   const createdId = await db.transaction(async (tx) => {
+    await tx.execute(sql`
+      UPDATE reservations r
+      SET status = 'expired', updated_at = now()
+      WHERE r.status = 'pending'
+        AND r.payment_mode <> 'pay_at_hotel'
+        AND r.hold_expires_at IS NOT NULL
+        AND r.hold_expires_at < now()
+        AND r.room_id IN (
+          SELECT id FROM rooms WHERE room_type_id = ${roomType.id}
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM payments p
+          WHERE p.reservation_id = r.id AND p.status = 'paid'
+        )
+        AND NOT EXISTS (
+          SELECT 1
+          FROM payment_proofs pp
+          JOIN payments p ON p.id = pp.payment_id
+          WHERE p.reservation_id = r.id
+        )
+    `);
+
     const room = await findAvailableRoom(
       roomType.id,
       input.stay.checkIn,
@@ -835,6 +1160,8 @@ export async function insertReservation(input: {
     );
     if (!room) return null;
 
+    const payAtHotel = input.settings.paymentMode === 'pay_at_hotel';
+    const initialStatus = payAtHotel ? 'confirmed' : 'pending';
     const row: typeof reservations.$inferInsert = {
       id,
       reference: input.reference,
@@ -852,7 +1179,7 @@ export async function insertReservation(input: {
       adults: input.stay.adults,
       children: input.stay.children,
       nights: input.quote.breakdown.nights,
-      status: 'pending',
+      status: initialStatus,
       bookingSource: 'website',
       paymentMode: dbPaymentModeOf(input.settings.paymentMode),
       confirmationMode:
@@ -877,6 +1204,8 @@ export async function insertReservation(input: {
       currency: 'NGN',
       holdExpiresAt: new Date(Date.now() + input.settings.holdSeconds * 1000),
       termsAcceptedAt: now,
+      confirmedAt: payAtHotel ? now : null,
+      confirmedBy: null,
       snapshot: input.snapshot as unknown as Record<string, unknown>,
     };
     await tx.insert(reservations).values(row);
@@ -922,8 +1251,8 @@ export async function insertReservation(input: {
     await tx.insert(reservationStatusHistory).values({
       reservationId: id,
       fromStatus: null,
-      toStatus: 'pending',
-      reason: 'created',
+      toStatus: initialStatus,
+      reason: payAtHotel ? 'pay_at_hotel_auto_confirmed' : 'created',
       metadata: { type: 'created' },
     });
 

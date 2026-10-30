@@ -6,78 +6,113 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- Singleton hotel settings
-ALTER TABLE hotel_settings
-ADD CONSTRAINT hotel_settings_singleton CHECK (id = 1);
+DO $$ BEGIN IF NOT EXISTS (
+  SELECT 1 FROM pg_constraint WHERE conname = 'hotel_settings_singleton'
+) THEN
+  ALTER TABLE hotel_settings
+  ADD CONSTRAINT hotel_settings_singleton CHECK (id = 1);
+END IF; END $$;
 
 -- Check constraints
-ALTER TABLE reservations
-ADD CONSTRAINT chk_res_dates CHECK (check_out > check_in),
-ADD CONSTRAINT chk_res_guests CHECK (
-  adults >= 1
-  AND children >= 0
-),
-ADD CONSTRAINT chk_res_money CHECK (
-  total_minor >= 0
-  AND amount_paid_minor >= 0
-  AND amount_refunded_minor >= 0
-  AND deposit_required_minor >= 0
-),
-ADD CONSTRAINT chk_res_email CHECK (
-  guest_email IS NOT NULL
-  OR guest_email_missing = true
-);
+DO $$ BEGIN IF NOT EXISTS (
+  SELECT 1 FROM pg_constraint WHERE conname = 'chk_res_dates'
+) THEN
+  ALTER TABLE reservations ADD CONSTRAINT chk_res_dates CHECK (check_out > check_in);
+END IF; END $$;
 
-ALTER TABLE room_blocks
-ADD CONSTRAINT chk_block_dates CHECK (end_date > start_date);
+DO $$ BEGIN IF NOT EXISTS (
+  SELECT 1 FROM pg_constraint WHERE conname = 'chk_res_guests'
+) THEN
+  ALTER TABLE reservations ADD CONSTRAINT chk_res_guests CHECK (
+    adults >= 1 AND children >= 0
+  );
+END IF; END $$;
 
-ALTER TABLE rate_rules
-ADD CONSTRAINT chk_rule_dates CHECK (end_date >= start_date);
+DO $$ BEGIN IF NOT EXISTS (
+  SELECT 1 FROM pg_constraint WHERE conname = 'chk_res_money'
+) THEN
+  ALTER TABLE reservations ADD CONSTRAINT chk_res_money CHECK (
+    total_minor >= 0
+    AND amount_paid_minor >= 0
+    AND amount_refunded_minor >= 0
+    AND deposit_required_minor >= 0
+  );
+END IF; END $$;
 
-ALTER TABLE room_types
-ADD CONSTRAINT chk_rt_price CHECK (
-  base_price_minor >= 0
-  AND max_adults >= 1
-);
+DO $$ BEGIN IF NOT EXISTS (
+  SELECT 1 FROM pg_constraint WHERE conname = 'chk_res_email'
+) THEN
+  ALTER TABLE reservations ADD CONSTRAINT chk_res_email CHECK (
+    guest_email IS NOT NULL OR guest_email_missing = true
+  );
+END IF; END $$;
 
-ALTER TABLE testimonials
-ADD CONSTRAINT chk_rating CHECK (
-  rating IS NULL
-  OR rating BETWEEN 1 AND 5
-);
+DO $$ BEGIN IF NOT EXISTS (
+  SELECT 1 FROM pg_constraint WHERE conname = 'chk_block_dates'
+) THEN
+  ALTER TABLE room_blocks ADD CONSTRAINT chk_block_dates CHECK (end_date > start_date);
+END IF; END $$;
 
-ALTER TABLE payments
-ADD CONSTRAINT chk_pay_amount CHECK (amount_minor > 0);
+DO $$ BEGIN IF NOT EXISTS (
+  SELECT 1 FROM pg_constraint WHERE conname = 'chk_rule_dates'
+) THEN
+  ALTER TABLE rate_rules ADD CONSTRAINT chk_rule_dates CHECK (end_date >= start_date);
+END IF; END $$;
 
-ALTER TABLE hotel_settings
-ADD CONSTRAINT chk_bps CHECK (
-  tax_bps BETWEEN 0 AND 10000
-  AND service_charge_bps BETWEEN 0 AND 10000
-  AND deposit_bps BETWEEN 0 AND 10000
-  AND refund_bps_after_window BETWEEN 0 AND 10000
-);
+DO $$ BEGIN IF NOT EXISTS (
+  SELECT 1 FROM pg_constraint WHERE conname = 'chk_rt_price'
+) THEN
+  ALTER TABLE room_types ADD CONSTRAINT chk_rt_price CHECK (
+    base_price_minor >= 0 AND max_adults >= 1
+  );
+END IF; END $$;
+
+DO $$ BEGIN IF NOT EXISTS (
+  SELECT 1 FROM pg_constraint WHERE conname = 'chk_rating'
+) THEN
+  ALTER TABLE testimonials ADD CONSTRAINT chk_rating CHECK (
+    rating IS NULL OR rating BETWEEN 1 AND 5
+  );
+END IF; END $$;
+
+DO $$ BEGIN IF NOT EXISTS (
+  SELECT 1 FROM pg_constraint WHERE conname = 'chk_pay_amount'
+) THEN
+  ALTER TABLE payments ADD CONSTRAINT chk_pay_amount CHECK (amount_minor > 0);
+END IF; END $$;
+
+DO $$ BEGIN IF NOT EXISTS (
+  SELECT 1 FROM pg_constraint WHERE conname = 'chk_bps'
+) THEN
+  ALTER TABLE hotel_settings ADD CONSTRAINT chk_bps CHECK (
+    tax_bps BETWEEN 0 AND 10000
+    AND service_charge_bps BETWEEN 0 AND 10000
+    AND deposit_bps BETWEEN 0 AND 10000
+    AND refund_bps_after_window BETWEEN 0 AND 10000
+  );
+END IF; END $$;
 
 -- Exclusion constraints for no double-booking
-ALTER TABLE reservations
-ADD CONSTRAINT no_overlapping_reservations EXCLUDE USING gist (
-  room_id
-  WITH
-    =,
-    daterange (check_in, check_out, '[)')
-  WITH
-    &&
-)
-WHERE
-  (status IN ('pending', 'confirmed', 'checked_in'));
+DO $$ BEGIN IF NOT EXISTS (
+  SELECT 1 FROM pg_constraint WHERE conname = 'no_overlapping_reservations'
+) THEN
+  ALTER TABLE reservations
+  ADD CONSTRAINT no_overlapping_reservations EXCLUDE USING gist (
+    room_id WITH =,
+    daterange (check_in, check_out, '[)') WITH &&
+  )
+  WHERE (status IN ('pending', 'confirmed', 'checked_in'));
+END IF; END $$;
 
-ALTER TABLE room_blocks
-ADD CONSTRAINT no_overlapping_blocks EXCLUDE USING gist (
-  room_id
-  WITH
-    =,
-    daterange (start_date, end_date, '[)')
-  WITH
-    &&
-);
+DO $$ BEGIN IF NOT EXISTS (
+  SELECT 1 FROM pg_constraint WHERE conname = 'no_overlapping_blocks'
+) THEN
+  ALTER TABLE room_blocks
+  ADD CONSTRAINT no_overlapping_blocks EXCLUDE USING gist (
+    room_id WITH =,
+    daterange (start_date, end_date, '[)') WITH &&
+  );
+END IF; END $$;
 
 -- Prevent block/reservation conflicts
 CREATE OR REPLACE FUNCTION prevent_block_reservation_conflict () RETURNS trigger AS $$
@@ -104,12 +139,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_reservation_vs_blocks ON reservations;
+
 CREATE TRIGGER trg_reservation_vs_blocks
 BEFORE INSERT OR UPDATE OF room_id,
 check_in,
 check_out,
 status ON reservations FOR EACH ROW
 EXECUTE FUNCTION prevent_block_reservation_conflict ();
+
+DROP TRIGGER IF EXISTS trg_block_vs_reservations ON room_blocks;
 
 CREATE TRIGGER trg_block_vs_reservations
 BEFORE INSERT OR UPDATE OF room_id,
@@ -125,90 +164,45 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Apply updated_at triggers to tables that have updated_at
-CREATE TRIGGER trg_hotel_settings_updated_at
-BEFORE UPDATE ON hotel_settings FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_bank_accounts_updated_at
-BEFORE UPDATE ON bank_accounts FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_social_links_updated_at
-BEFORE UPDATE ON social_links FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_staff_users_updated_at
-BEFORE UPDATE ON staff_users FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_room_types_updated_at
-BEFORE UPDATE ON room_types FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_rooms_updated_at
-BEFORE UPDATE ON rooms FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_room_blocks_updated_at
-BEFORE UPDATE ON room_blocks FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_rate_rules_updated_at
-BEFORE UPDATE ON rate_rules FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_extras_updated_at
-BEFORE UPDATE ON extras FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_reservations_updated_at
-BEFORE UPDATE ON reservations FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_payments_updated_at
-BEFORE UPDATE ON payments FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_enquiries_updated_at
-BEFORE UPDATE ON enquiries FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_site_pages_updated_at
-BEFORE UPDATE ON site_pages FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_facilities_updated_at
-BEFORE UPDATE ON facilities FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_gallery_images_updated_at
-BEFORE UPDATE ON gallery_images FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_testimonials_updated_at
-BEFORE UPDATE ON testimonials FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_faqs_updated_at
-BEFORE UPDATE ON faqs FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_team_members_updated_at
-BEFORE UPDATE ON team_members FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_nearby_attractions_updated_at
-BEFORE UPDATE ON nearby_attractions FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_notification_templates_updated_at
-BEFORE UPDATE ON notification_templates FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
-
-CREATE TRIGGER trg_notification_recipients_updated_at
-BEFORE UPDATE ON notification_recipients FOR EACH ROW
-EXECUTE FUNCTION set_updated_at ();
+DO $$
+DECLARE
+  table_name text;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY[
+    'hotel_settings',
+    'bank_accounts',
+    'social_links',
+    'staff_users',
+    'room_types',
+    'rooms',
+    'room_blocks',
+    'rate_rules',
+    'extras',
+    'reservations',
+    'payments',
+    'enquiries',
+    'site_pages',
+    'facilities',
+    'gallery_images',
+    'testimonials',
+    'faqs',
+    'team_members',
+    'nearby_attractions',
+    'notification_templates',
+    'notification_recipients'
+  ] LOOP
+    EXECUTE format(
+      'DROP TRIGGER IF EXISTS %I ON %I',
+      'trg_' || table_name || '_updated_at',
+      table_name
+    );
+    EXECUTE format(
+      'CREATE TRIGGER %I BEFORE UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION set_updated_at()',
+      'trg_' || table_name || '_updated_at',
+      table_name
+    );
+  END LOOP;
+END $$;
 
 -- Audit logs append-only
 CREATE OR REPLACE FUNCTION audit_logs_append_only () RETURNS trigger AS $$
@@ -217,23 +211,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_audit_no_update_delete ON audit_logs;
+
 CREATE TRIGGER trg_audit_no_update_delete
 BEFORE UPDATE OR DELETE ON audit_logs FOR EACH ROW
 EXECUTE FUNCTION audit_logs_append_only ();
+
+DROP TRIGGER IF EXISTS trg_audit_no_truncate ON audit_logs;
 
 CREATE TRIGGER trg_audit_no_truncate
 BEFORE TRUNCATE ON audit_logs FOR EACH STATEMENT
 EXECUTE FUNCTION audit_logs_append_only ();
 
 -- Trigram search indexes
-CREATE INDEX idx_res_guest_name_trgm ON reservations USING gin (guest_name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_res_guest_name_trgm ON reservations USING gin (guest_name gin_trgm_ops);
 
-CREATE INDEX idx_res_guest_email_trgm ON reservations USING gin (guest_email gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_res_guest_email_trgm ON reservations USING gin (guest_email gin_trgm_ops);
 
-CREATE INDEX idx_enq_name_trgm ON enquiries USING gin (name gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_enq_name_trgm ON enquiries USING gin (name gin_trgm_ops);
 
-CREATE INDEX idx_enq_email_trgm ON enquiries USING gin (email gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_enq_email_trgm ON enquiries USING gin (email gin_trgm_ops);
 
-CREATE INDEX idx_enq_message_trgm ON enquiries USING gin (message gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_enq_message_trgm ON enquiries USING gin (message gin_trgm_ops);
 
-CREATE INDEX idx_res_email_lower ON reservations (lower(guest_email));
+CREATE INDEX IF NOT EXISTS idx_res_email_lower ON reservations (lower(guest_email));

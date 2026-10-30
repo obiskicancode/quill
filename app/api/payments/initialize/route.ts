@@ -1,20 +1,33 @@
+import { eq } from 'drizzle-orm';
+
 import { config } from '@/config';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { insertPayment, saveStoredReservation } from '@/lib/booking/store';
+import { db } from '@/db';
+import { reservationChanges } from '@/db/schema';
+import { getAccess } from '@/lib/booking/session';
+import {
+  findReusableOnlinePayment,
+  insertPayment,
+  saveStoredReservation,
+} from '@/lib/booking/store';
 import { loadReservation } from '@/lib/booking/view';
 import { getCheckoutSettings } from '@/lib/checkout/settings';
 import { createReference } from '@/lib/db/reference';
 import {
+  claimIdempotency,
+  finishIdempotency,
   getIdempotencyRecord,
-  setIdempotency,
+  releaseIdempotency,
 } from '@/lib/db/repositories/idempotency.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
+import { clientIp } from '@/lib/http/request';
 import { requireManage } from '@/lib/manage/auth';
 import {
   tryGetPaymentProvider,
   type PaymentProviderAdapter,
 } from '@/lib/payments';
+import { rateLimit } from '@/lib/rate-limit';
 import { fieldErrorsFrom, paymentInitSchema } from '@/schemas/checkout.schema';
 import type { ApiError, PaymentInitResponse } from '@/types/checkout.types';
 
@@ -40,16 +53,30 @@ async function redirectToProvider(input: {
   reservationId: string;
   changeId?: string;
 }): Promise<string> {
-  const providerReference = createReference();
-  await insertPayment({
+  const reusable = await findReusableOnlinePayment({
     reservationId: input.reservationId,
-    reference: providerReference,
-    method: 'online',
-    amountMinor: input.amountMinor,
     provider: input.provider.id,
-    providerReference,
-    note: input.changeId ?? null,
+    amountMinor: input.amountMinor,
+    changeId: input.changeId ?? null,
   });
+  const providerReference =
+    reusable?.providerRef ?? reusable?.reference ?? createReference();
+  const paymentId = reusable
+    ? reusable.id
+    : await insertPayment({
+        reservationId: input.reservationId,
+        reference: providerReference,
+        method: 'online',
+        amountMinor: input.amountMinor,
+        provider: input.provider.id,
+        providerReference,
+        note: input.changeId ?? null,
+      });
+  if (input.changeId)
+    await db
+      .update(reservationChanges)
+      .set({ paymentId, updatedAt: new Date() })
+      .where(eq(reservationChanges.id, input.changeId));
   const { redirectUrl } = await input.provider.initialize({
     email: input.email,
     amountMinor: input.amountMinor,
@@ -68,6 +95,14 @@ async function redirectToProvider(input: {
  * The payment row is persisted first, so a retry reuses the same provider reference.
  */
 export async function POST(req: Request) {
+  const client = clientIp(req) ?? 'local';
+  if (!(await rateLimit(`pay-init:${client}`, 20, 60_000)).allowed) {
+    return fail(429, {
+      code: ERROR_CODES.RATE_LIMITED,
+      message: ERROR_MESSAGES.RATE_LIMITED,
+    });
+  }
+
   const parsed = paymentInitSchema.safeParse(
     await req.json().catch(() => null),
   );
@@ -79,7 +114,7 @@ export async function POST(req: Request) {
     });
   const { reference, method, idempotencyKey, purpose, changeId } = parsed.data;
 
-  const idKey = `pay:${idempotencyKey}`;
+  const idKey = `pay:${reference}:${purpose ?? 'booking'}:${changeId ?? 'none'}:${idempotencyKey}`;
   const previous = await getIdempotencyRecord(idKey);
   if (previous?.response)
     return apiOk(previous.response as PaymentInitResponse);
@@ -96,6 +131,20 @@ export async function POST(req: Request) {
       code: ERROR_CODES.HOLD_EXPIRED,
       message: ERROR_MESSAGES.HOLD_EXPIRED,
     });
+  if (r.status === 'cancelled')
+    return fail(409, {
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.RESERVATION_CANCELLED,
+    });
+
+  if (purpose !== 'change') {
+    const access = await getAccess(reference);
+    if (!access)
+      return fail(401, {
+        code: ERROR_CODES.UNAUTHORISED,
+        message: ERROR_MESSAGES.SESSION_EXPIRED,
+      });
+  }
 
   if (purpose === 'change') {
     const auth = await requireManage(req, reference);
@@ -112,6 +161,19 @@ export async function POST(req: Request) {
         message: ERROR_MESSAGES.CHANGE_AWAITING_VERIFICATION,
       });
 
+    const claim = await claimIdempotency(idKey, 120, {
+      method: 'POST',
+      path: '/api/payments/initialize',
+    });
+    if (!claim.claimed) {
+      if (claim.record?.response)
+        return apiOk(claim.record.response as PaymentInitResponse);
+      return fail(409, {
+        code: ERROR_CODES.VALIDATION,
+        message: ERROR_MESSAGES.REQUEST_IN_PROGRESS,
+      });
+    }
+
     pc.method = method;
     let response: PaymentInitResponse;
     if (method === 'bank_transfer') {
@@ -126,13 +188,18 @@ export async function POST(req: Request) {
       await saveStoredReservation(r);
     } else {
       const provider = tryGetPaymentProvider();
-      if (!provider?.isConfigured()) return unavailable();
-      if (!r.guest.email)
+      if (!provider?.isConfigured()) {
+        await releaseIdempotency(idKey);
+        return unavailable();
+      }
+      if (!r.guest.email) {
+        await releaseIdempotency(idKey);
         return fail(422, {
           code: ERROR_CODES.VALIDATION,
           message: ERROR_MESSAGES.EMAIL_REQUIRED_FOR_ONLINE_PAYMENT,
           fieldErrors: { 'guest.email': ERROR_MESSAGES.EMAIL_REQUIRED },
         });
+      }
       pc.status = 'awaiting_payment';
       await saveStoredReservation(r);
       try {
@@ -149,16 +216,15 @@ export async function POST(req: Request) {
         });
         response = { kind: 'redirect', url };
       } catch {
+        await releaseIdempotency(idKey);
         return fail(502, {
           code: ERROR_CODES.SERVER,
           message: ERROR_MESSAGES.PAYMENT_PROVIDER_UNREACHABLE,
         });
       }
     }
-    await setIdempotency(idKey, response, 200, 60, {
+    await finishIdempotency(idKey, response, 200, 60, {
       reservationId: r.id,
-      method: 'POST',
-      path: '/api/payments/initialize',
     });
     return apiOk(response);
   }
@@ -169,17 +235,27 @@ export async function POST(req: Request) {
       message: ERROR_MESSAGES.NOTHING_TO_PAY_ONLINE,
     });
   if (
-    ![
-      'pending_payment',
-      'awaiting_transfer',
-      'payment_failed',
-      'cancelled',
-    ].includes(r.status)
+    !['pending_payment', 'awaiting_transfer', 'payment_failed'].includes(
+      r.status,
+    )
   )
     return fail(409, {
       code: ERROR_CODES.VALIDATION,
       message: ERROR_MESSAGES.RESERVATION_ALREADY_PROCESSING,
     });
+
+  const claim = await claimIdempotency(idKey, 120, {
+    method: 'POST',
+    path: '/api/payments/initialize',
+  });
+  if (!claim.claimed) {
+    if (claim.record?.response)
+      return apiOk(claim.record.response as PaymentInitResponse);
+    return fail(409, {
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.REQUEST_IN_PROGRESS,
+    });
+  }
 
   r.method = method;
   let response: PaymentInitResponse;
@@ -201,13 +277,18 @@ export async function POST(req: Request) {
     await saveStoredReservation(r);
   } else {
     const provider = tryGetPaymentProvider();
-    if (!provider?.isConfigured()) return unavailable();
-    if (!r.guest.email)
+    if (!provider?.isConfigured()) {
+      await releaseIdempotency(idKey);
+      return unavailable();
+    }
+    if (!r.guest.email) {
+      await releaseIdempotency(idKey);
       return fail(422, {
         code: ERROR_CODES.VALIDATION,
         message: ERROR_MESSAGES.EMAIL_REQUIRED_FOR_ONLINE_PAYMENT,
         fieldErrors: { 'guest.email': ERROR_MESSAGES.EMAIL_REQUIRED },
       });
+    }
     try {
       const url = await redirectToProvider({
         provider,
@@ -221,16 +302,15 @@ export async function POST(req: Request) {
       });
       response = { kind: 'redirect', url };
     } catch {
+      await releaseIdempotency(idKey);
       return fail(502, {
         code: ERROR_CODES.SERVER,
         message: ERROR_MESSAGES.PAYMENT_PROVIDER_UNREACHABLE,
       });
     }
   }
-  await setIdempotency(idKey, response, 200, 60, {
+  await finishIdempotency(idKey, response, 200, 60, {
     reservationId: r.id,
-    method: 'POST',
-    path: '/api/payments/initialize',
   });
   return apiOk(response);
 }

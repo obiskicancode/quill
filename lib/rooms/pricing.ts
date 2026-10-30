@@ -215,6 +215,7 @@ export async function getQuoteResponse(
   room: RoomDetail,
   input: StayInput & { checkIn: ISODate; checkOut: ISODate },
   clock: Clock,
+  excludeReservationId?: string,
 ): Promise<QuoteResponse> {
   if (!room.showPrice) return { status: 'on-request' };
 
@@ -230,7 +231,9 @@ export async function getQuoteResponse(
     adults: input.adults,
     children: input.children,
   };
-  const result = (await fetchAvailability(stay, [room]))[room.id];
+  const result = (await fetchAvailability(stay, [room], excludeReservationId))[
+    room.id
+  ];
 
   if (result.status === 'sold-out') {
     return {

@@ -1,7 +1,9 @@
-import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
-import { apiOk } from '@/lib/http/envelope';
+import { recheckPaymentRepo } from '@/lib/db/repositories/payments-admin.repo';
+import { apiFail, apiOk } from '@/lib/http/envelope';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +16,7 @@ export async function POST(
   const context = guard.context;
 
   const { id } = await params;
+  const result = await recheckPaymentRepo(id);
 
   await recordAuditLog({
     actorId: context.user.id,
@@ -21,14 +24,26 @@ export async function POST(
     entity: 'payment',
     entityId: id,
     action: 'recheck_refund',
-    reason: 'Manual status check against gateway refund API',
+    reason: `Manual status check: ${result.providerStatus}`,
   }).catch(() => {});
+
+  if (!result.ok)
+    return apiFail(
+      502,
+      result.error ?? ERROR_MESSAGES.PROVIDER_RECHECK_FAILED,
+      {
+        code: ERROR_CODES.SERVER,
+        message: ERROR_MESSAGES.PROVIDER_RECHECK_FAILED,
+      },
+      { noCache: true },
+    );
 
   return apiOk(
     {
       success: true,
-      providerStatus: 'processing',
-      message: SUCCESS_MESSAGES.PROVIDER_REFUND_RECHECKED,
+      providerStatus: result.providerStatus,
+      paymentStatus: result.paymentStatus,
+      message: `Payment status: ${result.providerStatus}`,
     },
     { noCache: true },
   );

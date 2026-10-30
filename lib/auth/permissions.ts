@@ -27,6 +27,7 @@ export const PERMISSIONS = [
   'blocks.backdate',
   'enquiries.view',
   'enquiries.manage',
+  'enquiries.anonymise',
   'rooms.view',
   'rooms.manage',
   'rates.manage',
@@ -47,7 +48,9 @@ export const PERMISSIONS = [
 const ownerPermissions = PERMISSIONS;
 const managerPermissions = PERMISSIONS.filter(
   (permission) =>
-    permission !== 'staff.manage' && permission !== 'settings.payments.manage',
+    permission !== 'staff.manage' &&
+    permission !== 'settings.payments.manage' &&
+    permission !== 'enquiries.anonymise',
 );
 const receptionPermissions = [
   'dashboard.view',
@@ -63,6 +66,7 @@ const receptionPermissions = [
   'calendar.block',
   'enquiries.view',
   'enquiries.manage',
+  'enquiries.anonymise',
 ] as const satisfies readonly Permission[];
 
 export const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {

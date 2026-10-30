@@ -1,6 +1,6 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { completeOnlinePayment } from '@/lib/booking/store';
+import { completeOnlinePayment, failOnlinePayment } from '@/lib/booking/store';
 import {
   createWebhookEvent,
   findWebhookEvent,
@@ -63,6 +63,12 @@ export async function handlePaymentWebhook(
       });
       if (!result.ok)
         throw new Error(ERROR_MESSAGES.PAYMENT_NOT_APPLIED(event.reference));
+    } else if (event.status === 'failed' && event.reference) {
+      await failOnlinePayment({
+        provider: provider.id,
+        reference: event.reference,
+        payload: event.payload,
+      });
     }
     await markWebhookProcessed(stored.id);
     return apiOk({ received: true });
@@ -76,4 +82,41 @@ export async function handlePaymentWebhook(
       message: ERROR_MESSAGES.WEBHOOK_PROCESSING_FAILED,
     });
   }
+}
+
+export async function applyStoredWebhookEvent(
+  provider: PaymentProvider,
+  eventType: string,
+  payload: Record<string, unknown>,
+): Promise<{ applied: boolean }> {
+  const data = (payload.data ?? payload) as Record<string, unknown>;
+  const status = String(data.status ?? '').toLowerCase();
+  const reference = String(data.reference ?? payload.reference ?? '');
+  const amountMinor = Number(data.amount ?? data.amountMinor ?? 0);
+  const paid =
+    status === 'success' || status === 'successful' || status === 'paid';
+  const failed =
+    status === 'failed' || status === 'abandoned' || status === 'reversed';
+  if (!reference) return { applied: false };
+
+  if (failed) {
+    const applied = await failOnlinePayment({
+      provider,
+      reference,
+      payload: { ...payload, source: 'webhook_reprocess', eventType },
+    });
+    return { applied };
+  }
+
+  if (!paid || amountMinor <= 0) return { applied: false };
+
+  const result = await completeOnlinePayment({
+    provider,
+    reference,
+    amountMinor,
+    payload: { ...payload, source: 'webhook_reprocess', eventType },
+  });
+  if (!result.ok)
+    throw new Error(ERROR_MESSAGES.PAYMENT_NOT_APPLIED(reference));
+  return { applied: true };
 }

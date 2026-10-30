@@ -20,12 +20,14 @@ function totalFor(room: RoomType, checkIn: ISODate, nights: number): number {
 export async function fetchAvailability(
   stay: StayParams,
   rooms: RoomType[],
+  excludeReservationId?: string,
 ): Promise<AvailabilityMap> {
   const nights = nightsBetween(stay.checkIn, stay.checkOut);
   const availability = await countAvailableRoomsByType(
     rooms.map((r) => r.id),
     stay.checkIn,
     stay.checkOut,
+    excludeReservationId,
   );
   const result: AvailabilityMap = {};
 
@@ -42,6 +44,7 @@ export async function fetchAvailability(
         rooms.map((r) => r.id),
         date,
         addDays(date, nights),
+        excludeReservationId,
       ),
     })),
   );

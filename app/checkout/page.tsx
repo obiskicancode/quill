@@ -52,6 +52,7 @@ export default async function CheckoutPage({
     children: q.children,
     extraBed: saved ? saved.stay.extraBed : needs && get('extraBed') !== '0',
     extras: saved ? saved.extras : [],
+    excludeReservationId: saved?.id,
     seenTotalMinor: returning
       ? null
       : Number.isInteger(seen) && seen > 0

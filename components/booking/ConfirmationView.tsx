@@ -217,7 +217,7 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
           <PolicySection v={v} />
         </Reveal>
         <Reveal delay={0.24}>
-          <AddExtrasStrip v={v} />
+          <AddExtrasStrip v={v} mode="whatsapp" />
         </Reveal>
       </div>
 

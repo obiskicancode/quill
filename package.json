@@ -18,7 +18,10 @@
     "db:check": "drizzle-kit check",
     "db:drop": "drizzle-kit drop",
     "db:seed": "node --env-file=.env --import tsx db/seed/index.ts",
-    "db:owner": "node --env-file=.env --import tsx db/seed/create-owner.ts"
+    "db:owner": "node --env-file=.env --import tsx db/seed/create-owner.ts",
+    "db:reconcile": "node --env-file=.env --import tsx db/reconcile.ts",
+    "db:verify": "node --env-file=.env --import tsx db/verify-migrations.ts",
+    "test": "node --import tsx --test tests/*.test.ts"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

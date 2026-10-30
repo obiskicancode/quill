@@ -142,6 +142,19 @@ export function NewReservationClient({
     : undefined;
   const prefillRoomId = prefillRoomTypeId ? searchParams.get('roomId') : null;
 
+  const enquiryId = searchParams.get('enquiryId');
+  const prefillName = searchParams.get('name') || '';
+  const prefillEmail = searchParams.get('email') || '';
+  const prefillPhone = searchParams.get('phone') || '';
+  const prefillAdults = searchParams.get('adults')
+    ? Number(searchParams.get('adults'))
+    : 1;
+  const prefillChildren = searchParams.get('children')
+    ? Number(searchParams.get('children'))
+    : 0;
+  const prefillSpecialRequests =
+    searchParams.get('message') || searchParams.get('notes') || '';
+
   const form = useForm<
     NewReservationFormInput,
     unknown,
@@ -157,19 +170,19 @@ export function NewReservationClient({
         prefillCheckOut && /^\d{4}-\d{2}-\d{2}$/.test(prefillCheckOut)
           ? prefillCheckOut
           : addDays(today, 1),
-      adults: 1,
-      children: 0,
+      adults: prefillAdults > 0 ? prefillAdults : 1,
+      children: prefillChildren >= 0 ? prefillChildren : 0,
       roomTypeId: prefillRoomTypeId || roomTypes[0]?.id || '',
       roomId: prefillRoomId || undefined,
       extraBed: false,
       extras: [],
       guest: {
-        fullName: '',
-        email: '',
-        phone: '',
+        fullName: prefillName,
+        email: prefillEmail,
+        phone: prefillPhone,
         country: 'NG',
         arrivalTime: '',
-        specialRequests: '',
+        specialRequests: prefillSpecialRequests,
       },
       noEmail: false,
       internalNotes: '',
@@ -392,6 +405,7 @@ export function NewReservationClient({
             : undefined,
         paymentChoice,
         termsAcceptedByStaff: true,
+        enquiryId: enquiryId || undefined,
         idempotencyKey: crypto.randomUUID(),
       });
 
@@ -428,6 +442,26 @@ export function NewReservationClient({
 
   return (
     <div className="space-y-6">
+      {enquiryId && (
+        <div className="rounded-card border-brand/30 bg-brand/10 flex flex-wrap items-center justify-between gap-2 border p-4">
+          <div className="flex items-center gap-3">
+            <span className="bg-brand text-paper rounded-full px-2 py-0.5 text-xs font-bold">
+              Enquiry Conversion
+            </span>
+            <p className="text-sm font-medium">
+              Creating a booking from enquiry{' '}
+              <span className="font-bold">{prefillName || 'Guest'}</span>
+            </p>
+          </div>
+          <Link
+            href={`/admin/enquiries/${enquiryId}`}
+            className="text-brand text-xs font-semibold hover:underline"
+          >
+            View Original Enquiry →
+          </Link>
+        </div>
+      )}
+
       {/* Top Breadcrumb */}
       <div>
         <Link
@@ -1126,7 +1160,7 @@ export function NewReservationClient({
                     <p className="text-small mt-2 font-semibold">
                       Hold room with payment link
                     </p>
-                    <p className="text-caption opacity-80">
+                    <p className="text-caption text-wrap opacity-80">
                       Status pending. Generates payment link with staff hold
                       duration.
                     </p>
@@ -1155,7 +1189,7 @@ export function NewReservationClient({
                       <p className="text-small mt-2 font-semibold">
                         Record payment now
                       </p>
-                      <p className="text-caption opacity-80">
+                      <p className="text-caption text-wrap opacity-80">
                         Status confirmed. Record immediate cash, transfer, or
                         POS payment.
                       </p>
@@ -1184,7 +1218,7 @@ export function NewReservationClient({
                     <p className="text-small mt-2 font-semibold">
                       Confirm without payment
                     </p>
-                    <p className="text-caption opacity-80">
+                    <p className="text-caption text-wrap opacity-80">
                       Pay at hotel. Confirmed with balance due shown at arrival.
                     </p>
                   </Button>
@@ -1233,6 +1267,7 @@ export function NewReservationClient({
                           type="number"
                           step="any"
                           required
+                          disabled
                           {...register('paidAmountNaira')}
                           className={inputClass(
                             errors.paidAmountNaira?.message,
@@ -1303,6 +1338,7 @@ export function NewReservationClient({
                           Reference
                         </Label>
                         <Input
+                          disabled
                           id="immediate-reference"
                           type="text"
                           {...register('paymentReference')}

@@ -3,10 +3,10 @@ import { NextResponse } from 'next/server';
 
 import { config as appConfig } from '@/config';
 import {
-  ADMIN_CSRF_COOKIE,
-  createCsrfValue,
-  CSRF_TTL_SECONDS,
-} from '@/lib/auth/cookies';
+  COOKIE_NAMES,
+  createCsrfToken,
+  setAdminCsrfCookie,
+} from '@/lib/cookies';
 
 const MAINTENANCE = appConfig.MAINTENANCE_MODE;
 
@@ -25,15 +25,9 @@ export function middleware(request: NextRequest) {
     if (
       isAdminPage &&
       request.method === 'GET' &&
-      !request.cookies.get(ADMIN_CSRF_COOKIE)
+      !request.cookies.get(COOKIE_NAMES.ADMIN_CSRF)
     ) {
-      response.cookies.set(ADMIN_CSRF_COOKIE, createCsrfValue(), {
-        httpOnly: false,
-        secure: appConfig.isProd,
-        sameSite: 'lax',
-        path: '/',
-        maxAge: CSRF_TTL_SECONDS,
-      });
+      setAdminCsrfCookie(response, createCsrfToken());
     }
     return response;
   }

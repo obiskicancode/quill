@@ -9,6 +9,7 @@ import type {
   PaymentInitialization,
   PaymentProviderAdapter,
   PaymentRefundInput,
+  PaymentVerificationResult,
   PaymentWebhookInput,
   WebhookVerification,
 } from '../provider';
@@ -113,11 +114,42 @@ export function createPaystackProvider(): PaymentProviderAdapter {
       };
     },
 
+    async verifyTransaction(
+      reference: string,
+    ): Promise<PaymentVerificationResult | null> {
+      const key = config.PAYMENT.SECRET_KEY;
+      if (!key || !reference) return null;
+      try {
+        const res = await fetch(
+          `${BASE_URL}/transaction/verify/${encodeURIComponent(reference)}`,
+          { headers: { Authorization: `Bearer ${key}` } },
+        );
+        const body = (await res.json().catch(() => null)) as {
+          status?: boolean;
+          data?: { status?: string; amount?: number };
+        } | null;
+        if (!res.ok || !body?.status || !body.data) return null;
+        const status =
+          body.data.status === 'success'
+            ? 'paid'
+            : body.data.status === 'failed'
+              ? 'failed'
+              : 'pending';
+        return {
+          status,
+          amountMinor: Number(body.data.amount ?? 0),
+          payload: body as Record<string, unknown>,
+        };
+      } catch {
+        return null;
+      }
+    },
+
     async refund(input: PaymentRefundInput): Promise<boolean> {
       const key = config.PAYMENT.SECRET_KEY;
       if (!key || !input.reference) return false;
       try {
-        const res = await fetch(`${BASE_URL}/transaction/refund`, {
+        const res = await fetch(`${BASE_URL}/refund`, {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${key}`,

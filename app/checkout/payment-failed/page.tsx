@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 
 import { CheckoutShell } from '@/components/checkout/CheckoutShell';
 import { ButtonLink } from '@/components/ui/button';
+import { loadReservation } from '@/lib/booking/view';
 
 export const metadata: Metadata = {
   title: 'Payment not completed',
@@ -25,6 +26,21 @@ export default async function PaymentFailedPage({
     return Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
   };
   const ref = get('ref');
+  const reservation = ref ? await loadReservation(ref) : null;
+  const retryHref = reservation
+    ? `/checkout?${new URLSearchParams({
+        room: reservation.roomSlug,
+        checkIn: reservation.stay.checkIn,
+        checkOut: reservation.stay.checkOut,
+        adults: String(reservation.stay.adults),
+        children: String(reservation.stay.children),
+        extraBed: reservation.stay.extraBed ? '1' : '0',
+        ref: reservation.reference,
+        return: '1',
+      }).toString()}`
+    : ref
+      ? `/booking/manage?ref=${encodeURIComponent(ref)}`
+      : null;
 
   return (
     <CheckoutShell label="Secure checkout" backToHome>
@@ -35,8 +51,8 @@ export default async function PaymentFailedPage({
             Payment not completed
           </h1>
           <p className="text-body-lg text-ink/85">
-            The payment was not completed or was cancelled. Nothing has been
-            charged.
+            The payment was not completed or was cancelled. No completed charge
+            was recorded for this booking.
           </p>
           {ref && (
             <p className="text-small text-muted-foreground">
@@ -47,11 +63,8 @@ export default async function PaymentFailedPage({
           )}
           <div className="flex flex-wrap gap-3">
             <ButtonLink href="/rooms">Browse rooms</ButtonLink>
-            {ref ? (
-              <ButtonLink
-                href={`/checkout?ref=${encodeURIComponent(ref)}&return=1`}
-                variant="secondary"
-              >
+            {retryHref ? (
+              <ButtonLink href={retryHref} variant="secondary">
                 Try again
               </ButtonLink>
             ) : (

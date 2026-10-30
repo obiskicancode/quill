@@ -1,6 +1,5 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { setAccessCookie } from '@/lib/booking/session';
 import { buildSnapshot } from '@/lib/booking/snapshot';
 import {
   createReference,
@@ -9,12 +8,16 @@ import {
 } from '@/lib/booking/store';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
 import { getCheckoutSettings } from '@/lib/checkout/settings';
+import { setBookingAccessCookie } from '@/lib/cookies';
 import {
+  claimIdempotency,
+  finishIdempotency,
   getIdempotencyRecord,
-  setIdempotency,
+  releaseIdempotency,
 } from '@/lib/db/repositories/idempotency.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp } from '@/lib/http/request';
+import { logStructured } from '@/lib/observability';
 import { rateLimit } from '@/lib/rate-limit';
 import { getRoomDetail } from '@/lib/rooms/detail';
 import {
@@ -28,6 +31,12 @@ const fail = (
   error: ApiError,
   headers?: Record<string, string>,
 ) => apiFail(status, error.message, error, { noCache: true, headers });
+
+function pgErrorCode(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object' || !('code' in error)) return;
+  const code = (error as { code?: unknown }).code;
+  return typeof code === 'string' ? code : undefined;
+}
 
 /**
  * Creates the pending reservation and starts the hold. Safe to retry: the same idempotency key always returns
@@ -66,7 +75,7 @@ export async function POST(req: Request) {
   const previous = await getIdempotencyRecord(idKey);
   if (previous?.response) {
     const replay = apiOk(previous.response as ReservationResponse);
-    setAccessCookie(
+    setBookingAccessCookie(
       replay,
       (previous.response as ReservationResponse).reference,
       'checkout',
@@ -115,35 +124,100 @@ export async function POST(req: Request) {
     specialRequests: data.guest.specialRequests,
   };
   const snapshot = await buildSnapshot(room, quote, settings);
-  const reservation = await insertReservation({
-    reference: createReference(),
-    roomSlug: data.room,
-    stay: {
-      checkIn: data.checkIn,
-      checkOut: data.checkOut,
-      adults: data.adults,
-      children: data.children,
-      extraBed: data.extraBed,
-    },
-    extras: data.extras,
-    quote,
-    settings,
-    guest,
-    snapshot,
-  });
-  if (!reservation)
-    return fail(409, {
-      code: ERROR_CODES.UNAVAILABLE,
-      message: ERROR_MESSAGES.ROOM_UNAVAILABLE_DATES,
-    });
-
-  const response = toReservationResponse(reservation);
-  await setIdempotency(idKey, response, 201, 60, {
-    reservationId: reservation.id,
+  const claim = await claimIdempotency(idKey, 120, {
     method: 'POST',
     path: '/api/reservations',
   });
-  const created = apiOk(response, { status: 201 });
-  setAccessCookie(created, reservation.reference, 'checkout');
-  return created;
+  if (!claim.claimed) {
+    if (claim.record?.response) {
+      const replay = apiOk(claim.record.response as ReservationResponse);
+      setBookingAccessCookie(
+        replay,
+        (claim.record.response as ReservationResponse).reference,
+        'checkout',
+      );
+      return replay;
+    }
+    return fail(409, {
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.REQUEST_IN_PROGRESS,
+    });
+  }
+
+  try {
+    let reservation: Awaited<ReturnType<typeof insertReservation>> = null;
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        reservation = await insertReservation({
+          reference: createReference(),
+          roomSlug: data.room,
+          stay: {
+            checkIn: data.checkIn,
+            checkOut: data.checkOut,
+            adults: data.adults,
+            children: data.children,
+            extraBed: data.extraBed,
+          },
+          extras: data.extras,
+          quote,
+          settings,
+          guest,
+          snapshot,
+        });
+        break;
+      } catch (error) {
+        const code = pgErrorCode(error);
+        if (code === '23P01') {
+          logStructured(
+            'reservation.inventory_conflict',
+            {
+              room: data.room,
+              checkIn: data.checkIn,
+              checkOut: data.checkOut,
+              attempt,
+            },
+            'warn',
+          );
+          await releaseIdempotency(idKey);
+          return fail(409, {
+            code: ERROR_CODES.UNAVAILABLE,
+            message: ERROR_MESSAGES.ROOM_UNAVAILABLE_DATES,
+          });
+        }
+        if (code === '23505' && attempt < 2) continue;
+        throw error;
+      }
+    }
+
+    if (!reservation) {
+      await releaseIdempotency(idKey);
+      return fail(409, {
+        code: ERROR_CODES.UNAVAILABLE,
+        message: ERROR_MESSAGES.ROOM_UNAVAILABLE_DATES,
+      });
+    }
+
+    const response = toReservationResponse(reservation);
+    try {
+      await finishIdempotency(idKey, response, 201, 60, {
+        reservationId: reservation.id,
+      });
+    } catch (error) {
+      logStructured(
+        'reservation.idempotency_finish_failed',
+        {
+          reference: reservation.reference,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        'error',
+      );
+    }
+    const created = apiOk(response, { status: 201 });
+    setBookingAccessCookie(created, reservation.reference, 'checkout');
+    return created;
+  } catch (error) {
+    await releaseIdempotency(idKey);
+    throw error;
+  }
 }

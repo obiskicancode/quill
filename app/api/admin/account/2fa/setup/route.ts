@@ -4,13 +4,13 @@ import { writeAdminAudit } from '@/lib/auth/audit';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { createMfaSetup, encryptMfaSecret } from '@/lib/auth/mfa';
 import { setMfaSecret } from '@/lib/db/repositories/staff.repo';
-import { checkCsrf } from '@/lib/http/csrf';
+import { checkAdminCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, tooManyRequests, userAgent } from '@/lib/http/request';
 import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
-  const csrfError = checkCsrf(request);
+  const csrfError = checkAdminCsrf(request);
   if (csrfError) return csrfError;
 
   const guard = await guardAdminApi(request, { allowPending: true });

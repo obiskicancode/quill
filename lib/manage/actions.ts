@@ -1,6 +1,7 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { db } from '@/db';
 import { detailsPatchSchema } from '@/schemas/checkout.schema';
 import type { CancelRequest, DetailsRequest } from '@/schemas/manage.schema';
 import type { CheckoutBreakdown } from '@/types/checkout.types';
@@ -28,7 +29,8 @@ import {
 } from '../booking/store';
 import { buildCheckoutQuote } from '../checkout/quote';
 import { nightsBetween } from '../dates';
-import { getPaymentProvider, isPaymentProviderId } from '../payments';
+import { isPaymentProviderId } from '../payments';
+import { insertRefundPayment } from '../reservations/payment-ledger';
 import { formatRange } from '../rooms';
 import { getPricingSettings, getRoomDetail } from '../rooms/detail';
 import { validateStay } from '../rooms/pricing';
@@ -60,23 +62,18 @@ export async function cancelBooking(
   if (preview.refundMinor !== req.expectedRefundMinor)
     return { status: 'preview_changed', preview };
 
-  let refundStatus: RefundStatus =
-    preview.refundMinor > 0
-      ? preview.refundMethod === 'manual_bank'
-        ? 'pending_manual'
-        : 'initiated'
-      : 'none';
-  if (
-    refundStatus === 'initiated' &&
-    r.paymentReference &&
-    (!r.paymentProvider ||
-      !isPaymentProviderId(r.paymentProvider) ||
-      !(await getPaymentProvider(r.paymentProvider).refund({
-        reference: r.paymentReference,
-        amountMinor: preview.refundMinor,
-      })))
-  )
-    refundStatus = 'pending_manual';
+  const manual = preview.refundMethod === 'manual_bank';
+  const onlineProvider =
+    r.paymentProvider && isPaymentProviderId(r.paymentProvider)
+      ? r.paymentProvider
+      : null;
+  const refundStatus: RefundStatus =
+    preview.refundMinor <= 0
+      ? 'none'
+      : !manual && onlineProvider && r.paymentReference
+        ? 'initiated'
+        : 'pending_manual';
+
   r.status = 'cancelled';
   r.pendingChange = null;
   r.cancellation = {
@@ -89,15 +86,24 @@ export async function cancelBooking(
   logEvent(r, 'cancelled', undefined, 'guest');
 
   if (preview.refundMinor > 0) {
+    const provider = onlineProvider ?? (manual ? 'bank_transfer' : 'cash');
+    const { refundId } = await insertRefundPayment(db, {
+      reservationId: r.id,
+      amountMinor: preview.refundMinor,
+      method: preview.refundMethod,
+      provider,
+      status: 'pending',
+      reason: `Cancellation refund: ${req.reason ?? 'Guest cancellation'}`,
+      originalPaymentReference: r.paymentReference,
+    });
     const record: RefundRecord = {
-      id: newId(),
+      id: refundId,
       at: Date.now(),
       amountMinor: preview.refundMinor,
       method: preview.refundMethod,
       status: refundStatus,
     };
     r.refunds.push(record);
-    // Refunds that the provider cannot process become a manual task for staff.
     logEvent(
       r,
       refundStatus === 'pending_manual'
@@ -193,6 +199,7 @@ export async function quoteChange(
     children: r.stay.children,
     extraBed: r.stay.extraBed,
     extras: r.extras,
+    excludeReservationId: r.id,
   });
   const roomReassigned = false;
   if (q.status === 'unavailable')
@@ -355,21 +362,41 @@ export async function commitChange(
     checkOut: stored.checkOut,
     breakdown: stored.breakdown,
     totalMinor: stored.newTotalMinor,
-    paidDeltaMinor: -refund,
+    paidDeltaMinor: 0,
     policy: stored.policy,
   });
   if (refund > 0) {
     const manual = r.method === 'bank_transfer';
+    const onlineProvider =
+      r.paymentProvider && isPaymentProviderId(r.paymentProvider)
+        ? r.paymentProvider
+        : null;
+    const refundStatus: RefundStatus =
+      !manual && onlineProvider && r.paymentReference
+        ? 'initiated'
+        : 'pending_manual';
+    const provider = onlineProvider ?? (manual ? 'bank_transfer' : 'cash');
+    const { refundId } = await insertRefundPayment(db, {
+      reservationId: r.id,
+      amountMinor: refund,
+      method: manual ? 'manual_bank' : 'original_payment',
+      provider,
+      status: 'pending',
+      reason: 'Difference for new dates',
+      originalPaymentReference: r.paymentReference,
+    });
     r.refunds.push({
-      id: newId(),
+      id: refundId,
       at: Date.now(),
       amountMinor: refund,
       method: manual ? 'manual_bank' : 'original_payment',
-      status: manual ? 'pending_manual' : 'initiated',
+      status: refundStatus,
     });
     logEvent(
       r,
-      manual ? 'refund_pending_manual' : 'refund_initiated',
+      refundStatus === 'pending_manual'
+        ? 'refund_pending_manual'
+        : 'refund_initiated',
       'Difference for your new dates',
     );
   }

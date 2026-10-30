@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
+import { isExclusionViolation } from '@/lib/db/errors';
 import {
   getIdempotencyRecord,
   setIdempotency,
@@ -59,6 +60,9 @@ export async function POST(
 
     return apiOk(updated, { noCache: true });
   } catch (error) {
+    if (isExclusionViolation(error)) {
+      return apiFail(409, ERROR_MESSAGES.ROOM_NOT_AVAILABLE_NEW_DATES);
+    }
     const message =
       error instanceof Error
         ? error.message

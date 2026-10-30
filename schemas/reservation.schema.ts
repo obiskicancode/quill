@@ -75,6 +75,7 @@ export const adminCreateReservationSchema = z.object({
   }),
   noEmail: z.boolean().default(false),
   internalNotes: z.string().optional(),
+  enquiryId: z.string().uuid().optional(),
   source: z.enum(['phone', 'walk_in', 'admin']).default('phone'),
   discount: z
     .object({

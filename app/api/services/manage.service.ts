@@ -1,3 +1,4 @@
+import { CSRF_HEADER_NAME } from '@/lib/cookies/constants';
 import type { CancelRequest, DetailsRequest } from '@/schemas/manage.schema';
 import type { GuestReservation } from '@/types/booking.types';
 import type { PaymentInitResponse } from '@/types/checkout.types';
@@ -22,7 +23,7 @@ class ManageService extends BaseService {
   }
 
   private withCsrf(csrf: string) {
-    return { headers: { 'X-CSRF-Token': csrf } };
+    return { headers: { [CSRF_HEADER_NAME]: csrf } };
   }
 
   /** Reloads the booking with its manage data (allowed actions, timeline, CSRF token). */

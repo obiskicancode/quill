@@ -104,6 +104,7 @@ export interface QuoteRequest {
   extras: ExtraSelection[];
   /** What the guest last saw on the room page. Only used to show "Price updated". */
   seenTotalMinor?: number | null;
+  excludeReservationId?: string;
 }
 
 export type CheckoutQuoteResponse =
@@ -204,6 +205,7 @@ export type ApiErrorCode =
   | 'hold_expired'
   | 'not_found'
   | 'bad_file'
+  | 'unauthorised'
   | 'server';
 
 export interface ApiError {

@@ -7,13 +7,13 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import { generateRecoveryCodes, recoveryCodeHash } from '@/lib/auth/mfa';
 import { verifyPassword } from '@/lib/auth/password';
 import { replaceRecoveryCodes } from '@/lib/db/repositories/staff.repo';
-import { checkCsrf } from '@/lib/http/csrf';
+import { checkAdminCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
 import { adminDisable2faSchema } from '@/schemas/admin-auth.schema';
 
 export async function POST(request: Request) {
-  const csrfError = checkCsrf(request);
+  const csrfError = checkAdminCsrf(request);
   if (csrfError) return csrfError;
 
   const guard = await guardAdminApi(request);

@@ -1,24 +1,6 @@
-import { config } from '@/config';
-import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { assertAccessSecret, assertRefreshSecret } from '@/config';
 
 import { hmacSign, safeEqual } from './crypto';
-
-const DEV_ACCESS_SECRET = 'dev-admin-access-secret-change-me';
-const DEV_REFRESH_SECRET = 'dev-admin-refresh-secret-change-me';
-
-function accessSecret(): string {
-  const secret = config.JWT.ACCESS_SECRET;
-  if (secret) return secret;
-  if (config.isDev) return DEV_ACCESS_SECRET;
-  throw new Error(ERROR_MESSAGES.JWT_SECRETS_MISSING);
-}
-
-function refreshSecret(): string {
-  const secret = config.JWT.REFRESH_SECRET;
-  if (secret) return secret;
-  if (config.isDev) return DEV_REFRESH_SECRET;
-  throw new Error(ERROR_MESSAGES.JWT_SECRETS_MISSING);
-}
 
 export interface SignedPayload {
   exp: number;
@@ -75,13 +57,13 @@ export function createAccessToken(
   payload: { sub: string; sid: string; role: string },
   ttlSeconds: number,
 ): string {
-  return createSignedToken(payload, accessSecret(), ttlSeconds);
+  return createSignedToken(payload, assertAccessSecret(), ttlSeconds);
 }
 
 export function readAccessToken(
   value: string | null | undefined,
 ): AccessTokenPayload | null {
-  const payload = readSignedToken(value, accessSecret());
+  const payload = readSignedToken(value, assertAccessSecret());
   if (
     !payload ||
     typeof payload.sub !== 'string' ||
@@ -104,7 +86,7 @@ export function createChallengeToken(
 ): string {
   return createSignedToken(
     { sub: staffUserId, purpose: 'mfa' },
-    refreshSecret(),
+    assertRefreshSecret(),
     ttlSeconds,
   );
 }
@@ -112,7 +94,7 @@ export function createChallengeToken(
 export function readChallengeToken(
   value: string | null | undefined,
 ): ChallengePayload | null {
-  const payload = readSignedToken(value, refreshSecret());
+  const payload = readSignedToken(value, assertRefreshSecret());
   if (
     !payload ||
     typeof payload.sub !== 'string' ||

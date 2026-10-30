@@ -47,6 +47,7 @@ export async function POST(
       id,
       paymentId,
       'verify',
+      parsed.data.version,
       parsed.data.amountMinor,
       undefined,
       parsed.data.note,

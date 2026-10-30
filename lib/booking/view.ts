@@ -147,7 +147,7 @@ export async function buildGuestReservation(
       balanceMinor:
         r.status === 'cancelled'
           ? 0
-          : Math.max(0, r.totals.totalMinor - r.paidMinor),
+          : Math.max(0, r.totals.totalMinor - r.paidMinor + r.refundedMinor),
     },
     payment: {
       label: paymentLabel(r),

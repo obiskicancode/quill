@@ -1,12 +1,8 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import {
-  createManageValue,
-  readManageValue,
-  setAccessCookie,
-  setManageCookie,
-} from '@/lib/booking/session';
+import { createManageValue, readManageValue } from '@/lib/booking/session';
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view';
+import { setBookingAccessCookie, setBookingManageCookie } from '@/lib/cookies';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, tooManyRequests } from '@/lib/http/request';
 import { rateLimit } from '@/lib/rate-limit';
@@ -59,12 +55,12 @@ export async function POST(req: Request) {
       }),
       { noCache: true },
     );
-    setManageCookie(res, reference, value);
+    setBookingManageCookie(res, reference, value);
     return res;
   }
   const res = apiOk(await buildGuestReservation(reservation, 'verified'), {
     noCache: true,
   });
-  setAccessCookie(res, reference, 'verified');
+  setBookingAccessCookie(res, reference, 'verified');
   return res;
 }

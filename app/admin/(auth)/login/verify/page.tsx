@@ -3,8 +3,8 @@ import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 
 import { VerifyForm } from '@/components/admin/VerifyForm';
-import { ADMIN_CHALLENGE_COOKIE } from '@/lib/auth/cookies';
 import { readAdminContext } from '@/lib/auth/guards';
+import { COOKIE_NAMES } from '@/lib/cookies';
 
 export const metadata: Metadata = { title: 'Verify sign in' };
 
@@ -17,7 +17,7 @@ export default async function AdminVerifyPage({
   if (context) redirect('/admin');
 
   const cookieStore = await cookies();
-  if (!cookieStore.get(ADMIN_CHALLENGE_COOKIE)?.value) {
+  if (!cookieStore.get(COOKIE_NAMES.ADMIN_CHALLENGE)?.value) {
     redirect('/admin/login');
   }
 

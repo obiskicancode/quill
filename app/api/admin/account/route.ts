@@ -7,7 +7,7 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import { ROLE_PERMISSIONS } from '@/lib/auth/permissions';
 import { toAdminStaff } from '@/lib/db/mappers/staff.mapper';
 import { updateStaff } from '@/lib/db/repositories/staff.repo';
-import { checkCsrf } from '@/lib/http/csrf';
+import { checkAdminCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
 import { adminProfileSchema } from '@/schemas/admin-account.schema';
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const csrfError = checkCsrf(request);
+  const csrfError = checkAdminCsrf(request);
   if (csrfError) return csrfError;
 
   const guard = await guardAdminApi(request);

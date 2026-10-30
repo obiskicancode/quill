@@ -27,6 +27,7 @@ export const config = {
   },
   ADMIN: {
     MFA_ENCRYPTION_KEY: process.env.ADMIN_MFA_ENCRYPTION_KEY,
+    CSRF_SECRET: process.env.ADMIN_CSRF_SECRET,
   },
   MAINTENANCE_MODE: process.env.MAINTENANCE_MODE === 'true',
   JWT: {
@@ -46,12 +47,17 @@ export const config = {
       (process.env.STORAGE_FORCE_PATH_STYLE ?? 'false') === 'true',
   },
   PAYMENT: {
-    POPUP: process.env.NEXT_PUBLIC_PAYMENT_POPUP === '1',
     PROVIDER: process.env.PAYMENT_PROVIDER ?? 'paystack',
     BASE_URL:
       process.env.PAYMENT_PROVIDER_BASE_URL ?? 'https://api.paystack.co',
     PUBLIC_KEY: process.env.PAYMENT_PROVIDER_PUBLIC_KEY,
     SECRET_KEY: process.env.PAYMENT_PROVIDER_SECRET_KEY,
+  },
+  CRON: {
+    SECRET: process.env.CRON_SECRET,
+  },
+  NOTIFICATIONS: {
+    WEBHOOK_URL: process.env.NOTIFICATION_WEBHOOK_URL,
   },
   UPSTASH: {
     REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
@@ -59,8 +65,40 @@ export const config = {
   },
 };
 
-export function assertDbUrl(): void {
+export function assertBookingSecret() {
+  if (!config.BOOKING.COOKIE_SECRET && config.isProd)
+    throw new Error(ERROR_MESSAGES.BOOKING_COOKIE_SECRET_MISSING);
+
+  return (
+    config.BOOKING.COOKIE_SECRET || 'dev-only-booking-cookie-secret-change-me'
+  );
+}
+
+export function assertAdminCsrfSecret() {
+  if (!config.ADMIN.CSRF_SECRET && config.isProd)
+    throw new Error(ERROR_MESSAGES.ADMIN_CSRF_FAILED);
+
+  return config.ADMIN.CSRF_SECRET || 'dev-only-admin-csrf-secret-change-me';
+}
+
+export function assertDbUrl() {
   if (!config.DB.URL) {
     throw new Error(ERROR_MESSAGES.DATABASE_URL_MISSING);
   }
+
+  return config.DB.URL;
+}
+
+export function assertAccessSecret(): string {
+  const secret = config.JWT.ACCESS_SECRET;
+  if (secret) return secret;
+  if (config.isDev) return 'dev-only-access-secret-change-me';
+  throw new Error(ERROR_MESSAGES.JWT_SECRETS_MISSING);
+}
+
+export function assertRefreshSecret(): string {
+  const secret = config.JWT.REFRESH_SECRET;
+  if (secret) return secret;
+  if (config.isDev) return 'dev-only-refresh-secret-change-me';
+  throw new Error(ERROR_MESSAGES.JWT_SECRETS_MISSING);
 }

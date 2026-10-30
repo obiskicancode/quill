@@ -1,5 +1,6 @@
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
+import { requireStepUp } from '@/lib/auth/step-up';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
 import { reconcilePaymentsBulkRepo } from '@/lib/db/repositories/payments-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
@@ -12,6 +13,9 @@ export async function POST(request: Request) {
   const guard = await guardAdminApi(request, { permission: 'payments.manage' });
   if (!guard.ok) return guard.response;
   const context = guard.context;
+
+  const stepUp = requireStepUp(guard.context);
+  if (!stepUp.ok) return stepUp.response;
 
   let body: unknown;
   try {

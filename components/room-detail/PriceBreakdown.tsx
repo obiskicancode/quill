@@ -9,7 +9,7 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
   const row = 'flex items-baseline justify-between gap-4';
 
   return (
-    <div className="min-h-[13rem]">
+    <div className="min-h-52">
       <dl className="text-small space-y-3">
         <div>
           <div className={row}>
@@ -129,7 +129,7 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
 export function BreakdownSkeleton() {
   const bar = 'rounded bg-ink/10 motion-safe:animate-pulse';
   return (
-    <div aria-hidden className="min-h-[13rem] space-y-4">
+    <div aria-hidden className="min-h-52 space-y-4">
       {[0, 1, 2, 3].map((i) => (
         <div key={i} className="flex justify-between gap-4">
           <div className={`${bar} h-4 w-1/2`} />

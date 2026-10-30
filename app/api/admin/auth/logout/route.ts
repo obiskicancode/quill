@@ -1,11 +1,11 @@
 import { writeAdminAudit } from '@/lib/auth/audit';
 import { resolveAdminSession, revokeAdminSession } from '@/lib/auth/session';
-import { checkCsrf } from '@/lib/http/csrf';
+import { checkAdminCsrf } from '@/lib/http/csrf';
 import { apiOk } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
 
 export async function POST(request: Request) {
-  const csrfError = checkCsrf(request);
+  const csrfError = checkAdminCsrf(request);
   if (csrfError) return csrfError;
 
   const context = await resolveAdminSession(request);

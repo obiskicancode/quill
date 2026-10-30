@@ -1,5 +1,6 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { checkManageCsrf } from '@/lib/http/csrf';
 import { apiFail } from '@/lib/http/envelope';
 import { clientIp } from '@/lib/http/request';
 import type { ManageApiError } from '@/types/manage.types';
@@ -37,14 +38,8 @@ export async function requireManage(
         message: ERROR_MESSAGES.SESSION_EXPIRED,
       }),
     };
-  if (req.headers.get('x-csrf-token') !== session.csrf)
-    return {
-      ok: false,
-      res: manageError(403, {
-        code: ERROR_CODES.CSRF,
-        message: ERROR_MESSAGES.CSRF_FAILED,
-      }),
-    };
+  const csrfError = checkManageCsrf(req, session.csrf);
+  if (csrfError) return { ok: false, res: csrfError };
   return { ok: true };
 }
 
