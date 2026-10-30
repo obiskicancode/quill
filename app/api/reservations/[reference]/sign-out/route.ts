@@ -1,4 +1,4 @@
-import { clearBookingManageCookie } from '@/lib/cookies';
+import { clearBookingManageCookie } from '@/lib/booking/session';
 import { createAuditLog } from '@/lib/db/repositories/audit.repo';
 import { apiOk } from '@/lib/http/envelope';
 

@@ -5,7 +5,7 @@ import type {
   StorageProviderAdapter,
   StorageProviderFactory,
 } from './provider';
-import { createS3StorageProvider } from './providers/s3';
+import { createS3StorageProvider } from './providers/supabase-bucket';
 
 const registry = new Map<string, StorageProviderFactory>();
 const builtins: Record<string, StorageProviderFactory> = {
@@ -21,7 +21,7 @@ export function registerStorageProvider(
 }
 
 export function getActiveStorageProviderId(): string {
-  return (config.STORAGE.PROVIDER ?? 's3').toLowerCase();
+  return config.STORAGE.PROVIDER.toLowerCase();
 }
 
 export function createStorageProvider(

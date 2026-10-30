@@ -88,9 +88,7 @@ export default async function RootLayout({
                 <Footer site={site} />
                 <StickyBookBar />
               </HideOnCheckout>
-              <HideOnCheckout>
-                <WhatsAppFab />
-              </HideOnCheckout>
+              <WhatsAppFab />
               <HideOnCheckout>
                 <ConsentBanner
                   enabled={consent.enabled}

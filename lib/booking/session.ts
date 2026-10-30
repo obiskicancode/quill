@@ -1,8 +1,13 @@
 import { cookies } from 'next/headers';
+import type { NextResponse } from 'next/server';
 
 import { assertBookingSecret } from '@/config';
 import { hmacSign, safeEqual } from '@/lib/auth/crypto';
-import { COOKIE_NAMES, COOKIE_TTLS } from '@/lib/cookies';
+import {
+  buildCookieOptions,
+  COOKIE_NAMES,
+  COOKIE_TTLS,
+} from '@/lib/cookies/constants';
 import { createManageCsrfToken } from '@/lib/http/csrf';
 
 /**
@@ -90,5 +95,59 @@ export async function getManageSession(
   return readManageValue(
     reference,
     jar.get(COOKIE_NAMES.BOOKING_MANAGE(reference))?.value,
+  );
+}
+
+export function setBookingAccessCookie(
+  response: NextResponse,
+  reference: string,
+  valueOrLevel: AccessLevel | string,
+  maxAge: number = COOKIE_TTLS.BOOKING_ACCESS,
+): void {
+  const value =
+    valueOrLevel === 'checkout' || valueOrLevel === 'verified'
+      ? createAccessValue(reference, valueOrLevel, maxAge)
+      : valueOrLevel;
+  response.cookies.set(
+    COOKIE_NAMES.BOOKING_ACCESS(reference),
+    value,
+    buildCookieOptions({ maxAge }),
+  );
+}
+
+export function clearBookingAccessCookie(
+  response: NextResponse,
+  reference: string,
+): void {
+  response.cookies.set(
+    COOKIE_NAMES.BOOKING_ACCESS(reference),
+    '',
+    buildCookieOptions({ maxAge: 0 }),
+  );
+}
+
+export function setBookingManageCookie(
+  response: NextResponse,
+  reference: string,
+  value?: string,
+  maxAge: number = COOKIE_TTLS.BOOKING_MANAGE,
+): string {
+  const actualValue = value ?? createManageValue(reference, maxAge);
+  response.cookies.set(
+    COOKIE_NAMES.BOOKING_MANAGE(reference),
+    actualValue,
+    buildCookieOptions({ maxAge }),
+  );
+  return actualValue;
+}
+
+export function clearBookingManageCookie(
+  response: NextResponse,
+  reference: string,
+): void {
+  response.cookies.set(
+    COOKIE_NAMES.BOOKING_MANAGE(reference),
+    '',
+    buildCookieOptions({ maxAge: 0 }),
   );
 }

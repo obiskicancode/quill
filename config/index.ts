@@ -37,8 +37,8 @@ export const config = {
     REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
   STORAGE: {
-    PROVIDER: process.env.STORAGE_PROVIDER ?? 's3',
-    BUCKET: process.env.STORAGE_BUCKET,
+    PROVIDER: process.env.STORAGE_PROVIDER ?? 'supabase',
+    BUCKET: process.env.STORAGE_BUCKET ?? 'uploads',
     ACCESS_KEY_ID: process.env.STORAGE_ACCESS_KEY_ID,
     SECRET_ACCESS_KEY: process.env.STORAGE_SECRET_ACCESS_KEY,
     ENDPOINT: process.env.STORAGE_ENDPOINT,

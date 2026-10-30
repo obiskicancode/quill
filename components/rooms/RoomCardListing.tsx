@@ -29,7 +29,6 @@ const MAX_AMENITIES_SHOWN = 4;
 
 export interface RoomCardListingProps {
   room: RoomType;
-  /** Position in the list. The first two cards load their first photo eagerly. */
   index: number;
   query: RoomQuery;
   /** 'idle' = no dates yet, 'ready' = live result in `availability`, 'error' = live prices failed. */
@@ -39,10 +38,6 @@ export interface RoomCardListingProps {
   onPickDates: (range: { checkIn: ISODate; checkOut: ISODate }) => void;
 }
 
-/**
- * Listing variant of RoomCard. Same shell, carousel, photo and button components as the home page card,
- * with more detail and every availability state. One filled button at most.
- */
 export function RoomCardListing({
   room,
   index,
@@ -173,20 +168,17 @@ export function RoomCardListing({
       </div>
 
       <div className="flex flex-1 flex-col gap-4 p-5">
-        <h3
-          id={nameId}
-          className="font-display text-h3 line-clamp-2 min-h-[2.6em]"
-        >
+        <h3 id={nameId} className="font-display text-h3 line-clamp-2">
           {room.name}
         </h3>
 
-        <div className="flex min-h-7 flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2">
           {room.popular && <Badge tone="accent">Most popular</Badge>}
           {room.breakfastIncluded && <Badge>Breakfast included</Badge>}
           {room.extraBed.available && <Badge>Extra bed available</Badge>}
         </div>
 
-        <p className="text-small text-ink/85 line-clamp-2 min-h-12">
+        <p className="text-small text-ink/85 line-clamp-2">
           {room.description}
         </p>
 
@@ -216,7 +208,7 @@ export function RoomCardListing({
 
         <ul
           aria-label="Amenities"
-          className="text-small flex min-h-13 flex-wrap content-start gap-x-4 gap-y-2"
+          className="text-small flex flex-wrap content-start gap-x-4 gap-y-2"
         >
           {shown.map((key) => (
             <li key={key} className="inline-flex items-center gap-1.5">
@@ -270,7 +262,7 @@ export function RoomCardListing({
               )}
             </div>
           ) : overCapacity && live.status === 'over-capacity' ? (
-            <div className="min-h-22">
+            <div>
               <p className="font-semibold">Too small for your group</p>
               <p className="text-small text-muted-foreground mt-1">
                 This room sleeps up to {live.maxAdults} adults and{' '}
@@ -279,7 +271,7 @@ export function RoomCardListing({
               </p>
             </div>
           ) : live?.status === 'min-stay' ? (
-            <div className="min-h-22">
+            <div>
               <p className="font-semibold">
                 Minimum stay: {live.minNights} nights
               </p>

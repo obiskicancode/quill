@@ -68,54 +68,6 @@ export function setAdminCsrfCookie(
   );
 }
 
-export function setBookingAccessCookie(
-  response: NextResponse,
-  reference: string,
-  value: string,
-  maxAge: number = COOKIE_TTLS.BOOKING_ACCESS,
-): void {
-  response.cookies.set(
-    COOKIE_NAMES.BOOKING_ACCESS(reference),
-    value,
-    buildCookieOptions({ maxAge }),
-  );
-}
-
-export function setBookingManageCookie(
-  response: NextResponse,
-  reference: string,
-  value: string,
-  maxAge: number = COOKIE_TTLS.BOOKING_MANAGE,
-): void {
-  response.cookies.set(
-    COOKIE_NAMES.BOOKING_MANAGE(reference),
-    value,
-    buildCookieOptions({ maxAge }),
-  );
-}
-
-export function clearBookingManageCookie(
-  response: NextResponse,
-  reference: string,
-): void {
-  response.cookies.set(
-    COOKIE_NAMES.BOOKING_MANAGE(reference),
-    '',
-    buildCookieOptions({ maxAge: 0 }),
-  );
-}
-
-export function clearBookingAccessCookie(
-  response: NextResponse,
-  reference: string,
-): void {
-  response.cookies.set(
-    COOKIE_NAMES.BOOKING_ACCESS(reference),
-    '',
-    buildCookieOptions({ maxAge: 0 }),
-  );
-}
-
 /** Parse a named cookie value from a Request or raw cookie string */
 export function getCookieValue(
   request: Request | string,

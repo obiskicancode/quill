@@ -1,3 +1,5 @@
+import { cn } from 'cn';
+
 import { getPublicSite } from '@/lib/content/data';
 import { whatsappHref } from '@/lib/site';
 import type { Room } from '@/types/site.types';
@@ -12,8 +14,6 @@ import { TextLink } from '../ui/TextLink';
 export async function FeaturedRooms({ rooms }: { rooms: Room[] }) {
   const site = await getPublicSite();
   const visible = rooms.slice(0, 4);
-  // Static class names so Tailwind can see them.
-  const columns = visible.length === 4 ? 'xl:grid-cols-4' : 'xl:grid-cols-3';
 
   return (
     <section aria-labelledby="rooms-heading" className="section-y pt-0">
@@ -26,7 +26,9 @@ export async function FeaturedRooms({ rooms }: { rooms: Room[] }) {
         />
         {visible.length > 0 ? (
           <StaggerGroup
-            className={`grid gap-6 md:grid-cols-2 lg:grid-cols-3 ${columns}`}
+            className={cn(
+              `grid gap-6 md:grid-cols-2 lg:grid-cols-3 ${visible.length === 4 ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`,
+            )}
             staggerChildren={0.1}
           >
             {visible.map((room) => (

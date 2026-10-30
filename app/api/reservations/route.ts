@@ -1,5 +1,6 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { setBookingAccessCookie } from '@/lib/booking/session';
 import { buildSnapshot } from '@/lib/booking/snapshot';
 import {
   createReference,
@@ -8,7 +9,6 @@ import {
 } from '@/lib/booking/store';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
 import { getCheckoutSettings } from '@/lib/checkout/settings';
-import { setBookingAccessCookie } from '@/lib/cookies';
 import {
   claimIdempotency,
   finishIdempotency,

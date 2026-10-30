@@ -3,14 +3,18 @@ import { describe, it } from 'node:test';
 import { NextResponse } from 'next/server';
 
 import {
+  readAccessValue,
+  readManageValue,
+  setBookingAccessCookie,
+  setBookingManageCookie,
+} from '../lib/booking/session';
+import {
   buildCookieOptions,
   COOKIE_NAMES,
   COOKIE_TTLS,
   CSRF_HEADER_NAME,
   setAdminAccessCookie,
   setAdminCsrfCookie,
-  setBookingAccessCookie,
-  setBookingManageCookie,
 } from '../lib/cookies';
 import {
   checkAdminCsrf,
@@ -66,11 +70,36 @@ describe('CSRF & Cookie Unification Tests', () => {
       'booking-access-val',
     );
 
+    // Signing access level 'checkout'
+    const resCheckout = NextResponse.json({ ok: true });
+    setBookingAccessCookie(resCheckout, 'REF-101', 'checkout');
+    const checkoutVal = resCheckout.cookies.get('dea_bk_REF-101')?.value;
+    assert.ok(checkoutVal && checkoutVal !== 'checkout');
+    assert.strictEqual(readAccessValue('REF-101', checkoutVal), 'checkout');
+
+    // Signing access level 'verified'
+    const resVerified = NextResponse.json({ ok: true });
+    setBookingAccessCookie(resVerified, 'REF-102', 'verified');
+    const verifiedVal = resVerified.cookies.get('dea_bk_REF-102')?.value;
+    assert.ok(verifiedVal && verifiedVal !== 'verified');
+    assert.strictEqual(readAccessValue('REF-102', verifiedVal), 'verified');
+
+    // Setting manage cookie with custom value
     setBookingManageCookie(res, 'REF-999', 'manage-session-val');
     assert.strictEqual(
       res.cookies.get('dea_mg_REF-999')?.value,
       'manage-session-val',
     );
+
+    // Setting manage cookie with auto-generated session
+    const resManage = NextResponse.json({ ok: true });
+    setBookingManageCookie(resManage, 'REF-103');
+    const manageVal = resManage.cookies.get('dea_mg_REF-103')?.value;
+    assert.ok(manageVal);
+    const parsedManage = readManageValue('REF-103', manageVal);
+    assert.ok(parsedManage);
+    assert.ok(parsedManage.csrf && parsedManage.csrf.length >= 16);
+    assert.ok(parsedManage.expiresAt > Date.now());
   });
 
   it('3. sameOrigin validation handles origin, host, and forwarded hosts correctly', () => {

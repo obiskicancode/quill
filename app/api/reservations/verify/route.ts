@@ -1,8 +1,12 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { createManageValue, readManageValue } from '@/lib/booking/session';
+import {
+  createManageValue,
+  readManageValue,
+  setBookingAccessCookie,
+  setBookingManageCookie,
+} from '@/lib/booking/session';
 import { buildGuestReservation, loadReservation } from '@/lib/booking/view';
-import { setBookingAccessCookie, setBookingManageCookie } from '@/lib/cookies';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, tooManyRequests } from '@/lib/http/request';
 import { rateLimit } from '@/lib/rate-limit';

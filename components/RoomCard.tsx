@@ -24,10 +24,6 @@ export type RoomCardProps =
   | { variant?: 'feature'; room: Room; stayQuery?: string; compact?: boolean }
   | ({ variant: 'listing' } & RoomCardListingProps);
 
-/**
- * `feature` (default) is the home page card. `listing` is the richer card on the Rooms page.
- * Existing home page usage, <RoomCard room={room} />, is unchanged.
- */
 export function RoomCard(props: RoomCardProps) {
   if (props.variant === 'listing') {
     return <RoomCardListing {...props} />;
@@ -41,10 +37,6 @@ export function RoomCard(props: RoomCardProps) {
   );
 }
 
-/**
- * `stayQuery` (e.g. "checkIn=...&adults=2") is appended to the detail and booking links so the chosen stay carries through.
- * `compact` drops the amenities and the Book button, leaving one secondary action.
- */
 function FeatureRoomCard({
   room,
   stayQuery = '',
@@ -74,7 +66,7 @@ function FeatureRoomCard({
               src={img.src}
               alt={img.alt}
               sizes={PHOTO_SIZES}
-              className="aspect-[4/3] w-full"
+              className="aspect-4/3 w-full"
             />
           ))}
         />
@@ -82,7 +74,7 @@ function FeatureRoomCard({
         <div
           role="img"
           aria-label={`No photos yet for ${room.name}`}
-          className="bg-ink/5 text-ink/50 grid aspect-[4/3] w-full place-items-center"
+          className="bg-ink/5 text-ink/50 grid aspect-4/3 w-full place-items-center"
         >
           <ImageIcon className="size-8" aria-hidden />
         </div>
@@ -90,10 +82,7 @@ function FeatureRoomCard({
 
       <div className="flex flex-1 flex-col gap-4 p-5">
         <div>
-          <h3
-            id={nameId}
-            className="font-display text-h3 line-clamp-2 min-h-[2.6em]"
-          >
+          <h3 id={nameId} className="font-display text-h3 line-clamp-2">
             {room.name}
           </h3>
           <p className="text-small text-muted-foreground mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
