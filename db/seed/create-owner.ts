@@ -2,7 +2,7 @@ import { hashPassword, validatePassword } from '@/lib/auth/password';
 import {
   createStaff,
   findStaffByEmail,
-  updateStaff,
+  update as updateStaff,
 } from '@/lib/db/repositories/staff.repo';
 
 function required(name: string): string {

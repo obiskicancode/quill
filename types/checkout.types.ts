@@ -203,6 +203,7 @@ export type ApiErrorCode =
   | 'rate_limited'
   | 'rejected'
   | 'hold_expired'
+  | 'payment_init_failed'
   | 'not_found'
   | 'bad_file'
   | 'unauthorised'

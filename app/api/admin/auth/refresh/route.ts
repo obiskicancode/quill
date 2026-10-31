@@ -1,12 +1,12 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { rotateAdminSession } from '@/lib/auth/session';
-import { clearAdminAuthCookies } from '@/lib/cookies';
-import { checkAdminCsrf } from '@/lib/http/csrf';
+import { clearAuthCookies } from '@/lib/cookies';
+import { checkCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 
 export async function POST(request: Request) {
-  const csrfError = checkAdminCsrf(request);
+  const csrfError = checkCsrf(request);
   if (csrfError) return csrfError;
 
   const response = apiOk({}, { noCache: true });
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       { code: ERROR_CODES.SESSION_EXPIRED },
       { noCache: true },
     );
-    clearAdminAuthCookies(failed);
+    clearAuthCookies(failed);
     return failed;
   }
   return response;

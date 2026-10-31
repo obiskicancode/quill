@@ -42,7 +42,7 @@ function LazyMap({ hotel }: { hotel: HotelInfo }) {
   return (
     <div
       ref={ref}
-      className="rounded-card bg-ink/10 relative aspect-[4/3] w-full overflow-hidden md:aspect-[16/10]"
+      className="rounded-card bg-ink/10 relative aspect-4/3 w-full overflow-hidden md:aspect-16/10"
     >
       <AnimatePresence initial={false}>
         {near && query ? (

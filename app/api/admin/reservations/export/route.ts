@@ -6,7 +6,7 @@ import { hotelClock } from '@/lib/dates';
 import {
   getReservationsAdminList,
   logExportAudit,
-} from '@/lib/db/repositories/reservations-admin.repo';
+} from '@/lib/db/repositories/reservations.repo';
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, NO_STORE_HEADERS } from '@/lib/http/envelope';
 import { rateLimit } from '@/lib/rate-limit';

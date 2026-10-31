@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
-import { addRoomTypeImage } from '@/lib/db/repositories/inventory-admin.repo';
+import { addRoomTypeImage } from '@/lib/db/repositories/inventory.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { processRoomImage, saveProcessedImage } from '@/lib/images/processor';
 

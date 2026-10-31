@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 
-import type { AuditDiffField } from '@/types/audit-admin.types';
+import type { AuditDiffField } from '@/types/audit.types';
 
 const SENSITIVE_KEY_PATTERNS = [
   /password/i,

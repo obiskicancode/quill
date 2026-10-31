@@ -4,7 +4,7 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { checkBlockConflicts } from '@/lib/db/repositories/calendar-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminBlockCheckSchema } from '@/schemas/calendar.schema';
+import { blockCheckSchema } from '@/schemas/calendar.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => null);
-  const parsed = adminBlockCheckSchema.safeParse(body);
+  const parsed = blockCheckSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

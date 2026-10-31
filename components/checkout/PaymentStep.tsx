@@ -53,7 +53,7 @@ export function CopyButton({ value, label }: { value: string; label: string }) {
     <>
       <Button
         type="button"
-        variant="outline"
+        variant="secondary"
         size="sm"
         aria-label={`Copy ${label}`}
         onClick={() => {

@@ -20,12 +20,12 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useResendReservationConfirmation } from '@/hooks/services/admin/use-reservations';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import { adminResendConfirmationSchema } from '@/schemas/reservation.schema';
+import { resendConfirmationSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
 
-const resendFormSchema = adminResendConfirmationSchema
+const resendFormSchema = resendConfirmationSchema
   .omit({ idempotencyKey: true })
   .extend({
     recipient: z.email(ERROR_MESSAGES.VALID_RECIPIENT_EMAIL),

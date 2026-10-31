@@ -51,8 +51,8 @@ import {
   useUpdateStaff,
 } from '@/hooks/services/admin/use-staff';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import { StaffUpdateInputSchema } from '@/schemas/staff-admin.schema';
-import type { StaffDetailResponse } from '@/types/staff-admin.types';
+import { StaffUpdateInputSchema } from '@/schemas/staff.schema';
+import type { StaffDetailResponse } from '@/types/staff.types';
 
 const ROLE_OPTIONS = [
   { value: 'reception', label: 'Reception' },

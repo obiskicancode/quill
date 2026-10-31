@@ -5,7 +5,7 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
 import { getRoomTypeById } from '@/lib/db/repositories/rooms.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminReservationQuoteSchema } from '@/schemas/quote.schema';
+import { reservationQuoteSchema } from '@/schemas/quote.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => null);
-  const parsed = adminReservationQuoteSchema.safeParse(body);
+  const parsed = reservationQuoteSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

@@ -21,7 +21,7 @@ import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useIssueReservationRefund } from '@/hooks/services/admin/use-reservations';
 import { formatNaira } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import { adminRefundSchema } from '@/schemas/reservation.schema';
+import { refundSchema } from '@/schemas/reservation.schema';
 import type {
   ReservationDetail,
   ReservationPaymentItem,
@@ -30,7 +30,7 @@ import type {
 import { ActionModal } from './ActionModal';
 
 function makeRefundFormSchema(maxNaira: number) {
-  return adminRefundSchema
+  return refundSchema
     .omit({
       version: true,
       idempotencyKey: true,

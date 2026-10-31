@@ -3,7 +3,7 @@ import type {
   StaffQueryParams as StaffQueryParamsSchema,
   StaffUpdateInput as StaffUpdateInputSchema,
   StepUpAuthInput as StepUpAuthInputSchema,
-} from '@/schemas/staff-admin.schema';
+} from '@/schemas/staff.schema';
 import type { AdminRole } from '@/types/auth.types';
 
 export type StaffStatus = 'active' | 'invited' | 'deactivated' | 'locked';
@@ -11,6 +11,17 @@ export type StaffStatus = 'active' | 'invited' | 'deactivated' | 'locked';
 export type StaffInviteInput = StaffInviteInputSchema;
 export type StaffUpdateInput = StaffUpdateInputSchema;
 export type StaffQueryParams = StaffQueryParamsSchema;
+
+export interface Staff {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: AdminRole;
+  phone: string | null;
+  mfaEnabled: boolean;
+  lastLoginAt: string | null;
+}
 
 export interface StaffListItem {
   id: string;

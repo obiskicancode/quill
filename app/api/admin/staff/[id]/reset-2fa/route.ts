@@ -2,7 +2,7 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { requireStepUp } from '@/lib/auth/step-up';
-import { resetStaffMfaRepo } from '@/lib/db/repositories/staff-admin.repo';
+import { resetStaffMfa } from '@/lib/db/repositories/staff.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp } from '@/lib/http/request';
 
@@ -23,7 +23,7 @@ export async function POST(
   }
 
   const { id } = await params;
-  const result = await resetStaffMfaRepo({
+  const result = await resetStaffMfa({
     id,
     actor: context.user,
     ipAddress: clientIp(request),

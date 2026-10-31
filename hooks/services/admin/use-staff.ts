@@ -15,7 +15,7 @@ import type {
   StaffQueryParams,
   StaffUpdateInput,
   StepUpAuthInput,
-} from '@/types/staff-admin.types';
+} from '@/types/staff.types';
 
 function toQueryString(
   params: Record<string, string | number | undefined> = {},

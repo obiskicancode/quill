@@ -4,9 +4,11 @@ import type { NextResponse } from 'next/server';
 import { assertBookingSecret } from '@/config';
 import { hmacSign, safeEqual } from '@/lib/auth/crypto';
 import {
+  BOOKING_ACCESS_COOKIE_NAME,
+  BOOKING_ACCESS_TTL_SECONDS,
+  BOOKING_MANAGE_COOKIE_NAME,
+  BOOKING_MANAGE_TTL_SECONDS,
   buildCookieOptions,
-  COOKIE_NAMES,
-  COOKIE_TTLS,
 } from '@/lib/cookies/constants';
 import { createManageCsrfToken } from '@/lib/http/csrf';
 
@@ -22,7 +24,7 @@ const sign = (data: string) => hmacSign(data, assertBookingSecret());
 export function createAccessValue(
   reference: string,
   level: AccessLevel,
-  ttl = COOKIE_TTLS.BOOKING_ACCESS,
+  ttl = BOOKING_ACCESS_TTL_SECONDS,
 ): string {
   const payload = `${Math.floor(Date.now() / 1000) + ttl}.${level === 'verified' ? 'v' : 'c'}`;
   return `${payload}.${sign(`${reference}.${payload}`)}`;
@@ -47,13 +49,13 @@ export async function getAccess(
   if (
     readManageValue(
       reference,
-      jar.get(COOKIE_NAMES.BOOKING_MANAGE(reference))?.value,
+      jar.get(BOOKING_MANAGE_COOKIE_NAME(reference))?.value,
     )
   )
     return 'verified';
   return readAccessValue(
     reference,
-    jar.get(COOKIE_NAMES.BOOKING_ACCESS(reference))?.value,
+    jar.get(BOOKING_ACCESS_COOKIE_NAME(reference))?.value,
   );
 }
 
@@ -61,7 +63,7 @@ export async function getAccess(
 
 export function createManageValue(
   reference: string,
-  ttl = COOKIE_TTLS.BOOKING_MANAGE,
+  ttl = BOOKING_MANAGE_TTL_SECONDS,
 ): string {
   const exp = Math.floor(Date.now() / 1000) + ttl;
   return `${exp}.${sign(`${reference}.mg.${exp}`)}`;
@@ -94,7 +96,7 @@ export async function getManageSession(
   const jar = await cookies();
   return readManageValue(
     reference,
-    jar.get(COOKIE_NAMES.BOOKING_MANAGE(reference))?.value,
+    jar.get(BOOKING_MANAGE_COOKIE_NAME(reference))?.value,
   );
 }
 
@@ -102,14 +104,14 @@ export function setBookingAccessCookie(
   response: NextResponse,
   reference: string,
   valueOrLevel: AccessLevel | string,
-  maxAge: number = COOKIE_TTLS.BOOKING_ACCESS,
+  maxAge: number = BOOKING_ACCESS_TTL_SECONDS,
 ): void {
   const value =
     valueOrLevel === 'checkout' || valueOrLevel === 'verified'
       ? createAccessValue(reference, valueOrLevel, maxAge)
       : valueOrLevel;
   response.cookies.set(
-    COOKIE_NAMES.BOOKING_ACCESS(reference),
+    BOOKING_ACCESS_COOKIE_NAME(reference),
     value,
     buildCookieOptions({ maxAge }),
   );
@@ -120,7 +122,7 @@ export function clearBookingAccessCookie(
   reference: string,
 ): void {
   response.cookies.set(
-    COOKIE_NAMES.BOOKING_ACCESS(reference),
+    BOOKING_ACCESS_COOKIE_NAME(reference),
     '',
     buildCookieOptions({ maxAge: 0 }),
   );
@@ -130,11 +132,11 @@ export function setBookingManageCookie(
   response: NextResponse,
   reference: string,
   value?: string,
-  maxAge: number = COOKIE_TTLS.BOOKING_MANAGE,
+  maxAge: number = BOOKING_MANAGE_TTL_SECONDS,
 ): string {
   const actualValue = value ?? createManageValue(reference, maxAge);
   response.cookies.set(
-    COOKIE_NAMES.BOOKING_MANAGE(reference),
+    BOOKING_MANAGE_COOKIE_NAME(reference),
     actualValue,
     buildCookieOptions({ maxAge }),
   );
@@ -146,7 +148,7 @@ export function clearBookingManageCookie(
   reference: string,
 ): void {
   response.cookies.set(
-    COOKIE_NAMES.BOOKING_MANAGE(reference),
+    BOOKING_MANAGE_COOKIE_NAME(reference),
     '',
     buildCookieOptions({ maxAge: 0 }),
   );

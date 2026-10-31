@@ -2,16 +2,13 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { requireStepUp } from '@/lib/auth/step-up';
-import {
-  inviteStaffRepo,
-  listStaffRepo,
-} from '@/lib/db/repositories/staff-admin.repo';
+import { inviteStaff, listStaff } from '@/lib/db/repositories/staff.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp } from '@/lib/http/request';
 import {
   StaffInviteInputSchema,
   StaffQuerySchema,
-} from '@/schemas/staff-admin.schema';
+} from '@/schemas/staff.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +27,7 @@ export async function GET(request: Request) {
     });
   }
 
-  const list = await listStaffRepo(parsed.data);
+  const list = await listStaff(parsed.data);
   return apiOk(list, { noCache: true });
 }
 
@@ -67,7 +64,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const result = await inviteStaffRepo({
+  const result = await inviteStaff({
     input: parsed.data,
     actor: context.user,
     ipAddress: clientIp(request),

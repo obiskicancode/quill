@@ -31,7 +31,7 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useInviteStaff } from '@/hooks/services/admin/use-staff';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import { StaffInviteInputSchema } from '@/schemas/staff-admin.schema';
+import { StaffInviteInputSchema } from '@/schemas/staff.schema';
 
 const ROLE_OPTIONS = [
   { value: 'reception', label: 'Reception' },

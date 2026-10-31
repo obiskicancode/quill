@@ -9,7 +9,7 @@ import { queryKeys } from '@/hooks/services/query-keys';
 import type {
   AuditDetailResponse,
   AuditQueryParams,
-} from '@/types/audit-admin.types';
+} from '@/types/audit.types';
 
 function auditQueryString(filters: AuditQueryParams) {
   const query = new URLSearchParams();

@@ -6,9 +6,9 @@ import { db } from '@/db';
 import { reservations, roomTypes } from '@/db/schema';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
-import { listAvailableRoomsForStay } from '@/lib/db/repositories/reservations-admin.repo';
+import { listAvailableRoomsForStay } from '@/lib/db/repositories/reservations.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminChangeDatesQuoteSchema } from '@/schemas/reservation.schema';
+import { changeDatesQuoteSchema } from '@/schemas/reservation.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +25,7 @@ export async function POST(
   if (!id) return apiFail(400, ERROR_MESSAGES.MISSING_RESERVATION_ID);
 
   const body = await request.json().catch(() => null);
-  const parsed = adminChangeDatesQuoteSchema.safeParse(body);
+  const parsed = changeDatesQuoteSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

@@ -64,7 +64,7 @@ import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import { minorToNaira, nairaToMinor } from '@/lib/rate-resolution';
 import type {
   AdminExtra,
-  AdminExtraInput,
+  ExtraInput,
   ExtraPricingUnit,
 } from '@/types/inventory.types';
 
@@ -189,7 +189,7 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
     setDialogError(null);
 
     const { priceNaira, ...rest } = input;
-    const payload: AdminExtraInput = {
+    const payload: ExtraInput = {
       ...rest,
       priceMinor: nairaToMinor(priceNaira),
       sortOrder: editingExtra ? editingExtra.sortOrder : extras.length + 1,

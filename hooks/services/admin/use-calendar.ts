@@ -11,13 +11,13 @@ import { adminService } from '@/app/api/services/admin.service';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { queryKeys } from '@/hooks/services/query-keys';
 import type {
-  AdminBlockCheckInput,
-  AdminBlocksListQueryInput,
-  AdminCreateBlockInput,
-  AdminUpdateBlockInput,
+  BlockCheckInput,
+  BlocksListQueryInput,
   CalendarDayResponse,
   CalendarResponse,
+  CreateBlockInput,
   RoomBlocksListResponse,
+  UpdateBlockInput,
 } from '@/types/calendar.types';
 
 interface CalendarRangeParams {
@@ -65,7 +65,7 @@ export function useCalendarDay(date: string | null) {
   });
 }
 
-function blocksQueryString(params: AdminBlocksListQueryInput) {
+function blocksQueryString(params: BlocksListQueryInput) {
   const query = new URLSearchParams({
     page: String(params.page),
     pageSize: String(params.pageSize),
@@ -78,7 +78,7 @@ function blocksQueryString(params: AdminBlocksListQueryInput) {
 }
 
 export function useBlocksList(
-  params: AdminBlocksListQueryInput,
+  params: BlocksListQueryInput,
   initialData?: RoomBlocksListResponse,
 ) {
   return useQuery({
@@ -93,7 +93,7 @@ export function useBlocksList(
 }
 
 export function useBlockConflicts(
-  input: AdminBlockCheckInput | null,
+  input: BlockCheckInput | null,
   enabled = true,
 ) {
   return useQuery({
@@ -127,7 +127,7 @@ function invalidateBlockCaches(queryClient: ReturnType<typeof useQueryClient>) {
 export function useCreateBlocks() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: AdminCreateBlockInput) => {
+    mutationFn: async (input: CreateBlockInput) => {
       const response = await adminService.createBlocks(input);
       return response.data;
     },
@@ -143,7 +143,7 @@ export function useUpdateBlock() {
       body,
     }: {
       id: string;
-      body: AdminUpdateBlockInput;
+      body: UpdateBlockInput;
     }) => {
       const response = await adminService.updateBlock(id, body);
       return response.data;

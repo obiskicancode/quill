@@ -2,21 +2,21 @@ import { z } from 'zod';
 
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { writeAdminAudit } from '@/lib/auth/audit';
+import { writeAudit } from '@/lib/auth/audit';
 import { verifyDummyPassword, verifyPassword } from '@/lib/auth/password';
 import { issueAdminSession } from '@/lib/auth/session';
 import { createChallengeToken } from '@/lib/auth/tokens';
-import { CHALLENGE_TTL_SECONDS, setAdminChallengeCookie } from '@/lib/cookies';
+import { CHALLENGE_TTL_SECONDS, setChallengeCookie } from '@/lib/cookies';
 import {
   findStaffByEmail,
   recordSuccessfulLogin,
   registerFailedLogin,
 } from '@/lib/db/repositories/staff.repo';
-import { checkAdminCsrf } from '@/lib/http/csrf';
+import { checkCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, tooManyRequests, userAgent } from '@/lib/http/request';
 import { rateLimit } from '@/lib/rate-limit';
-import { adminLoginSchema } from '@/schemas/admin-auth.schema';
+import { loginSchema } from '@/schemas/auth.schema';
 
 function safeNext(value: string | undefined): string {
   if (!value || !value.startsWith('/admin') || value.startsWith('//')) {
@@ -26,11 +26,11 @@ function safeNext(value: string | undefined): string {
 }
 
 export async function POST(request: Request) {
-  const csrfError = checkAdminCsrf(request);
+  const csrfError = checkCsrf(request);
   if (csrfError) return csrfError;
 
   const body = await request.json().catch(() => null);
-  const parsed = adminLoginSchema.safeParse(body);
+  const parsed = loginSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     const retryAfterSeconds = Math.ceil(
       (user.lockedUntil.getTime() - now.getTime()) / 1000,
     );
-    await writeAdminAudit({
+    await writeAudit({
       actorId: user.id,
       actorRole: user.role,
       action: 'login.locked',
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
   if (!user.passwordHash) await verifyDummyPassword(password);
   if (!passwordValid) {
     const { staff, locked } = await registerFailedLogin(user.id);
-    await writeAdminAudit({
+    await writeAudit({
       actorId: user.id,
       actorRole: user.role,
       action: locked ? 'login.locked' : 'login.failed',
@@ -131,11 +131,11 @@ export async function POST(request: Request) {
 
   if (user.mfaEnabled) {
     const response = apiOk({ mfaRequired: true }, { noCache: true });
-    setAdminChallengeCookie(
+    setChallengeCookie(
       response,
       createChallengeToken(user.id, CHALLENGE_TTL_SECONDS),
     );
-    await writeAdminAudit({
+    await writeAudit({
       actorId: user.id,
       actorRole: user.role,
       action: 'login.mfa_challenge',
@@ -158,7 +158,7 @@ export async function POST(request: Request) {
     stepUpVerifiedAt: pending ? null : undefined,
   });
 
-  await writeAdminAudit({
+  await writeAudit({
     actorId: user.id,
     actorRole: user.role,
     action: 'login.success',

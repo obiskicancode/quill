@@ -74,7 +74,7 @@ export function assertBookingSecret() {
   );
 }
 
-export function assertAdminCsrfSecret() {
+export function assertCsrfSecret() {
   if (!config.ADMIN.CSRF_SECRET && config.isProd)
     throw new Error(ERROR_MESSAGES.ADMIN_CSRF_FAILED);
 

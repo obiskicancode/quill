@@ -1,6 +1,6 @@
 'use client';
 
-import type { PaymentsBreakdownResponse } from '@/types/payments-admin.types';
+import type { PaymentsBreakdownResponse } from '@/types/payments.types';
 
 function formatNaira(minor: number): string {
   return `₦${(minor / 100).toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
@@ -112,7 +112,7 @@ export function PaymentsBreakdown({
                 </div>
                 <div className="bg-paper flex h-16 w-full items-end justify-center rounded-t">
                   <div
-                    className="bg-primary/80 group-hover:bg-primary w-full max-w-[1.25rem] rounded-t transition-colors"
+                    className="bg-primary/80 group-hover:bg-primary w-full max-w-5 rounded-t transition-colors"
                     style={{ height: `${heightPercent}%` }}
                   />
                 </div>

@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
-import { logProofViewAudit } from '@/lib/db/repositories/reservations-admin.repo';
+import { logProofViewAudit } from '@/lib/db/repositories/reservations.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 
 export const dynamic = 'force-dynamic';

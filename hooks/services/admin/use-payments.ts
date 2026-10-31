@@ -14,7 +14,7 @@ import type {
   PaymentDetailResponse,
   PaymentsQueryParams,
   ReconcileBulkInput,
-} from '@/types/payments-admin.types';
+} from '@/types/payments.types';
 
 function toQueryString(
   params: Record<string, string | number | undefined> = {},

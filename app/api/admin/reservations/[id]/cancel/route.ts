@@ -7,9 +7,9 @@ import {
   getIdempotencyRecord,
   setIdempotency,
 } from '@/lib/db/repositories/idempotency.repo';
-import { cancelReservationAdmin } from '@/lib/db/repositories/reservations-admin.repo';
+import { cancelReservationAdmin } from '@/lib/db/repositories/reservations.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminCancelSchema } from '@/schemas/reservation.schema';
+import { cancelSchema } from '@/schemas/reservation.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +26,7 @@ export async function POST(
   if (!id) return apiFail(400, ERROR_MESSAGES.MISSING_RESERVATION_ID);
 
   const body = await request.json().catch(() => null);
-  const parsed = adminCancelSchema.safeParse(body);
+  const parsed = cancelSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

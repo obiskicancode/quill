@@ -17,12 +17,12 @@ import {
   useReassignReservationRoom,
 } from '@/hooks/services/admin/use-reservations';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import { adminReassignRoomSchema } from '@/schemas/reservation.schema';
+import { reassignRoomSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
 
-const reassignFormSchema = adminReassignRoomSchema
+const reassignFormSchema = reassignRoomSchema
   .omit({ version: true, idempotencyKey: true })
   .extend({
     roomId: z.string().uuid(ERROR_MESSAGES.SELECT_AVAILABLE_ROOM),

@@ -16,7 +16,7 @@ import {
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
-import type { WebhookEventItem } from '@/types/payments-admin.types';
+import type { WebhookEventItem } from '@/types/payments.types';
 
 export function WebhooksTab({
   events,

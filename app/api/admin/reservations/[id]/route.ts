@@ -4,7 +4,7 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { can } from '@/lib/auth/permissions';
 import { hotelClock } from '@/lib/dates';
-import { getReservationAdminDetail } from '@/lib/db/repositories/reservations-admin.repo';
+import { getReservationAdminDetail } from '@/lib/db/repositories/reservations.repo';
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import type { ReservationDetail } from '@/types/reservation.types';

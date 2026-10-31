@@ -21,7 +21,7 @@ export const ExtraPricingUnitSchema = z.enum([
 export type ExtraPricingUnit = z.infer<typeof ExtraPricingUnitSchema>;
 
 // Room Type Schema
-export const AdminRoomTypeInputSchema = z.object({
+export const RoomTypeInputSchema = z.object({
   name: z.string().trim().min(2, ERROR_MESSAGES.NAME_MIN_TWO).max(150),
   slug: z
     .string()
@@ -64,10 +64,10 @@ export const AdminRoomTypeInputSchema = z.object({
   isActive: z.boolean().default(true),
   unlockSlugConfirmed: z.boolean().optional(),
 });
-export type AdminRoomTypeInput = z.infer<typeof AdminRoomTypeInputSchema>;
+export type RoomTypeInput = z.infer<typeof RoomTypeInputSchema>;
 
 // Room Unit Schema
-export const AdminRoomUnitInputSchema = z.object({
+export const RoomUnitInputSchema = z.object({
   roomNumber: z
     .string()
     .trim()
@@ -78,19 +78,19 @@ export const AdminRoomUnitInputSchema = z.object({
   notes: z.string().trim().nullable().optional(),
   isActive: z.boolean().default(true),
 });
-export type AdminRoomUnitInput = z.infer<typeof AdminRoomUnitInputSchema>;
+export type RoomUnitInput = z.infer<typeof RoomUnitInputSchema>;
 
 // Image Update Schema
-export const AdminImageUpdateSchema = z.object({
+export const ImageUpdateSchema = z.object({
   altText: z.string().trim().min(1, ERROR_MESSAGES.ALT_TEXT_REQUIRED).max(255),
   caption: z.string().trim().max(500).nullable().optional(),
   isCover: z.boolean().optional(),
   sortOrder: z.coerce.number().int().optional(),
 });
-export type AdminImageUpdate = z.infer<typeof AdminImageUpdateSchema>;
+export type ImageUpdate = z.infer<typeof ImageUpdateSchema>;
 
 // Rate Rule Schema
-export const AdminRateRuleFieldsSchema = z.object({
+export const RateRuleFieldsSchema = z.object({
   name: z.string().trim().min(2, ERROR_MESSAGES.NAME_MIN_TWO).max(150),
   roomTypeId: z.string().uuid().nullable().optional(),
   startDate: z
@@ -111,17 +111,17 @@ export const AdminRateRuleFieldsSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
-export const AdminRateRuleInputSchema = AdminRateRuleFieldsSchema.refine(
+export const RateRuleInputSchema = RateRuleFieldsSchema.refine(
   (data) => data.endDate >= data.startDate,
   {
     message: ERROR_MESSAGES.END_DATE_ON_OR_AFTER_START,
     path: ['endDate'],
   },
 );
-export type AdminRateRuleInput = z.infer<typeof AdminRateRuleInputSchema>;
+export type RateRuleInput = z.infer<typeof RateRuleInputSchema>;
 
 // Extra Schema
-export const AdminExtraInputSchema = z.object({
+export const ExtraInputSchema = z.object({
   name: z.string().trim().min(2, ERROR_MESSAGES.NAME_MIN_TWO).max(150),
   slug: z
     .string()
@@ -140,10 +140,10 @@ export const AdminExtraInputSchema = z.object({
   isActive: z.boolean().default(true),
   sortOrder: z.coerce.number().int().default(0),
 });
-export type AdminExtraInput = z.infer<typeof AdminExtraInputSchema>;
+export type ExtraInput = z.infer<typeof ExtraInputSchema>;
 
 // Amenity Schema
-export const AdminAmenityInputSchema = z.object({
+export const AmenityInputSchema = z.object({
   key: z
     .string()
     .trim()
@@ -156,7 +156,7 @@ export const AdminAmenityInputSchema = z.object({
   sortOrder: z.coerce.number().int().default(0),
   isActive: z.boolean().default(true),
 });
-export type AdminAmenityInput = z.infer<typeof AdminAmenityInputSchema>;
+export type AmenityInput = z.infer<typeof AmenityInputSchema>;
 
 // Reorder Schema
 export const ReorderItemsInputSchema = z.object({
@@ -177,6 +177,6 @@ export type UpdateRoomTypeAmenities = z.infer<
   typeof UpdateRoomTypeAmenitiesSchema
 >;
 
-export const adminCreateRoomPayloadSchema = AdminRoomUnitInputSchema.extend({
+export const createRoomPayloadSchema = RoomUnitInputSchema.extend({
   roomTypeId: z.string().uuid(),
 });

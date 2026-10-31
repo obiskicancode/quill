@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { hotelClock } from '@/lib/dates';
-import { getReservationNeighbors } from '@/lib/db/repositories/reservations-admin.repo';
+import { getReservationNeighbors } from '@/lib/db/repositories/reservations.repo';
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { reservationsListQuerySchema } from '@/schemas/reservation.schema';

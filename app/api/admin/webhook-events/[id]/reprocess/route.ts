@@ -1,5 +1,5 @@
 import { guardAdminApi } from '@/lib/auth/guards';
-import { reprocessWebhookEventRepo } from '@/lib/db/repositories/payments-admin.repo';
+import { reprocessWebhookEvent } from '@/lib/db/repositories/payments.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +13,7 @@ export async function POST(
   const context = guard.context;
 
   const { id } = await params;
-  const result = await reprocessWebhookEventRepo(id, context.user.id);
+  const result = await reprocessWebhookEvent(id, context.user.id);
 
   if (!result.ok) {
     return apiFail(400, result.message, undefined, { noCache: true });

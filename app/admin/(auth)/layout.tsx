@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-export default function AdminAuthLayout({ children }: { children: ReactNode }) {
+export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1fr_30rem]">
       <section className="on-dark bg-ink text-paper hidden flex-col justify-between p-10 lg:flex xl:p-14">

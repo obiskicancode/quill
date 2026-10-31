@@ -5,6 +5,7 @@ import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { db } from '@/db';
 import { reservationChanges } from '@/db/schema';
+import { rollbackFailedPaymentInit } from '@/lib/booking/rollback';
 import { getAccess } from '@/lib/booking/session';
 import {
   findReusableOnlinePayment,
@@ -34,11 +35,30 @@ import type { ApiError, PaymentInitResponse } from '@/types/checkout.types';
 const fail = (status: number, error: ApiError) =>
   apiFail(status, error.message, error);
 
-const unavailable = () =>
-  fail(503, {
-    code: ERROR_CODES.UNAVAILABLE,
-    message: ERROR_MESSAGES.ONLINE_PAYMENTS_UNAVAILABLE,
+async function rollbackAndFail(
+  idKey: string,
+  input: {
+    reservationId: string;
+    changeId?: string | null;
+    message: string;
+  },
+) {
+  const rollback = await rollbackFailedPaymentInit({
+    reservationId: input.reservationId,
+    changeId: input.changeId,
+    reason: input.message,
   });
+  await releaseIdempotency(idKey);
+  if (!rollback.released)
+    return fail(502, {
+      code: ERROR_CODES.SERVER,
+      message: ERROR_MESSAGES.COULD_NOT_REACH_SERVER_PAYMENT_UNKNOWN,
+    });
+  return fail(409, {
+    code: ERROR_CODES.PAYMENT_INIT_FAILED,
+    message: input.message,
+  });
+}
 
 function appUrl(path: string): string {
   return `${config.SITE.URL.replace(/\/$/, '')}${path}`;
@@ -188,18 +208,18 @@ export async function POST(req: Request) {
       await saveStoredReservation(r);
     } else {
       const provider = tryGetPaymentProvider();
-      if (!provider?.isConfigured()) {
-        await releaseIdempotency(idKey);
-        return unavailable();
-      }
-      if (!r.guest.email) {
-        await releaseIdempotency(idKey);
-        return fail(422, {
-          code: ERROR_CODES.VALIDATION,
-          message: ERROR_MESSAGES.EMAIL_REQUIRED_FOR_ONLINE_PAYMENT,
-          fieldErrors: { 'guest.email': ERROR_MESSAGES.EMAIL_REQUIRED },
+      if (!provider?.isConfigured())
+        return rollbackAndFail(idKey, {
+          reservationId: r.id,
+          changeId: pc.changeId,
+          message: ERROR_MESSAGES.ONLINE_PAYMENTS_UNAVAILABLE,
         });
-      }
+      if (!r.guest.email)
+        return rollbackAndFail(idKey, {
+          reservationId: r.id,
+          changeId: pc.changeId,
+          message: ERROR_MESSAGES.EMAIL_REQUIRED_FOR_ONLINE_PAYMENT,
+        });
       pc.status = 'awaiting_payment';
       await saveStoredReservation(r);
       try {
@@ -216,9 +236,9 @@ export async function POST(req: Request) {
         });
         response = { kind: 'redirect', url };
       } catch {
-        await releaseIdempotency(idKey);
-        return fail(502, {
-          code: ERROR_CODES.SERVER,
+        return rollbackAndFail(idKey, {
+          reservationId: r.id,
+          changeId: pc.changeId,
           message: ERROR_MESSAGES.PAYMENT_PROVIDER_UNREACHABLE,
         });
       }
@@ -277,18 +297,16 @@ export async function POST(req: Request) {
     await saveStoredReservation(r);
   } else {
     const provider = tryGetPaymentProvider();
-    if (!provider?.isConfigured()) {
-      await releaseIdempotency(idKey);
-      return unavailable();
-    }
-    if (!r.guest.email) {
-      await releaseIdempotency(idKey);
-      return fail(422, {
-        code: ERROR_CODES.VALIDATION,
-        message: ERROR_MESSAGES.EMAIL_REQUIRED_FOR_ONLINE_PAYMENT,
-        fieldErrors: { 'guest.email': ERROR_MESSAGES.EMAIL_REQUIRED },
+    if (!provider?.isConfigured())
+      return rollbackAndFail(idKey, {
+        reservationId: r.id,
+        message: ERROR_MESSAGES.ONLINE_PAYMENTS_UNAVAILABLE,
       });
-    }
+    if (!r.guest.email)
+      return rollbackAndFail(idKey, {
+        reservationId: r.id,
+        message: ERROR_MESSAGES.EMAIL_REQUIRED_FOR_ONLINE_PAYMENT,
+      });
     try {
       const url = await redirectToProvider({
         provider,
@@ -302,9 +320,8 @@ export async function POST(req: Request) {
       });
       response = { kind: 'redirect', url };
     } catch {
-      await releaseIdempotency(idKey);
-      return fail(502, {
-        code: ERROR_CODES.SERVER,
+      return rollbackAndFail(idKey, {
+        reservationId: r.id,
         message: ERROR_MESSAGES.PAYMENT_PROVIDER_UNREACHABLE,
       });
     }

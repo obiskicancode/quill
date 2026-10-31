@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 
-export const adminProfileSchema = z.object({
+export const profileSchema = z.object({
   firstName: z
     .string()
     .trim()
@@ -20,10 +20,10 @@ export const adminProfileSchema = z.object({
     .optional()
     .default(''),
 });
-export type AdminProfileInput = z.input<typeof adminProfileSchema>;
+export type AdminProfileInput = z.input<typeof profileSchema>;
 
 export {
-  adminConfirm2faSchema,
-  adminDisable2faSchema,
-  adminPasswordChangeSchema,
-} from './admin-auth.schema';
+  confirm2faSchema,
+  disable2faSchema,
+  passwordChangeSchema,
+} from './auth.schema';

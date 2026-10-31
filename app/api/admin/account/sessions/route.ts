@@ -1,15 +1,15 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { writeAdminAudit } from '@/lib/auth/audit';
+import { writeAudit } from '@/lib/auth/audit';
 import { guardAdminApi } from '@/lib/auth/guards';
-import { toAdminSession } from '@/lib/db/mappers/staff.mapper';
+import { toSession } from '@/lib/db/mappers/staff.mapper';
 import {
   findSessionById,
   listActiveSessionsForUser,
   revokeOtherSessionsForUser,
   revokeSession,
 } from '@/lib/db/repositories/staff.repo';
-import { checkAdminCsrf } from '@/lib/http/csrf';
+import { checkCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
 
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   return apiOk(
     {
       sessions: sessions.map((session) =>
-        toAdminSession(session, context.sessionId),
+        toSession(session, context.sessionId),
       ),
     },
     { noCache: true },
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const csrfError = checkAdminCsrf(request);
+  const csrfError = checkCsrf(request);
   if (csrfError) return csrfError;
 
   const guard = await guardAdminApi(request);
@@ -62,7 +62,7 @@ export async function DELETE(request: Request) {
       );
     }
     await revokeSession(session.id);
-    await writeAdminAudit({
+    await writeAudit({
       actorId: context.user.id,
       actorRole: context.role,
       action: 'session.revoked',
@@ -77,7 +77,7 @@ export async function DELETE(request: Request) {
     context.user.id,
     context.sessionId,
   );
-  await writeAdminAudit({
+  await writeAudit({
     actorId: context.user.id,
     actorRole: context.role,
     action: 'session.revoked_others',

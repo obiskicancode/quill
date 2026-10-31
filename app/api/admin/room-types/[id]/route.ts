@@ -7,9 +7,9 @@ import {
   deleteAdminRoomType,
   getAdminRoomTypeById,
   updateAdminRoomTypeDetails,
-} from '@/lib/db/repositories/inventory-admin.repo';
+} from '@/lib/db/repositories/inventory.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { AdminRoomTypeInputSchema } from '@/schemas/inventory.schema';
+import { RoomTypeInputSchema } from '@/schemas/inventory.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +45,7 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json().catch(() => null);
-  const parsed = AdminRoomTypeInputSchema.safeParse(body);
+  const parsed = RoomTypeInputSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

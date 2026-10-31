@@ -2,13 +2,12 @@ import { z } from 'zod';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 
-export const adminEmailSchema = z
-  .string()
+export const emailSchema = z
+  .email(ERROR_MESSAGES.EMAIL_INVALID)
   .trim()
   .toLowerCase()
   .min(1, ERROR_MESSAGES.EMAIL_REQUIRED)
-  .max(255, ERROR_MESSAGES.ADMIN_EMAIL_TOO_LONG)
-  .email(ERROR_MESSAGES.EMAIL_INVALID);
+  .max(255, ERROR_MESSAGES.ADMIN_EMAIL_TOO_LONG);
 
 const currentPassword = z
   .string()
@@ -20,27 +19,25 @@ const newPassword = z
   .min(1, ERROR_MESSAGES.ADMIN_PASSWORD_TOO_SHORT)
   .max(200, ERROR_MESSAGES.ADMIN_PASSWORD_TOO_LONG);
 
-export const adminLoginSchema = z.object({
-  email: adminEmailSchema,
+export const loginSchema = z.object({
+  email: emailSchema,
   password: currentPassword,
   next: z.string().max(200).optional(),
 });
-export type AdminLoginInput = z.input<typeof adminLoginSchema>;
+export type LoginInput = z.input<typeof loginSchema>;
 
-export const adminVerify2faSchema = z.object({
+export const verify2faSchema = z.object({
   code: z.string().trim().min(6, ERROR_MESSAGES.ADMIN_MFA_INVALID).max(32),
   mode: z.enum(['totp', 'recovery']).default('totp'),
 });
-export type AdminVerify2faInput = z.input<typeof adminVerify2faSchema>;
+export type Verify2faInput = z.input<typeof verify2faSchema>;
 
-export const adminForgotPasswordSchema = z.object({
-  email: adminEmailSchema,
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
 });
-export type AdminForgotPasswordInput = z.input<
-  typeof adminForgotPasswordSchema
->;
+export type ForgotPasswordInput = z.input<typeof forgotPasswordSchema>;
 
-export const adminResetPasswordSchema = z
+export const resetPasswordSchema = z
   .object({
     token: z.string().trim().min(20).max(200),
     password: newPassword,
@@ -50,9 +47,9 @@ export const adminResetPasswordSchema = z
     path: ['confirmPassword'],
     message: ERROR_MESSAGES.ADMIN_PASSWORD_MISMATCH,
   });
-export type AdminResetPasswordInput = z.input<typeof adminResetPasswordSchema>;
+export type ResetPasswordInput = z.input<typeof resetPasswordSchema>;
 
-export const adminPasswordChangeSchema = z
+export const passwordChangeSchema = z
   .object({
     currentPassword,
     newPassword,
@@ -62,19 +59,17 @@ export const adminPasswordChangeSchema = z
     path: ['confirmPassword'],
     message: ERROR_MESSAGES.ADMIN_PASSWORD_MISMATCH,
   });
-export type AdminPasswordChangeInput = z.input<
-  typeof adminPasswordChangeSchema
->;
+export type PasswordChangeInput = z.input<typeof passwordChangeSchema>;
 
-export const adminDisable2faSchema = z.object({
+export const disable2faSchema = z.object({
   password: currentPassword,
 });
-export type AdminDisable2faInput = z.input<typeof adminDisable2faSchema>;
+export type Disable2faInput = z.input<typeof disable2faSchema>;
 
-export const adminConfirm2faSchema = z.object({
+export const confirm2faSchema = z.object({
   code: z
     .string()
     .trim()
     .regex(/^\d{6}$/, ERROR_MESSAGES.ADMIN_MFA_INVALID),
 });
-export type AdminConfirm2faInput = z.input<typeof adminConfirm2faSchema>;
+export type Confirm2faInput = z.input<typeof confirm2faSchema>;

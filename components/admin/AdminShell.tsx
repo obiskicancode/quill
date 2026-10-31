@@ -43,8 +43,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useAdminLogout } from '@/hooks/services/admin/use-auth';
 import { ADMIN_NAV, ROLE_LABELS } from '@/lib/auth/permissions';
-import type { AdminIdentity } from '@/types/admin.types';
-import type { AdminRole, Permission } from '@/types/auth.types';
+import type { AdminIdentity, AdminRole, Permission } from '@/types/auth.types';
 
 const icons = {
   '/admin': LayoutDashboard,

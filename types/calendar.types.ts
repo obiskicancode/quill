@@ -1,8 +1,8 @@
 import type {
-  AdminBlockCheckInput as AdminBlockCheckInputSchema,
-  AdminBlocksListQueryInput as AdminBlocksListQueryInputSchema,
-  AdminCreateBlockInput as AdminCreateBlockInputSchema,
-  AdminUpdateBlockInput as AdminUpdateBlockInputSchema,
+  BlockCheckInput as AdminBlockCheckInputSchema,
+  BlocksListQueryInput as AdminBlocksListQueryInputSchema,
+  CreateBlockInput as AdminCreateBlockInputSchema,
+  UpdateBlockInput as AdminUpdateBlockInputSchema,
 } from '@/schemas/calendar.schema';
 
 export type BlockReason = 'maintenance' | 'owner_hold' | 'renovation' | 'other';
@@ -158,7 +158,7 @@ export interface RoomBlocksListResponse {
   totalPages: number;
 }
 
-export type AdminBlockCheckInput = AdminBlockCheckInputSchema;
-export type AdminCreateBlockInput = AdminCreateBlockInputSchema;
-export type AdminUpdateBlockInput = AdminUpdateBlockInputSchema;
-export type AdminBlocksListQueryInput = AdminBlocksListQueryInputSchema;
+export type BlockCheckInput = AdminBlockCheckInputSchema;
+export type CreateBlockInput = AdminCreateBlockInputSchema;
+export type UpdateBlockInput = AdminUpdateBlockInputSchema;
+export type BlocksListQueryInput = AdminBlocksListQueryInputSchema;

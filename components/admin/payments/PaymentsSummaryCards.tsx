@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import type { PaymentSummaryResponse } from '@/types/payments-admin.types';
+import type { PaymentSummaryResponse } from '@/types/payments.types';
 
 function formatNaira(minor: number): string {
   return `₦${(minor / 100).toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;

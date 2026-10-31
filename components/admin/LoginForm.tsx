@@ -16,12 +16,9 @@ import { Input } from '@/components/ui/input';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useAdminLogin } from '@/hooks/services/admin/use-auth';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import {
-  adminLoginSchema,
-  type AdminLoginInput,
-} from '@/schemas/admin-auth.schema';
+import { loginSchema, type LoginInput } from '@/schemas/auth.schema';
 
-type AdminLoginOutput = z.output<typeof adminLoginSchema>;
+type AdminLoginOutput = z.output<typeof loginSchema>;
 
 export function LoginForm({
   next,
@@ -34,8 +31,8 @@ export function LoginForm({
 }) {
   const router = useRouter();
   const login = useAdminLogin();
-  const form = useForm<AdminLoginInput, unknown, AdminLoginOutput>({
-    resolver: zodResolver(adminLoginSchema),
+  const form = useForm<LoginInput, unknown, AdminLoginOutput>({
+    resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '', next },
     mode: 'onBlur',
   });

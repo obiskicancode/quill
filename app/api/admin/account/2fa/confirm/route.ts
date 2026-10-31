@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { writeAdminAudit } from '@/lib/auth/audit';
+import { writeAudit } from '@/lib/auth/audit';
 import { guardAdminApi } from '@/lib/auth/guards';
 import {
   decryptMfaSecret,
@@ -15,14 +15,14 @@ import {
   replaceRecoveryCodes,
   setMfaEnabled,
 } from '@/lib/db/repositories/staff.repo';
-import { checkAdminCsrf } from '@/lib/http/csrf';
+import { checkCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, tooManyRequests, userAgent } from '@/lib/http/request';
 import { rateLimit } from '@/lib/rate-limit';
-import { adminConfirm2faSchema } from '@/schemas/admin-auth.schema';
+import { confirm2faSchema } from '@/schemas/auth.schema';
 
 export async function POST(request: Request) {
-  const csrfError = checkAdminCsrf(request);
+  const csrfError = checkCsrf(request);
   if (csrfError) return csrfError;
 
   const guard = await guardAdminApi(request, { allowPending: true });
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   const { context } = guard;
 
   const body = await request.json().catch(() => null);
-  const parsed = adminConfirm2faSchema.safeParse(body);
+  const parsed = confirm2faSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
   }
 
   if (!valid) {
-    await writeAdminAudit({
+    await writeAudit({
       actorId: context.user.id,
       actorRole: context.role,
       action: 'mfa.confirm_failed',
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
   );
   await markAdminSessionVerified(context.sessionId);
 
-  await writeAdminAudit({
+  await writeAudit({
     actorId: context.user.id,
     actorRole: context.role,
     action: 'mfa.enabled',

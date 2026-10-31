@@ -8,8 +8,8 @@ import { SessionsPanel } from '@/components/admin/account/SessionsPanel';
 import { TwoFactorPanel } from '@/components/admin/account/TwoFactorPanel';
 import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { AdminStaff } from '@/types/admin.types';
 import type { AdminRole } from '@/types/auth.types';
+import type { Staff } from '@/types/staff.types';
 
 export type AccountTab = 'profile' | 'password' | 'two-factor' | 'sessions';
 
@@ -26,7 +26,7 @@ export function AccountView({
   mfaPending,
   initialTab,
 }: {
-  staff: AdminStaff;
+  staff: Staff;
   role: AdminRole;
   mfaPending: boolean;
   initialTab: AccountTab;

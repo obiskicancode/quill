@@ -12,11 +12,11 @@ import {
   adminCreateReservation,
   getFilterOptions,
   getReservationsAdminList,
-} from '@/lib/db/repositories/reservations-admin.repo';
+} from '@/lib/db/repositories/reservations.repo';
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import {
-  adminCreateReservationSchema,
+  createReservationSchema,
   reservationsListQuerySchema,
 } from '@/schemas/reservation.schema';
 import type { ReservationsListResponse } from '@/types/reservation.types';
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => null);
-  const parsed = adminCreateReservationSchema.safeParse(body);
+  const parsed = createReservationSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

@@ -5,6 +5,7 @@ export const ERROR_CODES = {
   RATE_LIMITED: 'rate_limited',
   REJECTED: 'rejected',
   HOLD_EXPIRED: 'hold_expired',
+  PAYMENT_INIT_FAILED: 'payment_init_failed',
   NOT_FOUND: 'not_found',
   BAD_FILE: 'bad_file',
   SERVER: 'server',

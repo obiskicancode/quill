@@ -41,7 +41,7 @@ export type ReservationsListQueryParams = z.infer<
   typeof reservationsListQuerySchema
 >;
 
-export const adminCreateReservationSchema = z.object({
+export const createReservationSchema = z.object({
   checkIn: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, ERROR_MESSAGES.INVALID_CHECKIN_DATE),
@@ -106,11 +106,9 @@ export const adminCreateReservationSchema = z.object({
   idempotencyKey: z.string().min(8),
 });
 
-export type AdminCreateReservationInput = z.infer<
-  typeof adminCreateReservationSchema
->;
+export type CreateReservationInput = z.infer<typeof createReservationSchema>;
 
-export const adminEditDetailsSchema = z.object({
+export const editDetailsSchema = z.object({
   fullName: z.string().min(2, ERROR_MESSAGES.NAME_MIN_TWO),
   email: z
     .string()
@@ -126,18 +124,18 @@ export const adminEditDetailsSchema = z.object({
   idempotencyKey: z.string().min(8),
 });
 
-export type AdminEditDetailsInput = z.infer<typeof adminEditDetailsSchema>;
+export type EditDetailsInput = z.infer<typeof editDetailsSchema>;
 
-export const adminReassignRoomSchema = z.object({
+export const reassignRoomSchema = z.object({
   roomId: z.string().uuid(ERROR_MESSAGES.VALID_ROOM_ID_REQUIRED),
   note: z.string().optional(),
   version: z.string().min(1, ERROR_MESSAGES.VERSION_REQUIRED),
   idempotencyKey: z.string().min(8),
 });
 
-export type AdminReassignRoomInput = z.infer<typeof adminReassignRoomSchema>;
+export type ReassignRoomInput = z.infer<typeof reassignRoomSchema>;
 
-export const adminRecordPaymentSchema = z.object({
+export const recordPaymentSchema = z.object({
   amountMinor: z.number().int().min(100, ERROR_MESSAGES.MINIMUM_PAYMENT),
   type: z.enum(['deposit', 'balance', 'full']),
   method: z.enum(['cash', 'bank_transfer', 'card']),
@@ -148,9 +146,9 @@ export const adminRecordPaymentSchema = z.object({
   idempotencyKey: z.string().min(8),
 });
 
-export type AdminRecordPaymentInput = z.infer<typeof adminRecordPaymentSchema>;
+export type RecordPaymentInput = z.infer<typeof recordPaymentSchema>;
 
-export const adminVerifyTransferSchema = z.object({
+export const verifyTransferSchema = z.object({
   action: z.enum(['verify', 'reject']),
   amountMinor: z.number().int().positive().optional(),
   rejectionReason: z.string().optional(),
@@ -159,32 +157,26 @@ export const adminVerifyTransferSchema = z.object({
   idempotencyKey: z.string().min(8),
 });
 
-export type AdminVerifyTransferInput = z.infer<
-  typeof adminVerifyTransferSchema
->;
+export type VerifyTransferInput = z.infer<typeof verifyTransferSchema>;
 
-export const adminApproveDeclineSchema = z.object({
+export const approveDeclineSchema = z.object({
   action: z.enum(['approve', 'decline']),
   reason: z.string().optional(),
   version: z.string().min(1, ERROR_MESSAGES.VERSION_REQUIRED),
   idempotencyKey: z.string().min(8),
 });
 
-export type AdminApproveDeclineInput = z.infer<
-  typeof adminApproveDeclineSchema
->;
+export type ApproveDeclineInput = z.infer<typeof approveDeclineSchema>;
 
-export const adminChangeDatesQuoteSchema = z.object({
+export const changeDatesQuoteSchema = z.object({
   checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   extraBed: z.boolean().optional(),
 });
 
-export type AdminChangeDatesQuoteInput = z.infer<
-  typeof adminChangeDatesQuoteSchema
->;
+export type ChangeDatesQuoteInput = z.infer<typeof changeDatesQuoteSchema>;
 
-export const adminChangeDatesSchema = z.object({
+export const changeDatesSchema = z.object({
   checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   roomId: z.uuid().optional(),
@@ -194,9 +186,9 @@ export const adminChangeDatesSchema = z.object({
   idempotencyKey: z.string().min(8),
 });
 
-export type AdminChangeDatesInput = z.infer<typeof adminChangeDatesSchema>;
+export type changeDatesInput = z.infer<typeof changeDatesSchema>;
 
-export const adminCancelSchema = z.object({
+export const cancelSchema = z.object({
   refundAmountMinor: z.number().int().min(0),
   overrideReason: z.string().optional(),
   reason: z.string().min(2, ERROR_MESSAGES.CANCELLATION_REASON_REQUIRED),
@@ -206,9 +198,9 @@ export const adminCancelSchema = z.object({
   idempotencyKey: z.string().min(8),
 });
 
-export type AdminCancelInput = z.infer<typeof adminCancelSchema>;
+export type CancelInput = z.infer<typeof cancelSchema>;
 
-export const adminRefundSchema = z.object({
+export const refundSchema = z.object({
   paymentId: z.string().uuid(ERROR_MESSAGES.VALID_PAYMENT_ID_REQUIRED),
   amountMinor: z.number().int().positive(ERROR_MESSAGES.REFUND_AMOUNT_POSITIVE),
   reason: z.string().min(3, ERROR_MESSAGES.REFUND_REASON_REQUIRED),
@@ -219,9 +211,9 @@ export const adminRefundSchema = z.object({
   idempotencyKey: z.string().min(8),
 });
 
-export type AdminRefundInput = z.infer<typeof adminRefundSchema>;
+export type RefundInput = z.infer<typeof refundSchema>;
 
-export const adminNoShowSchema = z.object({
+export const noShowSchema = z.object({
   refundAmountMinor: z.number().int().min(0).default(0),
   overrideReason: z.string().optional(),
   reason: z.string().optional(),
@@ -229,9 +221,9 @@ export const adminNoShowSchema = z.object({
   idempotencyKey: z.string().min(8),
 });
 
-export type AdminNoShowInput = z.infer<typeof adminNoShowSchema>;
+export type NoShowInput = z.infer<typeof noShowSchema>;
 
-export const adminResendConfirmationSchema = z.object({
+export const resendConfirmationSchema = z.object({
   templateKey: z.enum([
     'booking_confirmation',
     'payment_receipt',
@@ -241,6 +233,4 @@ export const adminResendConfirmationSchema = z.object({
   idempotencyKey: z.string().min(8),
 });
 
-export type AdminResendConfirmationInput = z.infer<
-  typeof adminResendConfirmationSchema
->;
+export type ResendConfirmationInput = z.infer<typeof resendConfirmationSchema>;

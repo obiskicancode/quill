@@ -1,8 +1,8 @@
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
-import { listWebhookEventsRepo } from '@/lib/db/repositories/payments-admin.repo';
+import { listWebhookEvents } from '@/lib/db/repositories/payments.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { WebhookEventsQuerySchema } from '@/schemas/payments-admin.schema';
+import { WebhookEventsQuerySchema } from '@/schemas/payments.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +20,6 @@ export async function GET(request: Request) {
     });
   }
 
-  const result = await listWebhookEventsRepo(parsed.data);
+  const result = await listWebhookEvents(parsed.data);
   return apiOk(result, { noCache: true });
 }

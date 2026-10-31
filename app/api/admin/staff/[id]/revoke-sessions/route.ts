@@ -1,6 +1,6 @@
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
-import { revokeAllSessionsForStaffRepo } from '@/lib/db/repositories/staff-admin.repo';
+import { revokeAllSessionsForStaff } from '@/lib/db/repositories/staff.repo';
 import { apiOk } from '@/lib/http/envelope';
 import { clientIp } from '@/lib/http/request';
 
@@ -15,7 +15,7 @@ export async function POST(
   const context = guard.context;
 
   const { id } = await params;
-  await revokeAllSessionsForStaffRepo({
+  await revokeAllSessionsForStaff({
     id,
     actor: context.user,
     ipAddress: clientIp(request),

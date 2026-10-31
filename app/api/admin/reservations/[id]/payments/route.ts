@@ -7,9 +7,9 @@ import {
   getIdempotencyRecord,
   setIdempotency,
 } from '@/lib/db/repositories/idempotency.repo';
-import { recordAdminPayment } from '@/lib/db/repositories/reservations-admin.repo';
+import { recordAdminPayment } from '@/lib/db/repositories/reservations.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminRecordPaymentSchema } from '@/schemas/reservation.schema';
+import { recordPaymentSchema } from '@/schemas/reservation.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +26,7 @@ export async function POST(
   if (!id) return apiFail(400, ERROR_MESSAGES.MISSING_RESERVATION_ID);
 
   const body = await request.json().catch(() => null);
-  const parsed = adminRecordPaymentSchema.safeParse(body);
+  const parsed = recordPaymentSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

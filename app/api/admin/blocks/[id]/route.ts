@@ -11,7 +11,7 @@ import {
   updateRoomBlockAdmin,
 } from '@/lib/db/repositories/calendar-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminUpdateBlockSchema } from '@/schemas/calendar.schema';
+import { updateBlockSchema } from '@/schemas/calendar.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +28,7 @@ export async function PATCH(
   if (!id) return apiFail(400, ERROR_MESSAGES.MISSING_BLOCK_ID);
 
   const body = await request.json().catch(() => null);
-  const parsed = adminUpdateBlockSchema.safeParse(body);
+  const parsed = updateBlockSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

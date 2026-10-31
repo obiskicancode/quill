@@ -1,7 +1,7 @@
 import { ExtrasClient } from '@/components/admin/inventory/ExtrasClient';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { requireAdminPage } from '@/lib/auth/guards';
-import { listAdminExtras } from '@/lib/db/repositories/inventory-admin.repo';
+import { listAdminExtras } from '@/lib/db/repositories/inventory.repo';
 
 export const metadata = {
   title: 'Extras & Add-ons | Admin',

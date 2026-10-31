@@ -1,7 +1,7 @@
 import { fromISO } from '@/lib/dates';
 import type {
   NightRateResolution,
-  RateRuleInput,
+  RateRuleLike,
 } from '@/types/inventory.types';
 
 /**
@@ -67,7 +67,7 @@ export function resolveNightlyRate(params: {
   basePriceMinor: number;
   weekendPriceMinor: number | null;
   stayNights?: number;
-  activeRules: RateRuleInput[];
+  activeRules: RateRuleLike[];
 }): NightRateResolution {
   const {
     roomTypeId,

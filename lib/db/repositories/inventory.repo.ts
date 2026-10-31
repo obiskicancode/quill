@@ -19,21 +19,21 @@ import { createAuditLog } from '@/lib/db/repositories/audit.repo';
 import { resolveNightlyRate } from '@/lib/rate-resolution';
 import type {
   AdminAmenity,
-  AdminAmenityInput,
   AdminExtra,
-  AdminExtraInput,
-  AdminImageUpdate,
   AdminRateRule,
-  AdminRateRuleInput,
   AdminRoomImage,
   AdminRoomTypeDetail,
-  AdminRoomTypeInput,
   AdminRoomTypeListItem,
   AdminRoomUnit,
-  AdminRoomUnitInput,
+  AmenityInput,
+  ExtraInput,
+  ImageUpdate,
   PriceCalendarDay,
   RateRuleInput,
+  RateRuleLike,
   RoomImpactCheckResponse,
+  RoomTypeInput,
+  RoomUnitInput,
 } from '@/types/inventory.types';
 
 // ==========================================
@@ -207,7 +207,7 @@ export async function getAdminRoomTypeById(
 }
 
 export async function createAdminRoomType(params: {
-  input: AdminRoomTypeInput;
+  input: RoomTypeInput;
   actorId?: string;
   actorRole?: 'owner' | 'manager' | 'reception';
   ipAddress?: string;
@@ -288,7 +288,7 @@ export async function createAdminRoomType(params: {
 
 export async function updateAdminRoomTypeDetails(params: {
   id: string;
-  input: AdminRoomTypeInput;
+  input: RoomTypeInput;
   actorId?: string;
   actorRole?: 'owner' | 'manager' | 'reception';
   ipAddress?: string;
@@ -538,7 +538,7 @@ export async function addRoomTypeImage(params: {
 
 export async function updateImageDetails(
   imageId: string,
-  input: AdminImageUpdate,
+  input: ImageUpdate,
 ): Promise<void> {
   const [img] = await db
     .select()
@@ -708,7 +708,7 @@ export async function checkRoomStatusImpact(
 
 export async function createAdminRoom(params: {
   roomTypeId: string;
-  input: AdminRoomUnitInput;
+  input: RoomUnitInput;
   actorId?: string;
   actorRole?: 'owner' | 'manager' | 'reception';
   ipAddress?: string;
@@ -763,7 +763,7 @@ export async function createAdminRoom(params: {
 
 export async function updateAdminRoom(params: {
   id: string;
-  input: AdminRoomUnitInput;
+  input: RoomUnitInput;
   actorId?: string;
   actorRole?: 'owner' | 'manager' | 'reception';
   ipAddress?: string;
@@ -915,7 +915,7 @@ export async function listAdminRateRules(
 }
 
 export async function createAdminRateRule(params: {
-  input: AdminRateRuleInput;
+  input: RateRuleInput;
   actorId?: string;
   actorRole?: 'owner' | 'manager' | 'reception';
   ipAddress?: string;
@@ -969,7 +969,7 @@ export async function createAdminRateRule(params: {
 
 export async function updateAdminRateRule(params: {
   id: string;
-  input: AdminRateRuleInput;
+  input: RateRuleInput;
   actorId?: string;
   actorRole?: 'owner' | 'manager' | 'reception';
   ipAddress?: string;
@@ -1032,7 +1032,7 @@ export async function deleteAdminRateRule(params: {
   });
 }
 
-export async function checkRateRuleOverlap(input: AdminRateRuleInput): Promise<{
+export async function checkRateRuleOverlap(input: RateRuleInput): Promise<{
   hasOverlap: boolean;
   conflicts: Array<{
     id: string;
@@ -1104,7 +1104,7 @@ export async function getPricingCalendar(params: {
       ),
     );
 
-  const activeRules: RateRuleInput[] = activeRulesRaw.map((r) => ({
+  const activeRules: RateRuleLike[] = activeRulesRaw.map((r) => ({
     id: r.id,
     roomTypeId: r.roomTypeId,
     name: r.name,
@@ -1185,7 +1185,7 @@ export async function listAdminExtras(): Promise<AdminExtra[]> {
 }
 
 export async function createAdminExtra(params: {
-  input: AdminExtraInput;
+  input: ExtraInput;
   actorId?: string;
   actorRole?: 'owner' | 'manager' | 'reception';
   ipAddress?: string;
@@ -1241,7 +1241,7 @@ export async function createAdminExtra(params: {
 
 export async function updateAdminExtra(params: {
   id: string;
-  input: AdminExtraInput;
+  input: ExtraInput;
   actorId?: string;
   actorRole?: 'owner' | 'manager' | 'reception';
   ipAddress?: string;
@@ -1366,7 +1366,7 @@ export async function listAdminAmenitiesWithUsage(): Promise<AdminAmenity[]> {
 }
 
 export async function createAdminAmenity(params: {
-  input: AdminAmenityInput;
+  input: AmenityInput;
   actorId?: string;
   actorRole?: 'owner' | 'manager' | 'reception';
   ipAddress?: string;
@@ -1419,7 +1419,7 @@ export async function createAdminAmenity(params: {
 
 export async function updateAdminAmenity(params: {
   id: string;
-  input: AdminAmenityInput;
+  input: AmenityInput;
   actorId?: string;
   actorRole?: 'owner' | 'manager' | 'reception';
   ipAddress?: string;

@@ -6,9 +6,9 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import {
   deleteRoomTypeImage,
   updateImageDetails,
-} from '@/lib/db/repositories/inventory-admin.repo';
+} from '@/lib/db/repositories/inventory.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { AdminImageUpdateSchema } from '@/schemas/inventory.schema';
+import { ImageUpdateSchema } from '@/schemas/inventory.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +21,7 @@ export async function PATCH(
 
   const { imageId } = await params;
   const body = await request.json().catch(() => null);
-  const parsed = AdminImageUpdateSchema.safeParse(body);
+  const parsed = ImageUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

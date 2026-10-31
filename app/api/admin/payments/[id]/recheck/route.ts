@@ -2,7 +2,7 @@ import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
-import { recheckPaymentRepo } from '@/lib/db/repositories/payments-admin.repo';
+import { recheckPayment } from '@/lib/db/repositories/payments.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +16,7 @@ export async function POST(
   const context = guard.context;
 
   const { id } = await params;
-  const result = await recheckPaymentRepo(id);
+  const result = await recheckPayment(id);
 
   await recordAuditLog({
     actorId: context.user.id,

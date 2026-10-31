@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 
 import { RoomTypeEditorClient } from '@/components/admin/inventory/RoomTypeEditorClient';
 import { requireAdminPage } from '@/lib/auth/guards';
-import { getAdminRoomTypeById } from '@/lib/db/repositories/inventory-admin.repo';
+import { getAdminRoomTypeById } from '@/lib/db/repositories/inventory.repo';
 
 export const metadata = {
   title: 'Edit Room Type | Admin',

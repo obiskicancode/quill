@@ -21,7 +21,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import type { PaymentsQueryParams } from '@/types/payments-admin.types';
+import type { PaymentsQueryParams } from '@/types/payments.types';
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All statuses' },

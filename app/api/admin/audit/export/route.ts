@@ -5,7 +5,7 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import { exportAuditCsvRepo } from '@/lib/db/repositories/audit-admin.repo';
 import { apiFail } from '@/lib/http/envelope';
 import { clientIp } from '@/lib/http/request';
-import { AuditQuerySchema } from '@/schemas/audit-admin.schema';
+import { AuditQuerySchema } from '@/schemas/audit.schema';
 
 export const dynamic = 'force-dynamic';
 

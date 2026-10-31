@@ -19,10 +19,9 @@ import {
   useRevokeSession,
 } from '@/hooks/services/admin/use-account';
 import { formatDate } from '@/lib/dates';
-import type { AdminSession } from '@/types/admin.types';
+import type { Session } from '@/types/auth.types';
 
-type DialogState =
-  { type: 'one'; session: AdminSession } | { type: 'all' } | null;
+type DialogState = { type: 'one'; session: Session } | { type: 'all' } | null;
 
 export function SessionsPanel() {
   const sessionsQuery = useAdminSessions();

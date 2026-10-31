@@ -1,8 +1,8 @@
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
-import { listPaymentsRepo } from '@/lib/db/repositories/payments-admin.repo';
+import { listPayments } from '@/lib/db/repositories/payments.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { PaymentsQuerySchema } from '@/schemas/payments-admin.schema';
+import { PaymentsQuerySchema } from '@/schemas/payments.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +24,6 @@ export async function GET(request: Request) {
     );
   }
 
-  const result = await listPaymentsRepo(parsed.data);
+  const result = await listPayments(parsed.data);
   return apiOk(result, { noCache: true });
 }

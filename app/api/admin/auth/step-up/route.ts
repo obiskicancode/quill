@@ -7,7 +7,7 @@ import { markAdminSessionVerified } from '@/lib/auth/session';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
-import { StepUpAuthInputSchema } from '@/schemas/staff-admin.schema';
+import { StepUpAuthInputSchema } from '@/schemas/staff.schema';
 
 export const dynamic = 'force-dynamic';
 

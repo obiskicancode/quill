@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { AuditListItem } from '@/types/audit-admin.types';
+import type { AuditListItem } from '@/types/audit.types';
 
 export function AuditTable({
   items,

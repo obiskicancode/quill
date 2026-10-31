@@ -1,7 +1,7 @@
 import type {
   AuditPreset as AuditPresetSchema,
   AuditQueryParams as AuditQueryParamsSchema,
-} from '@/schemas/audit-admin.schema';
+} from '@/schemas/audit.schema';
 import type { AdminRole } from '@/types/auth.types';
 
 export type AuditPreset = AuditPresetSchema;

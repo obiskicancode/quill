@@ -1,6 +1,6 @@
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
-import { sendPasswordResetRepo } from '@/lib/db/repositories/staff-admin.repo';
+import { sendPasswordReset } from '@/lib/db/repositories/staff.repo';
 import { apiOk } from '@/lib/http/envelope';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,7 @@ export async function POST(
   const context = guard.context;
 
   const { id } = await params;
-  await sendPasswordResetRepo({ id, actor: context.user });
+  await sendPasswordReset({ id, actor: context.user });
 
   return apiOk(
     { success: true, message: SUCCESS_MESSAGES.PASSWORD_RESET_LINK_SENT },

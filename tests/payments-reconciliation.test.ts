@@ -4,7 +4,6 @@ import { describe, it } from 'node:test';
 import {
   checkPayoutIdempotency,
   reconcilePayment,
-  resolveHotelDayRange,
   unreconcilePayment,
   validateManualRefundPayout,
   type RawPaymentRecord,
@@ -134,18 +133,5 @@ describe('Payments & Reconciliation Helpers', () => {
       ownerSuccess.updatedPayment?.note ?? '',
       /\[Unreconciled\]: Physical receipt does not match/,
     );
-  });
-
-  it('4. Resolves date range crossing midnight in hotel timezone (Africa/Lagos UTC+1)', () => {
-    const range = resolveHotelDayRange('2026-10-15', '2026-10-15', 1);
-
-    // Local start: 2026-10-15 00:00:00 (UTC+1) = 2026-10-14 23:00:00 UTC
-    assert.strictEqual(
-      range.startUtc.toISOString(),
-      '2026-10-14T23:00:00.000Z',
-    );
-
-    // Local end: 2026-10-15 23:59:59.999 (UTC+1) = 2026-10-15 22:59:59.999 UTC
-    assert.strictEqual(range.endUtc.toISOString(), '2026-10-15T22:59:59.999Z');
   });
 });

@@ -42,11 +42,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
-import { ManualRefundPayoutInputSchema } from '@/schemas/payments-admin.schema';
+import { ManualRefundPayoutInputSchema } from '@/schemas/payments.schema';
 import type {
   ManualRefundItem,
   ManualRefundPayoutInput,
-} from '@/types/payments-admin.types';
+} from '@/types/payments.types';
 
 const ManualRefundPayoutFormSchema = ManualRefundPayoutInputSchema.omit({
   amountMinor: true,

@@ -15,7 +15,7 @@ interface AuditInput {
   userAgent?: string | null;
 }
 
-export async function writeAdminAudit(input: AuditInput): Promise<void> {
+export async function writeAudit(input: AuditInput): Promise<void> {
   try {
     await createAuditLog({
       actorId: input.actorId ?? null,

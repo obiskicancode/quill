@@ -2,7 +2,7 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { listAuditRepo } from '@/lib/db/repositories/audit-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { AuditQuerySchema } from '@/schemas/audit-admin.schema';
+import { AuditQuerySchema } from '@/schemas/audit.schema';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,16 +1,16 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { writeAdminAudit } from '@/lib/auth/audit';
+import { writeAudit } from '@/lib/auth/audit';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { createMfaSetup, encryptMfaSecret } from '@/lib/auth/mfa';
 import { setMfaSecret } from '@/lib/db/repositories/staff.repo';
-import { checkAdminCsrf } from '@/lib/http/csrf';
+import { checkCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, tooManyRequests, userAgent } from '@/lib/http/request';
 import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
-  const csrfError = checkAdminCsrf(request);
+  const csrfError = checkCsrf(request);
   if (csrfError) return csrfError;
 
   const guard = await guardAdminApi(request, { allowPending: true });
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
   const setup = await createMfaSetup(context.user.email);
   await setMfaSecret(context.user.id, encryptMfaSecret(setup.secret));
-  await writeAdminAudit({
+  await writeAudit({
     actorId: context.user.id,
     actorRole: context.role,
     action: 'mfa.setup_started',

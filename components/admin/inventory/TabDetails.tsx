@@ -19,14 +19,14 @@ import { useFormDraft } from '@/hooks/use-form-draft';
 import { minorToNaira } from '@/lib/rate-resolution';
 import type {
   AdminRoomTypeDetail,
-  AdminRoomTypeInput,
+  RoomTypeInput,
 } from '@/types/inventory.types';
 
 import { roomTypeDetailsFormSchema, slugify } from './form-schemas';
 
 interface TabDetailsProps {
   initialData?: AdminRoomTypeDetail | null;
-  onSave: (data: AdminRoomTypeInput) => Promise<boolean>;
+  onSave: (data: RoomTypeInput) => Promise<boolean>;
   isSaving: boolean;
   currentRole: 'owner' | 'manager' | 'reception';
 }
@@ -111,7 +111,7 @@ export function TabDetails({
       return;
     }
 
-    const payload: AdminRoomTypeInput = {
+    const payload: RoomTypeInput = {
       ...input,
       unlockSlugConfirmed,
     };

@@ -14,12 +14,12 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useApproveDeclineReservation } from '@/hooks/services/admin/use-reservations';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import { adminApproveDeclineSchema } from '@/schemas/reservation.schema';
+import { approveDeclineSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
 
-const approveDeclineFormSchema = adminApproveDeclineSchema
+const approveDeclineFormSchema = approveDeclineSchema
   .omit({ version: true, idempotencyKey: true })
   .superRefine((value, ctx) => {
     if (

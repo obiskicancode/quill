@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { writeAdminAudit } from '@/lib/auth/audit';
+import { writeAudit } from '@/lib/auth/audit';
 import { guardAdminApi } from '@/lib/auth/guards';
 import {
   hashPassword,
@@ -11,15 +11,15 @@ import {
 } from '@/lib/auth/password';
 import {
   revokeOtherSessionsForUser,
-  updateStaff,
+  update as updateStaff,
 } from '@/lib/db/repositories/staff.repo';
-import { checkAdminCsrf } from '@/lib/http/csrf';
+import { checkCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
-import { adminPasswordChangeSchema } from '@/schemas/admin-auth.schema';
+import { passwordChangeSchema } from '@/schemas/auth.schema';
 
 export async function POST(request: Request) {
-  const csrfError = checkAdminCsrf(request);
+  const csrfError = checkCsrf(request);
   if (csrfError) return csrfError;
 
   const guard = await guardAdminApi(request);
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const { context } = guard;
 
   const body = await request.json().catch(() => null);
-  const parsed = adminPasswordChangeSchema.safeParse(body);
+  const parsed = passwordChangeSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
     context.sessionId,
   );
 
-  await writeAdminAudit({
+  await writeAudit({
     actorId: context.user.id,
     actorRole: context.role,
     action: 'password.changed',

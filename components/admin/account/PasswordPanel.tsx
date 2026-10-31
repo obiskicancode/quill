@@ -18,16 +18,16 @@ import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useChangePassword } from '@/hooks/services/admin/use-account';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import {
-  adminPasswordChangeSchema,
-  type AdminPasswordChangeInput,
-} from '@/schemas/admin-auth.schema';
+  passwordChangeSchema,
+  type PasswordChangeInput,
+} from '@/schemas/auth.schema';
 
-type PasswordOutput = z.output<typeof adminPasswordChangeSchema>;
+type PasswordOutput = z.output<typeof passwordChangeSchema>;
 
 export function PasswordPanel() {
   const changePassword = useChangePassword();
-  const form = useForm<AdminPasswordChangeInput, unknown, PasswordOutput>({
-    resolver: zodResolver(adminPasswordChangeSchema),
+  const form = useForm<PasswordChangeInput, unknown, PasswordOutput>({
+    resolver: zodResolver(passwordChangeSchema),
     defaultValues: {
       currentPassword: '',
       newPassword: '',

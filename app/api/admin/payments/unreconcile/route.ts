@@ -3,10 +3,10 @@ import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { requireStepUp } from '@/lib/auth/step-up';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
-import { unreconcilePaymentRepo } from '@/lib/db/repositories/payments-admin.repo';
+import { unreconcilePayment } from '@/lib/db/repositories/payments.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
-import { UnreconcileInputSchema } from '@/schemas/payments-admin.schema';
+import { UnreconcileInputSchema } from '@/schemas/payments.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await unreconcilePaymentRepo({
+  const result = await unreconcilePayment({
     paymentId,
     actorId: context.user.id,
     actorRole: context.role,

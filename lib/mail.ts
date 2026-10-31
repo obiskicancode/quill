@@ -16,7 +16,7 @@ export async function sendAdminPasswordResetEmail({
   const resetUrl = `${config.SITE.URL.replace(/\/$/, '')}/admin/reset-password/${token}`;
 
   if (config.isDev) {
-    console.info('\nAdmin password reset');
+    console.info('\nAdminpassword reset');
     console.info(`Email: ${staff.email}`);
     console.info(`Link:  ${resetUrl}`);
     console.info(`Expires: ${expiresAt.toISOString()}\n`);

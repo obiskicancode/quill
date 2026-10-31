@@ -1,7 +1,8 @@
 import type { StaffSession, StaffUser } from '@/db/types';
-import type { AdminSession, AdminStaff } from '@/types/admin.types';
+import type { Session } from '@/types/auth.types';
+import type { Staff } from '@/types/staff.types';
 
-export function toAdminStaff(staff: StaffUser): AdminStaff {
+export function toStaff(staff: StaffUser): Staff {
   return {
     id: staff.id,
     email: staff.email,
@@ -14,10 +15,10 @@ export function toAdminStaff(staff: StaffUser): AdminStaff {
   };
 }
 
-export function toAdminSession(
+export function toSession(
   session: StaffSession,
   currentSessionId: string,
-): AdminSession {
+): Session {
   return {
     id: session.id,
     userAgent: session.userAgent,

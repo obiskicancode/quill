@@ -26,7 +26,7 @@ import {
 } from '@/hooks/services/admin/use-inventory';
 import type {
   AdminRoomTypeDetail,
-  AdminRoomTypeInput,
+  RoomTypeInput,
 } from '@/types/inventory.types';
 
 import { TabAmenities } from './TabAmenities';
@@ -67,9 +67,7 @@ export function RoomTypeEditorClient({
     }
   }
 
-  async function handleSaveDetails(
-    input: AdminRoomTypeInput,
-  ): Promise<boolean> {
+  async function handleSaveDetails(input: RoomTypeInput): Promise<boolean> {
     try {
       if (isExisting && data?.id) {
         const updated = await updateRoomType.mutateAsync(input);

@@ -5,7 +5,7 @@ import { ReservationDetailClient } from '@/components/admin/reservations/detail/
 import { requireAdminPage } from '@/lib/auth/guards';
 import { can, ROLE_PERMISSIONS } from '@/lib/auth/permissions';
 import { hotelClock } from '@/lib/dates';
-import { getReservationAdminDetail } from '@/lib/db/repositories/reservations-admin.repo';
+import { getReservationAdminDetail } from '@/lib/db/repositories/reservations.repo';
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 
 export async function generateMetadata({

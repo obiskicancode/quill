@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type { PaymentListItem } from '@/types/payments-admin.types';
+import type { PaymentListItem } from '@/types/payments.types';
 
 function formatNaira(minor: number): string {
   return `₦${(minor / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;

@@ -16,8 +16,6 @@ import type {
   RefundStatus,
 } from '@/types/manage.types';
 
-/** Confirmation-page contract. Money is integer minor units (kobo); the UI divides by 100. */
-
 export interface HotelInfo {
   name: string;
   addressLines: string[];

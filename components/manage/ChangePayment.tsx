@@ -83,6 +83,12 @@ export function ChangePayment({
     const f = e instanceof ServiceError ? e : null;
     if (f?.body?.code === ERROR_CODES.SESSION_EXPIRED)
       return onSessionExpired();
+    if (f?.body?.code === ERROR_CODES.PAYMENT_INIT_FAILED) {
+      key.current = newKey();
+      setError(f.body.message ?? ERROR_MESSAGES.PAYMENT_PROVIDER_UNREACHABLE);
+      void onRefresh();
+      return;
+    }
     if (!f || f.network || f.status >= 500)
       setError(ERROR_MESSAGES.COULD_NOT_REACH_SERVER_PAYMENT_UNKNOWN);
     else {

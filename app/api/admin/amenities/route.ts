@@ -5,9 +5,9 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import {
   createAdminAmenity,
   listAdminAmenitiesWithUsage,
-} from '@/lib/db/repositories/inventory-admin.repo';
+} from '@/lib/db/repositories/inventory.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { AdminAmenityInputSchema } from '@/schemas/inventory.schema';
+import { AmenityInputSchema } from '@/schemas/inventory.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => null);
-  const parsed = AdminAmenityInputSchema.safeParse(body);
+  const parsed = AmenityInputSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

@@ -19,7 +19,7 @@ import type {
   AuditDetailResponse,
   AuditListItem,
   AuditQueryParams,
-} from '@/types/audit-admin.types';
+} from '@/types/audit.types';
 import type { AdminRole } from '@/types/auth.types';
 
 const SECURITY_ENTITIES = [

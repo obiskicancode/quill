@@ -2,7 +2,7 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type {
   PaymentSummaryDelta,
   PaymentSummaryResponse,
-} from '@/types/payments-admin.types';
+} from '@/types/payments.types';
 
 export interface RawPaymentRecord {
   id: string;
@@ -228,27 +228,4 @@ export function unreconcilePayment(params: {
   };
 
   return { ok: true, updatedPayment };
-}
-
-/**
- * Normalizes date boundaries crossing midnight in hotel timezone (Africa/Lagos = UTC+1)
- * to exact UTC Date boundaries.
- */
-export function resolveHotelDayRange(
-  fromStr: string,
-  toStr: string,
-  timezoneOffsetHours = 1, // Africa/Lagos is UTC+1 with no DST
-): { startUtc: Date; endUtc: Date } {
-  // '2026-10-01' at 00:00:00 local time = 2026-09-30T23:00:00Z
-  const [fYear, fMonth, fDay] = fromStr.split('-').map(Number);
-  const [tYear, tMonth, tDay] = toStr.split('-').map(Number);
-
-  const startUtc = new Date(
-    Date.UTC(fYear, fMonth - 1, fDay, -timezoneOffsetHours, 0, 0, 0),
-  );
-  const endUtc = new Date(
-    Date.UTC(tYear, tMonth - 1, tDay, 23 - timezoneOffsetHours, 59, 59, 999),
-  );
-
-  return { startUtc, endUtc };
 }

@@ -1,7 +1,7 @@
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
-import { resendInviteRepo } from '@/lib/db/repositories/staff-admin.repo';
+import { resendInvite } from '@/lib/db/repositories/staff.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,7 @@ export async function POST(
   const context = guard.context;
 
   const { id } = await params;
-  const result = await resendInviteRepo({ id, actor: context.user });
+  const result = await resendInvite({ id, actor: context.user });
 
   if (!result.ok) {
     return apiFail(

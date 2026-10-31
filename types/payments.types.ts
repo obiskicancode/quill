@@ -4,7 +4,7 @@ import type {
   ReconcileBulkInput as ReconcileBulkInputSchema,
   UnreconcileInput as UnreconcileInputSchema,
   WebhookEventsQueryParams as WebhookEventsQueryParamsSchema,
-} from '@/schemas/payments-admin.schema';
+} from '@/schemas/payments.schema';
 
 export type PaymentsQueryParams = PaymentsQueryParamsSchema;
 

@@ -1,42 +1,38 @@
 import type { AxiosRequestConfig } from 'axios';
 
-import type { AdminProfileInput } from '@/schemas/admin-account.schema';
+import type { AdminProfileInput } from '@/schemas/account.schema';
 import type {
-  AdminForgotPasswordInput,
-  AdminLoginInput,
-  AdminResetPasswordInput,
-  AdminVerify2faInput,
-} from '@/schemas/admin-auth.schema';
+  ForgotPasswordInput,
+  LoginInput,
+  ResetPasswordInput,
+  Verify2faInput,
+} from '@/schemas/auth.schema';
 import type {
-  AdminAmenityInput,
-  AdminExtraInput,
-  AdminImageUpdate,
-  AdminRateRuleInput,
-  AdminRoomTypeInput,
-  AdminRoomUnitInput,
+  AmenityInput,
+  ExtraInput,
+  ImageUpdate,
+  RateRuleInput,
+  RoomTypeInput,
+  RoomUnitInput,
 } from '@/schemas/inventory.schema';
+import type { AuditDetailResponse, AuditListItem } from '@/types/audit.types';
 import type {
-  AdminAccountResponse,
-  AdminAuthResult,
-  AdminMfaSetupResponse,
-  AdminRecoveryCodesResponse,
-  AdminRevokeResponse,
-  AdminSessionsResponse,
-  AdminStaff,
-} from '@/types/admin.types';
+  AccountResponse,
+  AuthResult,
+  MfaSetupResponse,
+  RecoveryCodesResponse,
+  RevokeResponse,
+  SessionsResponse,
+} from '@/types/auth.types';
 import type {
-  AuditDetailResponse,
-  AuditListItem,
-} from '@/types/audit-admin.types';
-import type {
-  AdminBlockCheckInput,
-  AdminBlocksListQueryInput,
-  AdminCreateBlockInput,
-  AdminUpdateBlockInput,
+  BlockCheckInput,
   BlockCheckResponse,
+  BlocksListQueryInput,
   CalendarDayResponse,
   CalendarResponse,
+  CreateBlockInput,
   RoomBlocksListResponse,
+  UpdateBlockInput,
 } from '@/types/calendar.types';
 import type { CheckoutQuoteResponse } from '@/types/checkout.types';
 import type {
@@ -66,30 +62,31 @@ import type {
   PaymentsBreakdownResponse,
   PaymentSummaryResponse,
   WebhookEventItem,
-} from '@/types/payments-admin.types';
+} from '@/types/payments.types';
 import type {
-  AdminApproveDeclineInput,
-  AdminCancelInput,
-  AdminChangeDatesInput,
-  AdminChangeDatesQuoteInput,
-  AdminCreateReservationInput,
-  AdminEditDetailsInput,
-  AdminNoShowInput,
-  AdminReassignRoomInput,
-  AdminRecordPaymentInput,
-  AdminRefundInput,
-  AdminResendConfirmationInput,
-  AdminVerifyTransferInput,
+  ApproveDeclineInput,
+  CancelInput,
+  changeDatesInput,
+  ChangeDatesQuoteInput,
+  CreateReservationInput,
+  EditDetailsInput,
+  NoShowInput,
+  ReassignRoomInput,
+  RecordPaymentInput,
+  RefundInput,
+  ResendConfirmationInput,
   ReservationDetail,
   ReservationNeighbors,
   ReservationsListResponse,
+  VerifyTransferInput,
 } from '@/types/reservation.types';
 import type {
+  Staff,
   StaffDetailResponse,
   StaffInviteInput,
   StaffListItem,
   StaffUpdateInput,
-} from '@/types/staff-admin.types';
+} from '@/types/staff.types';
 
 import BaseService from './base.service';
 
@@ -105,16 +102,16 @@ class AdminService extends BaseService {
     };
   }
 
-  login(body: AdminLoginInput) {
-    return this.httpPost<AdminLoginInput, AdminAuthResult>(
+  login(body: LoginInput) {
+    return this.httpPost<LoginInput, AuthResult>(
       '/auth/login',
       body,
       noRefresh,
     );
   }
 
-  verify2fa(body: AdminVerify2faInput) {
-    return this.httpPost<AdminVerify2faInput, AdminAuthResult>(
+  verify2fa(body: Verify2faInput) {
+    return this.httpPost<Verify2faInput, AuthResult>(
       '/auth/verify-2fa',
       body,
       noRefresh,
@@ -128,16 +125,16 @@ class AdminService extends BaseService {
     );
   }
 
-  forgotPassword(body: AdminForgotPasswordInput) {
-    return this.httpPost<AdminForgotPasswordInput, { sent: boolean }>(
+  forgotPassword(body: ForgotPasswordInput) {
+    return this.httpPost<ForgotPasswordInput, { sent: boolean }>(
       '/auth/forgot-password',
       body,
       noRefresh,
     );
   }
 
-  resetPassword(body: AdminResetPasswordInput) {
-    return this.httpPost<AdminResetPasswordInput, { redirectTo: string }>(
+  resetPassword(body: ResetPasswordInput) {
+    return this.httpPost<ResetPasswordInput, { redirectTo: string }>(
       '/auth/reset-password',
       body,
       noRefresh,
@@ -145,11 +142,11 @@ class AdminService extends BaseService {
   }
 
   getAccount() {
-    return this.httpGet<AdminAccountResponse>('/account');
+    return this.httpGet<AccountResponse>('/account');
   }
 
   updateProfile(body: AdminProfileInput) {
-    return this.httpPatch<AdminProfileInput, { staff: AdminStaff }>(
+    return this.httpPatch<AdminProfileInput, { staff: Staff }>(
       '/account',
       body,
     );
@@ -167,14 +164,14 @@ class AdminService extends BaseService {
   }
 
   setup2fa() {
-    return this.httpPost<undefined, AdminMfaSetupResponse>(
+    return this.httpPost<undefined, MfaSetupResponse>(
       '/account/2fa/setup',
       undefined,
     );
   }
 
   confirm2fa(body: { code: string }) {
-    return this.httpPost<typeof body, AdminRecoveryCodesResponse>(
+    return this.httpPost<typeof body, RecoveryCodesResponse>(
       '/account/2fa/confirm',
       body,
     );
@@ -188,24 +185,24 @@ class AdminService extends BaseService {
   }
 
   rotateRecoveryCodes(body: { password: string }) {
-    return this.httpPost<typeof body, AdminRecoveryCodesResponse>(
+    return this.httpPost<typeof body, RecoveryCodesResponse>(
       '/account/2fa/recovery-codes',
       body,
     );
   }
 
   getSessions() {
-    return this.httpGet<AdminSessionsResponse>('/account/sessions');
+    return this.httpGet<SessionsResponse>('/account/sessions');
   }
 
   revokeSession(id: string) {
-    return this.httpDelete<AdminRevokeResponse>('/account/sessions', {
+    return this.httpDelete<RevokeResponse>('/account/sessions', {
       data: { id },
     });
   }
 
   revokeOtherSessions() {
-    return this.httpDelete<AdminRevokeResponse>('/account/sessions');
+    return this.httpDelete<RevokeResponse>('/account/sessions');
   }
 
   getDashboardSummary(date?: string) {
@@ -276,8 +273,8 @@ class AdminService extends BaseService {
     );
   }
 
-  createReservation(body: AdminCreateReservationInput) {
-    return this.httpPost<AdminCreateReservationInput, ReservationDetail>(
+  createReservation(body: CreateReservationInput) {
+    return this.httpPost<CreateReservationInput, ReservationDetail>(
       '/reservations',
       body,
     );
@@ -318,66 +315,58 @@ class AdminService extends BaseService {
     );
   }
 
-  updateDetails(id: string, body: AdminEditDetailsInput) {
-    return this.httpPatch<AdminEditDetailsInput, ReservationDetail>(
+  updateDetails(id: string, body: EditDetailsInput) {
+    return this.httpPatch<EditDetailsInput, ReservationDetail>(
       `/reservations/${encodeURIComponent(id)}/details`,
       body,
     );
   }
 
-  reassignRoom(id: string, body: AdminReassignRoomInput) {
-    return this.httpPost<AdminReassignRoomInput, ReservationDetail>(
+  reassignRoom(id: string, body: ReassignRoomInput) {
+    return this.httpPost<ReassignRoomInput, ReservationDetail>(
       `/reservations/${encodeURIComponent(id)}/reassign-room`,
       body,
     );
   }
 
-  recordPayment(id: string, body: AdminRecordPaymentInput) {
-    return this.httpPost<AdminRecordPaymentInput, ReservationDetail>(
+  recordPayment(id: string, body: RecordPaymentInput) {
+    return this.httpPost<RecordPaymentInput, ReservationDetail>(
       `/reservations/${encodeURIComponent(id)}/payments`,
       body,
     );
   }
 
-  verifyTransfer(
-    id: string,
-    paymentId: string,
-    body: AdminVerifyTransferInput,
-  ) {
-    return this.httpPost<AdminVerifyTransferInput, ReservationDetail>(
+  verifyTransfer(id: string, paymentId: string, body: VerifyTransferInput) {
+    return this.httpPost<VerifyTransferInput, ReservationDetail>(
       `/reservations/${encodeURIComponent(id)}/payments/${encodeURIComponent(paymentId)}/verify`,
       body,
     );
   }
 
-  rejectTransfer(
-    id: string,
-    paymentId: string,
-    body: AdminVerifyTransferInput,
-  ) {
-    return this.httpPost<AdminVerifyTransferInput, ReservationDetail>(
+  rejectTransfer(id: string, paymentId: string, body: VerifyTransferInput) {
+    return this.httpPost<VerifyTransferInput, ReservationDetail>(
       `/reservations/${encodeURIComponent(id)}/payments/${encodeURIComponent(paymentId)}/reject`,
       body,
     );
   }
 
-  approveReservation(id: string, body: AdminApproveDeclineInput) {
-    return this.httpPost<AdminApproveDeclineInput, ReservationDetail>(
+  approveReservation(id: string, body: ApproveDeclineInput) {
+    return this.httpPost<ApproveDeclineInput, ReservationDetail>(
       `/reservations/${encodeURIComponent(id)}/approve`,
       body,
     );
   }
 
-  declineReservation(id: string, body: AdminApproveDeclineInput) {
-    return this.httpPost<AdminApproveDeclineInput, ReservationDetail>(
+  declineReservation(id: string, body: ApproveDeclineInput) {
+    return this.httpPost<ApproveDeclineInput, ReservationDetail>(
       `/reservations/${encodeURIComponent(id)}/decline`,
       body,
     );
   }
 
-  quoteChangeDates(id: string, body: AdminChangeDatesQuoteInput) {
+  quoteChangeDates(id: string, body: ChangeDatesQuoteInput) {
     return this.httpPost<
-      AdminChangeDatesQuoteInput,
+      ChangeDatesQuoteInput,
       {
         quote: {
           breakdown: {
@@ -402,8 +391,8 @@ class AdminService extends BaseService {
     >(`/reservations/${encodeURIComponent(id)}/change-dates/quote`, body);
   }
 
-  changeDates(id: string, body: AdminChangeDatesInput) {
-    return this.httpPost<AdminChangeDatesInput, ReservationDetail>(
+  changeDates(id: string, body: changeDatesInput) {
+    return this.httpPost<changeDatesInput, ReservationDetail>(
       `/reservations/${encodeURIComponent(id)}/change-dates`,
       body,
     );
@@ -418,29 +407,29 @@ class AdminService extends BaseService {
     }>(`/reservations/${encodeURIComponent(id)}/cancellation-preview`);
   }
 
-  cancelReservation(id: string, body: AdminCancelInput) {
-    return this.httpPost<AdminCancelInput, ReservationDetail>(
+  cancelReservation(id: string, body: CancelInput) {
+    return this.httpPost<CancelInput, ReservationDetail>(
       `/reservations/${encodeURIComponent(id)}/cancel`,
       body,
     );
   }
 
-  issueRefund(id: string, body: AdminRefundInput) {
-    return this.httpPost<AdminRefundInput, ReservationDetail>(
+  issueRefund(id: string, body: RefundInput) {
+    return this.httpPost<RefundInput, ReservationDetail>(
       `/reservations/${encodeURIComponent(id)}/refunds`,
       body,
     );
   }
 
-  markNoShow(id: string, body: AdminNoShowInput) {
-    return this.httpPost<AdminNoShowInput, ReservationDetail>(
+  markNoShow(id: string, body: NoShowInput) {
+    return this.httpPost<NoShowInput, ReservationDetail>(
       `/reservations/${encodeURIComponent(id)}/no-show`,
       body,
     );
   }
 
-  resendConfirmation(id: string, body: AdminResendConfirmationInput) {
-    return this.httpPost<AdminResendConfirmationInput, { success: boolean }>(
+  resendConfirmation(id: string, body: ResendConfirmationInput) {
+    return this.httpPost<ResendConfirmationInput, { success: boolean }>(
       `/reservations/${encodeURIComponent(id)}/resend`,
       body,
     );
@@ -463,22 +452,22 @@ class AdminService extends BaseService {
     );
   }
 
-  checkBlockConflicts(body: AdminBlockCheckInput) {
-    return this.httpPost<AdminBlockCheckInput, BlockCheckResponse>(
+  checkBlockConflicts(body: BlockCheckInput) {
+    return this.httpPost<BlockCheckInput, BlockCheckResponse>(
       '/blocks/check',
       body,
     );
   }
 
-  createBlocks(body: AdminCreateBlockInput) {
-    return this.httpPost<
-      AdminCreateBlockInput,
-      { count: number; message: string }
-    >('/blocks', body);
+  createBlocks(body: CreateBlockInput) {
+    return this.httpPost<CreateBlockInput, { count: number; message: string }>(
+      '/blocks',
+      body,
+    );
   }
 
-  updateBlock(id: string, body: AdminUpdateBlockInput) {
-    return this.httpPatch<AdminUpdateBlockInput, unknown>(
+  updateBlock(id: string, body: UpdateBlockInput) {
+    return this.httpPatch<UpdateBlockInput, unknown>(
       `/blocks/${encodeURIComponent(id)}`,
       body,
     );
@@ -490,7 +479,7 @@ class AdminService extends BaseService {
     );
   }
 
-  listBlocks(params: AdminBlocksListQueryInput) {
+  listBlocks(params: BlocksListQueryInput) {
     const q = new URLSearchParams({
       page: String(params.page),
       pageSize: String(params.pageSize),
@@ -513,15 +502,15 @@ class AdminService extends BaseService {
     );
   }
 
-  createRoomType(body: AdminRoomTypeInput) {
-    return this.httpPost<AdminRoomTypeInput, AdminRoomTypeListItem>(
+  createRoomType(body: RoomTypeInput) {
+    return this.httpPost<RoomTypeInput, AdminRoomTypeListItem>(
       '/room-types',
       body,
     );
   }
 
-  updateRoomType(id: string, body: AdminRoomTypeInput) {
-    return this.httpPatch<AdminRoomTypeInput, AdminRoomTypeDetail>(
+  updateRoomType(id: string, body: RoomTypeInput) {
+    return this.httpPatch<RoomTypeInput, AdminRoomTypeDetail>(
       `/room-types/${encodeURIComponent(id)}`,
       body,
     );
@@ -548,11 +537,11 @@ class AdminService extends BaseService {
     );
   }
 
-  updateImage(imageId: string, body: AdminImageUpdate) {
-    return this.httpPatch<
-      AdminImageUpdate,
-      { success: boolean; message: string }
-    >(`/images/${encodeURIComponent(imageId)}`, body);
+  updateImage(imageId: string, body: ImageUpdate) {
+    return this.httpPatch<ImageUpdate, { success: boolean; message: string }>(
+      `/images/${encodeURIComponent(imageId)}`,
+      body,
+    );
   }
 
   deleteImage(imageId: string) {
@@ -583,18 +572,18 @@ class AdminService extends BaseService {
   }
 
   // Room Units
-  createRoom(body: AdminRoomUnitInput & { roomTypeId: string }) {
-    return this.httpPost<
-      AdminRoomUnitInput & { roomTypeId: string },
-      AdminRoomUnit
-    >('/rooms', body);
+  createRoom(body: RoomUnitInput & { roomTypeId: string }) {
+    return this.httpPost<RoomUnitInput & { roomTypeId: string }, AdminRoomUnit>(
+      '/rooms',
+      body,
+    );
   }
 
-  updateRoom(roomId: string, body: AdminRoomUnitInput) {
-    return this.httpPatch<
-      AdminRoomUnitInput,
-      { success: boolean; message: string }
-    >(`/rooms/${encodeURIComponent(roomId)}`, body);
+  updateRoom(roomId: string, body: RoomUnitInput) {
+    return this.httpPatch<RoomUnitInput, { success: boolean; message: string }>(
+      `/rooms/${encodeURIComponent(roomId)}`,
+      body,
+    );
   }
 
   deleteRoom(roomId: string) {
@@ -615,18 +604,15 @@ class AdminService extends BaseService {
     return this.httpGet<AdminRateRule[]>(`/rate-rules${q}`);
   }
 
-  createRateRule(body: AdminRateRuleInput) {
-    return this.httpPost<AdminRateRuleInput, AdminRateRule>(
-      '/rate-rules',
-      body,
-    );
+  createRateRule(body: RateRuleInput) {
+    return this.httpPost<RateRuleInput, AdminRateRule>('/rate-rules', body);
   }
 
-  updateRateRule(id: string, body: AdminRateRuleInput) {
-    return this.httpPatch<
-      AdminRateRuleInput,
-      { success: boolean; message: string }
-    >(`/rate-rules/${encodeURIComponent(id)}`, body);
+  updateRateRule(id: string, body: RateRuleInput) {
+    return this.httpPatch<RateRuleInput, { success: boolean; message: string }>(
+      `/rate-rules/${encodeURIComponent(id)}`,
+      body,
+    );
   }
 
   deleteRateRule(id: string) {
@@ -635,8 +621,8 @@ class AdminService extends BaseService {
     );
   }
 
-  checkRateRuleOverlap(body: AdminRateRuleInput) {
-    return this.httpPost<AdminRateRuleInput, RateRuleOverlapResponse>(
+  checkRateRuleOverlap(body: RateRuleInput) {
+    return this.httpPost<RateRuleInput, RateRuleOverlapResponse>(
       '/rate-rules/preview',
       body,
     );
@@ -670,15 +656,15 @@ class AdminService extends BaseService {
     return this.httpGet<AdminExtra[]>('/extras');
   }
 
-  createExtra(body: AdminExtraInput) {
-    return this.httpPost<AdminExtraInput, AdminExtra>('/extras', body);
+  createExtra(body: ExtraInput) {
+    return this.httpPost<ExtraInput, AdminExtra>('/extras', body);
   }
 
-  updateExtra(id: string, body: AdminExtraInput) {
-    return this.httpPatch<
-      AdminExtraInput,
-      { success: boolean; message: string }
-    >(`/extras/${encodeURIComponent(id)}`, body);
+  updateExtra(id: string, body: ExtraInput) {
+    return this.httpPatch<ExtraInput, { success: boolean; message: string }>(
+      `/extras/${encodeURIComponent(id)}`,
+      body,
+    );
   }
 
   deleteExtra(id: string) {
@@ -699,15 +685,15 @@ class AdminService extends BaseService {
     return this.httpGet<AdminAmenity[]>('/amenities');
   }
 
-  createAmenity(body: AdminAmenityInput) {
-    return this.httpPost<AdminAmenityInput, AdminAmenity>('/amenities', body);
+  createAmenity(body: AmenityInput) {
+    return this.httpPost<AmenityInput, AdminAmenity>('/amenities', body);
   }
 
-  updateAmenity(id: string, body: AdminAmenityInput) {
-    return this.httpPatch<
-      AdminAmenityInput,
-      { success: boolean; message: string }
-    >(`/amenities/${encodeURIComponent(id)}`, body);
+  updateAmenity(id: string, body: AmenityInput) {
+    return this.httpPatch<AmenityInput, { success: boolean; message: string }>(
+      `/amenities/${encodeURIComponent(id)}`,
+      body,
+    );
   }
 
   deleteAmenity(id: string) {

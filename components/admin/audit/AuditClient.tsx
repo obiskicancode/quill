@@ -20,13 +20,13 @@ import {
 } from '@/components/ui/pagination';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useAuditDetail, useAuditLogs } from '@/hooks/services/admin/use-audit';
-import { AuditQuerySchema } from '@/schemas/audit-admin.schema';
+import { AuditQuerySchema } from '@/schemas/audit.schema';
 import type {
   AuditDetailResponse,
   AuditListItem,
   AuditPreset,
   AuditQueryParams,
-} from '@/types/audit-admin.types';
+} from '@/types/audit.types';
 
 import { AuditDetailDrawer } from './AuditDetailDrawer';
 import { AuditTable } from './AuditTable';

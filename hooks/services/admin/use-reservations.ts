@@ -10,18 +10,18 @@ import {
 import { adminService } from '@/app/api/services/admin.service';
 import { queryKeys } from '@/hooks/services/query-keys';
 import type {
-  AdminApproveDeclineInput,
-  AdminCancelInput,
-  AdminChangeDatesInput,
-  AdminChangeDatesQuoteInput,
-  AdminEditDetailsInput,
-  AdminNoShowInput,
-  AdminReassignRoomInput,
-  AdminRecordPaymentInput,
-  AdminRefundInput,
-  AdminResendConfirmationInput,
-  AdminVerifyTransferInput,
+  ApproveDeclineInput,
+  CancelInput,
+  changeDatesInput,
+  ChangeDatesQuoteInput,
+  EditDetailsInput,
+  NoShowInput,
+  ReassignRoomInput,
+  RecordPaymentInput,
+  RefundInput,
+  ResendConfirmationInput,
   ReservationDetail,
+  VerifyTransferInput,
 } from '@/types/reservation.types';
 
 export type CancellationPreviewData = Awaited<
@@ -106,7 +106,7 @@ export function useCancellationPreview(id: string, enabled: boolean) {
 
 export function useChangeDatesQuote(
   id: string,
-  input: AdminChangeDatesQuoteInput,
+  input: ChangeDatesQuoteInput,
   enabled: boolean,
 ) {
   return useQuery({
@@ -156,7 +156,7 @@ export function useApproveDeclineReservation() {
       body,
     }: {
       id: string;
-      body: AdminApproveDeclineInput;
+      body: ApproveDeclineInput;
     }): Promise<ReservationDetail> => {
       const response =
         body.action === 'approve'
@@ -177,7 +177,7 @@ export function useCancelReservation() {
       body,
     }: {
       id: string;
-      body: AdminCancelInput;
+      body: CancelInput;
     }): Promise<ReservationDetail> => {
       const response = await adminService.cancelReservation(id, body);
       return response.data;
@@ -195,7 +195,7 @@ export function useChangeReservationDates() {
       body,
     }: {
       id: string;
-      body: AdminChangeDatesInput;
+      body: changeDatesInput;
     }): Promise<ReservationDetail> => {
       const response = await adminService.changeDates(id, body);
       return response.data;
@@ -213,7 +213,7 @@ export function useUpdateReservationDetails() {
       body,
     }: {
       id: string;
-      body: AdminEditDetailsInput;
+      body: EditDetailsInput;
     }): Promise<ReservationDetail> => {
       const response = await adminService.updateDetails(id, body);
       return response.data;
@@ -231,7 +231,7 @@ export function useMarkReservationNoShow() {
       body,
     }: {
       id: string;
-      body: AdminNoShowInput;
+      body: NoShowInput;
     }): Promise<ReservationDetail> => {
       const response = await adminService.markNoShow(id, body);
       return response.data;
@@ -249,7 +249,7 @@ export function useReassignReservationRoom() {
       body,
     }: {
       id: string;
-      body: AdminReassignRoomInput;
+      body: ReassignRoomInput;
     }): Promise<ReservationDetail> => {
       const response = await adminService.reassignRoom(id, body);
       return response.data;
@@ -267,7 +267,7 @@ export function useRecordReservationPayment() {
       body,
     }: {
       id: string;
-      body: AdminRecordPaymentInput;
+      body: RecordPaymentInput;
     }): Promise<ReservationDetail> => {
       const response = await adminService.recordPayment(id, body);
       return response.data;
@@ -285,7 +285,7 @@ export function useIssueReservationRefund() {
       body,
     }: {
       id: string;
-      body: AdminRefundInput;
+      body: RefundInput;
     }): Promise<ReservationDetail> => {
       const response = await adminService.issueRefund(id, body);
       return response.data;
@@ -305,7 +305,7 @@ export function useVerifyReservationTransfer() {
     }: {
       id: string;
       paymentId: string;
-      body: AdminVerifyTransferInput;
+      body: VerifyTransferInput;
     }): Promise<ReservationDetail> => {
       const response =
         body.action === 'verify'
@@ -326,7 +326,7 @@ export function useResendReservationConfirmation() {
       body,
     }: {
       id: string;
-      body: AdminResendConfirmationInput;
+      body: ResendConfirmationInput;
     }) => {
       const response = await adminService.resendConfirmation(id, body);
       return response.data;

@@ -33,7 +33,7 @@ import type {
   StaffDetailResponse,
   StaffListItem,
   StaffQueryParams,
-} from '@/types/staff-admin.types';
+} from '@/types/staff.types';
 
 import { InviteStaffDialog } from './InviteStaffDialog';
 import { StaffDetailSheet } from './StaffDetailSheet';

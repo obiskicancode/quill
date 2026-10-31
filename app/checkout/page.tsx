@@ -73,6 +73,7 @@ export default async function CheckoutPage({
   return (
     <CheckoutShell>
       <CheckoutFlow
+        key={`${room.slug}:${q.checkIn}:${q.checkOut}:${q.adults}:${q.children}`}
         room={{
           slug: room.slug,
           name: room.name,

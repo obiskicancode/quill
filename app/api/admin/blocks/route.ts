@@ -12,8 +12,8 @@ import {
 } from '@/lib/db/repositories/calendar-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import {
-  adminBlocksListQuerySchema,
-  adminCreateBlockSchema,
+  blocksListQuerySchema,
+  createBlockSchema,
 } from '@/schemas/calendar.schema';
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const url = new URL(request.url);
-  const parsed = adminBlocksListQuerySchema.safeParse({
+  const parsed = blocksListQuerySchema.safeParse({
     page: url.searchParams.get('page') || undefined,
     pageSize: url.searchParams.get('pageSize') || undefined,
     roomTypeId: url.searchParams.get('roomTypeId') || undefined,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => null);
-  const parsed = adminCreateBlockSchema.safeParse(body);
+  const parsed = createBlockSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

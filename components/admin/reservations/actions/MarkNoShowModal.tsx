@@ -16,13 +16,13 @@ import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useMarkReservationNoShow } from '@/hooks/services/admin/use-reservations';
 import { formatNaira } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import { adminNoShowSchema } from '@/schemas/reservation.schema';
+import { noShowSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
 
 function makeNoShowFormSchema(netPaidNaira: number) {
-  return adminNoShowSchema
+  return noShowSchema
     .omit({ version: true, idempotencyKey: true, refundAmountMinor: true })
     .extend({
       overrideRefund: z.boolean(),

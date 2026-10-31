@@ -5,7 +5,7 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 
-export const adminBlockCheckSchema = z
+export const blockCheckSchema = z
   .object({
     roomIds: z
       .array(z.string().uuid())
@@ -23,9 +23,9 @@ export const adminBlockCheckSchema = z
     path: ['endDate'],
   });
 
-export type AdminBlockCheckInput = z.infer<typeof adminBlockCheckSchema>;
+export type BlockCheckInput = z.infer<typeof blockCheckSchema>;
 
-export const adminCreateBlockSchema = z
+export const createBlockSchema = z
   .object({
     roomIds: z
       .array(z.string().uuid())
@@ -46,9 +46,9 @@ export const adminCreateBlockSchema = z
     path: ['endDate'],
   });
 
-export type AdminCreateBlockInput = z.infer<typeof adminCreateBlockSchema>;
+export type CreateBlockInput = z.infer<typeof createBlockSchema>;
 
-export const adminUpdateBlockSchema = z
+export const updateBlockSchema = z
   .object({
     roomId: z.string().uuid(ERROR_MESSAGES.INVALID_ROOM_ID),
     startDate: z
@@ -67,9 +67,9 @@ export const adminUpdateBlockSchema = z
     path: ['endDate'],
   });
 
-export type AdminUpdateBlockInput = z.infer<typeof adminUpdateBlockSchema>;
+export type UpdateBlockInput = z.infer<typeof updateBlockSchema>;
 
-export const adminBlocksListQuerySchema = z.object({
+export const blocksListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(10).max(100).default(25),
   roomTypeId: z.string().uuid().optional(),
@@ -80,11 +80,9 @@ export const adminBlocksListQuerySchema = z.object({
     .default('all'),
 });
 
-export type AdminBlocksListQueryInput = z.infer<
-  typeof adminBlocksListQuerySchema
->;
+export type BlocksListQueryInput = z.infer<typeof blocksListQuerySchema>;
 
-export const adminCalendarQuerySchema = z.object({
+export const calendarQuerySchema = z.object({
   from: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -99,7 +97,7 @@ export const adminCalendarQuerySchema = z.object({
   roomTypeId: z.string().uuid().optional(),
 });
 
-export const adminCalendarDayQuerySchema = z.object({
+export const calendarDayQuerySchema = z.object({
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)

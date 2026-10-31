@@ -26,12 +26,12 @@ import {
 } from '@/hooks/services/admin/use-reservations';
 import { formatNaira } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import { adminCancelSchema } from '@/schemas/reservation.schema';
+import { cancelSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
 
-const cancelFormSchema = adminCancelSchema
+const cancelFormSchema = cancelSchema
   .omit({ version: true, idempotencyKey: true, refundAmountMinor: true })
   .extend({
     refundNaira: z.string().refine((value) => {

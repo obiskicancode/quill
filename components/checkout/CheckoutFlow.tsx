@@ -233,7 +233,7 @@ export function CheckoutFlow({
     [room.slug, stay, extraBed, quantities],
   );
 
-  // --- live re-quote when extras or the extra bed change ---
+  // ive re-quote when extras or the extra bed change
   const firstRun = useRef(true);
   useEffect(() => {
     if (firstRun.current) {
@@ -254,7 +254,7 @@ export function CheckoutFlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [extraBed, quantities]);
 
-  // --- polling after the guest returns from the provider (only the verified webhook changes the status) ---
+  // polling after the guest returns from the provider
   useEffect(() => {
     if (phase.name !== 'confirming' || !reservation) return;
     const timer = window.setTimeout(() => setTimedOut(true), POLL_TIMEOUT_MS);
@@ -295,7 +295,7 @@ export function CheckoutFlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
-  // --- validation ---
+  // validation
   const detailsValid = resumed || guestSchema.safeParse(values).success;
   const detailsErrors = Object.fromEntries(
     Object.entries(formErrors).map(([field, error]) => [field, error?.message]),
@@ -314,7 +314,7 @@ export function CheckoutFlow({
     void trigger(name);
   };
 
-  // --- actions ---
+  // actions
   function handleFailure(err: unknown) {
     const fail = err instanceof ServiceError ? err : null;
     const body = fail?.body;
@@ -323,6 +323,14 @@ export function CheckoutFlow({
       return;
     }
     payKey.current = null;
+    if (body?.code === ERROR_CODES.PAYMENT_INIT_FAILED) {
+      reserveKey.current = newKey();
+      setReservation(null);
+      setBank(null);
+      setPhase({ name: 'form' });
+      setNetError(body.message ?? ERROR_MESSAGES.PAYMENT_PROVIDER_UNREACHABLE);
+      return;
+    }
     if (body?.code === ERROR_CODES.VALIDATION && body.fieldErrors) {
       let termsMsg: string | undefined;
       for (const [key, message] of Object.entries(body.fieldErrors)) {
@@ -355,7 +363,7 @@ export function CheckoutFlow({
     });
     if (init.kind === 'redirect') {
       setPhase({ name: 'redirecting' });
-      window.location.assign(init.url); // the provider's hosted checkout. Confirmation comes only from its webhook.
+      window.location.assign(init.url);
       return;
     }
     payKey.current = null;

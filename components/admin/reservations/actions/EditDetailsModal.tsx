@@ -13,12 +13,12 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useUpdateReservationDetails } from '@/hooks/services/admin/use-reservations';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import { adminEditDetailsSchema } from '@/schemas/reservation.schema';
+import { editDetailsSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
 
-const editDetailsFormSchema = adminEditDetailsSchema.omit({
+const editDetailsFormSchema = editDetailsSchema.omit({
   version: true,
   idempotencyKey: true,
 });

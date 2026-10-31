@@ -10,7 +10,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import type { AuditDetailResponse } from '@/types/audit-admin.types';
+import type { AuditDetailResponse } from '@/types/audit.types';
 
 export function AuditDetailDrawer({
   audit,

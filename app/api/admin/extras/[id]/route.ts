@@ -6,9 +6,9 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import {
   deleteAdminExtra,
   updateAdminExtra,
-} from '@/lib/db/repositories/inventory-admin.repo';
+} from '@/lib/db/repositories/inventory.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { AdminExtraInputSchema } from '@/schemas/inventory.schema';
+import { ExtraInputSchema } from '@/schemas/inventory.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +21,7 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json().catch(() => null);
-  const parsed = AdminExtraInputSchema.safeParse(body);
+  const parsed = ExtraInputSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

@@ -7,7 +7,7 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import { hotelClock } from '@/lib/dates';
 import { getCalendarDayData } from '@/lib/db/repositories/calendar-admin.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminCalendarDayQuerySchema } from '@/schemas/calendar.schema';
+import { calendarDayQuerySchema } from '@/schemas/calendar.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const url = new URL(request.url);
-  const parsed = adminCalendarDayQuerySchema.safeParse({
+  const parsed = calendarDayQuerySchema.safeParse({
     date: url.searchParams.get('date') || undefined,
   });
 

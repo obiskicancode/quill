@@ -1,33 +1,33 @@
 import type {
-  AdminApproveDeclineInput as AdminApproveDeclineInputSchema,
-  AdminCancelInput as AdminCancelInputSchema,
-  AdminChangeDatesInput as AdminChangeDatesInputSchema,
-  AdminChangeDatesQuoteInput as AdminChangeDatesQuoteInputSchema,
-  AdminCreateReservationInput as AdminCreateReservationInputSchema,
-  AdminEditDetailsInput as AdminEditDetailsInputSchema,
-  AdminNoShowInput as AdminNoShowInputSchema,
-  AdminReassignRoomInput as AdminReassignRoomInputSchema,
-  AdminRecordPaymentInput as AdminRecordPaymentInputSchema,
-  AdminRefundInput as AdminRefundInputSchema,
-  AdminResendConfirmationInput as AdminResendConfirmationInputSchema,
-  AdminVerifyTransferInput as AdminVerifyTransferInputSchema,
+  ApproveDeclineInput as AdminApproveDeclineInputSchema,
+  CancelInput as AdminCancelInputSchema,
+  changeDatesInput as AdminChangeDatesInputSchema,
+  ChangeDatesQuoteInput as AdminChangeDatesQuoteInputSchema,
+  CreateReservationInput as AdminCreateReservationInputSchema,
+  EditDetailsInput as AdminEditDetailsInputSchema,
+  NoShowInput as AdminNoShowInputSchema,
+  ReassignRoomInput as AdminReassignRoomInputSchema,
+  RecordPaymentInput as AdminRecordPaymentInputSchema,
+  RefundInput as AdminRefundInputSchema,
+  ResendConfirmationInput as AdminResendConfirmationInputSchema,
+  VerifyTransferInput as AdminVerifyTransferInputSchema,
   ReservationsListQueryParams as ReservationsListQueryParamsSchema,
 } from '@/schemas/reservation.schema';
 import type { ActionGate } from '@/types/base.types';
 
 export type ReservationsListQueryParams = ReservationsListQueryParamsSchema;
-export type AdminCreateReservationInput = AdminCreateReservationInputSchema;
-export type AdminEditDetailsInput = AdminEditDetailsInputSchema;
-export type AdminReassignRoomInput = AdminReassignRoomInputSchema;
-export type AdminRecordPaymentInput = AdminRecordPaymentInputSchema;
-export type AdminVerifyTransferInput = AdminVerifyTransferInputSchema;
-export type AdminApproveDeclineInput = AdminApproveDeclineInputSchema;
-export type AdminChangeDatesQuoteInput = AdminChangeDatesQuoteInputSchema;
-export type AdminChangeDatesInput = AdminChangeDatesInputSchema;
-export type AdminCancelInput = AdminCancelInputSchema;
-export type AdminRefundInput = AdminRefundInputSchema;
-export type AdminNoShowInput = AdminNoShowInputSchema;
-export type AdminResendConfirmationInput = AdminResendConfirmationInputSchema;
+export type CreateReservationInput = AdminCreateReservationInputSchema;
+export type EditDetailsInput = AdminEditDetailsInputSchema;
+export type ReassignRoomInput = AdminReassignRoomInputSchema;
+export type RecordPaymentInput = AdminRecordPaymentInputSchema;
+export type VerifyTransferInput = AdminVerifyTransferInputSchema;
+export type ApproveDeclineInput = AdminApproveDeclineInputSchema;
+export type ChangeDatesQuoteInput = AdminChangeDatesQuoteInputSchema;
+export type changeDatesInput = AdminChangeDatesInputSchema;
+export type CancelInput = AdminCancelInputSchema;
+export type RefundInput = AdminRefundInputSchema;
+export type NoShowInput = AdminNoShowInputSchema;
+export type ResendConfirmationInput = AdminResendConfirmationInputSchema;
 
 export type AdminReservationStatus =
   | 'pending'

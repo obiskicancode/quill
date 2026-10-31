@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { todayISO } from '@/lib/dates';
-import { getPricingCalendar } from '@/lib/db/repositories/inventory-admin.repo';
+import { getPricingCalendar } from '@/lib/db/repositories/inventory.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 
 export const dynamic = 'force-dynamic';

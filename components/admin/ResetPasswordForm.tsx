@@ -17,17 +17,17 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useAdminResetPassword } from '@/hooks/services/admin/use-auth';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import {
-  adminResetPasswordSchema,
-  type AdminResetPasswordInput,
-} from '@/schemas/admin-auth.schema';
+  resetPasswordSchema,
+  type ResetPasswordInput,
+} from '@/schemas/auth.schema';
 
-type ResetPasswordOutput = z.output<typeof adminResetPasswordSchema>;
+type ResetPasswordOutput = z.output<typeof resetPasswordSchema>;
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
   const resetPassword = useAdminResetPassword();
-  const form = useForm<AdminResetPasswordInput, unknown, ResetPasswordOutput>({
-    resolver: zodResolver(adminResetPasswordSchema),
+  const form = useForm<ResetPasswordInput, unknown, ResetPasswordOutput>({
+    resolver: zodResolver(resetPasswordSchema),
     defaultValues: { token, password: '', confirmPassword: '' },
     mode: 'onBlur',
   });

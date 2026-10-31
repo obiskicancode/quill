@@ -22,19 +22,16 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useAdminVerify2fa } from '@/hooks/services/admin/use-auth';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import {
-  adminVerify2faSchema,
-  type AdminVerify2faInput,
-} from '@/schemas/admin-auth.schema';
+import { verify2faSchema, type Verify2faInput } from '@/schemas/auth.schema';
 
 type Mode = 'totp' | 'recovery';
-type VerifyOutput = z.output<typeof adminVerify2faSchema>;
+type VerifyOutput = z.output<typeof verify2faSchema>;
 
 export function VerifyForm({ next }: { next?: string }) {
   const router = useRouter();
   const verify2fa = useAdminVerify2fa();
-  const form = useForm<AdminVerify2faInput, unknown, VerifyOutput>({
-    resolver: zodResolver(adminVerify2faSchema),
+  const form = useForm<Verify2faInput, unknown, VerifyOutput>({
+    resolver: zodResolver(verify2faSchema),
     defaultValues: { code: '', mode: 'totp' },
     mode: 'onBlur',
   });

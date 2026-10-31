@@ -3,9 +3,9 @@ import { NextRequest } from 'next/server';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
-import { getAdminRoomTypeById } from '@/lib/db/repositories/inventory-admin.repo';
+import { getAdminRoomTypeById } from '@/lib/db/repositories/inventory.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminPricingQuoteSchema } from '@/schemas/quote.schema';
+import { pricingQuoteSchema } from '@/schemas/quote.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => null);
-  const parsed = adminPricingQuoteSchema.safeParse(body);
+  const parsed = pricingQuoteSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

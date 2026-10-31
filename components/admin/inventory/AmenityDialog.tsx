@@ -45,7 +45,7 @@ import {
   useUpdateAmenity,
 } from '@/hooks/services/admin/use-inventory';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import type { AdminAmenity, AdminAmenityInput } from '@/types/inventory.types';
+import type { AdminAmenity, AmenityInput } from '@/types/inventory.types';
 
 import { amenityFormSchema, keyify } from './form-schemas';
 
@@ -115,7 +115,7 @@ export function AmenityDialog({
   async function handleFormSubmit(input: AmenityFormOutput) {
     setErrorMessage(null);
 
-    const payload: AdminAmenityInput = {
+    const payload: AmenityInput = {
       ...input,
       sortOrder: amenity ? amenity.sortOrder : 0,
     };

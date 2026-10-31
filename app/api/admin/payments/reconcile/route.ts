@@ -2,10 +2,10 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { requireStepUp } from '@/lib/auth/step-up';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
-import { reconcilePaymentsBulkRepo } from '@/lib/db/repositories/payments-admin.repo';
+import { reconcilePaymentsBulk } from '@/lib/db/repositories/payments.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
-import { ReconcileBulkInputSchema } from '@/schemas/payments-admin.schema';
+import { ReconcileBulkInputSchema } from '@/schemas/payments.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await reconcilePaymentsBulkRepo({
+  const result = await reconcilePaymentsBulk({
     paymentIds: parsed.data.paymentIds,
     staffUserId: context.user.id,
     note: parsed.data.note,

@@ -9,35 +9,42 @@ import {
   setBookingManageCookie,
 } from '../lib/booking/session';
 import {
+  ADMIN_ACCESS_COOKIE_NAME,
+  ADMIN_ACCESS_TTL_SECONDS,
+  ADMIN_CSRF_COOKIE_NAME,
+  ADMIN_REFRESH_TTL_SECONDS,
+  BOOKING_ACCESS_COOKIE_NAME,
+  BOOKING_ACCESS_TTL_SECONDS,
+  BOOKING_MANAGE_COOKIE_NAME,
+  BOOKING_MANAGE_TTL_SECONDS,
   buildCookieOptions,
-  COOKIE_NAMES,
-  COOKIE_TTLS,
   CSRF_HEADER_NAME,
+  CSRF_TTL_SECONDS,
   setAdminAccessCookie,
-  setAdminCsrfCookie,
+  setCsrfCookie,
 } from '../lib/cookies';
 import {
-  checkAdminCsrf,
+  checkCsrf,
   checkManageCsrf,
-  createAdminCsrfToken,
+  createCsrfToken,
   createManageCsrfToken,
   sameOrigin,
-  verifyAdminCsrfToken,
+  verifyCsrfToken,
   verifyManageCsrfToken,
 } from '../lib/http/csrf';
 
 describe('CSRF & Cookie Unification Tests', () => {
   it('1. Centralized cookie constants and options builder work consistently', () => {
-    assert.strictEqual(COOKIE_NAMES.ADMIN_ACCESS, 'dea_admin_access');
-    assert.strictEqual(COOKIE_NAMES.ADMIN_CSRF, 'dea_admin_csrf');
-    assert.strictEqual(COOKIE_NAMES.BOOKING_ACCESS('BK-100'), 'dea_bk_BK-100');
-    assert.strictEqual(COOKIE_NAMES.BOOKING_MANAGE('BK-100'), 'dea_mg_BK-100');
+    assert.strictEqual(ADMIN_ACCESS_COOKIE_NAME, 'dea_admin_access');
+    assert.strictEqual(ADMIN_CSRF_COOKIE_NAME, 'dea_admin_csrf');
+    assert.strictEqual(BOOKING_ACCESS_COOKIE_NAME('BK-100'), 'dea_bk_BK-100');
+    assert.strictEqual(BOOKING_MANAGE_COOKIE_NAME('BK-100'), 'dea_mg_BK-100');
 
-    assert.strictEqual(COOKIE_TTLS.ADMIN_ACCESS, 900); // 15m
-    assert.strictEqual(COOKIE_TTLS.ADMIN_REFRESH, 604800); // 7d
-    assert.strictEqual(COOKIE_TTLS.ADMIN_CSRF, 7200); // 2h
-    assert.strictEqual(COOKIE_TTLS.BOOKING_ACCESS, 7200); // 2h
-    assert.strictEqual(COOKIE_TTLS.BOOKING_MANAGE, 1800); // 30m
+    assert.strictEqual(ADMIN_ACCESS_TTL_SECONDS, 900); // 15m
+    assert.strictEqual(ADMIN_REFRESH_TTL_SECONDS, 604800); // 7d
+    assert.strictEqual(CSRF_TTL_SECONDS, 7200); // 2h
+    assert.strictEqual(BOOKING_ACCESS_TTL_SECONDS, 7200); // 2h
+    assert.strictEqual(BOOKING_MANAGE_TTL_SECONDS, 1800); // 30m
 
     // Default options
     const defaults = buildCookieOptions();
@@ -56,12 +63,12 @@ describe('CSRF & Cookie Unification Tests', () => {
 
     setAdminAccessCookie(res, 'admin-token-xyz');
     assert.strictEqual(
-      res.cookies.get(COOKIE_NAMES.ADMIN_ACCESS)?.value,
+      res.cookies.get(ADMIN_ACCESS_COOKIE_NAME)?.value,
       'admin-token-xyz',
     );
 
-    setAdminCsrfCookie(res, 'csrf-token-123');
-    const csrfCookie = res.cookies.get(COOKIE_NAMES.ADMIN_CSRF);
+    setCsrfCookie(res, 'csrf-token-123');
+    const csrfCookie = res.cookies.get(ADMIN_CSRF_COOKIE_NAME);
     assert.strictEqual(csrfCookie?.value, 'csrf-token-123');
 
     setBookingAccessCookie(res, 'REF-999', 'booking-access-val');
@@ -185,13 +192,13 @@ describe('CSRF & Cookie Unification Tests', () => {
     assert.strictEqual(body.data.code, 'csrf');
   });
 
-  it('5. Admin CSRF token generation, signature validation, and checkAdminCsrf', async () => {
-    const validToken = createAdminCsrfToken();
-    assert.strictEqual(verifyAdminCsrfToken(validToken), true);
+  it('5. Admin CSRF token generation, signature validation, and checkCsrf', async () => {
+    const validToken = createCsrfToken();
+    assert.strictEqual(verifyCsrfToken(validToken), true);
 
-    // Alias createAdminCsrfToken works identically
-    const aliasToken = createAdminCsrfToken();
-    assert.strictEqual(verifyAdminCsrfToken(aliasToken), true);
+    // Alias createCsrfToken works identically
+    const aliasToken = createCsrfToken();
+    assert.strictEqual(verifyCsrfToken(aliasToken), true);
 
     // Valid admin request passing both cookie and header
     const validReq = new Request('http://localhost:3000/api/admin/auth/login', {
@@ -199,17 +206,17 @@ describe('CSRF & Cookie Unification Tests', () => {
       headers: {
         host: 'localhost:3000',
         origin: 'http://localhost:3000',
-        cookie: `${COOKIE_NAMES.ADMIN_CSRF}=${validToken}`,
+        cookie: `${ADMIN_CSRF_COOKIE_NAME}=${validToken}`,
         [CSRF_HEADER_NAME]: validToken,
       },
     });
-    assert.strictEqual(checkAdminCsrf(validReq), null);
-    // Alias checkAdminCsrf works identically
-    assert.strictEqual(checkAdminCsrf(validReq), null);
+    assert.strictEqual(checkCsrf(validReq), null);
+    // Alias checkCsrf works identically
+    assert.strictEqual(checkCsrf(validReq), null);
 
     // Forged token
     const forgedToken = 'fake.token.signature';
-    assert.strictEqual(verifyAdminCsrfToken(forgedToken), false);
+    assert.strictEqual(verifyCsrfToken(forgedToken), false);
 
     const forgedReq = new Request(
       'http://localhost:3000/api/admin/auth/login',
@@ -218,18 +225,18 @@ describe('CSRF & Cookie Unification Tests', () => {
         headers: {
           host: 'localhost:3000',
           origin: 'http://localhost:3000',
-          cookie: `${COOKIE_NAMES.ADMIN_CSRF}=${forgedToken}`,
+          cookie: `${ADMIN_CSRF_COOKIE_NAME}=${forgedToken}`,
           [CSRF_HEADER_NAME]: forgedToken,
         },
       },
     );
-    const forgedRes = checkAdminCsrf(forgedReq);
+    const forgedRes = checkCsrf(forgedReq);
     assert.ok(forgedRes);
     assert.strictEqual(forgedRes.status, 403);
 
     // Expired token
-    const expiredToken = createAdminCsrfToken(-30);
-    assert.strictEqual(verifyAdminCsrfToken(expiredToken), false);
+    const expiredToken = createCsrfToken(-30);
+    assert.strictEqual(verifyCsrfToken(expiredToken), false);
 
     // Mismatched header and cookie
     const mismatchReq = new Request(
@@ -239,12 +246,12 @@ describe('CSRF & Cookie Unification Tests', () => {
         headers: {
           host: 'localhost:3000',
           origin: 'http://localhost:3000',
-          cookie: `${COOKIE_NAMES.ADMIN_CSRF}=${validToken}`,
+          cookie: `${ADMIN_CSRF_COOKIE_NAME}=${validToken}`,
           [CSRF_HEADER_NAME]: 'another-token',
         },
       },
     );
-    const mismatchRes = checkAdminCsrf(mismatchReq);
+    const mismatchRes = checkCsrf(mismatchReq);
     assert.ok(mismatchRes);
     assert.strictEqual(mismatchRes.status, 403);
   });

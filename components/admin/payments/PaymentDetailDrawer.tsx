@@ -28,7 +28,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
-import type { PaymentDetailResponse } from '@/types/payments-admin.types';
+import type { PaymentDetailResponse } from '@/types/payments.types';
 
 function formatNaira(minor: number): string {
   return `₦${(minor / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;

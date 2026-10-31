@@ -6,9 +6,9 @@ import {
   getIdempotencyRecord,
   setIdempotency,
 } from '@/lib/db/repositories/idempotency.repo';
-import { verifyBankTransfer } from '@/lib/db/repositories/reservations-admin.repo';
+import { verifyBankTransfer } from '@/lib/db/repositories/reservations.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { adminVerifyTransferSchema } from '@/schemas/reservation.schema';
+import { verifyTransferSchema } from '@/schemas/reservation.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +27,7 @@ export async function POST(
   }
 
   const body = await request.json().catch(() => null);
-  const parsed = adminVerifyTransferSchema.safeParse(body);
+  const parsed = verifyTransferSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

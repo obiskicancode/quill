@@ -21,13 +21,13 @@ import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useRecordReservationPayment } from '@/hooks/services/admin/use-reservations';
 import { formatNaira } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import { adminRecordPaymentSchema } from '@/schemas/reservation.schema';
+import { recordPaymentSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
 
 function makeRecordPaymentFormSchema(maxNaira: number) {
-  return adminRecordPaymentSchema
+  return recordPaymentSchema
     .omit({ version: true, idempotencyKey: true, amountMinor: true })
     .extend({
       amountNaira: z.string().superRefine((value, ctx) => {

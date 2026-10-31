@@ -26,12 +26,12 @@ import {
 } from '@/hooks/services/admin/use-reservations';
 import { formatNaira } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import { adminChangeDatesSchema } from '@/schemas/reservation.schema';
+import { changeDatesSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
 
-const changeDatesFormSchema = adminChangeDatesSchema
+const changeDatesFormSchema = changeDatesSchema
   .omit({ version: true, idempotencyKey: true })
   .extend({
     checkIn: z

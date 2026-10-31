@@ -2,13 +2,10 @@ import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { requireStepUp } from '@/lib/auth/step-up';
-import {
-  getStaffDetailRepo,
-  updateStaffRepo,
-} from '@/lib/db/repositories/staff-admin.repo';
+import { getStaffDetail, updateStaff } from '@/lib/db/repositories/staff.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp } from '@/lib/http/request';
-import { StaffUpdateInputSchema } from '@/schemas/staff-admin.schema';
+import { StaffUpdateInputSchema } from '@/schemas/staff.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +17,7 @@ export async function GET(
   if (!guard.ok) return guard.response;
 
   const { id } = await params;
-  const detail = await getStaffDetailRepo(id);
+  const detail = await getStaffDetail(id);
 
   if (!detail) {
     return apiFail(404, ERROR_MESSAGES.STAFF_MEMBER_NOT_FOUND, undefined, {
@@ -66,7 +63,7 @@ export async function PATCH(
     return stepUp.response;
   }
 
-  const result = await updateStaffRepo({
+  const result = await updateStaff({
     id,
     input: parsed.data,
     actor: context.user,

@@ -38,7 +38,7 @@ import {
 import { addDays, formatShort, nightsBetween } from '@/lib/dates';
 import type { AdminRole } from '@/types/auth.types';
 import type {
-  AdminBlockCheckInput,
+  BlockCheckInput,
   CalendarBlockBar,
   CalendarRoom,
 } from '@/types/calendar.types';
@@ -200,8 +200,9 @@ export function BlockModal({
   const isBackdated = Boolean(startDate) && startDate < today;
   const roomIdsKey = selectedRoomIds.join('|');
 
-  const [conflictInput, setConflictInput] =
-    useState<AdminBlockCheckInput | null>(null);
+  const [conflictInput, setConflictInput] = useState<BlockCheckInput | null>(
+    null,
+  );
   const conflictQuery = useBlockConflicts(conflictInput, isOpen);
   const conflicts = conflictQuery.data?.conflicts ?? [];
   const checking = conflictQuery.isFetching;

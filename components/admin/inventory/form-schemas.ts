@@ -3,16 +3,16 @@ import { z } from 'zod';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { nairaToMinor, percentageToBps } from '@/lib/rate-resolution';
 import {
-  AdminAmenityInputSchema,
-  AdminExtraInputSchema,
-  AdminImageUpdateSchema,
-  AdminRateRuleFieldsSchema,
-  AdminRoomTypeInputSchema,
-  AdminRoomUnitInputSchema,
+  AmenityInputSchema,
+  ExtraInputSchema,
+  ImageUpdateSchema,
   RateAdjustmentTypeSchema,
+  RateRuleFieldsSchema,
   RoomStatusSchema,
+  RoomTypeInputSchema,
+  RoomUnitInputSchema,
 } from '@/schemas/inventory.schema';
-import { adminPricingQuoteSchema } from '@/schemas/quote.schema';
+import { pricingQuoteSchema } from '@/schemas/quote.schema';
 
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -35,7 +35,7 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-export const amenityFormSchema = AdminAmenityInputSchema.omit({
+export const amenityFormSchema = AmenityInputSchema.omit({
   sortOrder: true,
 })
   .extend({
@@ -63,7 +63,7 @@ export const amenityFormSchema = AdminAmenityInputSchema.omit({
     description: data.description.trim() || null,
   }));
 
-export const extraFormSchema = AdminExtraInputSchema.omit({
+export const extraFormSchema = ExtraInputSchema.omit({
   sortOrder: true,
   priceMinor: true,
 })
@@ -94,7 +94,7 @@ export const extraFormSchema = AdminExtraInputSchema.omit({
     description: data.description.trim() || null,
   }));
 
-export const rateRuleFormSchema = AdminRateRuleFieldsSchema.omit({
+export const rateRuleFormSchema = RateRuleFieldsSchema.omit({
   adjustmentValue: true,
   minNights: true,
   maxNights: true,
@@ -150,7 +150,7 @@ export const rateRuleFormSchema = AdminRateRuleFieldsSchema.omit({
     };
   });
 
-export const roomTypeDetailsFormSchema = AdminRoomTypeInputSchema.omit({
+export const roomTypeDetailsFormSchema = RoomTypeInputSchema.omit({
   sizeSqm: true,
   extraBedPriceMinor: true,
   basePriceMinor: true,
@@ -194,7 +194,7 @@ export const roomTypeDetailsFormSchema = AdminRoomTypeInputSchema.omit({
     };
   });
 
-export const roomUnitFormSchema = AdminRoomUnitInputSchema.omit({
+export const roomUnitFormSchema = RoomUnitInputSchema.omit({
   isActive: true,
 })
   .extend({
@@ -226,7 +226,7 @@ export const photoUploadFormSchema = z.object({
   caption: z.string().default(''),
 });
 
-export const photoEditFormSchema = AdminImageUpdateSchema.omit({
+export const photoEditFormSchema = ImageUpdateSchema.omit({
   isCover: true,
   sortOrder: true,
 })
@@ -243,7 +243,7 @@ export const photoEditFormSchema = AdminImageUpdateSchema.omit({
     caption: data.caption.trim() || null,
   }));
 
-export const priceQuoteFormSchema = adminPricingQuoteSchema
+export const priceQuoteFormSchema = pricingQuoteSchema
   .omit({ roomTypeId: true })
   .extend({
     adults: z.number().int().min(1).default(2),

@@ -51,8 +51,8 @@ import { addDays, nightsBetween } from '@/lib/dates';
 import { formatNaira } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import {
-  adminCreateReservationSchema,
-  type AdminCreateReservationInput,
+  createReservationSchema,
+  type CreateReservationInput,
 } from '@/schemas/reservation.schema';
 import type { AdminRole } from '@/types/auth.types';
 import type {
@@ -67,7 +67,7 @@ interface NewReservationClientProps {
   today: string;
 }
 
-const newReservationFormSchema = adminCreateReservationSchema
+const newReservationFormSchema = createReservationSchema
   .omit({
     idempotencyKey: true,
     paymentChoice: true,
@@ -350,7 +350,7 @@ export function NewReservationClient({
 
       const numVal = input.discount?.value ?? Number.NaN;
 
-      let paymentChoice: AdminCreateReservationInput['paymentChoice'];
+      let paymentChoice: CreateReservationInput['paymentChoice'];
       if (input.paymentMode === 'hold') {
         paymentChoice = { mode: 'hold', holdHours: input.holdHours };
       } else if (input.paymentMode === 'record_payment') {

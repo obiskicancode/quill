@@ -5,9 +5,9 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import {
   createAdminRateRule,
   listAdminRateRules,
-} from '@/lib/db/repositories/inventory-admin.repo';
+} from '@/lib/db/repositories/inventory.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
-import { AdminRateRuleInputSchema } from '@/schemas/inventory.schema';
+import { RateRuleInputSchema } from '@/schemas/inventory.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
   if (!guard.ok) return guard.response;
 
   const body = await request.json().catch(() => null);
-  const parsed = AdminRateRuleInputSchema.safeParse(body);
+  const parsed = RateRuleInputSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,

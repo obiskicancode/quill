@@ -15,7 +15,7 @@ import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useVerifyReservationTransfer } from '@/hooks/services/admin/use-reservations';
 import { formatNaira } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
-import { adminVerifyTransferSchema } from '@/schemas/reservation.schema';
+import { verifyTransferSchema } from '@/schemas/reservation.schema';
 import type {
   ReservationDetail,
   ReservationPaymentItem,
@@ -23,7 +23,7 @@ import type {
 
 import { ActionModal } from './ActionModal';
 
-const verifyTransferFormSchema = adminVerifyTransferSchema
+const verifyTransferFormSchema = verifyTransferSchema
   .omit({ version: true, idempotencyKey: true, amountMinor: true })
   .extend({
     verifiedNaira: z.string(),

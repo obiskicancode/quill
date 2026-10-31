@@ -19,18 +19,18 @@ import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useUpdateProfile } from '@/hooks/services/admin/use-account';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import {
-  adminProfileSchema,
+  profileSchema,
   type AdminProfileInput,
-} from '@/schemas/admin-account.schema';
-import type { AdminStaff } from '@/types/admin.types';
+} from '@/schemas/account.schema';
+import type { Staff } from '@/types/staff.types';
 
-type ProfileOutput = z.output<typeof adminProfileSchema>;
+type ProfileOutput = z.output<typeof profileSchema>;
 
-export function ProfilePanel({ staff }: { staff: AdminStaff }) {
+export function ProfilePanel({ staff }: { staff: Staff }) {
   const router = useRouter();
   const updateProfile = useUpdateProfile();
   const form = useForm<AdminProfileInput, unknown, ProfileOutput>({
-    resolver: zodResolver(adminProfileSchema),
+    resolver: zodResolver(profileSchema),
     defaultValues: {
       firstName: staff.firstName,
       lastName: staff.lastName,

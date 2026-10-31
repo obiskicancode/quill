@@ -3,11 +3,11 @@ import { NextResponse } from 'next/server';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
-import { listPaymentsRepo } from '@/lib/db/repositories/payments-admin.repo';
+import { listPayments } from '@/lib/db/repositories/payments.repo';
 import { generateCsvStream } from '@/lib/export/csv';
 import { apiFail } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
-import { PaymentsQuerySchema } from '@/schemas/payments-admin.schema';
+import { PaymentsQuerySchema } from '@/schemas/payments.schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     });
   }
 
-  const result = await listPaymentsRepo({
+  const result = await listPayments({
     ...parsed.data,
     pageSize: 10_000,
     page: 1,

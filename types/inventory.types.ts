@@ -1,31 +1,31 @@
 import type {
-  AdminAmenityInput as AdminAmenityInputSchema,
-  AdminExtraInput as AdminExtraInputSchema,
-  AdminImageUpdate as AdminImageUpdateSchema,
-  AdminRateRuleInput as AdminRateRuleInputSchema,
-  AdminRoomTypeInput as AdminRoomTypeInputSchema,
-  AdminRoomUnitInput as AdminRoomUnitInputSchema,
+  AmenityInput as AmenityInputSchema,
+  ExtraInput as ExtraInputSchema,
   ExtraPricingUnit as ExtraPricingUnitSchema,
+  ImageUpdate as ImageUpdateSchema,
   RateAdjustmentType as RateAdjustmentTypeSchema,
+  RateRuleInput as RateRuleInputSchema,
   ReorderItemsInput as ReorderItemsInputSchema,
   RoomStatus as RoomStatusSchema,
+  RoomTypeInput as RoomTypeInputSchema,
+  RoomUnitInput as RoomUnitInputSchema,
   UpdateRoomTypeAmenities as UpdateRoomTypeAmenitiesSchema,
 } from '@/schemas/inventory.schema';
 
 export type RoomStatus = RoomStatusSchema;
 export type RateAdjustmentType = RateAdjustmentTypeSchema;
 export type ExtraPricingUnit = ExtraPricingUnitSchema;
-export type AdminRoomTypeInput = AdminRoomTypeInputSchema;
-export type AdminRoomUnitInput = AdminRoomUnitInputSchema;
-export type AdminImageUpdate = AdminImageUpdateSchema;
-export type AdminRateRuleInput = AdminRateRuleInputSchema;
-export type AdminExtraInput = AdminExtraInputSchema;
-export type AdminAmenityInput = AdminAmenityInputSchema;
+export type RoomTypeInput = RoomTypeInputSchema;
+export type RoomUnitInput = RoomUnitInputSchema;
+export type ImageUpdate = ImageUpdateSchema;
+export type RateRuleInput = RateRuleInputSchema;
+export type ExtraInput = ExtraInputSchema;
+export type AmenityInput = AmenityInputSchema;
 export type ReorderItemsInput = ReorderItemsInputSchema;
 export type UpdateRoomTypeAmenities = UpdateRoomTypeAmenitiesSchema;
 
 // TypeScript Interfaces for entities and API responses
-export interface RateRuleInput {
+export interface RateRuleLike {
   id: string;
   roomTypeId: string | null;
   name: string;

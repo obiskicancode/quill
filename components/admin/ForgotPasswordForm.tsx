@@ -17,21 +17,19 @@ import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useAdminForgotPassword } from '@/hooks/services/admin/use-auth';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import {
-  adminForgotPasswordSchema,
-  type AdminForgotPasswordInput,
-} from '@/schemas/admin-auth.schema';
+  forgotPasswordSchema,
+  type ForgotPasswordInput,
+} from '@/schemas/auth.schema';
 
-type ForgotPasswordOutput = z.output<typeof adminForgotPasswordSchema>;
+type ForgotPasswordOutput = z.output<typeof forgotPasswordSchema>;
 
 export function ForgotPasswordForm() {
   const forgotPassword = useAdminForgotPassword();
-  const form = useForm<AdminForgotPasswordInput, unknown, ForgotPasswordOutput>(
-    {
-      resolver: zodResolver(adminForgotPasswordSchema),
-      defaultValues: { email: '' },
-      mode: 'onBlur',
-    },
-  );
+  const form = useForm<ForgotPasswordInput, unknown, ForgotPasswordOutput>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: '' },
+    mode: 'onBlur',
+  });
   const {
     formState: { errors, isSubmitting },
     register,

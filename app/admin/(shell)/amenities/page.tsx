@@ -1,7 +1,7 @@
 import { AmenitiesClient } from '@/components/admin/inventory/AmenitiesClient';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { requireAdminPage } from '@/lib/auth/guards';
-import { listAdminAmenitiesWithUsage } from '@/lib/db/repositories/inventory-admin.repo';
+import { listAdminAmenitiesWithUsage } from '@/lib/db/repositories/inventory.repo';
 
 export const metadata = {
   title: 'Amenities Catalogue | Admin',

@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { adminService } from '@/app/api/services/admin.service';
 import { queryKeys } from '@/hooks/services/query-keys';
-import type { AdminCreateReservationInput } from '@/schemas/reservation.schema';
+import type { CreateReservationInput } from '@/schemas/reservation.schema';
 import type { CheckoutQuoteResponse } from '@/types/checkout.types';
 import type {
   ReservationDetail,
@@ -164,7 +164,7 @@ export function useReservationQuote(input: ReservationQuoteInput | null) {
 export function useCreateReservation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: AdminCreateReservationInput) => {
+    mutationFn: async (input: CreateReservationInput) => {
       const response = await adminService.createReservation(input);
       return response.data;
     },

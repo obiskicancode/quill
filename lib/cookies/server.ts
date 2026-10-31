@@ -1,65 +1,75 @@
 import type { NextResponse } from 'next/server';
 
-import { buildCookieOptions, COOKIE_NAMES, COOKIE_TTLS } from './constants';
+import {
+  ADMIN_ACCESS_COOKIE_NAME,
+  ADMIN_ACCESS_TTL_SECONDS,
+  ADMIN_CHALLENGE_COOKIE_NAME,
+  ADMIN_CSRF_COOKIE_NAME,
+  ADMIN_REFRESH_COOKIE_NAME,
+  ADMIN_REFRESH_TTL_SECONDS,
+  buildCookieOptions,
+  CHALLENGE_TTL_SECONDS,
+  CSRF_TTL_SECONDS,
+} from './constants';
 
 export function setAdminAccessCookie(
   response: NextResponse,
   token: string,
-  maxAge: number = COOKIE_TTLS.ADMIN_ACCESS,
+  maxAge: number = ADMIN_ACCESS_TTL_SECONDS,
 ): void {
   response.cookies.set(
-    COOKIE_NAMES.ADMIN_ACCESS,
+    ADMIN_ACCESS_COOKIE_NAME,
     token,
     buildCookieOptions({ maxAge }),
   );
 }
 
-export function setAdminRefreshCookie(
+export function setRefreshCookie(
   response: NextResponse,
   token: string,
-  maxAge: number = COOKIE_TTLS.ADMIN_REFRESH,
+  maxAge: number = ADMIN_REFRESH_TTL_SECONDS,
 ): void {
   response.cookies.set(
-    COOKIE_NAMES.ADMIN_REFRESH,
+    ADMIN_REFRESH_COOKIE_NAME,
     token,
     buildCookieOptions({ maxAge }),
   );
 }
 
-export function setAdminChallengeCookie(
+export function setChallengeCookie(
   response: NextResponse,
   token: string,
-  maxAge: number = COOKIE_TTLS.ADMIN_CHALLENGE,
+  maxAge: number = CHALLENGE_TTL_SECONDS,
 ): void {
   response.cookies.set(
-    COOKIE_NAMES.ADMIN_CHALLENGE,
+    ADMIN_CHALLENGE_COOKIE_NAME,
     token,
     buildCookieOptions({ maxAge }),
   );
 }
 
-export function clearAdminChallengeCookie(response: NextResponse): void {
+export function clearChallengeCookie(response: NextResponse): void {
   response.cookies.set(
-    COOKIE_NAMES.ADMIN_CHALLENGE,
+    ADMIN_CHALLENGE_COOKIE_NAME,
     '',
     buildCookieOptions({ maxAge: 0 }),
   );
 }
 
-export function clearAdminAuthCookies(response: NextResponse): void {
-  for (const name of [COOKIE_NAMES.ADMIN_ACCESS, COOKIE_NAMES.ADMIN_REFRESH]) {
+export function clearAuthCookies(response: NextResponse): void {
+  for (const name of [ADMIN_ACCESS_COOKIE_NAME, ADMIN_REFRESH_COOKIE_NAME]) {
     response.cookies.set(name, '', buildCookieOptions({ maxAge: 0 }));
   }
-  clearAdminChallengeCookie(response);
+  clearChallengeCookie(response);
 }
 
-export function setAdminCsrfCookie(
+export function setCsrfCookie(
   response: NextResponse,
   token: string,
-  maxAge: number = COOKIE_TTLS.ADMIN_CSRF,
+  maxAge: number = CSRF_TTL_SECONDS,
 ): void {
   response.cookies.set(
-    COOKIE_NAMES.ADMIN_CSRF,
+    ADMIN_CSRF_COOKIE_NAME,
     token,
     buildCookieOptions({
       httpOnly: false, // Must be readable by client scripts for CSRF header injection

@@ -37,7 +37,7 @@ import type {
   PaymentDetailResponse,
   PaymentListItem,
   PaymentsQueryParams,
-} from '@/types/payments-admin.types';
+} from '@/types/payments.types';
 
 import { ManualRefundsTab } from './ManualRefundsTab';
 import { PaymentDetailDrawer } from './PaymentDetailDrawer';

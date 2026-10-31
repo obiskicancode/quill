@@ -31,16 +31,15 @@ import {
 } from '@/hooks/services/admin/use-account';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import {
-  adminConfirm2faSchema,
-  adminDisable2faSchema,
-  type AdminConfirm2faInput,
-  type AdminDisable2faInput,
-} from '@/schemas/admin-auth.schema';
-import type { AdminMfaSetupResponse } from '@/types/admin.types';
-import type { AdminRole } from '@/types/auth.types';
+  confirm2faSchema,
+  disable2faSchema,
+  type Confirm2faInput,
+  type Disable2faInput,
+} from '@/schemas/auth.schema';
+import type { AdminRole, MfaSetupResponse } from '@/types/auth.types';
 
-type ConfirmOutput = z.output<typeof adminConfirm2faSchema>;
-type PasswordOutput = z.output<typeof adminDisable2faSchema>;
+type ConfirmOutput = z.output<typeof confirm2faSchema>;
+type PasswordOutput = z.output<typeof disable2faSchema>;
 
 export function TwoFactorPanel({
   enabled,
@@ -58,18 +57,18 @@ export function TwoFactorPanel({
   const confirm2fa = useConfirm2fa();
   const disable2fa = useDisable2fa();
   const rotateCodes = useRotateRecoveryCodes();
-  const confirmForm = useForm<AdminConfirm2faInput, unknown, ConfirmOutput>({
-    resolver: zodResolver(adminConfirm2faSchema),
+  const confirmForm = useForm<Confirm2faInput, unknown, ConfirmOutput>({
+    resolver: zodResolver(confirm2faSchema),
     defaultValues: { code: '' },
     mode: 'onBlur',
   });
-  const passwordForm = useForm<AdminDisable2faInput, unknown, PasswordOutput>({
-    resolver: zodResolver(adminDisable2faSchema),
+  const passwordForm = useForm<Disable2faInput, unknown, PasswordOutput>({
+    resolver: zodResolver(disable2faSchema),
     defaultValues: { password: '' },
     mode: 'onBlur',
   });
   const [isEnabled, setIsEnabled] = useState(enabled);
-  const [setup, setSetup] = useState<AdminMfaSetupResponse | null>(null);
+  const [setup, setSetup] = useState<MfaSetupResponse | null>(null);
   const [codes, setCodes] = useState<string[] | null>(null);
   const [setupError, setSetupError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);

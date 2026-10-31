@@ -1,11 +1,11 @@
-import { assertAdminCsrfSecret, assertBookingSecret } from '@/config';
+import { assertBookingSecret, assertCsrfSecret } from '@/config';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { hmacSign, randomToken, safeEqual } from '@/lib/auth/crypto';
 import {
-  COOKIE_NAMES,
-  COOKIE_TTLS,
+  ADMIN_CSRF_COOKIE_NAME,
   CSRF_HEADER_NAME,
+  CSRF_TTL_SECONDS,
 } from '@/lib/cookies/constants';
 import { getCookieValue } from '@/lib/cookies/server';
 
@@ -31,15 +31,13 @@ export function sameOrigin(request: Request): boolean {
 
 /**
  * Generates an HMAC-derived CSRF token containing: nonce.expiry.hmacSignature
- * Bound to the application secret and validated via verifyAdminCsrfToken.
+ * Bound to the application secret and validated via verifyCsrfToken.
  */
-export function createAdminCsrfToken(
-  ttl: number = COOKIE_TTLS.ADMIN_CSRF,
-): string {
+export function createCsrfToken(ttl: number = CSRF_TTL_SECONDS): string {
   const nonce = randomToken(16);
   const exp = Math.floor(Date.now() / 1000) + ttl;
   const payload = `${nonce}.${exp}`;
-  const sig = hmacSign(`admin.csrf.${payload}`, assertAdminCsrfSecret()).slice(
+  const sig = hmacSign(`admin.csrf.${payload}`, assertCsrfSecret()).slice(
     0,
     32,
   );
@@ -49,7 +47,7 @@ export function createAdminCsrfToken(
 /**
  * Validates the HMAC signature and expiration timestamp of an admin CSRF token.
  */
-export function verifyAdminCsrfToken(token: string): boolean {
+export function verifyCsrfToken(token: string): boolean {
   if (!token) return false;
   const parts = token.split('.');
   if (parts.length === 3) {
@@ -61,7 +59,7 @@ export function verifyAdminCsrfToken(token: string): boolean {
     const payload = `${nonce}.${exp}`;
     const expectedSig = hmacSign(
       `admin.csrf.${payload}`,
-      assertAdminCsrfSecret(),
+      assertCsrfSecret(),
     ).slice(0, 32);
     return safeEqual(sig, expectedSig);
   }
@@ -134,7 +132,7 @@ export function checkManageCsrf(
 /**
  * Validates CSRF for admin requests against the ADMIN_CSRF cookie and x-csrf-token header.
  */
-export function checkAdminCsrf(request: Request): Response | null {
+export function checkCsrf(request: Request): Response | null {
   if (!sameOrigin(request)) {
     return apiFail(
       403,
@@ -143,7 +141,7 @@ export function checkAdminCsrf(request: Request): Response | null {
       { noCache: true },
     );
   }
-  const cookie = getCookieValue(request, COOKIE_NAMES.ADMIN_CSRF);
+  const cookie = getCookieValue(request, ADMIN_CSRF_COOKIE_NAME);
   const header = request.headers.get(CSRF_HEADER_NAME);
   if (!cookie || !header || !safeEqual(cookie, header)) {
     return apiFail(
@@ -153,7 +151,7 @@ export function checkAdminCsrf(request: Request): Response | null {
       { noCache: true },
     );
   }
-  if (!verifyAdminCsrfToken(cookie)) {
+  if (!verifyCsrfToken(cookie)) {
     return apiFail(
       403,
       ERROR_MESSAGES.ADMIN_CSRF_FAILED,

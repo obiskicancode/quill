@@ -4,7 +4,7 @@ import { requireAdminPage } from '@/lib/auth/guards';
 import {
   listAdminRateRules,
   listAdminRoomTypes,
-} from '@/lib/db/repositories/inventory-admin.repo';
+} from '@/lib/db/repositories/inventory.repo';
 
 export const metadata = {
   title: 'Rate Rules | Admin',

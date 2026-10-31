@@ -12,19 +12,19 @@ import { queryKeys } from '@/hooks/services/query-keys';
 import type { CheckoutQuoteResponse } from '@/types/checkout.types';
 import type {
   AdminAmenity,
-  AdminAmenityInput,
   AdminExtra,
-  AdminExtraInput,
-  AdminImageUpdate,
   AdminRateRule,
-  AdminRateRuleInput,
   AdminRoomTypeDetail,
-  AdminRoomTypeInput,
   AdminRoomTypeListItem,
-  AdminRoomUnitInput,
+  AmenityInput,
+  ExtraInput,
+  ImageUpdate,
   PriceCalendarDay,
+  RateRuleInput,
   RateRuleOverlapResponse,
   RoomImpactCheckResponse,
+  RoomTypeInput,
+  RoomUnitInput,
 } from '@/types/inventory.types';
 
 export interface PricingQuoteInput {
@@ -123,7 +123,7 @@ export function usePriceCalendar(
 }
 
 export function useRateRuleOverlap(
-  input: AdminRateRuleInput | null,
+  input: RateRuleInput | null,
   enabled = true,
 ) {
   return useQuery({
@@ -165,7 +165,7 @@ export function usePricingQuote(
 export function useCreateRoomType() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: AdminRoomTypeInput) => {
+    mutationFn: async (input: RoomTypeInput) => {
       const response = await adminService.createRoomType(input);
       return response.data;
     },
@@ -179,7 +179,7 @@ export function useCreateRoomType() {
 export function useUpdateRoomType(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: AdminRoomTypeInput) => {
+    mutationFn: async (input: RoomTypeInput) => {
       const response = await adminService.updateRoomType(id, input);
       return response.data;
     },
@@ -253,7 +253,7 @@ export function useUpdateImage(roomTypeId?: string) {
       input,
     }: {
       imageId: string;
-      input: AdminImageUpdate;
+      input: ImageUpdate;
     }) => {
       const response = await adminService.updateImage(imageId, input);
       return response.data;
@@ -331,7 +331,7 @@ export function useUpdateRoomTypeAmenities(roomTypeId: string) {
 export function useCreateRoom(roomTypeId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: AdminRoomUnitInput) => {
+    mutationFn: async (input: RoomUnitInput) => {
       const response = await adminService.createRoom({
         ...input,
         roomTypeId,
@@ -359,7 +359,7 @@ export function useUpdateRoom(roomTypeId: string) {
       input,
     }: {
       roomId: string;
-      input: AdminRoomUnitInput;
+      input: RoomUnitInput;
     }) => {
       const response = await adminService.updateRoom(roomId, input);
       return response.data;
@@ -403,7 +403,7 @@ export function useDeleteRoom(roomTypeId: string) {
 export function useCreateRateRule() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: AdminRateRuleInput) => {
+    mutationFn: async (input: RateRuleInput) => {
       const response = await adminService.createRateRule(input);
       return response.data;
     },
@@ -417,13 +417,7 @@ export function useCreateRateRule() {
 export function useUpdateRateRule() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      input,
-    }: {
-      id: string;
-      input: AdminRateRuleInput;
-    }) => {
+    mutationFn: async ({ id, input }: { id: string; input: RateRuleInput }) => {
       const response = await adminService.updateRateRule(id, input);
       return response.data;
     },
@@ -451,7 +445,7 @@ export function useDeleteRateRule() {
 export function useCreateAmenity() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: AdminAmenityInput) => {
+    mutationFn: async (input: AmenityInput) => {
       const response = await adminService.createAmenity(input);
       return response.data;
     },
@@ -465,13 +459,7 @@ export function useCreateAmenity() {
 export function useUpdateAmenity() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      input,
-    }: {
-      id: string;
-      input: AdminAmenityInput;
-    }) => {
+    mutationFn: async ({ id, input }: { id: string; input: AmenityInput }) => {
       const response = await adminService.updateAmenity(id, input);
       return response.data;
     },
@@ -513,7 +501,7 @@ export function useReorderAmenities() {
 export function useCreateExtra() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: AdminExtraInput) => {
+    mutationFn: async (input: ExtraInput) => {
       const response = await adminService.createExtra(input);
       return response.data;
     },
@@ -527,13 +515,7 @@ export function useCreateExtra() {
 export function useUpdateExtra() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      id,
-      input,
-    }: {
-      id: string;
-      input: AdminExtraInput;
-    }) => {
+    mutationFn: async ({ id, input }: { id: string; input: ExtraInput }) => {
       const response = await adminService.updateExtra(id, input);
       return response.data;
     },

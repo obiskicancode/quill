@@ -9,7 +9,7 @@ import {
 import { PageHeader } from '@/components/admin/PageHeader';
 import { requireAdminPage } from '@/lib/auth/guards';
 import { isMfaPending } from '@/lib/auth/session';
-import { toAdminStaff } from '@/lib/db/mappers/staff.mapper';
+import { toStaff } from '@/lib/db/mappers/staff.mapper';
 
 export const metadata: Metadata = { title: 'Account' };
 
@@ -55,7 +55,7 @@ export default async function AdminAccountPage({
         }
       />
       <AccountView
-        staff={toAdminStaff(context.user)}
+        staff={toStaff(context.user)}
         role={context.role}
         mfaPending={pending}
         initialTab={initialTab}

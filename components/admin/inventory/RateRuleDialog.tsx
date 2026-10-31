@@ -39,9 +39,9 @@ import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import { bpsToPercentage, minorToNaira } from '@/lib/rate-resolution';
 import type {
   AdminRateRule,
-  AdminRateRuleInput,
   AdminRoomTypeListItem,
   RateAdjustmentType,
+  RateRuleInput,
 } from '@/types/inventory.types';
 
 import { rateRuleFormSchema } from './form-schemas';
@@ -128,7 +128,7 @@ export function RateRuleDialog({
   const busy =
     isSubmitting || createRateRule.isPending || updateRateRule.isPending;
 
-  const overlapPayload: AdminRateRuleInput | null =
+  const overlapPayload: RateRuleInput | null =
     startDate && endDate && endDate >= startDate
       ? {
           name: name || 'Test',
@@ -158,7 +158,7 @@ export function RateRuleDialog({
   async function handleFormSubmit(input: RateRuleFormOutput) {
     setErrorMessage(null);
 
-    const payload: AdminRateRuleInput = {
+    const payload: RateRuleInput = {
       name: input.name,
       roomTypeId: input.roomTypeId ?? null,
       startDate: input.startDate,

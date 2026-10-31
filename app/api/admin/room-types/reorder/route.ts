@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { guardAdminApi } from '@/lib/auth/guards';
-import { reorderRoomTypes } from '@/lib/db/repositories/inventory-admin.repo';
+import { reorderRoomTypes } from '@/lib/db/repositories/inventory.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { ReorderItemsInputSchema } from '@/schemas/inventory.schema';
 

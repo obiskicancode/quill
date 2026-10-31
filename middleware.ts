@@ -3,9 +3,9 @@ import { NextResponse } from 'next/server';
 
 import { config as appConfig } from '@/config';
 import {
-  COOKIE_NAMES,
+  ADMIN_CSRF_COOKIE_NAME,
   createCsrfToken,
-  setAdminCsrfCookie,
+  setCsrfCookie,
 } from '@/lib/cookies';
 
 const MAINTENANCE = appConfig.MAINTENANCE_MODE;
@@ -25,9 +25,9 @@ export function middleware(request: NextRequest) {
     if (
       isAdminPage &&
       request.method === 'GET' &&
-      !request.cookies.get(COOKIE_NAMES.ADMIN_CSRF)
+      !request.cookies.get(ADMIN_CSRF_COOKIE_NAME)
     ) {
-      setAdminCsrfCookie(response, createCsrfToken());
+      setCsrfCookie(response, createCsrfToken());
     }
     return response;
   }

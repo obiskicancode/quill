@@ -1,7 +1,7 @@
 import { RoomTypesListClient } from '@/components/admin/inventory/RoomTypesListClient';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { requireAdminPage } from '@/lib/auth/guards';
-import { listAdminRoomTypes } from '@/lib/db/repositories/inventory-admin.repo';
+import { listAdminRoomTypes } from '@/lib/db/repositories/inventory.repo';
 
 export const metadata = {
   title: 'Room Types | Admin',

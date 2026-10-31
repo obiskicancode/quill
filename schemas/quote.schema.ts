@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const adminPricingQuoteSchema = z.object({
+export const pricingQuoteSchema = z.object({
   roomTypeId: z.string().uuid(),
   checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -9,7 +9,7 @@ export const adminPricingQuoteSchema = z.object({
   extraBed: z.boolean().default(false),
 });
 
-export const adminReservationQuoteSchema = z.object({
+export const reservationQuoteSchema = z.object({
   roomTypeId: z.string().uuid(),
   checkIn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   checkOut: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

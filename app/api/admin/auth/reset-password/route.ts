@@ -2,33 +2,33 @@ import { z } from 'zod';
 
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { writeAdminAudit } from '@/lib/auth/audit';
+import { writeAudit } from '@/lib/auth/audit';
 import { hashToken } from '@/lib/auth/crypto';
 import {
   hashPassword,
   validatePassword,
   verifyPassword,
 } from '@/lib/auth/password';
-import { clearAdminAuthCookies } from '@/lib/cookies';
+import { clearAuthCookies } from '@/lib/cookies';
 import {
   findStaffById,
   findValidPasswordResetToken,
   markPasswordResetTokenUsed,
   revokeAllSessionsForUser,
-  updateStaff,
+  update as updateStaff,
 } from '@/lib/db/repositories/staff.repo';
-import { checkAdminCsrf } from '@/lib/http/csrf';
+import { checkCsrf } from '@/lib/http/csrf';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, tooManyRequests, userAgent } from '@/lib/http/request';
 import { rateLimit } from '@/lib/rate-limit';
-import { adminResetPasswordSchema } from '@/schemas/admin-auth.schema';
+import { resetPasswordSchema } from '@/schemas/auth.schema';
 
 export async function POST(request: Request) {
-  const csrfError = checkAdminCsrf(request);
+  const csrfError = checkCsrf(request);
   if (csrfError) return csrfError;
 
   const body = await request.json().catch(() => null);
-  const parsed = adminResetPasswordSchema.safeParse(body);
+  const parsed = resetPasswordSchema.safeParse(body);
   if (!parsed.success) {
     return apiFail(
       422,
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
   });
   await revokeAllSessionsForUser(staff.id);
 
-  await writeAdminAudit({
+  await writeAudit({
     actorId: staff.id,
     actorRole: staff.role,
     action: 'password_reset.completed',
@@ -124,6 +124,6 @@ export async function POST(request: Request) {
   });
 
   const response = apiOk({ redirectTo: '/admin/login' }, { noCache: true });
-  clearAdminAuthCookies(response);
+  clearAuthCookies(response);
   return response;
 }
