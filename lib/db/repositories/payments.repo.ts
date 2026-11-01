@@ -15,7 +15,7 @@ import {
 import { completeOnlinePayment } from '@/lib/booking/store';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
 import { sendRefundIssuedEmail } from '@/lib/mail';
-import { getPaymentProvider } from '@/lib/payments/factory';
+import { createPaymentProvider as getPaymentProvider } from '@/lib/payments/factory';
 import { isPaymentProviderId } from '@/lib/payments/provider';
 import {
   computePaymentSummary,

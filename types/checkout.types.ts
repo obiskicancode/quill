@@ -169,6 +169,18 @@ export interface ReservationResponse {
   };
 }
 
+/**
+ * A booking this browser is still holding, rendered by the server from the guest's
+ * own signed cookies. Milliseconds because it is compared against the client clock,
+ * exactly like the status responses the checkout polls.
+ */
+export interface CheckoutPendingRecovery {
+  reference: string;
+  holdExpiresAtMs: number;
+  serverTimeMs: number;
+  method: PaymentMethod | null;
+}
+
 export interface PaymentInitRequest {
   reference: string;
   method: PaymentMethod;
@@ -206,7 +218,7 @@ export type ApiErrorCode =
   | 'payment_init_failed'
   | 'not_found'
   | 'bad_file'
-  | 'unauthorised'
+  | 'unauthorized'
   | 'server';
 
 export interface ApiError {

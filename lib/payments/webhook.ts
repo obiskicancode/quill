@@ -31,7 +31,7 @@ export async function handlePaymentWebhook(
   if (!verification.ok)
     return verification.reason === ERROR_CODES.WEBHOOK_INVALID_SIGNATURE
       ? apiFail(401, ERROR_MESSAGES.INVALID_SIGNATURE, {
-          code: ERROR_CODES.UNAUTHORISED,
+          code: ERROR_CODES.UNAUTHORIZED,
           message: ERROR_MESSAGES.INVALID_SIGNATURE,
         })
       : apiFail(422, ERROR_MESSAGES.INVALID_EVENT, {

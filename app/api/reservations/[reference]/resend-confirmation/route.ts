@@ -12,9 +12,9 @@ const COOLDOWN_SECONDS = 60;
 const g = globalThis as unknown as { __deaResend?: Map<string, number> };
 const lastSent = (g.__deaResend ??= new Map<string, number>());
 
-const unauthorised = () => {
+const unauthorized = () => {
   const error: BookingApiError = {
-    code: ERROR_CODES.UNAUTHORISED,
+    code: ERROR_CODES.UNAUTHORIZED,
     message: ERROR_MESSAGES.VERIFY_BOOKING_FIRST,
   };
   return apiFail(401, error.message, error, { noCache: true });
@@ -26,9 +26,9 @@ export async function POST(
   ctx: { params: Promise<{ reference: string }> },
 ) {
   const { reference } = await ctx.params;
-  if (!(await getAccess(reference))) return unauthorised();
+  if (!(await getAccess(reference))) return unauthorized();
   const found = await loadReservation(reference);
-  if (!found) return unauthorised();
+  if (!found) return unauthorized();
 
   const wait = Math.ceil(
     (COOLDOWN_SECONDS * 1000 - (Date.now() - (lastSent.get(reference) ?? 0))) /

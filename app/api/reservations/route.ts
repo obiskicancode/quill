@@ -1,12 +1,16 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { db } from '@/db';
+import { decideReplay, matchesRequestedStay } from '@/lib/booking/recovery';
 import { setBookingAccessCookie } from '@/lib/booking/session';
 import { buildSnapshot } from '@/lib/booking/snapshot';
 import {
   createReference,
   insertReservation,
+  loadStoredReservation,
   toReservationResponse,
 } from '@/lib/booking/store';
+import { loadPendingReservations } from '@/lib/booking/view';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
 import { getCheckoutSettings } from '@/lib/checkout/settings';
 import {
@@ -14,6 +18,7 @@ import {
   finishIdempotency,
   getIdempotencyRecord,
   releaseIdempotency,
+  retireIdempotency,
 } from '@/lib/db/repositories/idempotency.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp } from '@/lib/http/request';
@@ -38,9 +43,31 @@ function pgErrorCode(error: unknown): string | undefined {
   return typeof code === 'string' ? code : undefined;
 }
 
+function replayed(body: ReservationResponse) {
+  const response = apiOk(body);
+  setBookingAccessCookie(response, body.reference, 'checkout');
+  return response;
+}
+
 /**
- * Creates the pending reservation and starts the hold. Safe to retry: the same idempotency key always returns
- * the same reservation, so a dropped connection can never create two.
+ * A replay only helps while the reservation it names can still be paid. The
+ * idempotency record lives an hour and the hold fifteen minutes, so a body that
+ * points at a dead booking is retired by the caller and this request continues as
+ * if it had never been submitted.
+ */
+async function replayBody(
+  response: unknown,
+): Promise<ReservationResponse | null> {
+  const body = response as ReservationResponse;
+  if (typeof body?.reference !== 'string') return null;
+  const stored = await loadStoredReservation(body.reference);
+  return decideReplay(body, stored) === 'replay' ? body : null;
+}
+
+/**
+ * Creates the pending reservation and starts the hold, in one commit with the idempotency record that replays it.
+ * Safe to retry: the same idempotency key always returns the same reservation, so a dropped connection can never
+ * create two — and can never leave a hold that its own retry is locked out of.
  */
 export async function POST(req: Request) {
   const client = clientIp(req) ?? 'local';
@@ -74,14 +101,22 @@ export async function POST(req: Request) {
   const idKey = `res:${data.idempotencyKey}`;
   const previous = await getIdempotencyRecord(idKey);
   if (previous?.response) {
-    const replay = apiOk(previous.response as ReservationResponse);
-    setBookingAccessCookie(
-      replay,
-      (previous.response as ReservationResponse).reference,
-      'checkout',
-    );
-    return replay;
+    const replay = await replayBody(previous.response);
+    if (replay) return replayed(replay);
+    await retireIdempotency(idKey);
   }
+
+  // A hold this guest already has must not be the reason their own new booking is
+  // refused. It is taken from their signed booking cookies, never from the request.
+  const ownHold = (await loadPendingReservations()).find((r) =>
+    matchesRequestedStay(r, {
+      roomSlug: data.room,
+      checkIn: data.checkIn,
+      checkOut: data.checkOut,
+      adults: data.adults,
+      children: data.children,
+    }),
+  );
 
   const quote = await buildCheckoutQuote({
     room: data.room,
@@ -91,6 +126,7 @@ export async function POST(req: Request) {
     children: data.children,
     extraBed: data.extraBed,
     extras: data.extras,
+    excludeReservationId: ownHold?.id,
   });
   if (quote.status === 'unavailable')
     return fail(409, {
@@ -124,100 +160,115 @@ export async function POST(req: Request) {
     specialRequests: data.guest.specialRequests,
   };
   const snapshot = await buildSnapshot(room, quote, settings);
-  const claim = await claimIdempotency(idKey, 120, {
-    method: 'POST',
-    path: '/api/reservations',
-  });
-  if (!claim.claimed) {
-    if (claim.record?.response) {
-      const replay = apiOk(claim.record.response as ReservationResponse);
-      setBookingAccessCookie(
-        replay,
-        (claim.record.response as ReservationResponse).reference,
-        'checkout',
-      );
-      return replay;
-    }
-    return fail(409, {
-      code: ERROR_CODES.VALIDATION,
-      message: ERROR_MESSAGES.REQUEST_IN_PROGRESS,
-    });
-  }
 
-  try {
-    let reservation: Awaited<ReturnType<typeof insertReservation>> = null;
+  /**
+   * The claim, the hold and the response that replays it commit together, so a
+   * request that dies partway leaves either a payable reservation with a replayable
+   * response or nothing at all — never a live hold its own retry is locked out of.
+   */
+  type Outcome =
+    | { replay: ReservationResponse }
+    | { locked: true }
+    | { unavailable: true }
+    | { created: ReservationResponse };
 
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        reservation = await insertReservation({
-          reference: createReference(),
-          roomSlug: data.room,
-          stay: {
-            checkIn: data.checkIn,
-            checkOut: data.checkOut,
-            adults: data.adults,
-            children: data.children,
-            extraBed: data.extraBed,
-          },
-          extras: data.extras,
-          quote,
-          settings,
-          guest,
-          snapshot,
-        });
-        break;
-      } catch (error) {
-        const code = pgErrorCode(error);
-        if (code === '23P01') {
-          logStructured(
-            'reservation.inventory_conflict',
-            {
-              room: data.room,
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    let outcome: Outcome;
+    try {
+      outcome = await db.transaction(async (tx): Promise<Outcome> => {
+        const claim = await claimIdempotency(
+          idKey,
+          120,
+          { method: 'POST', path: '/api/reservations' },
+          tx,
+        );
+        if (!claim.claimed) {
+          // A record finished inside the last few seconds belongs to a hold that
+          // cannot have lapsed yet, so it is replayed as-is; the stale check above
+          // handles the one case where it has.
+          if (claim.record?.response)
+            return { replay: claim.record.response as ReservationResponse };
+          return { locked: true };
+        }
+
+        const reservation = await insertReservation(
+          {
+            reference: createReference(),
+            roomSlug: data.room,
+            stay: {
               checkIn: data.checkIn,
               checkOut: data.checkOut,
-              attempt,
+              adults: data.adults,
+              children: data.children,
+              extraBed: data.extraBed,
             },
-            'warn',
-          );
-          await releaseIdempotency(idKey);
-          return fail(409, {
-            code: ERROR_CODES.UNAVAILABLE,
-            message: ERROR_MESSAGES.ROOM_UNAVAILABLE_DATES,
-          });
+            extras: data.extras,
+            quote,
+            settings,
+            guest,
+            snapshot,
+            supersedeReservationId: ownHold?.id ?? null,
+          },
+          tx,
+        );
+        if (!reservation) {
+          // Nothing was written, so the claim must not survive either: dropping it in
+          // the same commit leaves no trace of an attempt that created no hold.
+          await releaseIdempotency(idKey, tx);
+          return { unavailable: true };
         }
-        if (code === '23505' && attempt < 2) continue;
-        throw error;
+
+        const response = toReservationResponse(reservation);
+        await finishIdempotency(
+          idKey,
+          response,
+          201,
+          60,
+          { reservationId: reservation.id },
+          tx,
+        );
+        return { created: response };
+      });
+    } catch (error) {
+      const code = pgErrorCode(error);
+      if (code === '23P01') {
+        logStructured(
+          'reservation.inventory_conflict',
+          {
+            room: data.room,
+            checkIn: data.checkIn,
+            checkOut: data.checkOut,
+            attempt,
+          },
+          'warn',
+        );
+        return fail(409, {
+          code: ERROR_CODES.UNAVAILABLE,
+          message: ERROR_MESSAGES.ROOM_UNAVAILABLE_DATES,
+        });
       }
+      // A colliding reference aborts the whole attempt, claim included, so the retry
+      // below starts from a clean slate with a fresh reference.
+      if (code === '23505' && attempt < 2) continue;
+      throw error;
     }
 
-    if (!reservation) {
-      await releaseIdempotency(idKey);
+    if ('replay' in outcome) return replayed(outcome.replay);
+    if ('locked' in outcome)
+      return fail(409, {
+        code: ERROR_CODES.VALIDATION,
+        message: ERROR_MESSAGES.REQUEST_IN_PROGRESS,
+      });
+    if ('unavailable' in outcome)
       return fail(409, {
         code: ERROR_CODES.UNAVAILABLE,
         message: ERROR_MESSAGES.ROOM_UNAVAILABLE_DATES,
       });
-    }
 
-    const response = toReservationResponse(reservation);
-    try {
-      await finishIdempotency(idKey, response, 201, 60, {
-        reservationId: reservation.id,
-      });
-    } catch (error) {
-      logStructured(
-        'reservation.idempotency_finish_failed',
-        {
-          reference: reservation.reference,
-          error: error instanceof Error ? error.message : String(error),
-        },
-        'error',
-      );
-    }
-    const created = apiOk(response, { status: 201 });
-    setBookingAccessCookie(created, reservation.reference, 'checkout');
+    const created = apiOk(outcome.created, { status: 201 });
+    setBookingAccessCookie(created, outcome.created.reference, 'checkout');
     return created;
-  } catch (error) {
-    await releaseIdempotency(idKey);
-    throw error;
   }
+
+  throw new Error(ERROR_MESSAGES.RESERVATION_CREATION_RETRIES_EXHAUSTED);
 }

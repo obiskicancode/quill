@@ -10,7 +10,7 @@ import {
 import { logStructured } from '@/lib/observability';
 import { recomputeReservationFinancials } from '@/lib/reservations/payment-ledger';
 
-import { getPaymentProvider } from './factory';
+import { createPaymentProvider as getPaymentProvider } from './factory';
 import { isPaymentProviderId } from './provider';
 
 const CLAIM_TTL_MS = 5 * 60 * 1000;

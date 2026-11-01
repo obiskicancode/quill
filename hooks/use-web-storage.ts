@@ -21,13 +21,16 @@ export function useWebStorage<T>(
   deserializer: (raw: string) => T = (raw) => JSON.parse(raw) as T,
 ): [T, (value: T | ((prev: T) => T)) => void, () => void] {
   const [value, setValue] = useState<T>(initialValue);
+  const valueRef = useRef<T>(initialValue);
+  const initialValueRef = useRef<T>(initialValue);
   const serializerRef = useRef(serializer);
   const deserializerRef = useRef(deserializer);
 
   useEffect(() => {
     serializerRef.current = serializer;
     deserializerRef.current = deserializer;
-  }, [serializer, deserializer]);
+    initialValueRef.current = initialValue;
+  }, [serializer, deserializer, initialValue]);
 
   useEffect(() => {
     const storage = getWebStorage(type);
@@ -35,10 +38,13 @@ export function useWebStorage<T>(
 
     try {
       const raw = storage.getItem(key);
-      if (raw !== null) {
-        // Hydrate from storage after mount (Web Storage is unavailable during SSR).
-        setValue(deserializerRef.current(raw));
-      }
+      const next =
+        raw !== null
+          ? deserializerRef.current(raw)
+          : // A new key starts from its own default instead of the previous key's value.
+            initialValueRef.current;
+      valueRef.current = next;
+      setValue(next);
     } catch {
       // Ignore storage read failures (private browsing).
     }
@@ -46,16 +52,18 @@ export function useWebStorage<T>(
 
   const set = useCallback(
     (next: T | ((prev: T) => T)) => {
-      setValue((prev) => {
-        const v =
-          typeof next === 'function' ? (next as (prev: T) => T)(prev) : next;
-        try {
-          setWebStorageValue(type, key, v, serializerRef.current);
-        } catch {
-          // Ignore storage write failures.
-        }
-        return v;
-      });
+      // Write before scheduling the state update
+      const v =
+        typeof next === 'function'
+          ? (next as (prev: T) => T)(valueRef.current)
+          : next;
+      valueRef.current = v;
+      try {
+        setWebStorageValue(type, key, v, serializerRef.current);
+      } catch {
+        // Ignore storage write failures.
+      }
+      setValue(v);
     },
     [key, type],
   );
@@ -66,8 +74,9 @@ export function useWebStorage<T>(
     } catch {
       // Ignore storage removal failures.
     }
-    setValue(initialValue);
-  }, [initialValue, key, type]);
+    valueRef.current = initialValueRef.current;
+    setValue(initialValueRef.current);
+  }, [key, type]);
 
   return [value, set, remove];
 }

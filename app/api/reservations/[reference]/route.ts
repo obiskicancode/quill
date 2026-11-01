@@ -8,7 +8,7 @@ import type { BookingApiError } from '@/types/booking.types';
 
 const deny = () => {
   const error: BookingApiError = {
-    code: ERROR_CODES.UNAUTHORISED,
+    code: ERROR_CODES.UNAUTHORIZED,
     message: ERROR_MESSAGES.VERIFY_BOOKING_TO_VIEW,
   };
   return apiFail(401, error.message, error, {

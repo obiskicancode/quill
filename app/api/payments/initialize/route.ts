@@ -4,13 +4,16 @@ import { config } from '@/config';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { db } from '@/db';
-import { reservationChanges } from '@/db/schema';
-import { rollbackFailedPaymentInit } from '@/lib/booking/rollback';
+import { reservationChanges, reservations } from '@/db/schema';
+import { CHECKOUT_ACTIONABLE_STATUSES } from '@/lib/booking/recovery';
 import { getAccess } from '@/lib/booking/session';
 import {
-  findReusableOnlinePayment,
+  ensureBankTransferPayment,
   insertPayment,
+  loadStoredReservation,
   saveStoredReservation,
+  type QueryExecutor,
+  type StoredReservation,
 } from '@/lib/booking/store';
 import { loadReservation } from '@/lib/booking/view';
 import { getCheckoutSettings } from '@/lib/checkout/settings';
@@ -24,6 +27,7 @@ import {
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp } from '@/lib/http/request';
 import { requireManage } from '@/lib/manage/auth';
+import { logStructured } from '@/lib/observability';
 import {
   tryGetPaymentProvider,
   type PaymentProviderAdapter,
@@ -35,25 +39,20 @@ import type { ApiError, PaymentInitResponse } from '@/types/checkout.types';
 const fail = (status: number, error: ApiError) =>
   apiFail(status, error.message, error);
 
-async function rollbackAndFail(
-  idKey: string,
-  input: {
-    reservationId: string;
-    changeId?: string | null;
-    message: string;
-  },
-) {
-  const rollback = await rollbackFailedPaymentInit({
-    reservationId: input.reservationId,
-    changeId: input.changeId,
-    reason: input.message,
-  });
-  await releaseIdempotency(idKey);
-  if (!rollback.released)
-    return fail(502, {
-      code: ERROR_CODES.SERVER,
-      message: ERROR_MESSAGES.COULD_NOT_REACH_SERVER_PAYMENT_UNKNOWN,
-    });
+function paymentInitFailed(input: {
+  reservationId: string;
+  changeId?: string | null;
+  message: string;
+}) {
+  logStructured(
+    'payment.init_failed',
+    {
+      reservationId: input.reservationId,
+      changeId: input.changeId ?? null,
+      reason: input.message,
+    },
+    'warn',
+  );
   return fail(409, {
     code: ERROR_CODES.PAYMENT_INIT_FAILED,
     message: input.message,
@@ -64,39 +63,136 @@ function appUrl(path: string): string {
   return `${config.SITE.URL.replace(/\/$/, '')}${path}`;
 }
 
-async function redirectToProvider(input: {
+/** The step that runs inside the transaction, once the reservation is locked. */
+type InitStep =
+  | { response: PaymentInitResponse }
+  | { reject: { status: number; error: ApiError } };
+
+type InitOutcome =
+  | { kind: 'ok'; response: PaymentInitResponse }
+  | { kind: 'replay'; response: PaymentInitResponse }
+  | { kind: 'in_progress' }
+  | { kind: 'rejected'; status: number; error: ApiError };
+
+type Plan =
+  | { kind: 'bank_transfer' }
+  | {
+      kind: 'online';
+      providerId: PaymentProviderAdapter['id'];
+      url: string;
+      providerReference: string;
+      amountMinor: number;
+    };
+
+function rejectInit(status: number, message: string): InitStep {
+  return {
+    reject: { status, error: { code: ERROR_CODES.VALIDATION, message } },
+  };
+}
+
+/**
+ * Commits an initialize step in one transaction: the claim, the payment row, the
+ * stamped reservation and the reply that replays them either all exist or none do, so
+ * a request that dies partway can never leave a hold the guest cannot pay or a reply
+ * that points at nothing.
+ *
+ * The reservation is locked and re-read before any of it runs, so a webhook or the
+ * expiry cron that moved the row while this request was in flight is seen here instead
+ * of overwritten by the copy the route read earlier.
+ */
+async function commitInit(input: {
+  idKey: string;
+  reference: string;
+  reservationId: string;
+  apply: (ctx: {
+    r: StoredReservation;
+    tx: QueryExecutor;
+  }) => Promise<InitStep>;
+}): Promise<InitOutcome> {
+  return db.transaction(async (tx): Promise<InitOutcome> => {
+    const claim = await claimIdempotency(
+      input.idKey,
+      120,
+      { method: 'POST', path: '/api/payments/initialize' },
+      tx,
+    );
+    if (!claim.claimed) {
+      if (claim.record?.response)
+        return {
+          kind: 'replay',
+          response: claim.record.response as PaymentInitResponse,
+        };
+      return { kind: 'in_progress' };
+    }
+
+    await tx
+      .select({ id: reservations.id })
+      .from(reservations)
+      .where(eq(reservations.id, input.reservationId))
+      .limit(1)
+      .for('update');
+
+    const fresh = await loadStoredReservation(input.reference, tx);
+    if (!fresh) {
+      await releaseIdempotency(input.idKey, tx);
+      return {
+        kind: 'rejected',
+        status: 404,
+        error: {
+          code: ERROR_CODES.NOT_FOUND,
+          message: ERROR_MESSAGES.RESERVATION_NOT_FOUND,
+        },
+      };
+    }
+
+    const step = await input.apply({ r: fresh, tx });
+    if ('reject' in step) {
+      await releaseIdempotency(input.idKey, tx);
+      return { kind: 'rejected', ...step.reject };
+    }
+
+    await finishIdempotency(
+      input.idKey,
+      step.response,
+      200,
+      60,
+      { reservationId: input.reservationId },
+      tx,
+    );
+    return { kind: 'ok', response: step.response };
+  });
+}
+
+function initResponse(outcome: InitOutcome) {
+  if (outcome.kind === 'ok' || outcome.kind === 'replay')
+    return apiOk(outcome.response);
+  if (outcome.kind === 'in_progress')
+    return fail(409, {
+      code: ERROR_CODES.VALIDATION,
+      message: ERROR_MESSAGES.REQUEST_IN_PROGRESS,
+    });
+  return fail(outcome.status, outcome.error);
+}
+
+/**
+ * Opens the hosted session for an online attempt before anything is written, because
+ * no transaction may span the provider call. Every attempt gets a fresh provider
+ * reference: the provider rejects a reference it has already seen, and an old session
+ * must never be forced onto a new attempt. Replaying a completed attempt is handled by
+ * the idempotency record instead.
+ */
+async function openProviderSession(input: {
   provider: PaymentProviderAdapter;
   reference: string;
   email: string;
   amountMinor: number;
   callbackUrl: string;
-  reservationId: string;
-  changeId?: string;
-}): Promise<string> {
-  const reusable = await findReusableOnlinePayment({
-    reservationId: input.reservationId,
-    provider: input.provider.id,
-    amountMinor: input.amountMinor,
-    changeId: input.changeId ?? null,
-  });
-  const providerReference =
-    reusable?.providerRef ?? reusable?.reference ?? createReference();
-  const paymentId = reusable
-    ? reusable.id
-    : await insertPayment({
-        reservationId: input.reservationId,
-        reference: providerReference,
-        method: 'online',
-        amountMinor: input.amountMinor,
-        provider: input.provider.id,
-        providerReference,
-        note: input.changeId ?? null,
-      });
-  if (input.changeId)
-    await db
-      .update(reservationChanges)
-      .set({ paymentId, updatedAt: new Date() })
-      .where(eq(reservationChanges.id, input.changeId));
+  changeId?: string | null;
+}): Promise<{
+  url: string;
+  providerReference: string;
+}> {
+  const providerReference = createReference();
   const { redirectUrl } = await input.provider.initialize({
     email: input.email,
     amountMinor: input.amountMinor,
@@ -107,12 +203,13 @@ async function redirectToProvider(input: {
       ...(input.changeId ? { changeId: input.changeId } : {}),
     },
   });
-  return redirectUrl;
+  return { url: redirectUrl, providerReference };
 }
 
 /**
  * Starts a payment: returns the hotel's bank details, or a hosted redirect from the configured online provider.
- * The payment row is persisted first, so a retry reuses the same provider reference.
+ * Each attempt opens a new provider session, and every write the attempt needs — payment row, reservation,
+ * replayable reply — lands in a single commit.
  */
 export async function POST(req: Request) {
   const client = clientIp(req) ?? 'local';
@@ -161,173 +258,170 @@ export async function POST(req: Request) {
     const access = await getAccess(reference);
     if (!access)
       return fail(401, {
-        code: ERROR_CODES.UNAUTHORISED,
+        code: ERROR_CODES.UNAUTHORIZED,
         message: ERROR_MESSAGES.SESSION_EXPIRED,
       });
-  }
-
-  if (purpose === 'change') {
+  } else {
     const auth = await requireManage(req, reference);
     if (!auth.ok) return auth.res;
-    const pc = r.pendingChange;
-    if (!pc || pc.changeId !== changeId)
+  }
+
+  // These reads answer the common cases before any work starts. The transaction
+  // repeats them against the locked row, and that is the one that decides.
+  const pending = purpose === 'change' ? r.pendingChange : null;
+  if (purpose === 'change') {
+    if (!pending || pending.changeId !== changeId)
       return fail(409, {
         code: ERROR_CODES.VALIDATION,
         message: ERROR_MESSAGES.NO_PENDING_DATE_CHANGE,
       });
-    if (pc.status === 'awaiting_verification')
+    if (pending.status === 'awaiting_verification')
       return fail(409, {
         code: ERROR_CODES.VALIDATION,
         message: ERROR_MESSAGES.CHANGE_AWAITING_VERIFICATION,
       });
-
-    const claim = await claimIdempotency(idKey, 120, {
-      method: 'POST',
-      path: '/api/payments/initialize',
-    });
-    if (!claim.claimed) {
-      if (claim.record?.response)
-        return apiOk(claim.record.response as PaymentInitResponse);
+  } else {
+    if (r.mode === 'pay_at_hotel')
+      return fail(400, {
+        code: ERROR_CODES.VALIDATION,
+        message: ERROR_MESSAGES.NOTHING_TO_PAY_ONLINE,
+      });
+    if (!CHECKOUT_ACTIONABLE_STATUSES.includes(r.status))
       return fail(409, {
         code: ERROR_CODES.VALIDATION,
-        message: ERROR_MESSAGES.REQUEST_IN_PROGRESS,
+        message: ERROR_MESSAGES.RESERVATION_ALREADY_PROCESSING,
       });
-    }
-
-    pc.method = method;
-    let response: PaymentInitResponse;
-    if (method === 'bank_transfer') {
-      pc.status = 'awaiting_transfer';
-      response = {
-        kind: 'bank_transfer',
-        bank: settings.bank,
-        amountMinor: pc.amountDueMinor,
-        reference,
-      };
-      r.method = 'bank_transfer';
-      await saveStoredReservation(r);
-    } else {
-      const provider = tryGetPaymentProvider();
-      if (!provider?.isConfigured())
-        return rollbackAndFail(idKey, {
-          reservationId: r.id,
-          changeId: pc.changeId,
-          message: ERROR_MESSAGES.ONLINE_PAYMENTS_UNAVAILABLE,
-        });
-      if (!r.guest.email)
-        return rollbackAndFail(idKey, {
-          reservationId: r.id,
-          changeId: pc.changeId,
-          message: ERROR_MESSAGES.EMAIL_REQUIRED_FOR_ONLINE_PAYMENT,
-        });
-      pc.status = 'awaiting_payment';
-      await saveStoredReservation(r);
-      try {
-        const url = await redirectToProvider({
-          provider,
-          reference,
-          email: r.guest.email,
-          amountMinor: pc.amountDueMinor,
-          callbackUrl: appUrl(
-            `/booking/manage?ref=${encodeURIComponent(reference)}&return=change`,
-          ),
-          reservationId: r.id,
-          changeId: pc.changeId,
-        });
-        response = { kind: 'redirect', url };
-      } catch {
-        return rollbackAndFail(idKey, {
-          reservationId: r.id,
-          changeId: pc.changeId,
-          message: ERROR_MESSAGES.PAYMENT_PROVIDER_UNREACHABLE,
-        });
-      }
-    }
-    await finishIdempotency(idKey, response, 200, 60, {
-      reservationId: r.id,
-    });
-    return apiOk(response);
   }
 
-  if (r.mode === 'pay_at_hotel')
-    return fail(400, {
-      code: ERROR_CODES.VALIDATION,
-      message: ERROR_MESSAGES.NOTHING_TO_PAY_ONLINE,
-    });
-  if (
-    !['pending_payment', 'awaiting_transfer', 'payment_failed'].includes(
-      r.status,
-    )
-  )
-    return fail(409, {
-      code: ERROR_CODES.VALIDATION,
-      message: ERROR_MESSAGES.RESERVATION_ALREADY_PROCESSING,
-    });
-
-  const claim = await claimIdempotency(idKey, 120, {
-    method: 'POST',
-    path: '/api/payments/initialize',
-  });
-  if (!claim.claimed) {
-    if (claim.record?.response)
-      return apiOk(claim.record.response as PaymentInitResponse);
-    return fail(409, {
-      code: ERROR_CODES.VALIDATION,
-      message: ERROR_MESSAGES.REQUEST_IN_PROGRESS,
-    });
-  }
-
-  r.method = method;
-  let response: PaymentInitResponse;
+  let plan: Plan;
   if (method === 'bank_transfer') {
-    r.status = 'awaiting_transfer';
-    await insertPayment({
-      reservationId: r.id,
-      reference: createReference(),
-      method,
-      amountMinor: r.totals.dueNowMinor,
-      provider: 'bank_transfer',
-    });
-    response = {
-      kind: 'bank_transfer',
-      bank: settings.bank,
-      amountMinor: r.totals.dueNowMinor,
-      reference,
-    };
-    await saveStoredReservation(r);
+    plan = { kind: 'bank_transfer' };
   } else {
     const provider = tryGetPaymentProvider();
     if (!provider?.isConfigured())
-      return rollbackAndFail(idKey, {
+      return paymentInitFailed({
         reservationId: r.id,
+        changeId: pending?.changeId,
         message: ERROR_MESSAGES.ONLINE_PAYMENTS_UNAVAILABLE,
       });
     if (!r.guest.email)
-      return rollbackAndFail(idKey, {
+      return paymentInitFailed({
         reservationId: r.id,
+        changeId: pending?.changeId,
         message: ERROR_MESSAGES.EMAIL_REQUIRED_FOR_ONLINE_PAYMENT,
       });
+
+    const amountMinor = pending ? pending.amountDueMinor : r.totals.dueNowMinor;
     try {
-      const url = await redirectToProvider({
+      const session = await openProviderSession({
         provider,
         reference,
         email: r.guest.email,
-        amountMinor: r.totals.dueNowMinor,
+        amountMinor,
         callbackUrl: appUrl(
-          `/booking/confirmation?ref=${encodeURIComponent(reference)}&return=1`,
+          purpose === 'change'
+            ? `/booking/manage?ref=${encodeURIComponent(reference)}&return=change`
+            : `/booking/confirmation?ref=${encodeURIComponent(reference)}&return=1`,
         ),
-        reservationId: r.id,
+        changeId: pending?.changeId,
       });
-      response = { kind: 'redirect', url };
+      plan = {
+        kind: 'online',
+        providerId: provider.id,
+        amountMinor,
+        ...session,
+      };
     } catch {
-      return rollbackAndFail(idKey, {
+      return paymentInitFailed({
         reservationId: r.id,
+        changeId: pending?.changeId,
         message: ERROR_MESSAGES.PAYMENT_PROVIDER_UNREACHABLE,
       });
     }
   }
-  await finishIdempotency(idKey, response, 200, 60, {
+
+  const outcome = await commitInit({
+    idKey,
+    reference,
     reservationId: r.id,
+    apply: async ({ r: fresh, tx }) => {
+      if (fresh.status === 'expired')
+        return {
+          reject: {
+            status: 410,
+            error: {
+              code: ERROR_CODES.HOLD_EXPIRED,
+              message: ERROR_MESSAGES.HOLD_EXPIRED,
+            },
+          },
+        };
+      if (fresh.status === 'cancelled')
+        return rejectInit(409, ERROR_MESSAGES.RESERVATION_CANCELLED);
+
+      const change = purpose === 'change' ? fresh.pendingChange : null;
+      if (purpose === 'change') {
+        if (!change || change.changeId !== changeId)
+          return rejectInit(409, ERROR_MESSAGES.NO_PENDING_DATE_CHANGE);
+        if (change.status === 'awaiting_verification')
+          return rejectInit(409, ERROR_MESSAGES.CHANGE_AWAITING_VERIFICATION);
+      } else {
+        if (fresh.mode === 'pay_at_hotel')
+          return rejectInit(400, ERROR_MESSAGES.NOTHING_TO_PAY_ONLINE);
+        if (!CHECKOUT_ACTIONABLE_STATUSES.includes(fresh.status))
+          return rejectInit(409, ERROR_MESSAGES.RESERVATION_ALREADY_PROCESSING);
+      }
+
+      if (plan.kind === 'bank_transfer') {
+        if (change) {
+          change.method = 'bank_transfer';
+          change.status = 'awaiting_transfer';
+        } else {
+          fresh.status = 'awaiting_transfer';
+          await ensureBankTransferPayment(
+            { reservationId: fresh.id, amountMinor: fresh.totals.dueNowMinor },
+            tx,
+          );
+        }
+        await saveStoredReservation(fresh, tx);
+        return {
+          response: {
+            kind: 'bank_transfer',
+            bank: settings.bank,
+            amountMinor: change
+              ? change.amountDueMinor
+              : fresh.totals.dueNowMinor,
+            reference,
+          },
+        };
+      }
+
+      // The row has to describe the session the guest was just sent to, so it keeps
+      // the amount and reference that call used instead of a re-read of them. It is
+      // always a new row: reusing an old provider reference is what the provider rejects.
+      const paymentId = await insertPayment(
+        {
+          reservationId: fresh.id,
+          reference: plan.providerReference,
+          method: 'online',
+          amountMinor: plan.amountMinor,
+          provider: plan.providerId,
+          providerReference: plan.providerReference,
+          note: change?.changeId ?? null,
+        },
+        tx,
+      );
+      if (change) {
+        change.method = 'online';
+        change.status = 'awaiting_payment';
+        await tx
+          .update(reservationChanges)
+          .set({ paymentId, updatedAt: new Date() })
+          .where(eq(reservationChanges.id, change.changeId));
+        await saveStoredReservation(fresh, tx);
+      }
+      return { response: { kind: 'redirect', url: plan.url } };
+    },
   });
-  return apiOk(response);
+
+  return initResponse(outcome);
 }

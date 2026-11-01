@@ -1,6 +1,14 @@
 import { config } from '@/config';
 
 /**
+ * The booking access cookie carries the reference in its name, so a browser has one
+ * cookie per booking it has started. `lib/booking/recovery.ts` enumerates this prefix
+ * to find pending reservations to offer back — keep the two in sync.
+ */
+export const BOOKING_ACCESS_COOKIE_PREFIX = 'dea_bk_' as const;
+export const BOOKING_MANAGE_COOKIE_PREFIX = 'dea_mg_' as const;
+
+/**
  * Standard cookie names across Admin and Guest Booking flows.
  */
 export const COOKIE_NAMES = {
@@ -8,8 +16,10 @@ export const COOKIE_NAMES = {
   ADMIN_REFRESH: 'dea_admin_refresh',
   ADMIN_CHALLENGE: 'dea_admin_challenge',
   ADMIN_CSRF: 'dea_admin_csrf',
-  BOOKING_ACCESS: (reference: string) => `dea_bk_${reference}`,
-  BOOKING_MANAGE: (reference: string) => `dea_mg_${reference}`,
+  BOOKING_ACCESS: (reference: string) =>
+    `${BOOKING_ACCESS_COOKIE_PREFIX}${reference}`,
+  BOOKING_MANAGE: (reference: string) =>
+    `${BOOKING_MANAGE_COOKIE_PREFIX}${reference}`,
 } as const;
 
 /**

@@ -175,7 +175,7 @@ export type HeaderKind =
 
 export interface BookingApiError {
   code:
-    'unauthorised' | 'not_verified' | 'rate_limited' | 'validation' | 'server';
+    'unauthorized' | 'not_verified' | 'rate_limited' | 'validation' | 'server';
   message: string;
   retryAfterSeconds?: number;
 }

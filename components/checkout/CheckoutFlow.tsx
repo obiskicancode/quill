@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { ServiceError } from '@/app/api/services/base.service';
@@ -19,6 +19,12 @@ import {
   useUploadProof,
 } from '@/hooks/services/guest/use-checkout';
 import { useFormDraft } from '@/hooks/use-form-draft';
+import {
+  getWebStorageValue,
+  removeWebStorageValue,
+  setWebStorageValue,
+  useWebStorage,
+} from '@/hooks/use-web-storage';
 import { formatMinor } from '@/lib/format';
 import {
   checkProofFile,
@@ -29,6 +35,7 @@ import {
 } from '@/schemas/checkout.schema';
 import type {
   BankDetails,
+  CheckoutPendingRecovery,
   CheckoutQuoteOk,
   CheckoutQuoteResponse,
   PaymentMethod,
@@ -44,6 +51,7 @@ import {
   ExpiringBanner,
   FailedPanel,
   NetworkErrorBanner,
+  PendingHoldBanner,
   PriceUpdatedPanel,
   RequestReceivedScreen,
   TransferSubmittedScreen,
@@ -58,6 +66,10 @@ import { useHoldCountdown } from './useHoldCountdown';
 
 const POLL_TIMEOUT_MS = 30_000;
 const TERMS_MESSAGE = ERROR_MESSAGES.TERMS_ACCEPTANCE_REQUIRED;
+const RESERVE_KEY_PREFIX = 'dela:reserve-key:';
+const PAY_KEY_PREFIX = 'dela:pay-key:';
+const PENDING_DISMISSED_PREFIX = 'dela:checkout-resume-dismissed:';
+const rawString = (value: string) => value;
 
 type Phase =
   | { name: 'form' }
@@ -81,6 +93,8 @@ interface CheckoutFlowProps {
   initialQuote: CheckoutQuoteResponse;
   seenTotalMinor: number | null;
   resumeReference: string | null;
+  /** The guest's own still-live hold for this stay, if the server found one. */
+  pendingRecovery: CheckoutPendingRecovery | null;
   hotelTimes: { checkIn: string; checkOut: string };
 }
 
@@ -89,6 +103,7 @@ export function CheckoutFlow({
   stay,
   initialQuote,
   resumeReference,
+  pendingRecovery,
   hotelTimes,
 }: CheckoutFlowProps) {
   const router = useRouter();
@@ -134,8 +149,10 @@ export function CheckoutFlow({
   const [quote, setQuote] = useState<CheckoutQuoteResponse>(initialQuote);
   const quoteLoading = quoteMutation.isPending;
   const [quoteFailed, setQuoteFailed] = useState(false);
-  // A guest returning from the payment provider has already accepted the price.
-  const resumed = resumeReference !== null;
+  // A guest who has taken over a booking — from the provider or from their own live
+  // hold — has already given their details and accepted the price.
+  const [adopted, setAdopted] = useState(false);
+  const resumed = resumeReference !== null || adopted;
   const [accepted, setAccepted] = useState(resumed);
   const ok: CheckoutQuoteOk | null = quote.status === 'ok' ? quote : null;
   const priceChange = ok?.priceChange && !accepted ? ok.priceChange : null;
@@ -177,10 +194,85 @@ export function CheckoutFlow({
   const status = statusQuery.data;
 
   const submitting = useRef(false);
-  const reserveKey = useRef(newKey()); // generated when the page loads
-  const payKey = useRef<string | null>(null);
+  /**
+   * Payment keys are scoped to the reservation and survive a refresh, so resuming
+   * checkout replays the payment it already opened instead of starting a second one.
+   */
+  const payKey = useRef<{ scope: string; key: string } | null>(null);
+
+  function payKeyScope(reference: string): string {
+    return `${PAY_KEY_PREFIX}${reference}`;
+  }
+
+  function ensurePayKey(reference: string): string {
+    const scope = payKeyScope(reference);
+    if (payKey.current?.scope === scope) return payKey.current.key;
+    const stored = getWebStorageValue<string>(
+      'sessionStorage',
+      scope,
+      rawString,
+    );
+    const key = stored ?? newKey();
+    if (!stored) setWebStorageValue('sessionStorage', scope, key, rawString);
+    payKey.current = { scope, key };
+    return key;
+  }
+
+  function clearPayKey(reference: string | null | undefined): void {
+    if (reference) {
+      removeWebStorageValue('sessionStorage', payKeyScope(reference));
+    }
+    payKey.current = null;
+  }
+  /**
+   * The key that creates the reservation survives a refresh, so reloading checkout
+   * replays the booking it already made instead of taking a second hold.
+   */
+  const reserveKeyScope = `${RESERVE_KEY_PREFIX}checkout:${room.slug}:${stay.checkIn}:${stay.checkOut}:${stay.adults}:${stay.children}`;
+  const [reserveKey, setReserveKey, removeReserveKey] = useWebStorage<
+    string | null
+  >('sessionStorage', reserveKeyScope, null, (key) => key ?? '', rawString);
+
+  /** Reads through to storage too, so a submit before hydration still reuses a key. */
+  function ensureReserveKey(): string {
+    if (reserveKey) return reserveKey;
+    const stored = getWebStorageValue<string>(
+      'sessionStorage',
+      reserveKeyScope,
+      rawString,
+    );
+    const key = stored ?? newKey();
+    setReserveKey(key);
+    return key;
+  }
+
+  /** Only a genuinely new booking attempt needs a new key, and it is written down at once. */
+  function rotateReserveKey(): void {
+    setReserveKey(newKey());
+  }
 
   const inForm = phase.name === 'form' || phase.name === 'failed';
+  // True from the first client commit, so browser-only state is never read while
+  // the page is still being rendered on the server.
+  const [hydrated, setHydrated] = useState(false);
+  if (!hydrated) setHydrated(true);
+  const pendingReference = pendingRecovery?.reference ?? null;
+  const dismissalKey = `${PENDING_DISMISSED_PREFIX}${pendingReference ?? 'none'}`;
+  // Seed from storage on the first render, so a dismissed banner never flashes
+  // while the hook waits for its mount effect.
+  const initialDismissal = useMemo(
+    () =>
+      getWebStorageValue<string>('sessionStorage', dismissalKey, rawString) ??
+      '',
+    [dismissalKey],
+  );
+  const [dismissal, setDismissal] = useWebStorage<string>(
+    'sessionStorage',
+    dismissalKey,
+    initialDismissal,
+    rawString,
+    rawString,
+  );
   const holdActive =
     reservation !== null && reservation.holdExpiresAt > 0 && inForm;
   const hold = useHoldCountdown(
@@ -190,6 +282,19 @@ export function CheckoutFlow({
   );
   const expired = holdActive && hold.expired;
   const locked = reservation !== null;
+
+  // The banner counts down the hold it is offering to hand back, and disappears
+  // when that hold runs out — there is nothing left to continue.
+  const showPendingHold =
+    hydrated &&
+    pendingRecovery !== null &&
+    dismissal !== '1' &&
+    reservation === null;
+  const pendingHold = useHoldCountdown(
+    showPendingHold ? (pendingRecovery?.holdExpiresAtMs ?? null) : null,
+    0,
+    pendingRecovery?.serverTimeMs,
+  );
 
   const guests = stay.adults + stay.children;
   const catalog = ok?.extrasCatalog ?? [];
@@ -311,7 +416,11 @@ export function CheckoutFlow({
       status.status === 'checked_out' ||
       status.status === 'no_show'
     ) {
-      if (reservation) router.push(confirmationHref(reservation.reference));
+      if (reservation) {
+        removeReserveKey();
+        clearPayKey(reservation.reference);
+        router.push(confirmationHref(reservation.reference));
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- router helpers and stay are stable; navigate only on status changes
   }, [status]);
@@ -343,11 +452,12 @@ export function CheckoutFlow({
       setNetError(ERROR_MESSAGES.COULD_NOT_REACH_SERVER_UNKNOWN_OUTCOME);
       return;
     }
-    payKey.current = null;
+    clearPayKey(reservation?.reference);
     if (body?.code === ERROR_CODES.PAYMENT_INIT_FAILED) {
-      reserveKey.current = newKey();
+      rotateReserveKey();
       setReservation(null);
       setBank(null);
+      setAdopted(false);
       setPhase({ name: 'form' });
       setNetError(body.message ?? ERROR_MESSAGES.PAYMENT_PROVIDER_UNREACHABLE);
       return;
@@ -376,7 +486,7 @@ export function CheckoutFlow({
   }
 
   async function startPayment(reference: string) {
-    const key = (payKey.current ??= newKey());
+    const key = ensurePayKey(reference);
     const init = await initPayment.mutateAsync({
       reference,
       method,
@@ -387,7 +497,7 @@ export function CheckoutFlow({
       window.location.assign(init.url);
       return;
     }
-    payKey.current = null;
+    clearPayKey(reference);
     setBank({
       details: init.bank,
       amountMinor: init.amountMinor,
@@ -431,7 +541,7 @@ export function CheckoutFlow({
     try {
       if (!current) {
         const body: ReservationRequestInput = {
-          idempotencyKey: reserveKey.current,
+          idempotencyKey: ensureReserveKey(),
           room: room.slug,
           ...stay,
           extraBed,
@@ -451,6 +561,7 @@ export function CheckoutFlow({
         clearDraft();
       }
       if (ok.payment.mode === 'pay_at_hotel') {
+        removeReserveKey();
         router.push(confirmationHref(current.reference));
         return;
       } else if (method === 'bank_transfer' && bank) {
@@ -474,18 +585,47 @@ export function CheckoutFlow({
     void form.handleSubmit(submitResolved)();
   };
 
+  /**
+   * Take over the hold the guest already has instead of making another one. Nothing
+   * is sent to the server here: the reservation, its terms and its method are all
+   * already stored, so the form returns to the step the guest actually left from.
+   */
+  function adoptPendingHold() {
+    if (!pendingRecovery) return;
+    clearPayKey(pendingRecovery.reference);
+    setReservation({
+      reference: pendingRecovery.reference,
+      holdExpiresAt: pendingRecovery.holdExpiresAtMs,
+      skewMs: pendingRecovery.serverTimeMs - Date.now(),
+      serverNowMs: pendingRecovery.serverTimeMs,
+    });
+    removeReserveKey();
+    if (pendingRecovery.method) setMethod(pendingRecovery.method);
+    setAccepted(true);
+    setTerms(true);
+    setTermsError(undefined);
+    setAdopted(true);
+  }
+
+  /** Drops only this booking's pointer, in this tab, and lets a new attempt start. */
+  function dismissPendingHold() {
+    if (pendingReference) setDismissal('1');
+    void restart();
+  }
+
   async function restart() {
     if (submitting.current) return;
     submitting.current = true;
     setBusy(true);
     try {
-      reserveKey.current = newKey();
-      payKey.current = null;
+      rotateReserveKey();
+      clearPayKey(reservation?.reference);
       setReservation(null);
       setBank(null);
       setProofFile(null);
       setNetError(null);
       setTimedOut(false);
+      setAdopted(false);
       setPhase({ name: 'form' });
       router.replace(checkoutHref(stay));
       setAccepted(true);
@@ -499,13 +639,13 @@ export function CheckoutFlow({
   }
 
   const retryPayment = () => {
-    payKey.current = null;
+    clearPayKey(reservation?.reference);
     setPhase({ name: 'form' });
     window.setTimeout(() => void submit(), 0);
   };
 
   const switchMethod = () => {
-    payKey.current = null;
+    clearPayKey(reservation?.reference);
     setBank(null);
     setPhase({ name: 'form' });
     document.getElementById('step-payment')?.scrollIntoView({ block: 'start' });
@@ -514,7 +654,7 @@ export function CheckoutFlow({
   function chooseMethod(next: PaymentMethod) {
     setMethod(next);
     if (next !== 'bank_transfer') setBank(null);
-    payKey.current = null;
+    clearPayKey(reservation?.reference);
   }
 
   // --- full-width states ---
@@ -668,6 +808,20 @@ export function CheckoutFlow({
     main = (
       <div className="space-y-8">
         <AnimatePresence initial={false}>
+          {showPendingHold && !pendingHold.expired && (
+            <motion.div
+              key="pending"
+              {...bannerMotion}
+              transition={bannerTransition}
+            >
+              <PendingHoldBanner
+                reference={pendingRecovery.reference}
+                remainingMs={pendingHold.remainingMs}
+                onContinue={adoptPendingHold}
+                onChange={dismissPendingHold}
+              />
+            </motion.div>
+          )}
           {expired && (
             <motion.div
               key="expired"

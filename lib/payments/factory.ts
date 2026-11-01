@@ -38,8 +38,6 @@ export function createPaymentProvider(
   return factory();
 }
 
-export const getPaymentProvider = createPaymentProvider;
-
 export function tryGetPaymentProvider(
   id: PaymentProvider = getActivePaymentProviderId(),
 ): PaymentProviderAdapter | null {

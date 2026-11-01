@@ -7,7 +7,7 @@ import { useState, type ReactNode } from 'react';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
-import { formatMinor } from '@/lib/format';
+import { formatCountdown, formatMinor } from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import { telHref, whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
@@ -127,6 +127,51 @@ export function ExpiringBanner() {
       <p>
         Finish your payment soon to keep this room. If the time runs out you can
         start again and we will re-check availability.
+      </p>
+    </Banner>
+  );
+}
+
+/**
+ * The guest left mid-booking and the room is still held for them. Continuing hands
+ * that hold back instead of taking a second one; changing something releases it and
+ * starts a new attempt.
+ */
+export function PendingHoldBanner({
+  reference,
+  remainingMs,
+  onContinue,
+  onChange,
+}: {
+  reference: string;
+  remainingMs: number | null;
+  onContinue: () => void;
+  onChange: () => void;
+}) {
+  return (
+    <Banner
+      tone="info"
+      title="You already have a room held for these dates"
+      actions={
+        <>
+          <Button onClick={onContinue}>Continue this booking</Button>
+          <Button variant="secondary" onClick={onChange}>
+            Change something
+          </Button>
+        </>
+      }
+    >
+      <p>
+        Booking <span className="font-semibold">{reference}</span> is still open
+        and nothing has been charged yet.{' '}
+        {remainingMs !== null && (
+          <>
+            <span className="tabular-nums">{formatCountdown(remainingMs)}</span>{' '}
+            left.{' '}
+          </>
+        )}
+        Continue to finish the payment, or change your details and we will
+        release that hold and start again.
       </p>
     </Banner>
   );

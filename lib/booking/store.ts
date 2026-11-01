@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { db } from '@/db';
@@ -44,10 +44,24 @@ import type {
   StoredCancellation,
 } from '@/types/manage.types';
 
-type QueryExecutor = Pick<
+/** A `db` handle, or the transaction a caller that owns one hands to these helpers. */
+export type QueryExecutor = Pick<
   typeof db,
   'select' | 'insert' | 'update' | 'delete' | 'execute'
 >;
+
+/**
+ * Drizzle cannot open a transaction inside a transaction, so a write step that owns
+ * one uses it and a step already inside a caller's transaction joins that commit.
+ * `executor === db` is the marker for "nobody owns a transaction yet".
+ */
+async function inTransaction<T>(
+  executor: QueryExecutor,
+  work: (tx: QueryExecutor) => Promise<T>,
+): Promise<T> {
+  if (executor !== db) return work(executor);
+  return db.transaction((tx) => work(tx));
+}
 
 export interface StoredReservation {
   id: string;
@@ -375,9 +389,23 @@ export async function loadStoredReservation(
   return stored;
 }
 
+/**
+ * Writes every row that belongs to the reservation — status, history, refunds,
+ * notifications, pending change, ledger — as one unit.
+ *
+ * Called without an executor it owns a transaction. A caller already inside one
+ * must pass its `tx`, because Drizzle cannot nest transactions.
+ */
 export async function saveStoredReservation(
   r: StoredReservation,
   executor: QueryExecutor = db,
+): Promise<void> {
+  await inTransaction(executor, (tx) => writeStoredReservation(r, tx));
+}
+
+async function writeStoredReservation(
+  r: StoredReservation,
+  executor: QueryExecutor,
 ): Promise<void> {
   const breakdown = r.snapshot.breakdown;
   const snapshot = {
@@ -750,26 +778,29 @@ export async function deleteEmptyReservation(reference: string) {
 }
 
 export {
-  reservations,
-  payments,
-  paymentProofs,
-  reservationNights,
-  reservationExtras,
   createReference,
+  paymentProofs,
+  payments,
+  reservationExtras,
+  reservationNights,
+  reservations,
 };
 
-export async function insertPayment(input: {
-  reservationId: string;
-  reference: string;
-  method: PaymentMethod;
-  amountMinor: number;
-  provider: PaymentProvider | 'bank_transfer';
-  providerReference?: string | null;
-  status?: 'pending' | 'paid' | 'failed' | 'refunded';
-  note?: string | null;
-}) {
+export async function insertPayment(
+  input: {
+    reservationId: string;
+    reference: string;
+    method: PaymentMethod;
+    amountMinor: number;
+    provider: PaymentProvider | 'bank_transfer';
+    providerReference?: string | null;
+    status?: 'pending' | 'paid' | 'failed' | 'refunded';
+    note?: string | null;
+  },
+  executor: QueryExecutor = db,
+) {
   const id = randomUUID();
-  await db.insert(payments).values({
+  await executor.insert(payments).values({
     id,
     reservationId: input.reservationId,
     reference: input.reference,
@@ -826,13 +857,16 @@ async function recordLatePaymentRefund(
   });
 }
 
-export async function findReusableOnlinePayment(input: {
-  reservationId: string;
-  provider: PaymentProvider;
-  amountMinor: number;
-  changeId?: string | null;
-}) {
-  const [row] = await db
+export async function findReusablePayment(
+  input: {
+    reservationId: string;
+    provider: PaymentProvider | 'bank_transfer';
+    amountMinor: number;
+    changeId?: string | null;
+  },
+  executor: QueryExecutor = db,
+) {
+  const [row] = await executor
     .select()
     .from(payments)
     .where(
@@ -849,6 +883,53 @@ export async function findReusableOnlinePayment(input: {
     .orderBy(desc(payments.createdAt))
     .limit(1);
   return row ?? null;
+}
+
+/**
+ * One live transfer attempt per reservation: the reference the guest is given must
+ * not change between retries, otherwise the receipt they upload matches nothing.
+ * The reservation row is locked first so two near-simultaneous calls cannot both
+ * decide the attempt is missing. A `failed` or `refunded` row is not reusable, so a
+ * fresh attempt is still created wherever the payment lifecycle allows one.
+ */
+export async function ensureBankTransferPayment(
+  input: {
+    reservationId: string;
+    amountMinor: number;
+  },
+  executor: QueryExecutor = db,
+): Promise<{ reference: string; reused: boolean }> {
+  return inTransaction(executor, async (tx) => {
+    await tx
+      .select({ id: reservations.id })
+      .from(reservations)
+      .where(eq(reservations.id, input.reservationId))
+      .limit(1)
+      .for('update');
+
+    const reusable = await findReusablePayment(
+      {
+        reservationId: input.reservationId,
+        provider: 'bank_transfer',
+        amountMinor: input.amountMinor,
+      },
+      tx,
+    );
+    if (reusable) return { reference: reusable.reference, reused: true };
+
+    const reference = createReference();
+    await insertPayment(
+      {
+        reservationId: input.reservationId,
+        reference,
+        method: 'bank_transfer',
+        amountMinor: input.amountMinor,
+        provider: 'bank_transfer',
+      },
+      tx,
+    );
+    return { reference, reused: false };
+  });
 }
 
 export async function completeOnlinePayment(input: {
@@ -1110,26 +1191,122 @@ export async function failOnlinePayment(input: {
   });
 }
 
-export async function insertReservation(input: {
-  reference: string;
-  roomSlug: string;
-  stay: StoredReservation['stay'];
-  extras: ExtraSelection[];
-  quote: Extract<
-    import('@/types/checkout.types').CheckoutQuoteResponse,
-    { status: 'ok' }
-  >;
-  settings: import('@/types/checkout.types').CheckoutSettings;
-  guest: GuestInfo;
-  snapshot: ReservationSnapshot;
-}): Promise<StoredReservation | null> {
+/**
+ * Releases the guest's own earlier hold so it cannot block the replacement. Only a
+ * row the caller already authorized is touched, and only while it is still an
+ * unpaid hold: money in, or a receipt uploaded, and the row is left exactly as it
+ * was. The room is then re-allocated without an exclusion, so two live holds can
+ * never exist for the same room.
+ */
+async function releaseOwnHold(
+  tx: QueryExecutor,
+  reservationId?: string | null,
+): Promise<void> {
+  if (!reservationId) return;
+
+  const [target] = await tx
+    .select({ id: reservations.id })
+    .from(reservations)
+    .where(
+      and(
+        eq(reservations.id, reservationId),
+        eq(reservations.status, 'pending'),
+        eq(reservations.amountPaidMinor, 0),
+        ne(reservations.paymentMode, 'pay_at_hotel'),
+      ),
+    )
+    .limit(1)
+    .for('update');
+  if (!target) return;
+
+  const [blocked] = await tx
+    .select({ id: payments.id })
+    .from(payments)
+    .where(
+      and(
+        eq(payments.reservationId, reservationId),
+        inArray(payments.status, ['paid', 'refunded']),
+      ),
+    )
+    .limit(1);
+  if (blocked) return;
+
+  const [proof] = await tx
+    .select({ id: paymentProofs.id })
+    .from(paymentProofs)
+    .innerJoin(payments, eq(payments.id, paymentProofs.paymentId))
+    .where(eq(payments.reservationId, reservationId))
+    .limit(1);
+  if (proof) return;
+
+  await tx
+    .update(reservations)
+    .set({
+      status: 'expired',
+      holdExpiresAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(reservations.id, reservationId),
+        eq(reservations.status, 'pending'),
+      ),
+    );
+
+  await tx.insert(reservationStatusHistory).values({
+    reservationId,
+    fromStatus: 'pending',
+    toStatus: 'expired',
+    reason: 'replaced',
+    metadata: { type: 'replaced' },
+  });
+
+  await tx
+    .update(payments)
+    .set({
+      status: 'failed',
+      failedAt: new Date(),
+      providerResponse: { reason: 'replaced', source: 'reservation_replaced' },
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(payments.reservationId, reservationId),
+        eq(payments.status, 'pending'),
+        inArray(payments.type, ['deposit', 'balance', 'full']),
+      ),
+    );
+}
+
+export async function insertReservation(
+  input: {
+    reference: string;
+    roomSlug: string;
+    stay: StoredReservation['stay'];
+    extras: ExtraSelection[];
+    quote: Extract<
+      import('@/types/checkout.types').CheckoutQuoteResponse,
+      { status: 'ok' }
+    >;
+    settings: import('@/types/checkout.types').CheckoutSettings;
+    guest: GuestInfo;
+    snapshot: ReservationSnapshot;
+    /**
+     * A hold the same guest already has on this stay, derived from their own booking
+     * access cookie by the caller. Released here, in the transaction that takes the
+     * new one, so replacing a stay never needs two live holds at once.
+     */
+    supersedeReservationId?: string | null;
+  },
+  executor: QueryExecutor = db,
+): Promise<StoredReservation | null> {
   const roomType = await findRoomTypeBySlug(input.roomSlug);
   if (!roomType) return null;
 
   const now = new Date();
   const id = randomUUID();
 
-  const createdId = await db.transaction(async (tx) => {
+  const createdId = await inTransaction(executor, async (tx) => {
     await tx.execute(sql`
       UPDATE reservations r
       SET status = 'expired', updated_at = now()
@@ -1151,6 +1328,8 @@ export async function insertReservation(input: {
           WHERE p.reservation_id = r.id
         )
     `);
+
+    await releaseOwnHold(tx, input.supersedeReservationId);
 
     const room = await findAvailableRoom(
       roomType.id,
@@ -1260,5 +1439,5 @@ export async function insertReservation(input: {
   });
 
   if (!createdId) return null;
-  return loadStoredReservation(input.reference);
+  return loadStoredReservation(input.reference, executor);
 }

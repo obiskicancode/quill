@@ -12,7 +12,7 @@ export const ERROR_CODES = {
   DATES_REQUIRED: 'dates_required',
   INVALID_GUESTS: 'invalid_guests',
   ROOMS_REQUIRED: 'rooms_required',
-  UNAUTHORISED: 'unauthorised',
+  UNAUTHORIZED: 'unauthorized',
   NOT_VERIFIED: 'not_verified',
   SESSION_EXPIRED: 'session_expired',
   CSRF: 'csrf',

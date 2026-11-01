@@ -594,6 +594,8 @@ export const ERROR_MESSAGES = {
     "We couldn't create reservation. Please try again.",
   FAILED_TO_CREATE_RESERVATION_UI:
     "We couldn't create reservation. Please try again.",
+  RESERVATION_CREATION_RETRIES_EXHAUSTED:
+    'Reservation creation ran out of retries.',
   FAILED_TO_DECLINE_BOOKING: "We couldn't decline booking. Please try again.",
   FAILED_TO_EXPORT: 'Export failed. Please try again.',
   FAILED_TO_EXPORT_OR_RATE_LIMITED:

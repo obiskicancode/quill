@@ -3,11 +3,17 @@ import type { Metadata } from 'next';
 
 import { CheckoutFlow } from '@/components/checkout/CheckoutFlow';
 import { CheckoutShell } from '@/components/checkout/CheckoutShell';
-import { loadReservation } from '@/lib/booking/view';
+import { matchesRequestedStay } from '@/lib/booking/recovery';
+import {
+  loadPendingReservations,
+  loadReservation,
+  pendingRecoveryFor,
+} from '@/lib/booking/view';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
 import { parseRoomQuery } from '@/lib/rooms';
 import { getPricingSettings, getRoomDetail } from '@/lib/rooms/detail';
 import { needsExtraBed } from '@/lib/rooms/pricing';
+import type { CheckoutPendingRecovery } from '@/types/checkout.types';
 
 export const metadata: Metadata = {
   title: 'Secure checkout',
@@ -43,6 +49,26 @@ export default async function CheckoutPage({
   const returning = Boolean(reference && get('return') === '1');
   const saved =
     returning && reference ? await loadReservation(reference) : null;
+
+  // A guest who left mid-checkout still holds a room. Recovery reads their own
+  // signed booking cookies, so a stale `ref` in the URL is never enough on its own.
+  let pending: CheckoutPendingRecovery | null = null;
+  let recover = null;
+  if (!returning) {
+    const identity = {
+      roomSlug: slug,
+      checkIn: q.checkIn,
+      checkOut: q.checkOut,
+      adults: q.adults,
+      children: q.children,
+    };
+    recover = (await loadPendingReservations()).find((r) =>
+      matchesRequestedStay(r, identity),
+    );
+    if (recover) pending = pendingRecoveryFor(recover);
+  }
+
+  const pricedAs = saved ?? recover ?? null;
   // The server re-quotes the stay. Prices in the URL are only used to show "Price updated", never to charge.
   const initialQuote = await buildCheckoutQuote({
     room: slug,
@@ -50,9 +76,11 @@ export default async function CheckoutPage({
     checkOut: q.checkOut,
     adults: q.adults,
     children: q.children,
-    extraBed: saved ? saved.stay.extraBed : needs && get('extraBed') !== '0',
-    extras: saved ? saved.extras : [],
-    excludeReservationId: saved?.id,
+    extraBed: pricedAs
+      ? pricedAs.stay.extraBed
+      : needs && get('extraBed') !== '0',
+    extras: pricedAs ? pricedAs.extras : [],
+    excludeReservationId: pricedAs?.id,
     seenTotalMinor: returning
       ? null
       : Number.isInteger(seen) && seen > 0
@@ -89,6 +117,7 @@ export default async function CheckoutPage({
         initialQuote={initialQuote}
         seenTotalMinor={Number.isInteger(seen) && seen > 0 ? seen : null}
         resumeReference={returning ? reference : null}
+        pendingRecovery={pending}
         hotelTimes={{
           checkIn: pricing.checkInTime,
           checkOut: pricing.checkOutTime,

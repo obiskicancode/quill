@@ -1,15 +1,24 @@
+import { cookies } from 'next/headers';
+
 import { arrivalOptions } from '@/schemas/checkout.schema';
 import type {
   GuestCancellation,
   GuestReservation,
   PaymentLabel,
 } from '@/types/booking.types';
-import type { StatusResponse } from '@/types/checkout.types';
+import type {
+  CheckoutPendingRecovery,
+  StatusResponse,
+} from '@/types/checkout.types';
 
 import { getCheckoutSettings } from '../checkout/settings';
 import { hotelClock, nightsBetween } from '../dates';
 import { buildManageData } from '../manage/data';
-import type { AccessLevel } from './session';
+import {
+  isActionableForCheckout,
+  pendingReferencesFromAccessCookies,
+} from './recovery';
+import { getAccess, type AccessLevel } from './session';
 import {
   loadStoredReservation,
   toStatus,
@@ -176,6 +185,39 @@ export async function loadReservation(
   return loadStoredReservation(reference);
 }
 
+/**
+ * The caller's own bookings that are still waiting on them, newest first.
+ *
+ * Every reference comes from a signed booking access cookie in this browser, is
+ * re-checked against that cookie, and is reloaded from the database, so a guessed,
+ * forged or another guest's reference can never appear here.
+ */
+export async function loadPendingReservations(): Promise<StoredReservation[]> {
+  const jar = await cookies();
+  const found: StoredReservation[] = [];
+  for (const reference of pendingReferencesFromAccessCookies(jar.getAll())) {
+    if (!(await getAccess(reference))) continue;
+    const stored = await loadStoredReservation(reference);
+    if (stored && isActionableForCheckout(stored)) found.push(stored);
+  }
+  return found.sort((a, b) => b.createdAt - a.createdAt);
+}
+
 export const statusOf = (r: StoredReservation): StatusResponse => toStatus(r);
+
+/**
+ * What the checkout banner needs about a hold this browser still owns. The server
+ * stamps its own clock so the countdown is not trusting the guest's device.
+ */
+export function pendingRecoveryFor(
+  r: StoredReservation,
+): CheckoutPendingRecovery {
+  return {
+    reference: r.reference,
+    holdExpiresAtMs: r.holdExpiresAt,
+    serverTimeMs: Date.now(),
+    method: r.method,
+  };
+}
 
 export type { StoredReservation };
