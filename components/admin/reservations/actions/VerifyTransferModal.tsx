@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckCircle2, FileImage, XCircle } from 'lucide-react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -86,13 +86,13 @@ export function VerifyTransferModal({
     mode: 'onBlur',
   });
   const {
+    control,
     formState: { errors, isSubmitting },
     register,
     setError: setFieldError,
     setValue,
-    watch,
   } = form;
-  const mode = watch('action');
+  const mode = useWatch({ control, name: 'action' });
   const busy = isSubmitting || verifyTransfer.isPending;
   const [error, setError] = useState<string | null>(null);
 

@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
@@ -71,6 +71,8 @@ interface ReservationState {
   reference: string;
   holdExpiresAt: number;
   skewMs: number;
+  /** Parsed `serverTime` of the latest status response, so the countdown can re-measure the skew. */
+  serverNowMs?: number;
 }
 
 interface CheckoutFlowProps {
@@ -108,13 +110,13 @@ export function CheckoutFlow({
     `checkout:${room.slug}:${stay.checkIn}:${stay.checkOut}:${stay.adults}:${stay.children}`,
   );
   const {
+    control,
     formState: { errors: formErrors },
     setError: setGuestError,
     setValue,
     trigger,
-    watch,
   } = form;
-  const values = watch();
+  const values = useWatch({ control }) as GuestInput;
   const quoteMutation = useCheckoutQuote();
   const createReservation = useCreateReservation();
   const initPayment = useInitPayment();
@@ -184,6 +186,7 @@ export function CheckoutFlow({
   const hold = useHoldCountdown(
     holdActive ? reservation.holdExpiresAt : null,
     reservation?.skewMs ?? 0,
+    reservation?.serverNowMs,
   );
   const expired = holdActive && hold.expired;
   const locked = reservation !== null;
@@ -221,19 +224,16 @@ export function CheckoutFlow({
   const confirmationHref = (ref: string) =>
     `/booking/confirmation?ref=${encodeURIComponent(ref)}`;
 
-  const quoteRequest = useCallback(
-    () => ({
-      room: room.slug,
-      ...stay,
-      extraBed,
-      extras: selections,
-      seenTotalMinor: null,
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [room.slug, stay, extraBed, quantities],
-  );
+  const quoteRequest = () => ({
+    room: room.slug,
+    ...stay,
+    extraBed,
+    extras: selections,
+    seenTotalMinor: null,
+  });
 
-  // ive re-quote when extras or the extra bed change
+  // Re-quote when the extras or the extra bed change. Deliberately not keyed
+  // on the quote itself, so a refreshed quote does not re-trigger it.
   const firstRun = useRef(true);
   useEffect(() => {
     if (firstRun.current) {
@@ -251,48 +251,69 @@ export function CheckoutFlow({
       }
     }, 300);
     return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only extras changes should re-quote
   }, [extraBed, quantities]);
 
   // polling after the guest returns from the provider
   useEffect(() => {
-    if (phase.name !== 'confirming' || !reservation) return;
+    if (phase.name !== 'confirming' || !reservation || timedOut) return;
     const timer = window.setTimeout(() => setTimedOut(true), POLL_TIMEOUT_MS);
     return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase.name, pollNonce, reservation?.reference]);
+  }, [phase.name, pollNonce, reservation, timedOut]);
 
-  useEffect(() => {
-    if (!status || !reservation) return;
-    setReservation({
-      reference: reservation.reference,
-      holdExpiresAt: Date.parse(status.holdExpiresAt),
-      skewMs: Date.parse(status.serverTime) - Date.now(),
-    });
-    if (status.status === 'confirmed')
-      return router.push(confirmationHref(reservation.reference));
-    if (status.status === 'pending_approval')
-      return setPhase({ name: 'request-received', reason: 'manual' });
-    if (status.status === 'expired') {
-      setReservation(null);
-      setPhase({ name: 'form' });
-      router.replace(checkoutHref(stay));
-      return;
+  // Server-driven transitions when a fresh poll result arrives. Adjusting
+  // state during render (guarded by the previous value) replaces setState in
+  // an effect; the router calls below stay in an effect.
+  const [syncedStatus, setSyncedStatus] = useState(status);
+  if (status !== syncedStatus) {
+    setSyncedStatus(status);
+    if (status && reservation) {
+      if (status.status === 'pending_approval') {
+        setPhase({ name: 'request-received', reason: 'manual' });
+      } else if (status.status === 'expired') {
+        setReservation(null);
+        setPhase({ name: 'form' });
+      } else if (
+        status.status === 'payment_failed' ||
+        status.paymentStatus === 'failed' ||
+        status.status === 'cancelled' ||
+        status.paymentStatus === 'cancelled'
+      ) {
+        setReservation({
+          reference: reservation.reference,
+          holdExpiresAt: Date.parse(status.holdExpiresAt),
+          skewMs: reservation.skewMs,
+          serverNowMs: Date.parse(status.serverTime),
+        });
+        setPhase({
+          name: 'failed',
+          reason:
+            status.status === 'cancelled' ||
+            status.paymentStatus === 'cancelled'
+              ? 'cancelled'
+              : 'failed',
+        });
+      }
     }
-    if (
+  }
+
+  // Navigate for the terminal statuses once the transitions above have
+  // committed. This effect only talks to the router.
+  useEffect(() => {
+    if (!status) return;
+    if (status.status === 'expired') router.replace(checkoutHref(stay));
+    else if (
+      status.status === 'confirmed' ||
       status.status === 'awaiting_transfer' ||
       status.status === 'awaiting_verification' ||
       status.status === 'reserved_pay_at_hotel' ||
       status.status === 'checked_in' ||
       status.status === 'checked_out' ||
       status.status === 'no_show'
-    )
-      return router.push(confirmationHref(reservation.reference));
-    if (status.status === 'payment_failed' || status.paymentStatus === 'failed')
-      return setPhase({ name: 'failed', reason: 'failed' });
-    if (status.status === 'cancelled' || status.paymentStatus === 'cancelled')
-      return setPhase({ name: 'failed', reason: 'cancelled' });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    ) {
+      if (reservation) router.push(confirmationHref(reservation.reference));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- router helpers and stay are stable; navigate only on status changes
   }, [status]);
 
   // validation

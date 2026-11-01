@@ -1,7 +1,7 @@
 'use client';
 
 import { Pause, Play } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
 
 import { Button } from './ui/button';
 
@@ -12,25 +12,31 @@ interface HeroVideoProps {
 
 type NetworkNavigator = Navigator & { connection?: { saveData?: boolean } };
 
+const noSubscribe = () => () => {};
+
+/** One-time capability probe. Client-only: the server snapshot keeps SSR out. */
+function videoCapabilities() {
+  const motionOk = window.matchMedia(
+    '(prefers-reduced-motion: no-preference)',
+  ).matches;
+  const wide = window.matchMedia('(min-width: 768px)').matches;
+  const saveData =
+    (navigator as NetworkNavigator).connection?.saveData === true;
+  return motionOk && wide && !saveData;
+}
+
 /**
  * Silent, looping background video. Only loads on tablet and up, with motion allowed and Data Saver off.
  * Always has a pause button (WCAG 2.2.2). The hero photo stays underneath as the poster.
  */
 export function HeroVideo({ src, type }: HeroVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [enabled, setEnabled] = useState(false);
+  const enabled = useSyncExternalStore(
+    noSubscribe,
+    videoCapabilities,
+    () => false,
+  );
   const [playing, setPlaying] = useState(true);
-
-  useEffect(() => {
-    const motionOk = window.matchMedia(
-      '(prefers-reduced-motion: no-preference)',
-    ).matches;
-    const wide = window.matchMedia('(min-width: 768px)').matches;
-    const saveData =
-      (navigator as NetworkNavigator).connection?.saveData === true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time capability probe after mount; must not run during SSR
-    setEnabled(motionOk && wide && !saveData);
-  }, []);
 
   if (!enabled) return null;
 
@@ -50,7 +56,7 @@ export function HeroVideo({ src, type }: HeroVideoProps) {
     <>
       <video
         ref={videoRef}
-        className="absolute inset-0 z-[1] h-full w-full object-cover"
+        className="absolute inset-0 z-1 h-full w-full object-cover"
         autoPlay
         muted
         loop

@@ -62,6 +62,7 @@ function quoteKey(input: ReservationQuoteInput): string {
 export function useReservationsList(
   queryString: string,
   initialData?: ReservationsListResponse,
+  refetchInterval?: number | false | (() => number | false),
 ) {
   return useQuery({
     queryKey: queryKeys.admin.reservations.list(queryString),
@@ -71,6 +72,8 @@ export function useReservationsList(
     },
     initialData,
     staleTime: 0,
+    refetchInterval,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -175,54 +178,6 @@ export function useCreateReservation() {
       );
       void queryClient.invalidateQueries({
         queryKey: queryKeys.admin.reservations.lists(),
-      });
-    },
-  });
-}
-
-export function useCheckInReservation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const response = await adminService.checkInReservation(id);
-      return response.data;
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.admin.reservations.all,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.admin.calendar.all,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.admin.dashboard.all,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.admin.payments.all,
-      });
-    },
-  });
-}
-
-export function useCheckOutReservation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const response = await adminService.checkOutReservation(id);
-      return response.data;
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.admin.reservations.all,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.admin.calendar.all,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.admin.dashboard.all,
-      });
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.admin.payments.all,
       });
     },
   });

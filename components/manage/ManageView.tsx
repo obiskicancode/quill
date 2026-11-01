@@ -153,15 +153,20 @@ export function ManageView({
   useEffect(() => {
     previous.current = v;
   }, [v]);
+  // Restart the 90 second window when polling stops.
+  const [prevWaiting, setPrevWaiting] = useState(waiting);
+  if (prevWaiting !== waiting) {
+    setPrevWaiting(waiting);
+    if (!waiting) setPollTimedOut(false);
+  }
   useEffect(() => {
-    if (!waiting) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- restart the 90 second window when polling stops
-      setPollTimedOut(false);
-      return;
-    }
+    if (!waiting) return;
     if (pollTimedOut) return;
     const started = Date.now();
     const timer = window.setInterval(async () => {
+      // No point polling a page the guest cannot see; the 90s deadline is
+      // wall-clock, so it still applies when they come back.
+      if (document.visibilityState === 'hidden') return;
       if (Date.now() - started >= POLL_TIMEOUT_MS) {
         setPollTimedOut(true);
         return;

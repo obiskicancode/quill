@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, MessageCircle } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
@@ -104,9 +104,8 @@ export function EnquiryForm({
     formState: { errors, isSubmitting },
     register,
     setValue,
-    watch,
   } = form;
-  const values = watch();
+  const values = useWatch({ control }) as EnquiryFormInput;
   const submitEnquiry = useSubmitEnquiry();
   const [website, setWebsite] = useState('');
   const [failure, setFailure] = useState<Failure | null>(null);
@@ -171,7 +170,9 @@ export function EnquiryForm({
       inFlight.current = false;
     }
   };
-  const submit = form.handleSubmit(onSubmit);
+  const submit = (event?: React.SubmitEvent<HTMLFormElement>) => {
+    void form.handleSubmit(onSubmit)(event);
+  };
 
   function reset() {
     key.current = newKey();
@@ -491,7 +492,7 @@ export function EnquiryForm({
               {/* Honeypot: hidden from people and assistive tech. Bots fill it in. */}
               <div
                 aria-hidden
-                className="absolute -left-[624.9375rem] h-0 w-0 overflow-hidden"
+                className="absolute left-[-624.9375rem] h-0 w-0 overflow-hidden"
               >
                 <Label htmlFor="enquiry-website-honeypot">Website</Label>
                 <Input

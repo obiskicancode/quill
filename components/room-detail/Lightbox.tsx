@@ -63,9 +63,14 @@ export function Lightbox({
     };
   }, [open, startIndex]);
 
+  // Keep the latest callback without re-running the effect below when the
+  // parent re-creates it.
+  const onIndexChangeRef = useRef(onIndexChange);
   useEffect(() => {
-    if (open) onIndexChange?.(index);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    onIndexChangeRef.current = onIndexChange;
+  }, [onIndexChange]);
+  useEffect(() => {
+    if (open) onIndexChangeRef.current?.(index);
   }, [index, open]);
 
   const goTo = useCallback(
@@ -127,7 +132,7 @@ export function Lightbox({
                 const t = trackRef.current;
                 if (t) setIndex(Math.round(t.scrollLeft / t.clientWidth));
               }}
-              className="flex h-full snap-x snap-mandatory [scrollbar-width:none] overflow-x-auto [&::-webkit-scrollbar]:hidden"
+              className="flex h-full snap-x snap-mandatory overflow-x-auto [scrollbar:none] [&::-webkit-scrollbar]:hidden"
             >
               {images.map((img, i) => (
                 <figure

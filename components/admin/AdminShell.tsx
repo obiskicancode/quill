@@ -20,7 +20,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, type CSSProperties, type ReactNode } from 'react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useAdminLogout } from '@/hooks/services/admin/use-auth';
+import { useNewEnquiryCount } from '@/hooks/services/admin/use-enquiries';
 import { ADMIN_NAV, ROLE_LABELS } from '@/lib/auth/permissions';
 import type { AdminIdentity, AdminRole, Permission } from '@/types/auth.types';
 
@@ -80,39 +81,8 @@ function AdminSidebar({
 }: AdminSidebarProps) {
   const pathname = usePathname();
   const { isMobile, setOpenMobile } = useSidebar();
-  const [newEnquiriesCount, setNewEnquiriesCount] = useState<number>(0);
-
-  // TODO: Update to use hooks
-  useEffect(() => {
-    let active = true;
-    async function loadCount() {
-      try {
-        const res = await fetch('/api/admin/enquiries/counts');
-        const data = await res.json();
-        if (active && data.data?.count !== undefined) {
-          setNewEnquiriesCount(data.data.count);
-        }
-      } catch {
-        // quiet background refresh
-      }
-    }
-
-    loadCount();
-
-    const interval = setInterval(() => {
-      if (
-        typeof document !== 'undefined' &&
-        document.visibilityState === 'visible'
-      ) {
-        loadCount();
-      }
-    }, 60_000);
-
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, []);
+  const enquiryCount = useNewEnquiryCount(!mfaPending);
+  const newEnquiriesCount = enquiryCount.data ?? 0;
 
   const groups = mfaPending
     ? []

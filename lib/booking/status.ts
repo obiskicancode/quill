@@ -1,4 +1,20 @@
 import type { GuestReservation, HeaderKind } from '@/types/booking.types';
+import type { GuestReservationStatus } from '@/types/checkout.types';
+
+/** Everything except `pending_payment`: the booking is no longer waiting on a payment to clear. */
+export const TERMINAL_STATUSES: ReadonlySet<GuestReservationStatus> = new Set([
+  'awaiting_transfer',
+  'awaiting_verification',
+  'pending_approval',
+  'reserved_pay_at_hotel',
+  'confirmed',
+  'payment_failed',
+  'cancelled',
+  'expired',
+  'checked_in',
+  'checked_out',
+  'no_show',
+]);
 
 export function headerKind(
   reservation: Pick<GuestReservation, 'status' | 'mode'>,

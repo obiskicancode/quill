@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle } from 'lucide-react';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -88,9 +88,8 @@ export function MarkNoShowModal({
     formState: { errors, isSubmitting },
     register,
     setError: setFieldError,
-    watch,
   } = form;
-  const overrideRefund = watch('overrideRefund');
+  const overrideRefund = useWatch({ control, name: 'overrideRefund' });
   const busy = isSubmitting || markNoShow.isPending;
   const [error, setError] = useState<string | null>(null);
 

@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { ServiceError } from '@/app/api/services/base.service';
@@ -53,14 +53,14 @@ export function EditDetailsPanel({
     mode: 'onBlur',
   });
   const {
+    control,
     formState: { errors: formErrors, isDirty, isSubmitting },
     reset,
     setError: setFieldError,
     setValue,
     trigger,
-    watch,
   } = form;
-  const values = watch();
+  const values = useWatch({ control }) as DetailsInput;
   const [error, setError] = useState<{
     message: string;
     retryable: boolean;
@@ -163,7 +163,10 @@ export function EditDetailsPanel({
 
       <form
         noValidate
-        onSubmit={form.handleSubmit(save)}
+        onSubmit={(event) => {
+          event.preventDefault();
+          void form.handleSubmit(save)(event);
+        }}
         className="mt-5 space-y-6"
       >
         <DetailsStep

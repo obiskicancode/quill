@@ -12,8 +12,8 @@ import {
   Trash2,
   UploadCloud,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useState } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,7 @@ export function TabPhotos({
   const deleteImage = useDeleteImage(roomTypeId);
   const reorderImages = useReorderRoomImages(roomTypeId);
   const [photos, setPhotos] = useState<AdminRoomImage[]>(initialPhotos);
+  const [syncedPhotos, setSyncedPhotos] = useState(initialPhotos);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -61,9 +62,10 @@ export function TabPhotos({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
+  if (initialPhotos !== syncedPhotos) {
+    setSyncedPhotos(initialPhotos);
     setPhotos(initialPhotos);
-  }, [initialPhotos]);
+  }
 
   const uploadForm = useForm<PhotoUploadInput, unknown, PhotoUploadOutput>({
     resolver: zodResolver(photoUploadFormSchema),
@@ -83,7 +85,7 @@ export function TabPhotos({
     mode: 'onBlur',
   });
 
-  const pendingFile = uploadForm.watch('file');
+  const pendingFile = useWatch({ control: uploadForm.control, name: 'file' });
   const atMaxPhotos = photos.length >= 8;
 
   function handleFileSelect(
@@ -394,7 +396,7 @@ export function TabPhotos({
                 } bg-card`}
               >
                 {/* Image display */}
-                <div className="bg-paper relative aspect-[4/3] w-full">
+                <div className="bg-paper relative aspect-4/3 w-full">
                   <Image
                     src={p.thumbnailUrl || p.imageUrl}
                     alt={p.altText}

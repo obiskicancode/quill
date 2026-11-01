@@ -84,12 +84,17 @@ export const queryKeys = {
     },
     dashboard: {
       all: ['admin', 'dashboard'] as const,
+      summaries: () => ['admin', 'dashboard', 'summary'] as const,
       summary: (date?: string) =>
         ['admin', 'dashboard', 'summary', date ?? 'today'] as const,
       occupancy: (from?: string, days = 14) =>
         ['admin', 'dashboard', 'occupancy', from ?? 'today', days] as const,
       revenue: (range: RevenueRange) =>
         ['admin', 'dashboard', 'revenue', range] as const,
+    },
+    enquiries: {
+      all: ['admin', 'enquiries'] as const,
+      newCount: () => ['admin', 'enquiries', 'new-count'] as const,
     },
     reservations: {
       all: ['admin', 'reservations'] as const,

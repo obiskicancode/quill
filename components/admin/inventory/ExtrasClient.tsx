@@ -1,6 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
   ArrowDown,
@@ -10,8 +11,8 @@ import {
   RotateCcw,
   Trash2,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useState } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
 import {
@@ -60,13 +61,10 @@ import {
   useReorderExtras,
   useUpdateExtra,
 } from '@/hooks/services/admin/use-inventory';
+import { queryKeys } from '@/hooks/services/query-keys';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import { minorToNaira, nairaToMinor } from '@/lib/rate-resolution';
-import type {
-  AdminExtra,
-  ExtraInput,
-  ExtraPricingUnit,
-} from '@/types/inventory.types';
+import type { AdminExtra, ExtraInput } from '@/types/inventory.types';
 
 import { extraFormSchema, slugify } from './form-schemas';
 
@@ -78,12 +76,12 @@ type ExtraFormInput = z.input<typeof extraFormSchema>;
 type ExtraFormOutput = z.output<typeof extraFormSchema>;
 
 export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
+  const queryClient = useQueryClient();
   const extrasQuery = useExtras(initialExtras);
   const createExtra = useCreateExtra();
   const updateExtra = useUpdateExtra();
   const deleteExtra = useDeleteExtra();
   const reorderExtras = useReorderExtras();
-  const [extras, setExtras] = useState<AdminExtra[]>(initialExtras);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingExtra, setEditingExtra] = useState<AdminExtra | null>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
@@ -117,17 +115,18 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
     reset,
     setError: setFieldError,
     setValue,
-    watch,
   } = form;
-  const priceNaira = watch('priceNaira');
-  const pricingUnit = watch('pricingUnit') as ExtraPricingUnit;
+  const [priceNaira, pricingUnit] = useWatch({
+    control,
+    name: ['priceNaira', 'pricingUnit'],
+  });
 
   const isSaving =
     isSubmitting || createExtra.isPending || updateExtra.isPending;
 
-  useEffect(() => {
-    if (extrasQuery.data) setExtras(extrasQuery.data);
-  }, [extrasQuery.data]);
+  // The query cache is the source of truth; reorders are written there
+  // optimistically and rolled back by a refetch when the request fails.
+  const extras = extrasQuery.data ?? initialExtras;
 
   async function refresh() {
     await extrasQuery.refetch();
@@ -176,7 +175,10 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
       sortOrder: idx + 1,
     }));
 
-    setExtras(updated);
+    queryClient.setQueryData<AdminExtra[]>(
+      queryKeys.admin.inventory.extras(),
+      updated,
+    );
     try {
       await reorderExtras.mutateAsync(items);
       toast.add({ title: SUCCESS_MESSAGES.EXTRAS_REORDERED, type: 'success' });

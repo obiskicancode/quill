@@ -12,11 +12,17 @@ export async function GET(request: Request) {
   if (!guard.ok) return guard.response;
 
   const { searchParams } = new URL(request.url);
-  const from = searchParams.get('from') || '2026-10-01';
-  const to = searchParams.get('to') || '2026-10-26';
+  const now = new Date();
+  const monthStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    1,
+  ).toISOString();
+  const from = searchParams.get('from') || monthStart;
+  const to = searchParams.get('to') || now.toISOString();
 
   const summary = await getPaymentsSummary(from, to);
-  const breakdown = await getPaymentsBreakdown();
+  const breakdown = await getPaymentsBreakdown(from, to);
 
   return apiOk({ summary, breakdown }, { noCache: true });
 }

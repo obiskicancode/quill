@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -95,10 +95,11 @@ export function CancelModal({
     register,
     setError: setFieldError,
     setValue,
-    watch,
   } = form;
-  const overrideRefund = watch('overrideRefund');
-  const acknowledged = watch('acknowledged');
+  const [overrideRefund, acknowledged] = useWatch({
+    control,
+    name: ['overrideRefund', 'acknowledged'],
+  });
   const busy = isSubmitting || cancelReservation.isPending;
   const [error, setError] = useState<string | null>(null);
   const preview = previewQuery.data ?? null;

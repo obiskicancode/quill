@@ -4,6 +4,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { checkoutService } from '@/app/api/services/checkout.service';
 import { queryKeys } from '@/hooks/services/query-keys';
+import { TERMINAL_STATUSES } from '@/lib/booking/status';
 import type { ReservationRequestInput } from '@/schemas/checkout.schema';
 import type {
   PaymentInitRequest,
@@ -11,20 +12,6 @@ import type {
   ReservationResponse,
   StatusResponse,
 } from '@/types/checkout.types';
-
-const TERMINAL_STATUSES = new Set([
-  'confirmed',
-  'pending_approval',
-  'payment_failed',
-  'cancelled',
-  'expired',
-  'awaiting_transfer',
-  'awaiting_verification',
-  'reserved_pay_at_hotel',
-  'checked_in',
-  'checked_out',
-  'no_show',
-]);
 
 export function useCheckoutQuote() {
   return useMutation({
@@ -85,6 +72,5 @@ export function useCheckoutStatus(reference: string | null, enabled: boolean) {
       if (status && TERMINAL_STATUSES.has(status.status)) return false;
       return 2000;
     },
-    refetchIntervalInBackground: true,
   });
 }

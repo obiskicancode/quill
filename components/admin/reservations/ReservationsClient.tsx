@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Download, Plus } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { AdminEmpty, AdminError } from '@/components/admin/AdminStates';
 import { StaleBanner } from '@/components/admin/dashboard/StaleBanner';
@@ -49,7 +49,10 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
     isError,
     isPending,
     refetch,
-  } = useReservationsList(currentParamsString);
+  } = useReservationsList(currentParamsString, undefined, () =>
+    // 60-second silent auto-refresh, paused while the admin is interacting.
+    isInteractingRef.current ? false : 60_000,
+  );
 
   const data = reservationsData ?? null;
   const isLoading = isPending;
@@ -59,43 +62,6 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
       : ERROR_MESSAGES.FAILED_TO_LOAD_RESERVATIONS_UI
     : null;
   const isStale = isError && Boolean(data);
-
-  const fetchReservations = (isQuiet = false) => {
-    if (!isQuiet) {
-      void refetch();
-      return;
-    }
-    void refetch({ cancelRefetch: false });
-  };
-
-  // 60-second silent auto-refresh
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (
-        typeof document !== 'undefined' &&
-        document.visibilityState === 'hidden'
-      ) {
-        return;
-      }
-      if (isInteractingRef.current) {
-        return;
-      }
-      void refetch({ cancelRefetch: false });
-    }, 60000);
-
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        void refetch({ cancelRefetch: false });
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, [refetch]);
 
   // Update URL Search Params helper
   const updateUrlParams = (
@@ -239,7 +205,7 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
       />
 
       {/* Stale Data Warning Banner */}
-      {isStale && <StaleBanner onRefresh={() => fetchReservations(false)} />}
+      {isStale && <StaleBanner onRefresh={() => void refetch()} />}
 
       {/* 2. Filter Bar */}
       <ReservationsFilterBar
@@ -259,7 +225,7 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => fetchReservations(false)}
+              onClick={() => void refetch()}
             >
               Retry
             </Button>

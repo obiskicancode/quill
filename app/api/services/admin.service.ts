@@ -42,6 +42,7 @@ import type {
   DashboardSummaryResponse,
   RevenueRange,
 } from '@/types/dashboard.types';
+import type { NewEnquiryCountResponse } from '@/types/enquiries.types';
 import type {
   AdminAmenity,
   AdminExtra,
@@ -224,6 +225,10 @@ class AdminService extends BaseService {
     return this.httpGet<DashboardRevenueResponse>(
       `/dashboard/revenue?range=${range}`,
     );
+  }
+
+  getNewEnquiryCount() {
+    return this.httpGet<NewEnquiryCountResponse>('/enquiries/counts');
   }
 
   checkInReservation(id: string) {

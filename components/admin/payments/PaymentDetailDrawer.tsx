@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   Check,
@@ -371,8 +372,7 @@ export function PaymentDetailDrawer({
             <DialogDescription className="sr-only">
               Uploaded proof of payment for this transaction.
             </DialogDescription>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={payment.proofUrl}
               alt="Transfer Proof"
               className="max-h-[85vh] rounded-lg object-contain shadow-2xl"

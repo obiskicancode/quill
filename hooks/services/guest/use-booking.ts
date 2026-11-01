@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { bookingService } from '@/app/api/services/booking.service';
 import { checkoutService } from '@/app/api/services/checkout.service';
 import { queryKeys } from '@/hooks/services/query-keys';
+import { TERMINAL_STATUSES } from '@/lib/booking/status';
 import type { GuestReservation } from '@/types/booking.types';
 import type { StatusResponse } from '@/types/checkout.types';
 
@@ -32,8 +33,11 @@ export function useGuestBookingStatus(reference: string, enabled: boolean) {
     },
     enabled,
     staleTime: 0,
-    refetchInterval: 2000,
-    refetchIntervalInBackground: true,
+    refetchInterval: (query) => {
+      const status = query.state.data;
+      if (status && TERMINAL_STATUSES.has(status.status)) return false;
+      return 2000;
+    },
   });
 }
 

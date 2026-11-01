@@ -10,7 +10,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { ActionModal } from '@/components/admin/reservations/actions/ActionModal';
@@ -187,10 +187,9 @@ export function BlockModal({
     handleSubmit,
     register,
     setValue,
-    watch,
   } = form;
 
-  const values = watch();
+  const values = useWatch({ control }) as BlockFormInput;
   const selectedRoomIds = values.roomIds;
   const startDate = values.startDate;
   const lastNight = values.lastNight;
@@ -231,8 +230,7 @@ export function BlockModal({
     }, 250);
 
     return () => clearTimeout(timer);
-    // selectedRoomIds is represented by roomIdsKey.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedRoomIds is represented by roomIdsKey.
   }, [isOpen, roomIdsKey, startDate, lastNight, blockToEdit?.id]);
 
   // Bulk room selection helpers

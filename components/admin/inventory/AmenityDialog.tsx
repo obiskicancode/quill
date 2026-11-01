@@ -19,7 +19,7 @@ import {
   Wind,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { Alert } from '@/components/ui/alert';
@@ -105,10 +105,9 @@ export function AmenityDialog({
     register,
     setError: setFieldError,
     setValue,
-    watch,
   } = form;
 
-  const icon = watch('icon') || 'Wifi';
+  const icon = useWatch({ control, name: 'icon' }) || 'Wifi';
   const busy =
     isSubmitting || createAmenity.isPending || updateAmenity.isPending;
 

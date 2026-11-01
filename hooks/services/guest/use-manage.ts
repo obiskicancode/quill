@@ -26,7 +26,6 @@ export function useManageBooking(
     initialData,
     staleTime: 0,
     refetchInterval: poll ? 3000 : false,
-    refetchIntervalInBackground: true,
   });
 }
 

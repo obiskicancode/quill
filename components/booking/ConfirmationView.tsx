@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Settings2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import {
@@ -49,15 +49,15 @@ const emailLead = {
 export function ConfirmationView({ initial }: { initial: GuestReservation }) {
   const bookingQuery = useGuestBooking(initial.reference, initial);
   const { refetch } = bookingQuery;
-  const v = bookingQuery.data;
+  const booking = bookingQuery.data;
   const [timedOut, setTimedOut] = useState(false);
   const [announcement, setAnnouncement] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState(false);
-  const kind = headerKind(v);
+  const detailKind = headerKind(booking);
   const statusQuery = useGuestBookingStatus(
-    v.reference,
-    kind === 'confirming' && !timedOut,
+    booking.reference,
+    detailKind === 'confirming' && !timedOut,
   );
   const reduced = useReducedMotion();
   const presence = reduced
@@ -68,6 +68,23 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
         exit: { opacity: 0, y: -8 },
       };
   const presenceTransition = { duration: reduced ? 0 : 0.22, ease: EASE_OUT };
+
+  /**
+   * One source for the page: the detail, overlaid with the polled status, so the
+   * header follows the payment as soon as the poll sees it.
+   */
+  const v = useMemo(
+    () =>
+      statusQuery.data
+        ? {
+            ...booking,
+            status: statusQuery.data.status,
+            paymentStatus: statusQuery.data.paymentStatus,
+          }
+        : booking,
+    [booking, statusQuery.data],
+  );
+  const kind = headerKind(v);
 
   /** A read-only reload. Retrying it can never change the reservation. */
   const refresh = useCallback(async () => {
@@ -85,18 +102,6 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
       setRefreshing(false);
     }
   }, [refetch, v]);
-
-  // Poll while the payment is being verified.
-  const status = statusQuery.data;
-  useEffect(() => {
-    if (!status) return;
-    if (
-      status.status !== v.status ||
-      status.paymentStatus !== v.paymentStatus
-    ) {
-      void refetch();
-    }
-  }, [status, v.status, v.paymentStatus, refetch]);
 
   useEffect(() => {
     if (kind !== 'confirming' || timedOut) return;

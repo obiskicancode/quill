@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { Alert } from '@/components/ui/alert';
@@ -114,17 +114,31 @@ export function RateRuleDialog({
     register,
     setError: setFieldError,
     setValue,
-    watch,
   } = form;
 
-  const name = watch('name');
-  const roomTypeId = watch('roomTypeId') || '';
-  const startDate = watch('startDate');
-  const endDate = watch('endDate');
-  const selectedDays = watch('daysOfWeek') || [];
-  const adjustmentType = watch('adjustmentType');
-  const priority = watch('priority');
-  const isActive = watch('isActive');
+  const [
+    name,
+    roomTypeId,
+    startDate,
+    endDate,
+    daysOfWeek,
+    adjustmentType,
+    priority,
+    isActive,
+  ] = useWatch({
+    control,
+    name: [
+      'name',
+      'roomTypeId',
+      'startDate',
+      'endDate',
+      'daysOfWeek',
+      'adjustmentType',
+      'priority',
+      'isActive',
+    ],
+  });
+
   const busy =
     isSubmitting || createRateRule.isPending || updateRateRule.isPending;
 
@@ -145,6 +159,7 @@ export function RateRuleDialog({
   const overlapData = overlapQuery.data ?? null;
 
   function toggleDay(day: number) {
+    const selectedDays = daysOfWeek ?? [];
     if (selectedDays.includes(day)) {
       setValue(
         'daysOfWeek',
@@ -378,7 +393,7 @@ export function RateRuleDialog({
             <Label>Days of Week (Leave all unchecked for everyday)</Label>
             <div className="flex flex-wrap gap-2 pt-0.5">
               {DAYS.map((d) => {
-                const isSelected = selectedDays.includes(d.day);
+                const isSelected = (daysOfWeek || []).includes(d.day);
                 return (
                   <Button
                     key={d.day}

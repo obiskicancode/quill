@@ -82,13 +82,17 @@ export function StaySelector({
     setSheetOpen(true);
   }
 
-  useEffect(() => {
-    if (openSignal === 0) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- openSignal is an imperative trigger from elsewhere on the page
-    if (window.matchMedia('(min-width: 768px)').matches) openDates();
-    else openSheet();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openSignal]);
+  // openSignal is an imperative trigger from elsewhere on the page (for
+  // example a card's "Check availability"): open the picker when it
+  // increments, choosing desktop pop-over or mobile sheet by viewport.
+  const [prevSignal, setPrevSignal] = useState(openSignal);
+  if (prevSignal !== openSignal) {
+    setPrevSignal(openSignal);
+    if (openSignal !== 0) {
+      if (window.matchMedia('(min-width: 768px)').matches) openDates();
+      else openSheet();
+    }
+  }
 
   useEffect(() => {
     if (!panel) return;
@@ -153,7 +157,7 @@ export function StaySelector({
               aria-expanded={panel === 'dates'}
               aria-controls={ids.dates}
               onClick={(e) => trigger('dates', e)}
-              className={`${field} after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-[0.0625rem] ${panel === 'dates' ? 'bg-paper' : ''}`}
+              className={`${field} after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-px ${panel === 'dates' ? 'bg-paper' : ''}`}
             >
               <CalendarDays className="text-brand-ink size-5" aria-hidden />
               <span>
@@ -172,7 +176,7 @@ export function StaySelector({
               aria-expanded={panel === 'dates'}
               aria-controls={ids.dates}
               onClick={(e) => trigger('dates', e)}
-              className={`${field} after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-[0.0625rem] ${panel === 'dates' ? 'bg-paper' : ''}`}
+              className={`${field} after:bg-line after:absolute after:top-1/4 after:right-0 after:h-1/2 after:w-px ${panel === 'dates' ? 'bg-paper' : ''}`}
             >
               <CalendarDays className="text-brand-ink size-5" aria-hidden />
               <span>
@@ -210,7 +214,7 @@ export function StaySelector({
               id={ids.dates}
               role="group"
               aria-label="Choose your dates"
-              className="rounded-card bg-card shadow-float ring-ink/10 absolute top-full left-0 z-30 mt-3 w-[44rem] max-w-full p-5 ring-1"
+              className="rounded-card bg-card shadow-float ring-ink/10 absolute top-full left-0 z-30 mt-3 w-176 max-w-full p-5 ring-1"
             >
               <DatePicker
                 value={draft}

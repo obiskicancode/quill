@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Home, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -65,13 +65,13 @@ export function ReassignRoomModal({
     mode: 'onBlur',
   });
   const {
+    control,
     formState: { errors, isSubmitting },
     register,
     setError: setFieldError,
     setValue,
-    watch,
   } = form;
-  const selectedRoomId = watch('roomId');
+  const selectedRoomId = useWatch({ control, name: 'roomId' });
   const busy = isSubmitting || reassignRoom.isPending;
   const [error, setError] = useState<string | null>(null);
   const rooms = roomsQuery.data?.rooms ?? [];

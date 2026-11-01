@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { ServiceError } from '@/app/api/services/base.service';
@@ -153,9 +153,8 @@ export function CancelFlow({
     formState: { errors: formErrors, isSubmitting },
     register,
     reset,
-    watch,
   } = form;
-  const note = watch('note') ?? '';
+  const note = useWatch({ control, name: 'note' }) ?? '';
   const busy = isSubmitting || cancelBooking.isPending;
   const [error, setError] = useState<{
     message: string;
@@ -181,17 +180,6 @@ export function CancelFlow({
     )
       onSessionExpired();
   }, [previewQuery.error, onSessionExpired]);
-
-  useEffect(() => {
-    if (!open) return;
-    setStep('review');
-    reset();
-    setError(null);
-    setResult(null);
-    setNotice(null);
-    key.current = newKey();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
 
   const submit = async (input: CancelFormOutput) => {
     if (busy || !preview) return;
@@ -237,7 +225,19 @@ export function CancelFlow({
       }
     }
   };
-  const submitForm = form.handleSubmit(submit);
+  const submitForm = (event: React.SubmitEvent<HTMLFormElement>) => {
+    void form.handleSubmit(submit)(event);
+  };
+
+  function handleDialogClose() {
+    setStep('review');
+    reset();
+    setError(null);
+    setResult(null);
+    setNotice(null);
+    key.current = newKey();
+    onClose();
+  }
 
   const c = result?.cancellation;
   const panelKey = sessionExpired
@@ -252,7 +252,7 @@ export function CancelFlow({
   return (
     <FlowDialog
       open={open}
-      onClose={onClose}
+      onClose={handleDialogClose}
       title={step === 'done' ? 'Booking cancelled' : 'Cancel booking'}
       dismissible={!busy}
     >

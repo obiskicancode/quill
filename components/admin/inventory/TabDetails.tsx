@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, Info, Lock, Unlock } from 'lucide-react';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -90,17 +90,31 @@ export function TabDetails({
     handleSubmit,
     register,
     setValue,
-    watch,
   } = form;
 
-  const name = watch('name');
-  const slug = watch('slug');
-  const shortDescription = watch('shortDescription');
-  const description = watch('description');
-  const metaTitle = watch('metaTitle');
-  const metaDescription = watch('metaDescription');
-  const basePriceNaira = watch('basePriceNaira');
-  const extraBedAvailable = watch('extraBedAvailable');
+  const [
+    name,
+    slug,
+    shortDescription,
+    description,
+    metaTitle,
+    metaDescription,
+    basePriceNaira,
+    extraBedAvailable,
+  ] = useWatch({
+    control,
+    name: [
+      'name',
+      'slug',
+      'shortDescription',
+      'description',
+      'metaTitle',
+      'metaDescription',
+      'basePriceNaira',
+      'extraBedAvailable',
+    ],
+  });
+
   const busy = isSaving || isSubmitting;
 
   async function handleFormSubmit(input: RoomTypeFormOutput) {

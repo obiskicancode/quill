@@ -53,6 +53,7 @@ export function useDashboardSummary(
     staleTime: 0,
     refetchInterval: () => (isHoveredRef.current || hovering ? false : 60_000),
     refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 
   useEffect(() => {
@@ -82,20 +83,6 @@ export function useDashboardSummary(
     const timer = window.setTimeout(() => setLiveAnnouncement(message), 0);
     return () => window.clearTimeout(timer);
   }, [query.data]);
-
-  useEffect(() => {
-    const refetch = query.refetch;
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        void refetch();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [query.refetch]);
 
   const setHoveringValue = useCallback((value: boolean) => {
     isHoveredRef.current = value;
@@ -183,8 +170,10 @@ function updateSummaryCache(
   queryClient: ReturnType<typeof useQueryClient>,
   updater: (previous: DashboardSummaryResponse) => DashboardSummaryResponse,
 ) {
-  queryClient.setQueryData<DashboardSummaryResponse>(
-    queryKeys.admin.dashboard.summary(),
+  // The summary query is keyed per date; patch every cached instance so a
+  // date-filtered dashboard still receives the optimistic update.
+  queryClient.setQueriesData<DashboardSummaryResponse>(
+    { queryKey: queryKeys.admin.dashboard.summaries() },
     (previous) => (previous ? updater(previous) : previous),
   );
 }

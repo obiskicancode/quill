@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Download, ExternalLink } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 
@@ -82,8 +83,7 @@ export function ProofLightbox({
               </a>
             </div>
           ) : (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
+            <Image
               src={`/api/admin/reservations/${reservationId}/proof`}
               alt="Payment bank transfer receipt"
               className="rounded-control shadow-raised max-h-[65vh] w-auto object-contain"

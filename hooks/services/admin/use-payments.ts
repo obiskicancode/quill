@@ -36,10 +36,11 @@ export function usePayments(params: PaymentsQueryParams) {
   });
 }
 
-export function usePaymentsSummary() {
+export function usePaymentsSummary(from?: string, to?: string) {
+  const key = toQueryString({ from, to });
   return useQuery({
-    queryKey: queryKeys.admin.payments.summary(''),
-    queryFn: async () => (await adminService.getPaymentsSummary()).data,
+    queryKey: queryKeys.admin.payments.summary(key),
+    queryFn: async () => (await adminService.getPaymentsSummary(from, to)).data,
   });
 }
 
@@ -82,7 +83,7 @@ export function useReconcilePayments() {
           queryKey: queryKeys.admin.payments.lists(),
         }),
         queryClient.invalidateQueries({
-          queryKey: queryKeys.admin.payments.summary(''),
+          queryKey: queryKeys.admin.payments.all,
         }),
         ...input.paymentIds.map((id) =>
           queryClient.invalidateQueries({
@@ -105,7 +106,7 @@ export function useUnreconcilePayment() {
           queryKey: queryKeys.admin.payments.lists(),
         }),
         queryClient.invalidateQueries({
-          queryKey: queryKeys.admin.payments.summary(''),
+          queryKey: queryKeys.admin.payments.all,
         }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.admin.payments.detail(input.id),
@@ -129,7 +130,7 @@ export function useMarkManualRefundPaidOut() {
           queryKey: queryKeys.admin.payments.lists(),
         }),
         queryClient.invalidateQueries({
-          queryKey: queryKeys.admin.payments.summary(''),
+          queryKey: queryKeys.admin.payments.all,
         }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.admin.payments.detail(input.id),

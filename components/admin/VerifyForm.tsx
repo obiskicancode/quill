@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { KeyRound, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { ServiceError } from '@/app/api/services/base.service';
@@ -40,9 +40,8 @@ export function VerifyForm({ next }: { next?: string }) {
     formState: { errors, isSubmitting },
     setError: setFieldError,
     setValue,
-    watch,
   } = form;
-  const mode = watch('mode') as Mode;
+  const mode = useWatch({ control, name: 'mode' }) as Mode;
   const [error, setError] = useState<string | null>(null);
   const busy = isSubmitting || verify2fa.isPending;
 

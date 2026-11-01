@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, MessageCircle } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useRef, useState, useSyncExternalStore } from 'react';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
@@ -68,6 +68,10 @@ const CONTACT_DRAFT_EXCLUDE = [
   'consent',
 ] as const satisfies readonly (keyof EnquiryFormInput)[];
 
+const emptySubscribe = () => () => {};
+const getToday = () => new Date().toISOString().slice(0, 10);
+const getEmptySnapshot = () => '';
+
 function formDefaults(
   topic: EnquiryTopic,
   roomType: string,
@@ -119,21 +123,25 @@ export function ContactForm({
     control,
     formState: { errors, isSubmitting },
     register,
-    watch,
   } = form;
-  const values = watch();
+  const values = useWatch({ control }) as EnquiryFormInput;
   const submitEnquiry = useSubmitEnquiry();
   const [website, setWebsite] = useState('');
   const [failure, setFailure] = useState<Failure | null>(null);
   const [reference, setReference] = useState('');
-  const [today, setToday] = useState('');
   const key = useRef(newKey());
   const inFlight = useRef(false);
   const reduced = useReducedMotion();
   const busy = isSubmitting || submitEnquiry.isPending;
   const showStay = STAY_TOPICS.includes(values.topic);
 
-  useEffect(() => setToday(new Date().toISOString().slice(0, 10)), []);
+  // Read the clock only on the client so the server and the first client
+  // render agree; the date is only used as a `min` on the date inputs.
+  const today = useSyncExternalStore(
+    emptySubscribe,
+    getToday,
+    getEmptySnapshot,
+  );
 
   const onSubmit = async (input: EnquiryFormOutput) => {
     if (inFlight.current) return;
@@ -180,7 +188,9 @@ export function ContactForm({
       inFlight.current = false;
     }
   };
-  const submit = form.handleSubmit(onSubmit);
+  const submit = (event?: React.SubmitEvent<HTMLFormElement>) => {
+    void form.handleSubmit(onSubmit)(event);
+  };
 
   function reset() {
     key.current = newKey();
@@ -548,7 +558,7 @@ export function ContactForm({
                 {/* Honeypot: hidden from people and assistive tech. Bots fill it in. */}
                 <div
                   aria-hidden
-                  className="absolute -left-[624.9375rem] h-0 w-0 overflow-hidden"
+                  className="absolute left-[-624.9375rem] h-0 w-0 overflow-hidden"
                 >
                   <Label htmlFor="contact-website-honeypot">Website</Label>
                   <Input

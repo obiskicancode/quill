@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, X } from 'lucide-react';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { ServiceError } from '@/app/api/services/base.service';
@@ -69,13 +69,13 @@ export function ApproveDeclineModal({
   });
   const {
     clearErrors,
+    control,
     formState: { errors, isSubmitting },
     register,
     setError: setFieldError,
     setValue,
-    watch,
   } = form;
-  const action = watch('action');
+  const action = useWatch({ control, name: 'action' });
   const busy = isSubmitting || approveDecline.isPending;
   const [error, setError] = useState<string | null>(null);
 

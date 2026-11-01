@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useId, useState } from 'react';
 
 import { formatNaira } from '@/lib/format';
 import {
@@ -236,10 +236,13 @@ export function FilterSheet({
 }: SheetProps) {
   const [draft, setDraft] = useState(value);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync the draft each time the sheet opens
+  // Reset the draft each time the sheet opens, and follow external value
+  // changes while it is open.
+  const [synced, setSynced] = useState({ open, value });
+  if (synced.open !== open || synced.value !== value) {
+    setSynced({ open, value });
     if (open) setDraft(value);
-  }, [open, value]);
+  }
 
   const count = countFor(draft);
 

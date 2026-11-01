@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format, parseISO } from 'date-fns';
 import { AlertCircle, CalendarDays, Check, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -106,12 +106,12 @@ export function ChangeDatesModal({
     register,
     setError: setFieldError,
     setValue,
-    watch,
   } = form;
-  const checkIn = watch('checkIn');
-  const checkOut = watch('checkOut');
-  const selectedRoomId = watch('roomId');
-  const overrideRules = watch('overrideRules');
+  const [checkIn, checkOut, roomId, overrideRules] = useWatch({
+    control,
+    name: ['checkIn', 'checkOut', 'roomId', 'overrideRules'],
+  });
+
   const busy = isSubmitting || changeDates.isPending;
   const [error, setError] = useState<string | null>(null);
   const quoteData = quoteRequest ? (quoteQuery.data ?? null) : null;
@@ -343,9 +343,7 @@ export function ChangeDatesModal({
                         <Button
                           key={r.id}
                           type="button"
-                          variant={
-                            selectedRoomId === r.id ? 'default' : 'outline'
-                          }
+                          variant={roomId === r.id ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => setValue('roomId', r.id)}
                         >

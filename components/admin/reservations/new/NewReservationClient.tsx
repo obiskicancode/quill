@@ -13,7 +13,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { AdminCard } from '@/components/admin/AdminCard';
@@ -154,6 +154,9 @@ export function NewReservationClient({
     : 0;
   const prefillSpecialRequests =
     searchParams.get('message') || searchParams.get('notes') || '';
+  const [paymentReference] = useState(
+    () => `PAY-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+  );
 
   const form = useForm<
     NewReservationFormInput,
@@ -192,7 +195,7 @@ export function NewReservationClient({
       holdHours: 24,
       paidAmountNaira: '',
       paymentMethod: 'cash',
-      paymentReference: `PAY-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+      paymentReference,
       paymentNote: '',
       termsAccepted: false,
     },
@@ -208,10 +211,9 @@ export function NewReservationClient({
     handleSubmit,
     register,
     setValue,
-    watch,
   } = form;
 
-  const values = watch();
+  const values = useWatch({ control }) as NewReservationFormOutput;
   const checkIn = values.checkIn;
   const checkOut = values.checkOut;
   const adults = values.adults ?? 0;

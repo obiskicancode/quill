@@ -80,7 +80,10 @@ export function useFormDraft<
   const excludeRef = useLatest(exclude);
   const excludeKey = exclude.join('|');
   const dirtyRef = useRef(false);
+  // True from the first client commit, so persistence only starts after the
+  // restore effect has run (it is declared first, so it always runs first).
   const [hydrated, setHydrated] = useState(false);
+  if (!hydrated) setHydrated(true);
 
   useEffect(() => {
     return formRef.current.subscribe({
@@ -112,9 +115,6 @@ export function useFormDraft<
         // Ignore unreadable or malformed drafts.
       }
     }
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- enable persistence after the restore attempt.
-    setHydrated(true);
   }, [enabled, excludeRef, formRef, storageKey, storageType]);
 
   useEffect(() => {

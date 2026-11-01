@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
@@ -104,7 +104,23 @@ export function ChangeDatesFlow({
   } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<ChangeQuoteResponse | null>(null);
-  const key = useRef(newKey());
+  const [key, setKey] = useState(() => newKey());
+
+  // Reset the flow each time the dialog opens.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (open) {
+      setStep(v.manage?.pendingChange ? 'payment' : 'pick');
+      setRange(current);
+      setQuote(null);
+      setQuoteFailed(false);
+      setError(null);
+      setNotice(null);
+      setConfirmed(null);
+      setKey(newKey());
+    }
+  }
   const pending = v.manage?.pendingChange ?? null;
   const reduced = useReducedMotion();
   const panelMotion = reduced
@@ -115,20 +131,6 @@ export function ChangeDatesFlow({
         exit: { opacity: 0, y: -6 },
         transition: { duration: 0.2, ease: EASE_OUT },
       };
-
-  useEffect(() => {
-    if (!open) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset the flow each time the dialog opens
-    setStep(v.manage?.pendingChange ? 'payment' : 'pick');
-    setRange(current);
-    setQuote(null);
-    setQuoteFailed(false);
-    setError(null);
-    setNotice(null);
-    setConfirmed(null);
-    key.current = newKey();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
 
   async function runQuote(r: DateRange) {
     if (!r.checkIn || !r.checkOut) return;
@@ -155,17 +157,17 @@ export function ChangeDatesFlow({
     }
   }
 
-  useEffect(() => {
-    if (!open || step !== 'pick' || !range.checkIn || !range.checkOut) return;
-    if (
-      range.checkIn === current.checkIn &&
-      range.checkOut === current.checkOut
-    )
-      return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- re-quote when the picked range changes
-    void runQuote(range);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range.checkIn, range.checkOut, open, step]);
+  // Quote when a new full range is picked; the range-changing handlers below call it.
+  function isCurrentRange(r: DateRange) {
+    return r.checkIn === current.checkIn && r.checkOut === current.checkOut;
+  }
+
+  function pickRange(r: DateRange) {
+    setRange(r);
+    setQuote(null);
+    setNotice(null);
+    if (r.checkIn && r.checkOut && !isCurrentRange(r)) void runQuote(r);
+  }
 
   async function confirm() {
     if (busy || quote?.status !== 'ok') return;
@@ -174,7 +176,7 @@ export function ChangeDatesFlow({
     try {
       const res = await changeDates.mutateAsync({
         reference: v.reference,
-        body: { idempotencyKey: key.current, quoteId: quote.quoteId },
+        body: { idempotencyKey: key, quoteId: quote.quoteId },
         csrf,
       });
       setConfirmed(quote);
@@ -192,7 +194,7 @@ export function ChangeDatesFlow({
       )?.quote;
       if (f?.body?.code === ERROR_CODES.SESSION_EXPIRED) onSessionExpired();
       else if (f?.body?.code === ERROR_CODES.QUOTE_STALE && stale) {
-        key.current = newKey();
+        setKey(newKey());
         setQuote(stale);
         setNotice(ERROR_MESSAGES.QUOTE_CHANGED_REVIEW);
       } else if (!f || f.network || f.status >= 500) {
@@ -201,7 +203,7 @@ export function ChangeDatesFlow({
           retryable: true,
         });
       } else {
-        key.current = newKey();
+        setKey(newKey());
         setError({
           message: f.body?.message ?? ERROR_MESSAGES.COULD_NOT_CHANGE_DATES,
           retryable: false,
@@ -299,11 +301,7 @@ export function ChangeDatesFlow({
         <div className="rounded-card border-line bg-card max-w-sm border p-3">
           <DatePicker
             value={range}
-            onChange={(r) => {
-              setRange(r);
-              setQuote(null);
-              setNotice(null);
-            }}
+            onChange={(r) => pickRange(r)}
             monthsShown={1}
           />
         </div>
@@ -462,7 +460,7 @@ export function ChangeDatesFlow({
                             variant="outline"
                             className="h-auto min-h-14 w-full flex-col items-start justify-center px-4 text-left font-normal"
                             onClick={() =>
-                              setRange({
+                              pickRange({
                                 checkIn: s.checkIn,
                                 checkOut: s.checkOut,
                               })

@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Download, RefreshCw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -48,6 +49,94 @@ import { PaymentsTable } from './PaymentsTable';
 import { ReconciliationModal } from './ReconciliationModal';
 import { WebhooksTab } from './WebhooksTab';
 
+const RANGE_PRESETS = ['today', '7d', 'this_month', 'last_month'] as const;
+type RangePreset = (typeof RANGE_PRESETS)[number];
+
+/** The date window a summary preset covers, in ISO instants (local day bounds). */
+function rangeToDates(preset: RangePreset): { from: string; to: string } {
+  const now = new Date();
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  );
+  const endOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    23,
+    59,
+    59,
+    999,
+  );
+  switch (preset) {
+    case 'today':
+      return { from: startOfToday.toISOString(), to: endOfToday.toISOString() };
+    case '7d': {
+      const from = startOfToday;
+      from.setDate(from.getDate() - 6);
+      return { from: from.toISOString(), to: endOfToday.toISOString() };
+    }
+    case 'last_month':
+      return {
+        from: new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString(),
+        to: new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          0,
+          23,
+          59,
+          59,
+          999,
+        ).toISOString(),
+      };
+    default:
+      return {
+        from: new Date(now.getFullYear(), now.getMonth(), 1).toISOString(),
+        to: endOfToday.toISOString(),
+      };
+  }
+}
+
+/** Filter keys that make up the payments register URL state. */
+const FILTER_KEYS = [
+  'status',
+  'type',
+  'provider',
+  'method',
+  'dateField',
+  'reconciled',
+  'q',
+  'from',
+  'to',
+  'minAmount',
+  'maxAmount',
+  'sort',
+  'order',
+  'pageSize',
+] as const;
+
+function parseFilters(params: URLSearchParams): PaymentsQueryParams {
+  return {
+    status: (params.get('status') ?? 'all') as PaymentsQueryParams['status'],
+    type: (params.get('type') ?? 'all') as PaymentsQueryParams['type'],
+    provider: (params.get('provider') ??
+      'all') as PaymentsQueryParams['provider'],
+    method: (params.get('method') ?? 'all') as PaymentsQueryParams['method'],
+    dateField: (params.get('dateField') ??
+      'created') as PaymentsQueryParams['dateField'],
+    reconciled: (params.get('reconciled') ??
+      'all') as PaymentsQueryParams['reconciled'],
+    q: params.get('q') ?? undefined,
+    from: params.get('from') ?? undefined,
+    to: params.get('to') ?? undefined,
+    sort: (params.get('sort') ?? 'created_at') as PaymentsQueryParams['sort'],
+    order: (params.get('order') ?? 'desc') as PaymentsQueryParams['order'],
+    page: Math.max(1, Number(params.get('page')) || 1),
+    pageSize: Math.min(100, Math.max(5, Number(params.get('pageSize')) || 25)),
+  };
+}
+
 function buildFallbackDetail(
   paymentItem: PaymentListItem,
 ): PaymentDetailResponse {
@@ -72,26 +161,41 @@ function buildFallbackDetail(
 }
 
 export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
-  const [activeTab, setActiveTab] = useState<
-    'payments' | 'refunds' | 'webhooks'
-  >('payments');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const [rangePreset, setRangePreset] = useState<string>('this_month');
+  // View state lives in the URL so filtered views can be shared and bookmarked.
+  const tabParam = searchParams.get('tab');
+  const activeTab: 'payments' | 'refunds' | 'webhooks' =
+    tabParam === 'refunds' || tabParam === 'webhooks' ? tabParam : 'payments';
 
-  // Payments list & filters
+  const rangeParam = searchParams.get('range');
+  const rangePreset: RangePreset =
+    rangeParam && (RANGE_PRESETS as readonly string[]).includes(rangeParam)
+      ? (rangeParam as RangePreset)
+      : 'this_month';
+  const range = rangeToDates(rangePreset);
+
+  const filters = parseFilters(searchParams);
+
+  const updateParams = (updates: Record<string, string | undefined>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(updates)) {
+      if (!value || value === 'all' || (key === 'page' && value === '1')) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    }
+    // Any filter change resets pagination, unless the page is being set.
+    if (!('page' in updates)) params.delete('page');
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
+
+  // Ephemeral UI state that does not belong in the URL.
   const [selectedPaymentIds, setSelectedPaymentIds] = useState<string[]>([]);
-  const [filters, setFilters] = useState<PaymentsQueryParams>({
-    status: 'all',
-    type: 'all',
-    provider: 'all',
-    method: 'all',
-    dateField: 'created',
-    reconciled: 'all',
-    page: 1,
-    pageSize: 25,
-    sort: 'created_at',
-    order: 'desc',
-  });
 
   const [detailSelection, setDetailSelection] =
     useState<PaymentListItem | null>(null);
@@ -107,7 +211,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
 
   const isUserInteracting = useRef(false);
 
-  const summaryQuery = usePaymentsSummary();
+  const summaryQuery = usePaymentsSummary(range.from, range.to);
   const paymentsQuery = usePayments(filters);
   const refundsQuery = useManualRefunds();
   const webhooksQuery = useWebhookEvents();
@@ -275,10 +379,9 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
         summary={summary}
         loading={loading}
         selectedRange={rangePreset}
-        onRangeShortcut={(preset) => {
-          setRangePreset(preset);
-          void refetchSummary();
-        }}
+        onRangeShortcut={(preset) =>
+          updateParams({ range: preset === 'this_month' ? undefined : preset })
+        }
       />
 
       {/* Visual Volume Breakdown */}
@@ -289,7 +392,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
         <Tabs
           value={activeTab}
           onValueChange={(val) =>
-            setActiveTab(val as 'payments' | 'refunds' | 'webhooks')
+            updateParams({ tab: val === 'payments' ? undefined : val })
           }
         >
           <TabsList variant="line" className="h-auto gap-2 p-0">
@@ -373,21 +476,23 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
         <div className="space-y-4">
           <PaymentsFilterDrawer
             filters={filters}
-            onChange={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
-            onReset={() =>
-              setFilters({
-                status: 'all',
-                type: 'all',
-                provider: 'all',
-                method: 'all',
-                dateField: 'created',
-                reconciled: 'all',
-                page: 1,
-                pageSize: 25,
-                sort: 'created_at',
-                order: 'desc',
-              })
+            onChange={(patch) =>
+              updateParams(
+                Object.fromEntries(
+                  Object.entries(patch).map(([key, val]) => [
+                    key,
+                    val === undefined || val === null ? undefined : String(val),
+                  ]),
+                ),
+              )
             }
+            onReset={() => {
+              const params = new URLSearchParams(searchParams.toString());
+              for (const key of FILTER_KEYS) params.delete(key);
+              params.delete('page');
+              const query = params.toString();
+              router.replace(query ? `${pathname}?${query}` : pathname);
+            }}
           />
 
           {loading ? (
@@ -427,10 +532,9 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
                     <PaginationItem>
                       <PaginationPrevious
                         onClick={() =>
-                          setFilters((prev) => ({
-                            ...prev,
-                            page: Math.max(1, (prev.page ?? 1) - 1),
-                          }))
+                          updateParams({
+                            page: String(Math.max(1, (filters.page ?? 1) - 1)),
+                          })
                         }
                         disabled={(filters.page ?? 1) <= 1}
                       />
@@ -447,10 +551,9 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
                     <PaginationItem>
                       <PaginationNext
                         onClick={() =>
-                          setFilters((prev) => ({
-                            ...prev,
-                            page: (prev.page ?? 1) + 1,
-                          }))
+                          updateParams({
+                            page: String((filters.page ?? 1) + 1),
+                          })
                         }
                         disabled={
                           (filters.page ?? 1) >=
