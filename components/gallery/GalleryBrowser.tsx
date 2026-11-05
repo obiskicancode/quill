@@ -55,7 +55,7 @@ function Chip({
   const showPill = active && !reduced;
   return (
     <Button
-      variant={active ? 'default' : 'outline'}
+      variant={active ? 'primary' : 'secondary'}
       size="sm"
       aria-pressed={active}
       onClick={onClick}
@@ -64,12 +64,12 @@ function Chip({
       {showPill && (
         <motion.span
           layoutId={pillId}
-          className="bg-primary absolute inset-0 rounded-full"
+          className="absolute inset-0 rounded-full bg-primary"
           transition={spring}
         />
       )}
       {active && reduced && (
-        <span className="bg-primary absolute inset-0 rounded-full" />
+        <span className="absolute inset-0 rounded-full bg-primary" />
       )}
       <span className="relative">{children}</span>
     </Button>
@@ -222,7 +222,7 @@ export function GalleryBrowser({
       <p
         role="status"
         aria-live="polite"
-        className="text-small text-muted-foreground mt-6"
+        className="mt-6 text-small text-muted-foreground"
       >
         Showing {shown.length} of {filtered.length}{' '}
         {filtered.length === 1 ? 'photo' : 'photos'}
@@ -262,13 +262,13 @@ export function GalleryBrowser({
                   setLightbox({ open: true, index: i });
                   syncUrl({ category, room, image: img.id });
                 }}
-                className="group/media rounded-card block h-auto w-full overflow-hidden p-0 hover:bg-transparent"
+                className="group/media block h-auto w-full overflow-hidden rounded-card p-0 hover:bg-transparent"
               >
                 <HoverZoom
                   className="rounded-card"
                   caption={img.caption}
                   affordance={
-                    <span className="bg-ink/60 grid size-9 place-items-center rounded-full backdrop-blur">
+                    <span className="grid size-9 place-items-center rounded-full bg-ink/60 backdrop-blur">
                       <Expand className="size-4" aria-hidden />
                     </span>
                   }

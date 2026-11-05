@@ -9,6 +9,7 @@ import {
   X,
 } from 'lucide-react';
 
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import type { ReservationAlertFlags } from '@/types/reservation.types';
 
@@ -46,50 +47,48 @@ export function ReservationAlerts({
     <div className="space-y-2.5">
       {/* Cancelled / Expired Visual Treatment */}
       {status === 'cancelled' && (
-        <div
-          role="alert"
-          className="rounded-control border-destructive/30 bg-destructive/5 text-small text-destructive flex items-start gap-2.5 border p-3.5"
-        >
-          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+        <Alert variant="destructive" className="items-start gap-2.5">
+          <AlertCircle className="shrink-0" aria-hidden="true" />
           <div>
             <p className="font-semibold">This booking has been cancelled.</p>
             {cancellationReason && (
-              <p className="text-caption mt-0.5">
+              <p className="mt-0.5 text-caption">
                 Reason: {cancellationReason}
               </p>
             )}
           </div>
-        </div>
+        </Alert>
       )}
 
       {status === 'expired' && (
-        <div
-          role="alert"
-          className="rounded-control border-line bg-paper text-small text-muted-foreground flex items-start gap-2.5 border p-3.5"
+        <Alert
+          variant="neutral"
+          className="items-start gap-2.5 text-muted-foreground"
         >
-          <Clock className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <Clock className="shrink-0" aria-hidden="true" />
           <div>
-            <p className="text-ink font-semibold">Hold expired.</p>
+            <p className="font-semibold text-ink">Hold expired.</p>
             <p className="text-caption">
               The payment deadline for this booking hold has passed.
             </p>
           </div>
-        </div>
+        </Alert>
       )}
 
       {/* Bank transfer proof awaiting verification */}
       {alerts.bankTransferPendingVerification && (
-        <div
+        <Alert
           role="status"
-          className="rounded-control border-primary/40 bg-primary/10 text-small text-ink flex flex-col gap-3 border p-3.5 sm:flex-row sm:items-center sm:justify-between"
+          variant="brand"
+          className="gap-3 sm:grid-cols-[1fr_auto] sm:items-center"
         >
-          <div className="flex items-start gap-2.5">
+          <div className="col-start-1 flex items-start gap-2.5">
             <CreditCard
-              className="text-brand-ink mt-0.5 size-4 shrink-0"
+              className="shrink-0 text-brand-ink"
               aria-hidden="true"
             />
             <div>
-              <span className="text-brand-ink font-semibold">
+              <span className="font-semibold">
                 Bank transfer payment awaiting verification.
               </span>
               <p className="text-caption text-muted-foreground">
@@ -104,27 +103,28 @@ export function ReservationAlerts({
               type="button"
               size="sm"
               onClick={onVerifyTransfer}
-              className="shrink-0 self-start sm:self-auto"
+              className="col-start-1 row-start-2 shrink-0 justify-self-start sm:col-start-2 sm:row-start-1 sm:self-center"
             >
               Verify transfer receipt
             </Button>
           )}
-        </div>
+        </Alert>
       )}
 
       {/* Awaiting hotel approval */}
       {alerts.awaitingHotelApproval && (
-        <div
+        <Alert
           role="status"
-          className="rounded-control border-primary/40 bg-primary/10 text-small text-ink flex flex-col gap-3 border p-3.5 sm:flex-row sm:items-center sm:justify-between"
+          variant="brand"
+          className="gap-3 sm:grid-cols-[1fr_auto] sm:items-center"
         >
-          <div className="flex items-start gap-2.5">
+          <div className="col-start-1 flex items-start gap-2.5">
             <AlertTriangle
-              className="text-brand-ink mt-0.5 size-4 shrink-0"
+              className="shrink-0 text-brand-ink"
               aria-hidden="true"
             />
             <div>
-              <span className="text-brand-ink font-semibold">
+              <span className="font-semibold">
                 Reservation awaiting hotel approval.
               </span>
               <p className="text-caption text-muted-foreground">
@@ -134,7 +134,7 @@ export function ReservationAlerts({
           </div>
 
           {(onApprove || onDecline) && (
-            <div className="flex items-center gap-2 self-start sm:self-auto">
+            <div className="col-start-1 row-start-2 flex items-center gap-2 sm:col-start-2 sm:row-start-1 sm:self-center">
               {onApprove && (
                 <Button type="button" size="sm" onClick={onApprove}>
                   <Check className="size-3.5" aria-hidden="true" />
@@ -154,29 +154,27 @@ export function ReservationAlerts({
               )}
             </div>
           )}
-        </div>
+        </Alert>
       )}
 
       {/* Hold expiring soon */}
       {alerts.holdExpiringSoon && (
-        <div
-          role="alert"
-          className="rounded-control border-destructive/30 bg-destructive/5 text-small text-destructive flex items-start gap-2.5 border p-3.5"
-        >
-          <Clock className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+        <Alert className="items-start gap-2.5" variant="destructive">
+          <Clock className="shrink-0" aria-hidden="true" />
           <span className="font-semibold">
             Hold expires in less than 10 minutes.
           </span>
-        </div>
+        </Alert>
       )}
 
       {/* Balance due arriving soon */}
       {alerts.balanceDueArrivingSoon && (
-        <div
+        <Alert
           role="status"
-          className="rounded-control border-destructive/30 bg-destructive/5 text-small text-destructive flex items-start gap-2.5 border p-3.5"
+          variant="destructive"
+          className="items-start gap-2.5"
         >
-          <CreditCard className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <CreditCard className="shrink-0" aria-hidden="true" />
           <div>
             <span className="font-semibold">
               Balance due with arrival in less than 48 hours.
@@ -185,46 +183,40 @@ export function ReservationAlerts({
               Arrival is approaching and full payment has not been received.
             </p>
           </div>
-        </div>
+        </Alert>
       )}
 
       {/* Room in Maintenance or Blocked */}
       {alerts.roomBlockedOrMaintenance && (
-        <div
-          role="alert"
-          className="rounded-control border-destructive/30 bg-destructive/5 text-small text-destructive flex items-start gap-2.5 border p-3.5"
-        >
-          <Wrench className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+        <Alert variant="destructive" className="items-start gap-2.5">
+          <Wrench className="shrink-0" aria-hidden="true" />
           <div>
             <span className="font-semibold">
               Warning: Room has conflicting maintenance or schedule block!
             </span>
             {alerts.roomBlockedReason && (
-              <p className="text-caption mt-0.5 opacity-90">
+              <p className="mt-0.5 text-caption opacity-90">
                 {alerts.roomBlockedReason}
               </p>
             )}
           </div>
-        </div>
+        </Alert>
       )}
 
       {/* Notification delivery failure */}
       {alerts.failedNotification && (
-        <div
-          role="alert"
-          className="rounded-control border-destructive/30 bg-destructive/5 text-small text-destructive flex items-start gap-2.5 border p-3.5"
-        >
-          <MailWarning className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+        <Alert variant="destructive" className="items-start gap-2.5">
+          <MailWarning className="shrink-0" aria-hidden="true" />
           <div>
             <span className="font-semibold">
               Confirmation notification failed to deliver.
             </span>
-            <p className="text-caption mt-0.5 opacity-90">
+            <p className="mt-0.5 text-caption opacity-90">
               One or more outgoing messages could not be sent. Check the
               Notifications panel.
             </p>
           </div>
-        </div>
+        </Alert>
       )}
     </div>
   );

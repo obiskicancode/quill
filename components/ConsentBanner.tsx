@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Cookie } from 'lucide-react';
 
+import { TextLink } from '@/components/ui/text-link';
 import { useConsent } from '@/providers/consent.provider';
 
 import { EASE_OUT } from './motion/variants';
@@ -31,7 +31,7 @@ export function ConsentBanner({ enabled, privacyHref }: ConsentBannerProps) {
           role="dialog"
           aria-labelledby="consent-title"
           aria-modal="false"
-          className="border-line bg-card shadow-raised fixed inset-x-0 bottom-0 z-50 border-t p-4 md:p-5"
+          className="fixed inset-x-0 bottom-(--bottom-bar-h) z-(--z-banner) border-t border-line bg-card px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-raised md:p-5 md:pb-[max(1.25rem,env(safe-area-inset-bottom))]"
           initial={reduced ? false : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           exit={reduced ? undefined : { opacity: 0, y: 16 }}
@@ -46,19 +46,13 @@ export function ConsentBanner({ enabled, privacyHref }: ConsentBannerProps) {
                 <Cookie className="size-5" aria-hidden />
                 We use cookies to help us improve your experience
               </p>
-              <p className="text-small text-ink/85 mt-1">
+              <p className="mt-1 text-small text-ink/85">
                 We only use optional cookies when analytics or marketing is
                 configured. You can accept or reject them at any time. Read our{' '}
-                <Link
-                  href={privacyHref}
-                  className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
-                >
-                  Privacy Policy
-                </Link>
-                .
+                <TextLink href={privacyHref}>Privacy Policy</TextLink>.
               </p>
             </div>
-            <div className="flex w-full flex-col gap-2 sm:flex-row md:w-auto">
+            <div className="flex w-full flex-col flex-wrap gap-2 sm:flex-row md:w-auto">
               <Button
                 onClick={deny}
                 variant="secondary"

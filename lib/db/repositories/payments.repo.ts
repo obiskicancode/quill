@@ -13,7 +13,9 @@ import {
   staffUsers,
 } from '@/db/schema';
 import { completeOnlinePayment } from '@/lib/booking/store';
+import { formatWeekdayDay } from '@/lib/dates';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
+import { formatMinor } from '@/lib/format';
 import { sendRefundIssuedEmail } from '@/lib/mail';
 import { createPaymentProvider as getPaymentProvider } from '@/lib/payments/factory';
 import { isPaymentProviderId } from '@/lib/payments/provider';
@@ -242,10 +244,7 @@ export async function getPaymentsBreakdown(
   for (let i = daysCount - 1; i >= 0; i--) {
     const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
     const dateKey = d.toISOString().slice(0, 10);
-    const label = d.toLocaleDateString('en-GB', {
-      weekday: 'short',
-      day: 'numeric',
-    });
+    const label = formatWeekdayDay(dateKey);
     const stat = dayMap[dateKey] || { collectedMinor: 0, count: 0 };
     dailyStrip.push({
       date: dateKey,
@@ -815,7 +814,7 @@ export async function markManualRefundPaidOut(params: {
       reservationId: r.id,
       fromStatus: r.status,
       toStatus: r.status,
-      reason: `Manual refund paid out: ₦${(params.input.amountMinor / 100).toLocaleString()} via ${params.input.method}`,
+      reason: `Manual refund paid out: ${formatMinor(params.input.amountMinor)} via ${params.input.method}`,
       changedBy: params.staffUserId,
     });
 

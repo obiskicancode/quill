@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, KeyRound } from 'lucide-react';
@@ -13,6 +12,7 @@ import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Button } from '@/components/ui/button';
 import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { TextLink } from '@/components/ui/text-link';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useAdminResetPassword } from '@/hooks/services/admin/use-auth';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
@@ -60,11 +60,11 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
   return (
     <div>
-      <p className="text-caption text-muted-foreground font-semibold tracking-wide uppercase">
+      <p className="text-caption font-semibold tracking-wide text-muted-foreground uppercase">
         Account recovery
       </p>
-      <h1 className="font-display text-h2 mt-2">Choose a new password</h1>
-      <p className="text-small text-muted-foreground mt-2">
+      <h1 className="mt-2 font-display text-h2">Choose a new password</h1>
+      <p className="mt-2 text-small text-muted-foreground">
         Use at least 10 characters. All other sessions will be signed out.
       </p>
 
@@ -74,13 +74,10 @@ export function ResetPasswordForm({ token }: { token: string }) {
         </div>
       )}
       {invalidToken && (
-        <p className="text-small mt-3">
-          <Link
-            href="/admin/forgot-password"
-            className="decoration-line hover:decoration-ink font-semibold underline underline-offset-4"
-          >
+        <p className="mt-3 text-small">
+          <TextLink href="/admin/forgot-password" tone="quiet">
             Request a new reset link
-          </Link>
+          </TextLink>
         </p>
       )}
 
@@ -112,7 +109,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
                 size="icon"
                 onClick={() => setShowPassword((value) => !value)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 h-full w-12"
+                className="absolute inset-y-0 right-0 h-full w-12 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? (
                   <EyeOff className="size-5" aria-hidden />

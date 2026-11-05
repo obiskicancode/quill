@@ -1,5 +1,6 @@
 import { AdminCard } from '@/components/admin/AdminCard';
 import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
+import { formatHotelDateTime } from '@/lib/format';
 import type { ReservationStatusHistoryItem } from '@/types/reservation.types';
 
 export function TimelineCard({
@@ -12,34 +13,31 @@ export function TimelineCard({
       title="Status timeline"
       description="Audit trail of booking transitions and timestamps."
     >
-      <div className="before:bg-line relative pl-6 before:absolute before:top-2 before:bottom-2 before:left-2.5 before:w-0.5">
+      <div className="relative pl-6 before:absolute before:top-2 before:bottom-2 before:left-2.5 before:w-0.5 before:bg-line">
         <div className="space-y-5">
           {history.map((item) => {
-            const formattedTime = new Intl.DateTimeFormat('en-NG', {
-              dateStyle: 'medium',
-              timeStyle: 'short',
-            }).format(new Date(item.createdAt));
+            const formattedTime = formatHotelDateTime(item.createdAt);
 
             return (
               <div key={item.id} className="relative">
                 {/* Timeline node */}
-                <span className="border-card bg-ink ring-line absolute top-1 -left-6 size-2.5 rounded-full border-2 ring-2" />
+                <span className="absolute top-1 -left-6 size-2.5 rounded-full border-2 border-card bg-ink ring-2 ring-line" />
 
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusBadge status={item.toStatus} />
-                  <span className="text-caption text-ink font-semibold">
+                  <span className="text-caption font-semibold text-ink">
                     by {item.actorName}
                     {item.actorRole && ` (${item.actorRole})`}
                   </span>
                 </div>
 
                 {item.reason && (
-                  <p className="text-small text-muted-foreground mt-1">
+                  <p className="mt-1 text-small text-muted-foreground">
                     {item.reason}
                   </p>
                 )}
 
-                <p className="text-caption text-muted-foreground/75 mt-0.5">
+                <p className="mt-0.5 text-caption text-muted-foreground/75">
                   {formattedTime}
                 </p>
               </div>

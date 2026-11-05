@@ -7,12 +7,14 @@ import { ButtonLink } from '../ui/button';
 export async function EventsStrip() {
   const items = await getEventFacilities();
   if (items.length === 0) return null;
-  const capacity = items.map((i) => i.capacity).find(Boolean);
+  // Capacity is written per space, so each number keeps the space it describes.
+  // A single figure here would read as a claim about every room in the hotel.
+  const seated = items.filter((i) => i.capacity);
   const layouts = [...new Set(items.flatMap((i) => i.layouts))];
   return (
     <section
       aria-labelledby="events-title"
-      className="on-dark bg-ink text-paper py-14 md:py-20"
+      className="on-dark bg-ink py-14 text-paper md:py-20"
     >
       <div className="container-page flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
         <Reveal className="max-w-xl">
@@ -22,11 +24,13 @@ export async function EventsStrip() {
             text="Meetings, conferences and events"
             className="font-display text-h2 text-balance"
           />
-          <dl className="text-body-lg text-paper/90 mt-4 space-y-2">
-            {capacity && (
+          <dl className="mt-4 space-y-2 text-body-lg text-paper/90">
+            {seated.length > 0 && (
               <div className="flex gap-2">
                 <dt className="font-semibold">Capacity:</dt>
-                <dd>{capacity}</dd>
+                <dd>
+                  {seated.map((i) => `${i.capacity} (${i.name})`).join(', ')}
+                </dd>
               </div>
             )}
             {layouts.length > 0 && (

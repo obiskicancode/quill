@@ -1,6 +1,6 @@
 import { BreakdownSkeleton } from '../room-detail/PriceBreakdown';
 
-const bar = 'rounded bg-ink/10 motion-safe:animate-pulse';
+const bar = 'rounded-sm bg-ink/10 motion-safe:animate-pulse';
 
 /** Same grid and block heights as the loaded page, so nothing moves when the quote arrives. */
 export function CheckoutSkeleton() {
@@ -15,17 +15,17 @@ export function CheckoutSkeleton() {
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="space-y-2">
               <div className={`${bar} h-4 w-28`} />
-              <div className={`${bar} rounded-control h-12 w-full`} />
+              <div className={`${bar} h-12 w-full rounded-control`} />
             </div>
           ))}
-          <div className={`${bar} rounded-card h-40 w-full`} />
+          <div className={`${bar} h-40 w-full rounded-card`} />
         </div>
         <div
           aria-hidden
-          className="rounded-card border-line bg-card mt-8 hidden space-y-5 border p-5 lg:mt-0 lg:block"
+          className="mt-8 hidden space-y-5 rounded-card border border-line bg-card p-5 lg:mt-0 lg:block"
         >
           <div className="flex gap-4">
-            <div className={`${bar} rounded-control size-20`} />
+            <div className={`${bar} size-20 rounded-control`} />
             <div className="flex-1 space-y-2">
               <div className={`${bar} h-6 w-3/4`} />
               <div className={`${bar} h-4 w-1/2`} />

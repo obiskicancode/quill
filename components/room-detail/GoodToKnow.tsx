@@ -1,10 +1,10 @@
-import { formatMinor } from '@/lib/format';
+import { TextLink } from '@/components/ui/text-link';
+import { formatGuestTime, formatMinor } from '@/lib/format';
 import type { HotelPricingSettings, RoomDetail } from '@/types/rooms.types';
 
 import { Reveal } from '../motion/Reveal';
 import { StaggerGroup } from '../motion/StaggerGroup';
 import { StaggerItem } from '../motion/StaggerItem';
-import { TextLink } from '../ui/TextLink';
 
 export function GoodToKnow({
   room,
@@ -20,8 +20,8 @@ export function GoodToKnow({
     : `Not available in this room. It sleeps up to ${room.maxAdults + room.maxChildren} guests.`;
 
   const rows = [
-    ['Check-in', `From ${hotel.checkInTime}`],
-    ['Check-out', `By ${hotel.checkOutTime}`],
+    ['Check-in', `From ${formatGuestTime(hotel.checkInTime)}`],
+    ['Check-out', `By ${formatGuestTime(hotel.checkOutTime)}`],
     ['Extra bed', extraBed],
     ['Children', hotel.childrenPolicy],
     ['Pets', hotel.petsPolicy],
@@ -37,7 +37,7 @@ export function GoodToKnow({
         </h2>
         <StaggerGroup
           as="dl"
-          className="divide-line border-line mt-5 divide-y border-y"
+          className="mt-5 divide-y divide-line border-y border-line"
           staggerChildren={0.05}
         >
           {rows.map(([term, detail]) => (
@@ -58,7 +58,7 @@ export function GoodToKnow({
           <h2 id="cancel-title" className="font-display text-h3">
             Cancellation
           </h2>
-          <p className="text-ink/85 mt-3 max-w-prose">
+          <p className="mt-3 max-w-prose text-ink/85">
             {hotel.cancellationSummary}
           </p>
           <div className="mt-1">

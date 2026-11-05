@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Field, inputClass } from '@/components/ui/form-field';
@@ -16,7 +17,8 @@ import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SANITY_PRICE_MINOR } from '@/constants/inventory';
 import { useFormDraft } from '@/hooks/use-form-draft';
-import { minorToNaira } from '@/lib/rate-resolution';
+import { formatMinor } from '@/lib/format';
+import { minorToNaira, nairaToMinor } from '@/lib/rate-resolution';
 import type {
   AdminRoomTypeDetail,
   RoomTypeInput,
@@ -151,31 +153,36 @@ export function TabDetails({
       noValidate
     >
       {validationError && (
-        <div
-          role="alert"
-          className="rounded-card border-destructive/40 bg-destructive/10 text-small text-destructive flex items-center gap-3 border p-4"
+        <Alert
+          variant="destructive"
+          size="panel"
+          className="items-center gap-3"
         >
           <AlertCircle className="size-5 shrink-0" />
-          <p>{validationError}</p>
-        </div>
+          <p className="col-start-2">{validationError}</p>
+        </Alert>
       )}
 
       {sanityConfirmPending && (
         <div
           role="region"
           aria-label="High price confirmation"
-          className="border-warning/40 bg-warning/10 rounded-card text-small border p-4"
+          className="rounded-card border border-warning/40 bg-warning/10 p-4 text-small"
         >
           <div className="flex items-start gap-3">
-            <Info className="text-warning size-5 shrink-0" />
+            <Info className="size-5 shrink-0 text-warning" />
             <div>
-              <p className="text-warning-contrast font-semibold">
+              <p className="font-semibold text-warning">
                 Unusually High Price Confirmation
               </p>
-              <p className="text-muted-foreground mt-1">
-                You entered a base price of <strong>₦{basePriceNaira}</strong>.
-                This is higher than the typical sanity threshold (₦2,000,000).
-                Please confirm if this rate is intentional.
+              <p className="mt-1 text-muted-foreground">
+                You entered a base price of{' '}
+                <strong>
+                  {formatMinor(nairaToMinor(basePriceNaira ?? 0))}
+                </strong>
+                . This is higher than the typical sanity threshold (
+                {formatMinor(SANITY_PRICE_MINOR)}). Please confirm if this rate
+                is intentional.
               </p>
               <div className="mt-3 flex items-center gap-2">
                 <Button type="submit" size="sm">
@@ -184,7 +191,7 @@ export function TabDetails({
                 <Button
                   type="button"
                   size="sm"
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => setSanityConfirmPending(false)}
                 >
                   Cancel and edit
@@ -196,11 +203,11 @@ export function TabDetails({
       )}
 
       {/* Basic Info */}
-      <section className="rounded-card border-line bg-card border p-6 shadow-sm">
-        <h2 className="text-foreground text-h3 font-semibold">
+      <section className="rounded-card border border-line bg-card p-6 shadow-raised">
+        <h2 className="text-h3 font-semibold text-foreground">
           Room Type Identity
         </h2>
-        <p className="text-small text-muted-foreground mt-1">
+        <p className="mt-1 text-small text-muted-foreground">
           Names, public URL slug, and layout specifications.
         </p>
 
@@ -248,7 +255,7 @@ export function TabDetails({
                           });
                         }
                       }}
-                      className="text-primary inline-flex h-auto cursor-pointer items-center gap-1 p-0 text-xs hover:underline"
+                      className="inline-flex h-auto cursor-pointer items-center gap-1 p-0 text-caption text-brand-ink hover:underline"
                     >
                       <Lock className="size-3" /> Locked
                     </Button>
@@ -266,13 +273,13 @@ export function TabDetails({
                     })}
                   />
                   {isExisting && !slugLocked && (
-                    <span className="text-warning absolute top-2.5 right-3 text-xs">
+                    <span className="absolute top-2.5 right-3 text-caption text-warning">
                       <Unlock className="size-4" />
                     </span>
                   )}
                 </div>
                 {isExisting && !slugLocked && (
-                  <p className="text-warning text-xs">
+                  <p className="text-caption text-warning">
                     Warning: Changing the slug breaks existing public bookmarks
                     and links.
                   </p>
@@ -387,7 +394,7 @@ export function TabDetails({
           </Field>
 
           {/* Extra Bed */}
-          <div className="border-line bg-paper/50 rounded-card border p-4 sm:col-span-2">
+          <div className="rounded-card border border-line bg-paper/50 p-4 sm:col-span-2">
             <div className="flex items-center gap-2.5">
               <Controller
                 control={control}
@@ -418,7 +425,7 @@ export function TabDetails({
                 >
                   {(a11y) => (
                     <div className="relative">
-                      <span className="text-muted-foreground absolute top-2 left-3 text-xs">
+                      <span className="absolute top-2 left-3 text-caption text-muted-foreground">
                         ₦
                       </span>
                       <Input
@@ -437,11 +444,11 @@ export function TabDetails({
       </section>
 
       {/* Pricing & Visibility */}
-      <section className="rounded-card border-line bg-card border p-6 shadow-sm">
-        <h2 className="text-foreground text-h3 font-semibold">
+      <section className="rounded-card border border-line bg-card p-6 shadow-raised">
+        <h2 className="text-h3 font-semibold text-foreground">
           Pricing & Publishing
         </h2>
-        <p className="text-small text-muted-foreground mt-1">
+        <p className="mt-1 text-small text-muted-foreground">
           Base rates, weekend adjustments, and guest presentation settings.
         </p>
 
@@ -454,7 +461,7 @@ export function TabDetails({
           >
             {(a11y) => (
               <div className="relative">
-                <span className="text-muted-foreground absolute top-2 left-3 text-xs">
+                <span className="absolute top-2 left-3 text-caption text-muted-foreground">
                   ₦
                 </span>
                 <Input
@@ -476,7 +483,7 @@ export function TabDetails({
           >
             {(a11y) => (
               <div className="relative">
-                <span className="text-muted-foreground absolute top-2 left-3 text-xs">
+                <span className="absolute top-2 left-3 text-caption text-muted-foreground">
                   ₦
                 </span>
                 <Input
@@ -490,8 +497,8 @@ export function TabDetails({
             )}
           </Field>
 
-          <div className="border-line/60 bg-paper/30 text-muted-foreground rounded border p-3 text-xs sm:col-span-2">
-            <span className="text-foreground font-semibold">
+          <div className="rounded-sm border border-line/60 bg-paper/30 p-3 text-caption text-muted-foreground sm:col-span-2">
+            <span className="font-semibold text-foreground">
               Snapshot Guarantee:
             </span>{' '}
             Modifying prices does not change existing bookings. Each reservation
@@ -585,11 +592,11 @@ export function TabDetails({
       </section>
 
       {/* SEO & Search Preview */}
-      <section className="rounded-card border-line bg-card border p-6 shadow-sm">
-        <h2 className="text-foreground text-h3 font-semibold">
+      <section className="rounded-card border border-line bg-card p-6 shadow-raised">
+        <h2 className="text-h3 font-semibold text-foreground">
           SEO & Search Snippet
         </h2>
-        <p className="text-small text-muted-foreground mt-1">
+        <p className="mt-1 text-small text-muted-foreground">
           Customize how this room type appears in Google and Bing search
           results.
         </p>
@@ -604,7 +611,7 @@ export function TabDetails({
               <div className="space-y-1.5">
                 <div className="flex justify-end">
                   <span
-                    className={`text-xs ${(metaTitle ?? '').length > 60 ? 'text-warning' : 'text-muted-foreground'}`}
+                    className={`text-caption ${(metaTitle ?? '').length > 60 ? 'text-warning' : 'text-muted-foreground'}`}
                   >
                     {(metaTitle ?? '').length} / 160 chars
                   </span>
@@ -634,7 +641,7 @@ export function TabDetails({
               <div className="space-y-1.5">
                 <div className="flex justify-end">
                   <span
-                    className={`text-xs ${(metaDescription ?? '').length > 160 ? 'text-warning' : 'text-muted-foreground'}`}
+                    className={`text-caption ${(metaDescription ?? '').length > 160 ? 'text-warning' : 'text-muted-foreground'}`}
                   >
                     {(metaDescription ?? '').length} / 320 chars
                   </span>
@@ -652,18 +659,18 @@ export function TabDetails({
           </Field>
 
           {/* Live Google Search Preview */}
-          <div className="border-line bg-paper rounded-card mt-4 border p-4">
-            <span className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+          <div className="mt-4 rounded-card border border-line bg-paper p-4">
+            <span className="text-caption font-semibold tracking-wider text-muted-foreground uppercase">
               Live Google Search Preview
             </span>
             <div className="mt-2 space-y-1">
-              <p className="text-muted-foreground text-xs">
+              <p className="text-caption text-muted-foreground">
                 https://hotel.example.com/rooms/{slug || 'room-slug'}
               </p>
-              <p className="text-primary truncate text-base font-medium hover:underline">
+              <p className="truncate text-body font-medium text-brand-ink hover:underline">
                 {metaTitle || name || 'Room Type Name'} | Dela Hotel
               </p>
-              <p className="text-muted-foreground line-clamp-2 text-xs">
+              <p className="line-clamp-2 text-caption text-muted-foreground">
                 {metaDescription ||
                   shortDescription ||
                   description ||

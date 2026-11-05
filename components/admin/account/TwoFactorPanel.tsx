@@ -219,11 +219,11 @@ export function TwoFactorPanel({
           Two-factor authentication is active. Each recovery code can be used
           once if you lose your authenticator.
         </StatusBanner>
-        <ul className="text-small mt-4 grid gap-2 font-mono sm:grid-cols-2">
+        <ul className="mt-4 grid gap-2 font-mono text-small sm:grid-cols-2">
           {codes.map((code) => (
             <li
               key={code}
-              className="rounded-control border-line bg-paper border px-3 py-2 tracking-wider"
+              className="rounded-control border border-line bg-paper px-3 py-2 tracking-wider"
             >
               {code}
             </li>
@@ -304,16 +304,16 @@ export function TwoFactorPanel({
                 width={240}
                 height={240}
                 unoptimized
-                className="rounded-control border-line border bg-white p-2"
+                className="rounded-control border border-line bg-white p-2"
               />
             </div>
             <div>
-              <ol className="text-small text-muted-foreground list-decimal space-y-2 pl-5">
+              <ol className="list-decimal space-y-2 pl-5 text-small text-muted-foreground">
                 <li>Open your authenticator app and scan the QR code.</li>
                 <li>
                   If you cannot scan it, enter this key manually:
-                  <div className="rounded-control border-line bg-paper mt-1 flex w-fit items-center gap-2 border px-3 py-2">
-                    <code className="text-small text-ink min-w-0 flex-1 font-mono break-all select-all">
+                  <div className="mt-1 flex w-fit items-center gap-2 rounded-control border border-line bg-paper px-3 py-2">
+                    <code className="min-w-0 flex-1 font-mono text-small break-all text-ink select-all">
                       {setup.manualKey}
                     </code>
                     <Button
@@ -373,7 +373,7 @@ export function TwoFactorPanel({
                                 <InputOTPSlot
                                   key={index}
                                   index={index}
-                                  className="rounded-control text-h3 size-10"
+                                  className="size-10 rounded-control text-h3"
                                 />
                               ))}
                             </InputOTPGroup>
@@ -411,7 +411,7 @@ export function TwoFactorPanel({
             <StatusBanner tone="success">
               Two-factor authentication is enabled.
             </StatusBanner>
-            <p className="text-small text-muted-foreground mt-3">
+            <p className="mt-3 text-small text-muted-foreground">
               Recovery codes are the only backup if you lose your authenticator.
               Rotate them if you think they were exposed.
             </p>

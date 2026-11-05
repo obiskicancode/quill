@@ -1,3 +1,5 @@
+import { formatMinor } from '@/lib/format';
+
 export const ERROR_MESSAGES = {
   // Guest booking and stay
   ADD_EXTRAS_NOT_OFFERED:
@@ -143,6 +145,8 @@ export const ERROR_MESSAGES = {
   HOLD_EXPIRED: 'The hold on this room has ended.',
   HOLD_EXPIRED_ROOM: 'Your hold on this room has expired.',
   HOLD_EXPIRED_TITLE: 'Your hold on this room has expired',
+  HOLD_NOT_EDITABLE:
+    'This booking can no longer be changed because payment is already in progress.',
   INVALID_EVENT: "We couldn't process that payment update.",
   INVALID_PAYMENT_REQUEST:
     "We couldn't start that payment. Check your details and try again.",
@@ -699,8 +703,8 @@ export const ERROR_MESSAGES = {
     "There's no refundable balance left on this reservation.",
   ONLY_PENDING_BANK_TRANSFERS:
     'Only pending bank transfers can be verified or rejected.',
-  PAYMENT_EXCEEDS_BALANCE: (amount: string, balance: string) =>
-    `The payment (₦${amount}) can't be more than the balance due (₦${balance}).`,
+  PAYMENT_EXCEEDS_BALANCE: (amountMinor: number, balanceMinor: number) =>
+    `The payment (${formatMinor(amountMinor)}) can't be more than the balance due (${formatMinor(balanceMinor)}).`,
   PAYMENT_NOT_APPLIED: (_reference: string) =>
     "We couldn't apply that payment. Please contact us.",
   PAYMENT_NOT_FOUND: "We couldn't find that payment.",
@@ -709,20 +713,26 @@ export const ERROR_MESSAGES = {
   PAYMENT_PROVIDER_REJECTED:
     "The payment provider couldn't complete that request. Please try again.",
   PAYOUT_AMOUNT_POSITIVE: 'Payout amount must be greater than zero.',
-  PAYOUT_EXCEEDS_REFUND_DUE: (amount: string, due: string) =>
-    `The payout (₦${amount}) cannot exceed the refund amount due (₦${due}).`,
-  PAYOUT_EXCEEDS_REFUND_DUE_SIMPLE: (due: string) =>
-    `The payout can't be more than the refund due (${due}).`,
-  PAYOUT_EXCEEDS_REMAINING: (amount: string) =>
-    `The payout exceeds remaining un-refunded payments (₦${amount}).`,
+  PAYOUT_EXCEEDS_REFUND_DUE: (amountMinor: number, dueMinor: number) =>
+    `The payout (${formatMinor(amountMinor)}) cannot exceed the refund amount due (${formatMinor(dueMinor)}).`,
+  PAYOUT_EXCEEDS_REFUND_DUE_SIMPLE: (dueMinor: number) =>
+    `The payout can't be more than the refund due (${formatMinor(dueMinor)}).`,
+  PAYOUT_EXCEEDS_REMAINING: (amountMinor: number) =>
+    `The payout exceeds remaining un-refunded payments (${formatMinor(amountMinor)}).`,
   PAYSTACK_NOT_CONFIGURED:
     "Card payments aren't available right now. Please try again later.",
-  REFUND_AMOUNT_BETWEEN: (max: string) =>
-    `Enter a refund between ₦0 and ${max}.`,
-  REFUND_AMOUNT_EXCEEDS_REFUNDABLE: (amount: string, refundable: string) =>
-    `The refund (₦${amount}) is more than the refundable amount (₦${refundable}).`,
-  REFUND_EXCEEDS_AVAILABLE_BALANCE: (amount: string, available: string) =>
-    `The refund (₦${amount}) is more than the available refundable balance (₦${available}).`,
+  REFUND_AMOUNT_BETWEEN: (maxMinor: number) =>
+    `Enter a refund between ${formatMinor(0)} and ${formatMinor(maxMinor)}.`,
+  REFUND_AMOUNT_EXCEEDS_REFUNDABLE: (
+    amountMinor: number,
+    refundableMinor: number,
+  ) =>
+    `The refund (${formatMinor(amountMinor)}) is more than the refundable amount (${formatMinor(refundableMinor)}).`,
+  REFUND_EXCEEDS_AVAILABLE_BALANCE: (
+    amountMinor: number,
+    availableMinor: number,
+  ) =>
+    `The refund (${formatMinor(amountMinor)}) is more than the available refundable balance (${formatMinor(availableMinor)}).`,
   REFUND_PAYMENT_NOT_FOUND: "We couldn't find that refund payment.",
   REFUND_ALREADY_PROCESSED: 'This refund has already been processed.',
   REFUND_PROVIDER_IN_PROGRESS:

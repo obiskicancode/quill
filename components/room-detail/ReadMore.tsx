@@ -2,6 +2,9 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 
+import { textLinkRecipe } from '@/components/ui/text-link';
+import { cn } from '@/lib/utils';
+
 import { Button } from '../ui/button';
 
 /** Clamps text to about six lines. The button only appears when the text is actually longer. */
@@ -27,7 +30,7 @@ export function ReadMore({ text }: { text: string }) {
       <p
         id={id}
         ref={ref}
-        className={`text-body-lg text-ink/90 max-w-prose leading-[1.7] ${expanded ? '' : 'line-clamp-6'}`}
+        className={`max-w-prose text-body-lg leading-prose text-ink/90 ${expanded ? '' : 'line-clamp-6'}`}
       >
         {text}
       </p>
@@ -38,7 +41,7 @@ export function ReadMore({ text }: { text: string }) {
           aria-expanded={expanded}
           aria-controls={id}
           onClick={() => setExpanded((e) => !e)}
-          className="decoration-brand mt-1 inline-flex h-auto min-h-11 items-center p-0 font-semibold underline decoration-2 underline-offset-[0.375rem]"
+          className={cn(textLinkRecipe, 'mt-1 p-0')}
         >
           {expanded ? 'Show less' : 'Read more'}
         </Button>

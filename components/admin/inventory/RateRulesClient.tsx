@@ -8,8 +8,10 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
+import { StatusDotBadge } from '@/components/admin/StatusDotBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm';
 import {
   Select,
   SelectContent,
@@ -32,7 +34,8 @@ import {
   useDeleteRateRule,
   useRateRules,
 } from '@/hooks/services/admin/use-inventory';
-import { bpsToPercentage, minorToNaira } from '@/lib/rate-resolution';
+import { formatMinor } from '@/lib/format';
+import { bpsToPercentage } from '@/lib/rate-resolution';
 import type {
   AdminRateRule,
   AdminRoomTypeListItem,
@@ -49,6 +52,7 @@ export function RateRulesClient({
   initialRules,
   roomTypes,
 }: RateRulesClientProps) {
+  const confirm = useConfirm();
   const rulesQuery = useRateRules(undefined, initialRules);
   const deleteRateRule = useDeleteRateRule();
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -95,20 +99,25 @@ export function RateRulesClient({
         return pct >= 0 ? `+${pct}%` : `${pct}%`;
       }
       case 'fixed_price':
-        return `Fixed ₦${minorToNaira(r.adjustmentValue)}`;
+        return `Fixed ${formatMinor(r.adjustmentValue)}`;
       case 'amount_markup': {
         const val = r.adjustmentValue;
         return val >= 0
-          ? `+₦${minorToNaira(val)}`
-          : `-₦${minorToNaira(Math.abs(val))}`;
+          ? `+${formatMinor(val)}`
+          : `-${formatMinor(Math.abs(val))}`;
       }
     }
   }
 
   async function handleDelete(rule: AdminRateRule) {
-    if (!confirm(`Are you sure you want to delete rate rule "${rule.name}"?`)) {
-      return;
-    }
+    const sure = await confirm({
+      title: `Delete rate rule "${rule.name}"?`,
+      description:
+        'Nights already priced by it keep their recorded rates; future ones stop being adjusted.',
+      confirmLabel: 'Delete rule',
+      tone: 'danger',
+    });
+    if (!sure) return;
 
     try {
       await deleteRateRule.mutateAsync(rule.id);
@@ -126,10 +135,10 @@ export function RateRulesClient({
   return (
     <div className="space-y-6">
       {/* Filters & Action Bar */}
-      <div className="rounded-card border-line bg-card flex flex-col gap-3 border p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-card border border-line bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
-            <Filter className="text-muted-foreground size-4" />
+            <Filter className="size-4 text-muted-foreground" />
             <Select
               items={[
                 { value: 'all', label: 'All Room Types' },
@@ -140,10 +149,7 @@ export function RateRulesClient({
                 if (val) setSelectedRoomTypeId(val);
               }}
             >
-              <SelectTrigger
-                aria-label="Filter by room type"
-                className="w-[10rem]"
-              >
+              <SelectTrigger aria-label="Filter by room type" className="w-40">
                 <SelectValue placeholder="All Room Types" />
               </SelectTrigger>
               <SelectContent>
@@ -180,7 +186,7 @@ export function RateRulesClient({
 
           <Button
             size="sm"
-            variant="outline"
+            variant="secondary"
             onClick={refresh}
             disabled={loading}
             aria-label="Refresh"
@@ -220,9 +226,9 @@ export function RateRulesClient({
           weekend uplifts, or extended stay discounts.
         </AdminEmpty>
       ) : (
-        <div className="rounded-card border-line bg-card overflow-x-auto border">
-          <Table className="text-small w-full text-left">
-            <TableHeader className="border-line bg-paper text-muted-foreground border-b">
+        <div className="overflow-x-auto rounded-card border border-line bg-card">
+          <Table className="w-full text-left text-small">
+            <TableHeader className="border-b border-line bg-paper text-muted-foreground">
               <TableRow className="border-line hover:bg-transparent">
                 <TableHead className="py-3 pr-3 pl-4 font-medium">
                   Rule Name
@@ -245,19 +251,19 @@ export function RateRulesClient({
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="divide-line divide-y">
+            <TableBody className="divide-y divide-line">
               {filteredRules.map((r) => (
                 <TableRow
                   key={r.id}
-                  className="hover:bg-paper/40 border-line transition-colors"
+                  className="border-line transition-colors hover:bg-paper/40"
                 >
-                  <TableCell className="text-foreground py-3 pr-3 pl-4 font-semibold">
+                  <TableCell className="py-3 pr-3 pl-4 font-semibold text-foreground">
                     <div className="flex items-center gap-2">
                       <span>{r.name}</span>
                       {r.minNights && (
                         <Badge
                           variant="outline"
-                          className="text-muted-foreground text-xs font-normal"
+                          className="text-caption font-normal text-muted-foreground"
                         >
                           Min {r.minNights} nights
                         </Badge>
@@ -265,40 +271,28 @@ export function RateRulesClient({
                     </div>
                   </TableCell>
 
-                  <TableCell className="text-muted-foreground px-4 py-3">
+                  <TableCell className="px-4 py-3 text-muted-foreground">
                     {r.roomTypeName || 'All Room Types (Global)'}
                   </TableCell>
 
-                  <TableCell className="text-muted-foreground px-4 py-3">
+                  <TableCell className="px-4 py-3 text-muted-foreground">
                     {r.startDate} to {r.endDate}
                   </TableCell>
 
                   <TableCell className="px-4 py-3">
-                    <span className="text-foreground font-semibold">
+                    <span className="font-semibold text-foreground">
                       {formatAdjustment(r)}
                     </span>
                   </TableCell>
 
-                  <TableCell className="text-muted-foreground px-4 py-3">
+                  <TableCell className="px-4 py-3 text-muted-foreground">
                     Priority {r.priority}
                   </TableCell>
 
                   <TableCell className="px-4 py-3">
-                    <Badge
-                      variant="outline"
-                      className={`gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        r.isActive
-                          ? 'border-success/20 bg-success/15 text-success'
-                          : 'border-muted/30 bg-muted/20 text-muted-foreground'
-                      }`}
-                    >
-                      <span
-                        className={`size-1.5 rounded-full ${
-                          r.isActive ? 'bg-success' : 'bg-muted'
-                        }`}
-                      />
+                    <StatusDotBadge tone={r.isActive ? 'success' : 'neutral'}>
                       {r.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
+                    </StatusDotBadge>
                   </TableCell>
 
                   <TableCell className="py-3 pr-4 pl-3 text-right">

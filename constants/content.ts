@@ -27,3 +27,9 @@ export const GALLERY_CATEGORIES = [
   'events',
   'surroundings',
 ] as const;
+
+/**
+ * The availability search anchor. The global Book Now bar watches it so the two
+ * never stack, and the room-detail bar marks itself as the anchor on tablets.
+ */
+export const AVAILABILITY_SEARCH_ID = 'availability-search' as const;

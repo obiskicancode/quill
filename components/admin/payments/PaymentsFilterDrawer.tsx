@@ -16,8 +16,10 @@ import {
 } from '@/components/ui/select';
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
@@ -90,7 +92,7 @@ export function PaymentsFilterDrawer({
       {/* Search and primary bar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-55 flex-1">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
             aria-label="Search payments"
@@ -107,7 +109,7 @@ export function PaymentsFilterDrawer({
           variant={
             filters.status === 'paid' && filters.reconciled === 'no'
               ? 'primary'
-              : 'outline'
+              : 'secondary'
           }
           size="sm"
           onClick={() => {
@@ -236,7 +238,7 @@ export function PaymentsFilterDrawer({
         {/* Mobile toggle */}
         <Button
           type="button"
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => setMobileOpen(true)}
           className="lg:hidden"
@@ -252,7 +254,7 @@ export function PaymentsFilterDrawer({
           {activeChips.map((chip) => (
             <span
               key={chip.key}
-              className="border-line bg-paper text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5"
+              className="inline-flex items-center gap-1 rounded-full border border-line bg-paper px-2.5 py-0.5 text-caption text-ink"
             >
               <span>{chip.label}</span>
               <Button
@@ -266,7 +268,7 @@ export function PaymentsFilterDrawer({
                       [chip.key]: 'all',
                     } as Partial<PaymentsQueryParams>);
                 }}
-                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
+                className="size-4 p-0 hover:bg-transparent hover:text-destructive"
                 aria-label={`Remove filter ${chip.label}`}
               >
                 <X className="size-3" />
@@ -279,7 +281,7 @@ export function PaymentsFilterDrawer({
             variant="link"
             size="xs"
             onClick={onReset}
-            className="text-destructive ml-1"
+            className="ml-1 text-destructive"
           >
             Clear all
           </Button>
@@ -289,20 +291,19 @@ export function PaymentsFilterDrawer({
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent
           side="bottom"
-          showCloseButton
-          className="border-line bg-card max-h-[85vh] gap-0 overflow-y-auto rounded-t-2xl border-t p-0 lg:hidden"
+          className="max-h-[85vh] rounded-t-card lg:hidden"
         >
-          <SheetHeader className="border-line border-b p-5 pr-14">
-            <SheetTitle className="text-ink">Payment Filters</SheetTitle>
+          <SheetHeader>
+            <SheetTitle>Payment Filters</SheetTitle>
             <SheetDescription>
               Narrow the payment ledger by status, provider, method, or
               reconciliation state.
             </SheetDescription>
           </SheetHeader>
 
-          <div className="text-small space-y-4 p-5">
+          <SheetBody className="space-y-4">
             {activeChips.length > 0 && (
-              <Alert className="bg-muted/40 border-line text-caption">
+              <Alert variant="neutral" size="sm">
                 {activeChips.length} active filter
                 {activeChips.length === 1 ? '' : 's'} applied.
               </Alert>
@@ -419,12 +420,12 @@ export function PaymentsFilterDrawer({
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          </SheetBody>
 
-          <div className="border-line bg-card sticky bottom-0 flex items-center gap-2 border-t p-4">
+          <SheetFooter className="flex-row items-center border-t border-line">
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               className="flex-1"
               onClick={() => {
                 onReset();
@@ -440,7 +441,7 @@ export function PaymentsFilterDrawer({
             >
               Apply Filters
             </Button>
-          </div>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
     </div>

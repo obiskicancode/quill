@@ -24,17 +24,17 @@ export async function AskCard({
   return (
     <section
       aria-labelledby="ask-title"
-      className="rounded-card bg-card shadow-raised p-6 md:p-8"
+      className="rounded-card bg-card p-6 shadow-raised md:p-8"
     >
       <Reveal>
         <h2 id="ask-title" className="font-display text-h3">
           Ask about this room
         </h2>
-        <p className="text-ink/85 mt-2 max-w-prose">
+        <p className="mt-2 max-w-prose text-ink/85">
           Questions about the bed, the view or a special request? We reply
           quickly on WhatsApp.
         </p>
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-5 flex flex-col flex-wrap gap-3 sm:flex-row">
           <ButtonLink
             href={whatsappHref(site, message)}
             external

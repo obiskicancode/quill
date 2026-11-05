@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from 'framer-motion';
 import { Star } from 'lucide-react';
 
+import { TextLink } from '@/components/ui/text-link';
 import { useSite } from '@/providers/site.provider';
 import type { Testimonial } from '@/types/site.types';
 
@@ -11,7 +12,6 @@ import { Reveal } from './motion/Reveal';
 import { TextReveal } from './motion/TextReveal';
 import { blurStagger, fadeUp, viewportOnce } from './motion/variants';
 import { Photo } from './ui/Photo';
-import { TextLink } from './ui/TextLink';
 
 function Stars({ rating }: { rating: number }) {
   return (
@@ -23,7 +23,7 @@ function Stars({ rating }: { rating: number }) {
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
-          className={`size-5 ${i < rating ? 'fill-accent text-brand-ink' : 'text-ink/25'}`}
+          className={`size-5 ${i < rating ? 'fill-primary text-brand-ink' : 'text-ink/25'}`}
           aria-hidden
         />
       ))}
@@ -37,7 +37,7 @@ function Quote({ t }: { t: Testimonial }) {
   const inner = (
     <>
       {t.rating ? <Stars rating={t.rating} /> : null}
-      <blockquote className="font-display mt-5 text-[clamp(1.375rem,1.1rem+1vw,2rem)] leading-snug text-balance">
+      <blockquote className="mt-5 font-display text-quote text-balance">
         &ldquo;{t.quote}&rdquo;
       </blockquote>
       <figcaption className="mt-6 flex items-center gap-3 text-left">
@@ -51,7 +51,7 @@ function Quote({ t }: { t: Testimonial }) {
         )}
         <span>
           <span className="block font-semibold">{t.guestName}</span>
-          <span className="text-small text-muted-foreground block">
+          <span className="block text-small text-muted-foreground">
             {t.stayType}
           </span>
         </span>
@@ -81,7 +81,7 @@ function Quote({ t }: { t: Testimonial }) {
       ) : null}
       <motion.blockquote
         variants={fadeUp}
-        className="font-display mt-5 text-[clamp(1.375rem,1.1rem+1vw,2rem)] leading-snug text-balance"
+        className="mt-5 font-display text-quote text-balance"
       >
         &ldquo;{t.quote}&rdquo;
       </motion.blockquote>
@@ -99,7 +99,7 @@ function Quote({ t }: { t: Testimonial }) {
         )}
         <span>
           <span className="block font-semibold">{t.guestName}</span>
-          <span className="text-small text-muted-foreground block">
+          <span className="block text-small text-muted-foreground">
             {t.stayType}
           </span>
         </span>
@@ -118,17 +118,18 @@ export function TestimonialCarousel({
   const items = testimonials.slice(0, 6);
   if (items.length === 0) return null;
   return (
-    <section aria-labelledby="reviews-heading" className="section-y bg-card">
+    <section aria-labelledby="reviews-heading" className="bg-card section-y">
       <div className="container-page">
         <TextReveal
           as="h2"
           id="reviews-heading"
           text="What guests say"
-          className="font-display text-h2 mb-10 text-center md:mb-14"
+          className="mb-10 text-center font-display text-h2 md:mb-14"
           staggerChildren={0.08}
         />
         <Carousel
           label="Guest reviews"
+          itemNoun="review"
           slides={items.map((t) => (
             <Quote key={t.id} t={t} />
           ))}

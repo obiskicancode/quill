@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useVerifyReservationTransfer } from '@/hooks/services/admin/use-reservations';
-import { formatNaira } from '@/lib/format';
+import { formatMinor } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import { verifyTransferSchema } from '@/schemas/reservation.schema';
 import type {
@@ -160,21 +160,21 @@ export function VerifyTransferModal({
         {/* Receipt and Details Row */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* Left: Receipt Preview */}
-          <div className="bg-muted rounded-control border-line flex flex-col items-center justify-center border p-4 text-center">
+          <div className="flex flex-col items-center justify-center rounded-control border border-line bg-muted p-4 text-center">
             {payment.proofKey ? (
               <div className="space-y-2">
                 <FileImage
-                  className="text-brand mx-auto size-12"
+                  className="mx-auto size-12 text-brand"
                   aria-hidden="true"
                 />
-                <p className="text-small text-ink font-semibold">
+                <p className="text-small font-semibold text-ink">
                   Transfer Receipt Attached
                 </p>
                 <a
                   href={`/api/admin/reservations/${reservation.id}/proof`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-caption text-brand inline-flex items-center font-semibold hover:underline"
+                  className="inline-flex items-center text-caption font-semibold text-brand-ink hover:underline"
                 >
                   Open receipt in new tab &rarr;
                 </a>
@@ -187,12 +187,12 @@ export function VerifyTransferModal({
           </div>
 
           {/* Right: Payment details */}
-          <div className="bg-muted rounded-control border-line text-small space-y-2 border p-4">
+          <div className="space-y-2 rounded-control border border-line bg-muted p-4 text-small">
             <div>
               <span className="text-caption text-muted-foreground">
                 Reference:
               </span>
-              <p className="text-ink font-mono font-semibold">
+              <p className="font-mono font-semibold text-ink">
                 {payment.reference}
               </p>
             </div>
@@ -200,8 +200,8 @@ export function VerifyTransferModal({
               <span className="text-caption text-muted-foreground">
                 Expected Amount:
               </span>
-              <p className="text-ink font-bold">
-                {formatNaira(payment.amountMinor / 100)}
+              <p className="font-bold text-ink">
+                {formatMinor(payment.amountMinor)}
               </p>
             </div>
             <div>
@@ -214,15 +214,14 @@ export function VerifyTransferModal({
         </div>
 
         {/* Action Toggle */}
-        <div className="border-line grid grid-cols-2 gap-2 border-t pt-3">
+        <div className="grid grid-cols-2 gap-2 border-t border-line pt-3">
           <Button
             type="button"
-            variant={mode === 'verify' ? 'default' : 'outline'}
-            size="md"
+            variant={mode === 'verify' ? 'primary' : 'secondary'}
             onClick={() => setValue('action', 'verify')}
             className={
               mode === 'verify'
-                ? 'bg-success hover:bg-success/90 text-white'
+                ? 'bg-success text-success-foreground hover:bg-success/90'
                 : ''
             }
           >
@@ -231,8 +230,7 @@ export function VerifyTransferModal({
           </Button>
           <Button
             type="button"
-            variant={mode === 'reject' ? 'destructive' : 'outline'}
-            size="md"
+            variant={mode === 'reject' ? 'destructive' : 'secondary'}
             onClick={() => setValue('action', 'reject')}
           >
             <XCircle className="size-4" aria-hidden="true" />
@@ -295,10 +293,10 @@ export function VerifyTransferModal({
           )}
         </Field>
 
-        <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
+        <div className="flex items-center justify-end gap-3 border-t border-line pt-3">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={onClose}
             disabled={busy}
@@ -307,7 +305,7 @@ export function VerifyTransferModal({
           </Button>
           <Button
             type="submit"
-            variant={mode === 'verify' ? 'default' : 'destructive'}
+            variant={mode === 'verify' ? 'primary' : 'destructive'}
             size="sm"
             loading={busy}
           >

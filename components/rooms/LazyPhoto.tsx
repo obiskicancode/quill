@@ -32,7 +32,7 @@ export function LazyPhoto({ src, alt, sizes }: LazyPhotoProps) {
   }, [show]);
 
   return (
-    <div ref={ref} className="bg-ink/10 aspect-[4/3] w-full">
+    <div ref={ref} className="aspect-[4/3] w-full bg-ink/10">
       {show && (
         <Photo src={src} alt={alt} sizes={sizes} className="h-full w-full" />
       )}

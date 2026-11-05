@@ -3,8 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { Component, useState, type ReactNode } from 'react';
 
-import { Banner } from '../checkout/CheckoutStates';
 import { Reveal } from '../motion';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Button } from '../ui/button';
 
 interface BoundaryProps {
@@ -12,7 +12,6 @@ interface BoundaryProps {
   onRetry: () => void;
   children: ReactNode;
 }
-
 class Boundary extends Component<BoundaryProps, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {
@@ -23,11 +22,15 @@ class Boundary extends Component<BoundaryProps, { failed: boolean }> {
     return (
       <section className="container-page py-8">
         <Reveal>
-          <Banner
-            role="alert"
-            tone="danger"
-            title={`We couldn't load ${this.props.label}`}
-            actions={
+          <Alert role="alert" variant="destructive" size="banner">
+            <AlertTitle>{`We couldn't load ${this.props.label}`}</AlertTitle>
+            <AlertDescription>
+              <p>
+                The rest of the page still works. Trying again only reloads this
+                part.
+              </p>
+            </AlertDescription>
+            <div className="mt-4 flex flex-wrap gap-3">
               <Button
                 variant="secondary"
                 size="sm"
@@ -35,19 +38,13 @@ class Boundary extends Component<BoundaryProps, { failed: boolean }> {
               >
                 Try again
               </Button>
-            }
-          >
-            <p>
-              The rest of the page still works. Trying again only reloads this
-              part.
-            </p>
-          </Banner>
+            </div>
+          </Alert>
         </Reveal>
       </section>
     );
   }
 }
-
 /** Contains a failing section so one error never takes down the page. "Try again" reloads just that section. */
 export function SectionBoundary({
   label,

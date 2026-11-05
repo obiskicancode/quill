@@ -47,7 +47,7 @@ export function Footer({ site }: { site: SiteConfig }) {
       <div className="container-page grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-4">
         <div className="text-paper">
           <SiteLogo site={site} />
-          <p className="text-small text-paper/80 mt-3 max-w-xs">
+          <p className="mt-3 max-w-xs text-small text-paper/80">
             {site.description}
           </p>
           <ul aria-label="Social media" className="mt-4 flex gap-2">
@@ -56,7 +56,7 @@ export function Footer({ site }: { site: SiteConfig }) {
                 <a
                   href={s.href}
                   aria-label={s.label}
-                  className="border-paper/40 hover:bg-paper hover:text-ink grid size-11 place-items-center rounded-full border transition-colors"
+                  className="grid size-11 place-items-center rounded-full border border-paper/40 transition-colors hover:bg-paper hover:text-ink"
                 >
                   <SocialIcon platform={s.platform} />
                 </a>
@@ -67,7 +67,7 @@ export function Footer({ site }: { site: SiteConfig }) {
 
         <div>
           <h2 className="font-display text-h3 text-paper">Contact</h2>
-          <ul className="text-small mt-3 space-y-1">
+          <ul className="mt-3 space-y-1 text-small">
             <li className="flex gap-3 py-2">
               <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden />
               <address className="not-italic">
@@ -102,7 +102,7 @@ export function Footer({ site }: { site: SiteConfig }) {
 
         <nav aria-label="Footer">
           <h2 className="font-display text-h3 text-paper">Explore</h2>
-          <ul className="text-small mt-3">
+          <ul className="mt-3 text-small">
             {site.nav.map((n) => (
               <li key={n.href}>
                 <Link href={n.href} className={link}>
@@ -115,7 +115,7 @@ export function Footer({ site }: { site: SiteConfig }) {
 
         <nav aria-label="Policies">
           <h2 className="font-display text-h3 text-paper">Policies</h2>
-          <ul className="text-small mt-3">
+          <ul className="mt-3 text-small">
             {site.policies.map((p) => (
               <li key={p.href}>
                 <Link href={p.href} className={link}>
@@ -131,7 +131,7 @@ export function Footer({ site }: { site: SiteConfig }) {
       </div>
 
       {/* Extra bottom padding on mobile keeps the copyright clear of the sticky Book Now bar. */}
-      <div className="border-paper/15 border-t pt-6 pb-24 md:pb-6">
+      <div className="border-t border-paper/15 pt-6 pb-24 md:pb-6">
         <p className="container-page text-small">
           &copy; {new Date().getFullYear()} {site.name}. All rights reserved.
         </p>

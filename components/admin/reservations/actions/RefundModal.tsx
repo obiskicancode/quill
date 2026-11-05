@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useIssueReservationRefund } from '@/hooks/services/admin/use-reservations';
-import { formatNaira } from '@/lib/format';
+import { formatMinor, formatNaira } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import { refundSchema } from '@/schemas/reservation.schema';
 import type {
@@ -154,16 +154,16 @@ export function RefundModal({
         className="space-y-4"
       >
         {/* Payment Summary */}
-        <div className="bg-muted rounded-control border-line text-small flex items-center justify-between border p-3">
+        <div className="flex items-center justify-between rounded-control border border-line bg-muted p-3 text-small">
           <div>
             <span className="text-caption text-muted-foreground">
               Original Payment:
             </span>
-            <p className="text-ink font-semibold">
-              {formatNaira(payment.amountMinor / 100)} ({payment.provider})
+            <p className="font-semibold text-ink">
+              {formatMinor(payment.amountMinor)} ({payment.provider})
             </p>
           </div>
-          <span className="text-caption text-muted-foreground font-mono">
+          <span className="font-mono text-caption text-muted-foreground">
             {payment.reference}
           </span>
         </div>
@@ -309,10 +309,10 @@ export function RefundModal({
           )}
         </Field>
 
-        <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
+        <div className="flex items-center justify-end gap-3 border-t border-line pt-3">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={onClose}
             disabled={busy}

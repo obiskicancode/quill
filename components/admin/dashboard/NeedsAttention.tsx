@@ -6,18 +6,19 @@ import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 import { AdminCard } from '@/components/admin/AdminCard';
 import { AnimatedList } from '@/components/motion/AnimatedList';
+import { Alert, AlertTitle } from '@/components/ui/alert';
 import type { AttentionItem } from '@/types/dashboard.types';
 
 export function NeedsAttention({ items }: { items: AttentionItem[] }) {
   if (items.length === 0) {
     return (
       <section aria-label="Action items">
-        <div className="rounded-card border-success/30 bg-success/5 text-small text-success flex items-center gap-3 border p-4">
+        <Alert variant="success" size="panel" className="items-center gap-3">
           <CheckCircle2 className="size-5 shrink-0" aria-hidden="true" />
-          <span className="font-semibold">
+          <AlertTitle className="font-semibold">
             Nothing needs attention — operations are all clear!
-          </span>
-        </div>
+          </AlertTitle>
+        </Alert>
       </section>
     );
   }
@@ -29,7 +30,7 @@ export function NeedsAttention({ items }: { items: AttentionItem[] }) {
         description="Prioritised operational items waiting on staff action."
         className="border-destructive/30"
       >
-        <AnimatedList className="divide-line divide-y">
+        <AnimatedList className="divide-y divide-line">
           {items.map((item) => (
             <motion.li
               key={item.type}
@@ -41,23 +42,23 @@ export function NeedsAttention({ items }: { items: AttentionItem[] }) {
             >
               <Link
                 href={item.href}
-                className="group rounded-control hover:bg-paper flex flex-col gap-2 px-2 py-2 transition-colors sm:flex-row sm:items-center sm:justify-between"
+                className="group flex flex-col gap-2 rounded-control px-2 py-2 transition-colors hover:bg-paper sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-center gap-3">
-                  <span className="bg-destructive/10 text-caption text-destructive inline-flex size-6 shrink-0 items-center justify-center rounded-full font-bold">
+                  <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-caption font-bold text-destructive">
                     {item.count}
                   </span>
                   <div>
-                    <span className="text-ink group-hover:text-brand-ink font-semibold">
+                    <span className="font-semibold text-ink group-hover:text-brand-ink">
                       {item.label}
                     </span>
-                    <span className="text-caption text-muted-foreground ml-2">
+                    <span className="ml-2 text-caption text-muted-foreground">
                       (oldest {item.oldestAge})
                     </span>
                   </div>
                 </div>
 
-                <div className="text-caption text-muted-foreground group-hover:text-ink flex items-center gap-1.5 self-end font-semibold sm:self-auto">
+                <div className="flex items-center gap-1.5 self-end text-caption font-semibold text-muted-foreground group-hover:text-ink sm:self-auto">
                   <span>View</span>
                   <ArrowRight
                     className="size-3.5 transition-transform group-hover:translate-x-0.5"

@@ -16,6 +16,7 @@ import {
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { formatHotelTimeWithSeconds } from '@/lib/format';
 import type { WebhookEventItem } from '@/types/payments.types';
 
 export function WebhooksTab({
@@ -56,7 +57,7 @@ export function WebhooksTab({
 
   if (loading) {
     return (
-      <div className="rounded-card border-line bg-card text-muted-foreground border p-8 text-center">
+      <div className="rounded-card border border-line bg-card p-8 text-center text-muted-foreground">
         Loading gateway webhook events...
       </div>
     );
@@ -64,7 +65,7 @@ export function WebhooksTab({
 
   if (events.length === 0) {
     return (
-      <div className="rounded-card border-line bg-paper text-muted-foreground border border-dashed p-8 text-center">
+      <div className="rounded-card border border-dashed border-line bg-paper p-8 text-center text-muted-foreground">
         No webhook events recorded yet.
       </div>
     );
@@ -72,14 +73,14 @@ export function WebhooksTab({
 
   return (
     <div className="space-y-3">
-      <div className="text-caption text-muted-foreground flex items-center justify-between">
+      <div className="flex items-center justify-between text-caption text-muted-foreground">
         <span>Payment Gateway Webhook Feed</span>
         <span>Highlighting events unprocessed for &gt; 10 minutes</span>
       </div>
 
-      <div className="rounded-card border-line bg-card overflow-x-auto border">
-        <Table className="text-small w-full text-left">
-          <TableHeader className="border-line bg-paper text-caption text-muted-foreground border-b font-semibold uppercase">
+      <div className="overflow-x-auto rounded-card border border-line bg-card">
+        <Table className="w-full text-left text-small">
+          <TableHeader className="border-b border-line bg-paper text-caption font-semibold text-muted-foreground uppercase">
             <TableRow className="border-line hover:bg-transparent">
               <TableHead className="px-4 py-3">Received</TableHead>
               <TableHead className="px-4 py-3">Provider</TableHead>
@@ -89,7 +90,7 @@ export function WebhooksTab({
               <TableHead className="px-4 py-3 text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-line divide-y">
+          <TableBody className="divide-y divide-line">
             {events.map((evt) => {
               const isExpanded = expandedId === evt.id;
 
@@ -100,44 +101,29 @@ export function WebhooksTab({
                     evt.isOverdue ? 'bg-primary/5' : 'hover:bg-paper/50'
                   }`}
                 >
-                  <TableCell className="text-caption text-muted-foreground px-4 py-3 whitespace-nowrap">
-                    {new Date(evt.receivedAt).toLocaleTimeString('en-GB', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit',
-                    })}
+                  <TableCell className="px-4 py-3 text-caption whitespace-nowrap text-muted-foreground">
+                    {formatHotelTimeWithSeconds(evt.receivedAt)}
                   </TableCell>
-                  <TableCell className="text-ink px-4 py-3 font-medium capitalize">
+                  <TableCell className="px-4 py-3 font-medium text-ink capitalize">
                     {evt.provider}
                   </TableCell>
-                  <TableCell className="text-caption text-ink px-4 py-3 font-mono">
+                  <TableCell className="px-4 py-3 font-mono text-caption text-ink">
                     {evt.eventType || 'unknown'}
                   </TableCell>
-                  <TableCell className="text-caption text-muted-foreground px-4 py-3 font-mono">
+                  <TableCell className="px-4 py-3 font-mono text-caption text-muted-foreground">
                     {evt.eventId}
                   </TableCell>
                   <TableCell className="px-4 py-3">
                     {evt.processed ? (
-                      <Badge
-                        variant="outline"
-                        className="bg-success/10 text-caption text-success border-success/20 inline-flex items-center gap-1 font-medium"
-                      >
-                        <CheckCircle2 className="size-3.5" /> Processed
+                      <Badge variant="success">
+                        <CheckCircle2 /> Processed
                       </Badge>
                     ) : evt.isOverdue ? (
-                      <Badge
-                        variant="outline"
-                        className="bg-destructive/10 text-caption text-destructive border-destructive/20 inline-flex items-center gap-1 font-semibold"
-                      >
-                        <AlertTriangle className="size-3.5" /> Overdue (&gt;10m)
+                      <Badge variant="destructive">
+                        <AlertTriangle /> Overdue (&gt;10m)
                       </Badge>
                     ) : (
-                      <Badge
-                        variant="outline"
-                        className="text-caption border-primary/30 bg-primary/15 text-brand-ink font-medium"
-                      >
-                        Pending
-                      </Badge>
+                      <Badge variant="brand">Pending</Badge>
                     )}
                   </TableCell>
                   <TableCell className="space-x-2 px-4 py-3 text-right">
@@ -149,7 +135,7 @@ export function WebhooksTab({
                         onClick={() =>
                           setExpandedId(isExpanded ? null : evt.id)
                         }
-                        className="text-caption text-muted-foreground hover:text-ink font-medium"
+                        className="text-caption font-medium text-muted-foreground hover:text-ink"
                       >
                         {isExpanded ? 'Hide Payload' : 'View Payload'}
                       </Button>
@@ -179,9 +165,9 @@ export function WebhooksTab({
 
       {/* Expanded payload drawer/block for owner */}
       {expandedId && (
-        <div className="rounded-card border-line bg-ink text-paper overflow-x-auto border p-4 font-mono text-[0.6875rem]">
-          <div className="border-paper/20 mb-2 flex items-center justify-between border-b pb-2">
-            <span className="text-muted-foreground text-[0.625rem] font-semibold uppercase">
+        <div className="overflow-x-auto rounded-card border border-line bg-ink p-4 font-mono text-micro text-paper">
+          <div className="mb-2 flex items-center justify-between border-b border-paper/20 pb-2">
+            <span className="text-micro font-semibold text-muted-foreground uppercase">
               Masked Webhook Payload
             </span>
             <Button
@@ -189,7 +175,7 @@ export function WebhooksTab({
               variant="ghost"
               size="icon"
               onClick={() => setExpandedId(null)}
-              className="text-muted-foreground size-6 p-0 hover:bg-transparent hover:text-white"
+              className="size-6 p-0 text-muted-foreground hover:bg-transparent hover:text-white"
               aria-label="Close payload view"
             >
               <X className="size-4" />

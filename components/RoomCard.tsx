@@ -2,6 +2,7 @@
 
 import { BedDouble, ImageIcon, Users } from 'lucide-react';
 
+import { TextLink } from '@/components/ui/text-link';
 import { formatNaira, formatSecondary } from '@/lib/format';
 import { roomAmenityLabels as amenityLabels } from '@/lib/rooms';
 import { whatsappHref } from '@/lib/site';
@@ -55,11 +56,12 @@ function FeatureRoomCard({
   return (
     <article
       aria-labelledby={nameId}
-      className="rounded-card border-line bg-card shadow-raised focus-within:shadow-float hover:shadow-float flex h-full flex-col overflow-hidden border transition-shadow duration-200"
+      className="flex h-full flex-col overflow-hidden rounded-card border border-line bg-card shadow-raised transition-shadow duration-200 focus-within:shadow-float hover:shadow-float"
     >
       {room.images.length > 0 ? (
         <Carousel
           label={`${room.name} photos`}
+          itemNoun="photo"
           slides={room.images.map((img) => (
             <Photo
               key={img.src}
@@ -74,7 +76,7 @@ function FeatureRoomCard({
         <div
           role="img"
           aria-label={`No photos yet for ${room.name}`}
-          className="bg-ink/5 text-ink/50 grid aspect-4/3 w-full place-items-center"
+          className="grid aspect-4/3 w-full place-items-center bg-ink/5 text-ink/50"
         >
           <ImageIcon className="size-8" aria-hidden />
         </div>
@@ -82,10 +84,10 @@ function FeatureRoomCard({
 
       <div className="flex flex-1 flex-col gap-4 p-5">
         <div>
-          <h3 id={nameId} className="font-display text-h3 line-clamp-2">
+          <h3 id={nameId} className="line-clamp-2 font-display text-h3">
             {room.name}
           </h3>
-          <p className="text-small text-muted-foreground mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-small text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <BedDouble className="size-4" aria-hidden />
               {room.bedType}
@@ -100,11 +102,11 @@ function FeatureRoomCard({
         {!compact && (
           <ul
             aria-label="Key amenities"
-            className="text-small flex flex-wrap gap-x-4 gap-y-2"
+            className="flex flex-wrap gap-x-4 gap-y-2 text-small"
           >
             {room.amenities.slice(0, 3).map((key) => (
               <li key={key} className="inline-flex items-center gap-1.5">
-                <AmenityIcon name={key} className="text-brand-ink size-4" />
+                <AmenityIcon name={key} className="size-4 text-brand-ink" />
                 {amenityLabels[key]}
               </li>
             ))}
@@ -115,12 +117,12 @@ function FeatureRoomCard({
           {showPrice ? (
             <p>
               <span className="text-small text-muted-foreground">From </span>
-              <span className="font-display text-2xl">
+              <span className="font-display text-figure">
                 {formatNaira(room.priceNgn as number)}
               </span>
               <span className="text-small text-muted-foreground"> / night</span>
               {room.secondaryPrice && (
-                <span className="text-small text-muted-foreground ml-2">
+                <span className="ml-2 text-small text-muted-foreground">
                   about{' '}
                   {formatSecondary(
                     room.secondaryPrice.currency,
@@ -131,31 +133,25 @@ function FeatureRoomCard({
             </p>
           ) : (
             <p>
-              <a
+              <TextLink
                 href={whatsappHref(
                   site,
                   `Hello, what is the price for the ${room.name}?`,
                 )}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
+                external
               >
                 Contact us for price
                 <span className="sr-only"> (opens WhatsApp in a new tab)</span>
-              </a>
+              </TextLink>
             </p>
           )}
           <div
             className={`mt-4 grid gap-3 ${compact ? 'grid-cols-1' : 'grid-cols-2'}`}
           >
-            <ButtonLink href={detailHref} variant="secondary" size="sm">
+            <ButtonLink href={detailHref} variant="secondary">
               View Details
             </ButtonLink>
-            {!compact && (
-              <ButtonLink href={bookHref} size="sm">
-                Book
-              </ButtonLink>
-            )}
+            {!compact && <ButtonLink href={bookHref}>Book</ButtonLink>}
           </div>
         </div>
       </div>

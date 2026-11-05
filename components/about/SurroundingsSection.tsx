@@ -1,7 +1,6 @@
 import { Reveal, StaggerGroup, StaggerItem } from '@/components/motion';
+import { TextLink } from '@/components/ui/text-link';
 import { getAttractions, getSitePage } from '@/lib/content/data';
-
-import { TextLink } from '../ui/TextLink';
 
 /** Short text about the area, a list of nearby attractions and a link to Contact. Omitted when there is nothing to say. */
 export async function SurroundingsSection() {
@@ -9,14 +8,14 @@ export async function SurroundingsSection() {
   const text = (await getSitePage('about')).content.surroundingsText ?? '';
   if (!text && attractions.length === 0) return null;
   return (
-    <section aria-labelledby="area-title" className="section-y bg-card">
+    <section aria-labelledby="area-title" className="bg-card section-y">
       <div className="container-page grid gap-10 lg:grid-cols-12">
         <Reveal className="lg:col-span-5">
           <h2 id="area-title" className="font-display text-h2">
             Location and surroundings
           </h2>
           {text && (
-            <p className="text-body-lg text-ink/90 mt-4 leading-[1.7]">
+            <p className="mt-4 text-body-lg leading-prose text-ink/90">
               {text}
             </p>
           )}
@@ -34,15 +33,15 @@ export async function SurroundingsSection() {
               <StaggerItem
                 key={a.id}
                 as="li"
-                className="rounded-card border-line bg-paper border p-5"
+                className="rounded-card border border-line bg-paper p-5"
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4">
                   <h3 className="font-semibold">{a.name}</h3>
-                  <p className="text-small text-brand-ink font-semibold">
+                  <p className="text-small font-semibold text-brand-ink">
                     {a.distanceNote}
                   </p>
                 </div>
-                <p className="text-small text-ink/85 mt-1">{a.description}</p>
+                <p className="mt-1 text-small text-ink/85">{a.description}</p>
               </StaggerItem>
             ))}
           </StaggerGroup>

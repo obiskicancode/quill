@@ -1,6 +1,7 @@
 import { config } from '@/config';
 import type { StaffUser } from '@/db/types';
 import { createNotificationLog } from '@/lib/db/repositories/notifications.repo';
+import { formatMinorExact } from '@/lib/format';
 
 interface PasswordResetEmail {
   staff: StaffUser;
@@ -145,7 +146,7 @@ export async function sendRefundIssuedEmail({
   reference,
   note,
 }: RefundIssuedEmail): Promise<void> {
-  const formattedAmount = `₦${(amountMinor / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
+  const formattedAmount = formatMinorExact(amountMinor);
 
   if (config.isDev) {
     console.info('\n[REFUND ISSUED EMAIL]');

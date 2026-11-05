@@ -1,6 +1,6 @@
 'use client';
 
-import { CopyButton } from '../checkout/PaymentStep';
+import { CopyButton } from '@/components/ui/copy-button';
 
 /** The booking reference in large text with a labelled copy button that confirms the copy to screen readers. */
 export function ReferenceBlock({

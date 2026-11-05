@@ -66,7 +66,7 @@ export default async function EnquiryPage({
           <SectionSkeleton variant="form" label="Loading enquiry form" />
         }
       >
-        <div className="container-page section-y max-w-4xl">
+        <div className="container-page max-w-4xl section-y">
           <EnquiryForm
             rooms={roomRows.map((r) => r.room)}
             responseHours={settings.responseHours}

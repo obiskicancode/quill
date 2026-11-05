@@ -43,13 +43,13 @@ export function GuestInfoCard({
         {/* Name & Country */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2.5">
-            <User className="text-muted-foreground size-4" aria-hidden="true" />
+            <User className="size-4 text-muted-foreground" aria-hidden="true" />
             <div>
-              <p className="text-body-lg text-ink font-semibold">
+              <p className="text-body-lg font-semibold text-ink">
                 {reservation.guestName}
               </p>
               {reservation.guestCountry && (
-                <p className="text-caption text-muted-foreground flex items-center gap-1">
+                <p className="flex items-center gap-1 text-caption text-muted-foreground">
                   <Globe className="size-3" aria-hidden="true" />
                   Country: {reservation.guestCountry}
                 </p>
@@ -59,15 +59,15 @@ export function GuestInfoCard({
         </div>
 
         {/* Contact Links & Actions */}
-        <div className="border-line grid gap-3 border-t pt-2 sm:grid-cols-2">
+        <div className="grid gap-3 border-t border-line pt-2 sm:grid-cols-2">
           {/* Phone */}
-          <div className="rounded-control border-line bg-paper/50 border p-2.5">
-            <span className="text-caption text-muted-foreground font-semibold uppercase">
+          <div className="rounded-control border border-line bg-paper/50 p-2.5">
+            <span className="text-caption font-semibold text-muted-foreground uppercase">
               Phone number
             </span>
             {reservation.guestPhone ? (
               <div className="mt-1 flex items-center justify-between gap-2">
-                <span className="text-small text-ink truncate font-medium">
+                <span className="truncate text-small font-medium text-ink">
                   {reservation.guestPhone}
                 </span>
 
@@ -83,7 +83,7 @@ export function GuestInfoCard({
                   >
                     {copiedPhone ? (
                       <Check
-                        className="text-success size-3.5"
+                        className="size-3.5 text-success"
                         aria-hidden="true"
                       />
                     ) : (
@@ -94,7 +94,7 @@ export function GuestInfoCard({
                   <a
                     href={`tel:${reservation.guestPhone}`}
                     aria-label="Call guest phone"
-                    className="rounded-control text-muted-foreground hover:text-ink p-1"
+                    className="rounded-control p-1 text-muted-foreground hover:text-ink"
                   >
                     <Phone className="size-3.5" aria-hidden="true" />
                   </a>
@@ -105,7 +105,7 @@ export function GuestInfoCard({
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Message guest on WhatsApp"
-                      className="rounded-control text-whatsapp p-1 hover:brightness-110"
+                      className="rounded-control p-1 text-whatsapp hover:brightness-110"
                     >
                       <MessageCircle className="size-3.5" aria-hidden="true" />
                     </a>
@@ -113,20 +113,20 @@ export function GuestInfoCard({
                 </div>
               </div>
             ) : (
-              <p className="text-caption text-muted-foreground mt-1 italic">
+              <p className="mt-1 text-caption text-muted-foreground italic">
                 Redacted or not provided
               </p>
             )}
           </div>
 
           {/* Email */}
-          <div className="rounded-control border-line bg-paper/50 border p-2.5">
-            <span className="text-caption text-muted-foreground font-semibold uppercase">
+          <div className="rounded-control border border-line bg-paper/50 p-2.5">
+            <span className="text-caption font-semibold text-muted-foreground uppercase">
               Email address
             </span>
             {reservation.guestEmail ? (
               <div className="mt-1 flex items-center justify-between gap-2">
-                <span className="text-small text-ink truncate font-medium">
+                <span className="truncate text-small font-medium text-ink">
                   {reservation.guestEmail}
                 </span>
 
@@ -142,7 +142,7 @@ export function GuestInfoCard({
                   >
                     {copiedEmail ? (
                       <Check
-                        className="text-success size-3.5"
+                        className="size-3.5 text-success"
                         aria-hidden="true"
                       />
                     ) : (
@@ -153,14 +153,14 @@ export function GuestInfoCard({
                   <a
                     href={`mailto:${reservation.guestEmail}`}
                     aria-label="Email guest"
-                    className="rounded-control text-muted-foreground hover:text-ink p-1"
+                    className="rounded-control p-1 text-muted-foreground hover:text-ink"
                   >
                     <Mail className="size-3.5" aria-hidden="true" />
                   </a>
                 </div>
               </div>
             ) : (
-              <p className="text-caption text-muted-foreground mt-1 italic">
+              <p className="mt-1 text-caption text-muted-foreground italic">
                 Redacted or not provided
               </p>
             )}
@@ -169,23 +169,23 @@ export function GuestInfoCard({
 
         {/* Special Requests */}
         {reservation.specialRequests && (
-          <div className="border-line border-t pt-2">
-            <div className="text-caption text-muted-foreground flex items-center gap-1.5 font-semibold uppercase">
+          <div className="border-t border-line pt-2">
+            <div className="flex items-center gap-1.5 text-caption font-semibold text-muted-foreground uppercase">
               <MessageSquare className="size-3.5" aria-hidden="true" />
               <span>Special requests</span>
             </div>
-            <p className="rounded-control bg-paper text-small text-ink mt-1 p-3">
+            <p className="mt-1 rounded-control bg-paper p-3 text-small text-ink">
               {reservation.specialRequests}
             </p>
           </div>
         )}
 
         {/* Internal Notes (Read-only for now) */}
-        <div className="border-line border-t pt-2">
-          <span className="text-caption text-muted-foreground font-semibold uppercase">
+        <div className="border-t border-line pt-2">
+          <span className="text-caption font-semibold text-muted-foreground uppercase">
             Internal staff notes
           </span>
-          <p className="rounded-control border-line bg-paper/30 text-small text-muted-foreground mt-1 border border-dashed p-3 italic">
+          <p className="mt-1 rounded-control border border-dashed border-line bg-paper/30 p-3 text-small text-muted-foreground italic">
             {reservation.notes || 'No internal notes recorded.'}
           </p>
         </div>

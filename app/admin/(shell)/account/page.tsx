@@ -46,7 +46,7 @@ export default async function AdminAccountPage({
           !pending ? (
             <Link
               href="/admin"
-              className="rounded-control border-line text-small hover:bg-ink/5 inline-flex min-h-10 items-center gap-2 border px-3 font-semibold"
+              className="inline-flex min-h-10 items-center gap-2 rounded-control border border-line px-3 text-small font-semibold hover:bg-ink/5"
             >
               <ArrowLeft className="size-4" aria-hidden />
               Dashboard

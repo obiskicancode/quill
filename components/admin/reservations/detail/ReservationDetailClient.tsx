@@ -13,6 +13,7 @@ import {
 import { useState } from 'react';
 
 import { AdminError, AdminLoading } from '@/components/admin/AdminStates';
+import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
@@ -157,10 +158,10 @@ export function ReservationDetailClient({
   return (
     <div className="space-y-5">
       {/* Top Navigation Row: Back Link & Prev/Next within current filter */}
-      <div className="border-line flex flex-wrap items-center justify-between gap-3 border-b pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
         <Link
           href={backUrl}
-          className="rounded-control text-small text-muted-foreground hover:bg-paper hover:text-ink inline-flex min-h-10 items-center gap-1.5 px-2.5 font-semibold"
+          className="inline-flex min-h-10 items-center gap-1.5 rounded-control px-2.5 text-small font-semibold text-muted-foreground hover:bg-paper hover:text-ink"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
           <span>Back to reservations</span>
@@ -204,29 +205,25 @@ export function ReservationDetailClient({
 
       {/* Concurrency Notification Banner */}
       {hasNewerVersion && (
-        <div
+        <Alert
+          variant="brand"
           role="status"
-          className="rounded-control border-primary/40 bg-primary/15 text-small text-ink flex items-center justify-between gap-3 border p-3.5"
+          className="sm:grid-cols-[auto_1fr_auto] sm:items-center"
         >
-          <div className="flex items-center gap-2">
-            <AlertTriangle
-              className="text-brand-ink size-4 shrink-0"
-              aria-hidden="true"
-            />
-            <span className="font-semibold">
-              This reservation was updated in another session.
-            </span>
-          </div>
+          <AlertTriangle aria-hidden="true" />
+          <AlertTitle className="font-semibold">
+            This reservation was updated in another session.
+          </AlertTitle>
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={handleApplyUpdate}
           >
-            <RefreshCw className="size-3.5" aria-hidden="true" />
+            <RefreshCw aria-hidden="true" />
             <span>Refresh latest version</span>
           </Button>
-        </div>
+        </Alert>
       )}
 
       {/* Loading & Error States */}

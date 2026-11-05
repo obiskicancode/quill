@@ -1,7 +1,7 @@
-import { cn } from 'cn';
-
+import { TextLink } from '@/components/ui/text-link';
 import { getPublicSite } from '@/lib/content/data';
 import { whatsappHref } from '@/lib/site';
+import { cn } from '@/lib/utils';
 import type { Room } from '@/types/site.types';
 
 import { StaggerGroup } from '../motion/StaggerGroup';
@@ -9,7 +9,6 @@ import { StaggerItem } from '../motion/StaggerItem';
 import { Tilt } from '../motion/Tilt';
 import { RoomCard } from '../RoomCard';
 import { SectionHeading } from '../ui/SectionHeading';
-import { TextLink } from '../ui/TextLink';
 
 export async function FeaturedRooms({ rooms }: { rooms: Room[] }) {
   const site = await getPublicSite();
@@ -40,9 +39,9 @@ export async function FeaturedRooms({ rooms }: { rooms: Room[] }) {
             ))}
           </StaggerGroup>
         ) : (
-          <div className="rounded-card border-ink/30 border border-dashed p-10 text-center">
+          <div className="rounded-card border border-dashed border-ink/30 p-10 text-center">
             <p className="font-display text-h3">Our rooms are being updated.</p>
-            <p className="text-muted-foreground mx-auto mt-2 max-w-md">
+            <p className="mx-auto mt-2 max-w-md text-muted-foreground">
               Message us on WhatsApp and we will tell you what is available for
               your dates.
             </p>

@@ -217,6 +217,7 @@ export type ApiErrorCode =
   | 'hold_expired'
   | 'payment_init_failed'
   | 'not_found'
+  | 'not_allowed'
   | 'bad_file'
   | 'unauthorized'
   | 'server';

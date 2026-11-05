@@ -2,13 +2,15 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { SuccessMark } from '@/components/ui/icon-badge';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { CANCEL_REASONS } from '@/constants/manage';
@@ -26,7 +28,6 @@ import type { GuestReservation } from '@/types/booking.types';
 import type { CancellationPreview } from '@/types/manage.types';
 
 import { VerifyForm } from '../booking/VerifyForm';
-import { Banner } from '../checkout/CheckoutStates';
 import { EASE_OUT } from '../motion/variants';
 import { Button, ButtonLink } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
@@ -48,7 +49,6 @@ const cancelFormSchema = cancelRequestSchema.pick({
 });
 type CancelFormInput = z.input<typeof cancelFormSchema>;
 type CancelFormOutput = z.output<typeof cancelFormSchema>;
-
 interface CancelFlowProps {
   open: boolean;
   onClose: () => void;
@@ -59,7 +59,6 @@ interface CancelFlowProps {
   onSessionExpired: () => void;
   onReverified: () => void;
 }
-
 const kindNote: Record<
   CancellationPreview['kind'],
   (p: CancellationPreview) => string
@@ -78,19 +77,18 @@ const kindNote: Record<
   bank_transfer: (p) =>
     `You paid by bank transfer, so the hotel refunds you by hand. Expect it in ${p.timeline}.`,
 };
-
 function RefundSummary({ p }: { p: CancellationPreview }) {
   const row = 'flex items-baseline justify-between gap-4 py-2';
   return (
     <div className="space-y-4">
-      <dl className="divide-line rounded-card border-line bg-card divide-y border px-4">
+      <dl className="divide-y divide-line rounded-card border border-line bg-card px-4">
         <div className={row}>
           <dt className="text-muted-foreground">You paid</dt>
           <dd className="tabular-nums">{formatMinor(p.paidMinor)}</dd>
         </div>
         <div className={row}>
           <dt className="font-semibold">You would get back</dt>
-          <dd className="font-display text-xl tabular-nums">
+          <dd className="font-display text-figure-sm tabular-nums">
             {formatMinor(p.refundMinor)}
           </dd>
         </div>
@@ -115,14 +113,13 @@ function RefundSummary({ p }: { p: CancellationPreview }) {
           </>
         )}
       </dl>
-      <div className="rounded-control bg-paper text-small p-4">
-        <p className="font-semibold">Why: {p.rule}</p>
-        <p className="text-ink/85 mt-1">{kindNote[p.kind](p)}</p>
-      </div>
+      <Alert variant="neutral" size="panel">
+        <AlertTitle>Why: {p.rule}</AlertTitle>
+        <AlertDescription>{kindNote[p.kind](p)}</AlertDescription>
+      </Alert>
     </div>
   );
 }
-
 /** Cancel in three steps: see the consequences, give an optional reason and confirm, then the result. Safe to retry. */
 export function CancelFlow({
   open,
@@ -172,7 +169,6 @@ export function CancelFlow({
         exit: { opacity: 0, y: -6 },
         transition: { duration: 0.2, ease: EASE_OUT },
       };
-
   useEffect(() => {
     if (
       previewQuery.error instanceof ServiceError &&
@@ -180,7 +176,6 @@ export function CancelFlow({
     )
       onSessionExpired();
   }, [previewQuery.error, onSessionExpired]);
-
   const submit = async (input: CancelFormOutput) => {
     if (busy || !preview) return;
     setError(null);
@@ -228,7 +223,6 @@ export function CancelFlow({
   const submitForm = (event: React.SubmitEvent<HTMLFormElement>) => {
     void form.handleSubmit(submit)(event);
   };
-
   function handleDialogClose() {
     setStep('review');
     reset();
@@ -238,7 +232,6 @@ export function CancelFlow({
     key.current = newKey();
     onClose();
   }
-
   const c = result?.cancellation;
   const panelKey = sessionExpired
     ? 'expired'
@@ -270,15 +263,12 @@ export function CancelFlow({
           ) : step === 'done' && result ? (
             <div className="space-y-5">
               <div role="status" className="flex items-start gap-4">
-                <CheckCircle2
-                  className="text-brand-ink size-8 shrink-0"
-                  aria-hidden
-                />
+                <SuccessMark size="inline" />
                 <div>
                   <p className="font-display text-h3">
                     Your booking is cancelled
                   </p>
-                  <p className="text-ink/85 mt-2">
+                  <p className="mt-2 text-ink/85">
                     {c?.refundStatus === 'initiated' &&
                       `We've started a refund of ${formatMinor(c.refundMinor)} to your original payment method. Expect it within ${c.timeline}.`}
                     {c?.refundStatus === 'pending_manual' &&
@@ -286,12 +276,12 @@ export function CancelFlow({
                     {c?.refundStatus === 'none' &&
                       'No refund is due under the cancellation policy.'}
                   </p>
-                  <p className="text-small text-muted-foreground mt-2">
+                  <p className="mt-2 text-small text-muted-foreground">
                     We emailed a confirmation to {result.guest.email}.
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-col flex-wrap gap-3 sm:flex-row">
                 <ButtonLink
                   href={
                     v.stay.checkIn && v.stay.checkOut
@@ -314,17 +304,22 @@ export function CancelFlow({
                 {[0, 1, 2, 3].map((i) => (
                   <div
                     key={i}
-                    className="bg-ink/10 h-10 rounded motion-safe:animate-pulse"
+                    className="h-10 rounded-sm bg-ink/10 motion-safe:animate-pulse"
                   />
                 ))}
               </div>
             </div>
           ) : loadState === 'error' || !preview ? (
-            <Banner
-              role="alert"
-              tone="danger"
-              title={ERROR_MESSAGES.COULD_NOT_WORK_OUT_REFUND}
-              actions={
+            <Alert role="alert" variant="destructive" size="banner">
+              <AlertTitle>
+                {ERROR_MESSAGES.COULD_NOT_WORK_OUT_REFUND}
+              </AlertTitle>
+              <AlertDescription>
+                <p>
+                  Nothing has been changed. Try again, or contact the hotel.
+                </p>
+              </AlertDescription>
+              <div className="mt-4 flex flex-wrap gap-3">
                 <Button
                   variant="secondary"
                   size="sm"
@@ -332,27 +327,24 @@ export function CancelFlow({
                 >
                   Try again
                 </Button>
-              }
-            >
-              <p>Nothing has been changed. Try again, or contact the hotel.</p>
-            </Banner>
+              </div>
+            </Alert>
           ) : step === 'review' ? (
             <div className="space-y-5">
               {notice && (
-                <Banner
-                  role="alert"
-                  tone="warn"
-                  title="Please review the new amount"
-                >
-                  <p>{notice}</p>
-                </Banner>
+                <Alert role="alert" variant="warning" size="banner">
+                  <AlertTitle>Please review the new amount</AlertTitle>
+                  <AlertDescription>
+                    <p>{notice}</p>
+                  </AlertDescription>
+                </Alert>
               )}
               <p className="text-ink/85">
                 Here is exactly what happens if you cancel. Nothing is changed
                 until you confirm.
               </p>
               <RefundSummary p={preview} />
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-col flex-wrap gap-3 sm:flex-row">
                 <Button size="lg" variant="secondary" onClick={onClose}>
                   Keep my booking
                 </Button>
@@ -370,24 +362,26 @@ export function CancelFlow({
             </div>
           ) : (
             <form noValidate onSubmit={submitForm} className="space-y-5">
-              <p className="rounded-control bg-paper text-small p-4">
-                You will get back{' '}
-                <span className="font-semibold">
-                  {formatMinor(preview.refundMinor)}
-                </span>
-                . The hotel keeps{' '}
-                <span className="font-semibold">
-                  {formatMinor(preview.retainedMinor)}
-                </span>
-                .
-              </p>
+              <Alert variant="neutral" size="panel">
+                <AlertDescription>
+                  You will get back{' '}
+                  <span className="font-semibold">
+                    {formatMinor(preview.refundMinor)}
+                  </span>
+                  . The hotel keeps{' '}
+                  <span className="font-semibold">
+                    {formatMinor(preview.retainedMinor)}
+                  </span>
+                  .
+                </AlertDescription>
+              </Alert>
               <div className="space-y-1.5">
                 <Label
                   htmlFor="cancel-reason"
                   className="text-small font-semibold"
                 >
                   Reason{' '}
-                  <span className="text-muted-foreground font-normal">
+                  <span className="font-normal text-muted-foreground">
                     (optional)
                   </span>
                 </Label>
@@ -408,7 +402,7 @@ export function CancelFlow({
                     >
                       <SelectTrigger
                         id="cancel-reason"
-                        className="bg-card min-h-12 w-full"
+                        className="min-h-12 w-full bg-card"
                       >
                         <SelectValue placeholder="Choose a reason" />
                       </SelectTrigger>
@@ -430,7 +424,7 @@ export function CancelFlow({
                   className="text-small font-semibold"
                 >
                   Anything you would like to add{' '}
-                  <span className="text-muted-foreground font-normal">
+                  <span className="font-normal text-muted-foreground">
                     (optional)
                   </span>
                 </Label>
@@ -442,11 +436,11 @@ export function CancelFlow({
                   disabled={busy}
                   aria-describedby="cancel-note-count"
                   aria-invalid={formErrors.note ? true : undefined}
-                  className="bg-card w-full"
+                  className="w-full bg-card"
                 />
                 <p
                   id="cancel-note-count"
-                  className="text-caption text-muted-foreground mt-1"
+                  className="mt-1 text-caption text-muted-foreground"
                 >
                   {note.length} / 300 characters
                 </p>
@@ -489,20 +483,22 @@ export function CancelFlow({
                 {formErrors.acknowledged && (
                   <p
                     id="cancel-ack-error"
-                    className="text-small text-destructive mt-1.5 font-medium"
+                    className="mt-1.5 text-small font-medium text-destructive"
                   >
                     {formErrors.acknowledged.message}
                   </p>
                 )}
               </div>
-
               {error && (
-                <Banner
-                  role="alert"
-                  tone="danger"
-                  title={ERROR_MESSAGES.BOOKING_NOT_CANCELLED_YET}
-                  actions={
-                    error.retryable ? (
+                <Alert role="alert" variant="destructive" size="banner">
+                  <AlertTitle>
+                    {ERROR_MESSAGES.BOOKING_NOT_CANCELLED_YET}
+                  </AlertTitle>
+                  <AlertDescription>
+                    <p>{error.message}</p>
+                  </AlertDescription>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {error.retryable ? (
                       <Button
                         variant="secondary"
                         size="sm"
@@ -511,14 +507,11 @@ export function CancelFlow({
                       >
                         Try again
                       </Button>
-                    ) : undefined
-                  }
-                >
-                  <p>{error.message}</p>
-                </Banner>
+                    ) : undefined}
+                  </div>
+                </Alert>
               )}
-
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-col flex-wrap gap-3 sm:flex-row">
                 <Button
                   variant="secondary"
                   size="lg"

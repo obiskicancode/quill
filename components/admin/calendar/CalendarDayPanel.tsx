@@ -11,8 +11,10 @@ import {
 } from 'lucide-react';
 
 import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
+import { Alert } from '@/components/ui/alert';
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -47,37 +49,31 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
         if (!open) onClose();
       }}
     >
-      <SheetContent
-        side="right"
-        showCloseButton
-        className="border-line bg-paper w-full max-w-lg gap-0 border-l p-0 sm:max-w-lg"
-      >
-        <SheetHeader className="border-line border-b px-5 py-4 pr-14">
-          <SheetTitle className="text-h3 text-ink font-serif font-semibold">
-            {formatLong(date)}
-          </SheetTitle>
-          <SheetDescription className="text-caption text-muted-foreground">
+      <SheetContent side="right" size="lg" surface="paper">
+        <SheetHeader>
+          <SheetTitle>{formatLong(date)}</SheetTitle>
+          <SheetDescription className="text-caption">
             Daily Front Desk Breakdown
           </SheetDescription>
         </SheetHeader>
 
         {/* Content */}
-        <div className="flex-1 space-y-6 overflow-y-auto p-5">
+        <SheetBody className="space-y-6">
           {loading ? (
             <div className="flex h-48 items-center justify-center">
-              <Loader2 className="text-muted-foreground size-6 animate-spin" />
+              <Loader2 className="size-6 animate-spin text-muted-foreground" />
             </div>
           ) : error ? (
-            <div className="rounded-control border-destructive/30 bg-destructive/10 text-small text-destructive border p-4">
+            <Alert variant="destructive" size="panel">
               {error}
-            </div>
+            </Alert>
           ) : data ? (
             <>
               {/* Free Rooms by Room Type */}
               <section>
                 <div className="mb-2.5 flex items-center gap-2">
-                  <BedDouble className="text-muted-foreground size-4" />
-                  <h3 className="text-small text-ink font-semibold tracking-wider uppercase">
+                  <BedDouble className="size-4 text-muted-foreground" />
+                  <h3 className="text-small font-semibold tracking-wider text-ink uppercase">
                     Available Units by Type
                   </h3>
                 </div>
@@ -85,10 +81,10 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                   {data.freeRoomsByType.map((type) => (
                     <div
                       key={type.roomTypeId}
-                      className="bg-muted/40 rounded-control border-line border p-3"
+                      className="rounded-control border border-line bg-muted/40 p-3"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-small text-ink font-medium">
+                        <span className="text-small font-medium text-ink">
                           {type.roomTypeName}
                         </span>
                         <span
@@ -106,14 +102,14 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                           {type.availableRooms.map((r) => (
                             <span
                               key={r.id}
-                              className="rounded-control border-line bg-paper text-muted-foreground border px-1.5 py-0.5 font-mono text-[0.6875rem]"
+                              className="rounded-control border border-line bg-paper px-1.5 py-0.5 font-mono text-micro text-muted-foreground"
                             >
                               #{r.roomNumber}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-muted-foreground mt-1 text-[0.6875rem] italic">
+                        <p className="mt-1 text-micro text-muted-foreground italic">
                           Sold out for this night
                         </p>
                       )}
@@ -126,8 +122,8 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
               <section>
                 <div className="mb-2.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <ArrowDownLeft className="text-success size-4" />
-                    <h3 className="text-small text-ink font-semibold tracking-wider uppercase">
+                    <ArrowDownLeft className="size-4 text-success" />
+                    <h3 className="text-small font-semibold tracking-wider text-ink uppercase">
                       Arrivals ({data.arrivals.length})
                     </h3>
                   </div>
@@ -142,18 +138,18 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                       <Link
                         key={arr.id}
                         href={`/admin/reservations/${arr.id}`}
-                        className="hover:bg-muted/50 rounded-control border-line bg-paper flex items-center justify-between border p-3 transition-colors focus:outline-hidden"
+                        className="flex items-center justify-between rounded-control border border-line bg-paper p-3 transition-colors hover:bg-muted/50 focus:outline-hidden"
                       >
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-small text-ink font-medium">
+                            <span className="text-small font-medium text-ink">
                               {arr.guestName}
                             </span>
-                            <span className="bg-muted py-0.2 rounded-control text-muted-foreground px-1.5 font-mono text-[0.6875rem]">
+                            <span className="py-0.2 rounded-control bg-muted px-1.5 font-mono text-micro text-muted-foreground">
                               #{arr.roomNumber}
                             </span>
                           </div>
-                          <p className="text-caption text-muted-foreground font-mono">
+                          <p className="font-mono text-caption text-muted-foreground">
                             {arr.reference} • Out on {formatShort(arr.checkOut)}
                           </p>
                         </div>
@@ -170,8 +166,8 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
               <section>
                 <div className="mb-2.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <ArrowUpRight className="size-4 text-blue-600" />
-                    <h3 className="text-small text-ink font-semibold tracking-wider uppercase">
+                    <ArrowUpRight className="size-4 text-departures" />
+                    <h3 className="text-small font-semibold tracking-wider text-ink uppercase">
                       Departures ({data.departures.length})
                     </h3>
                   </div>
@@ -186,18 +182,18 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                       <Link
                         key={dep.id}
                         href={`/admin/reservations/${dep.id}`}
-                        className="hover:bg-muted/50 rounded-control border-line bg-paper flex items-center justify-between border p-3 transition-colors focus:outline-hidden"
+                        className="flex items-center justify-between rounded-control border border-line bg-paper p-3 transition-colors hover:bg-muted/50 focus:outline-hidden"
                       >
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-small text-ink font-medium">
+                            <span className="text-small font-medium text-ink">
                               {dep.guestName}
                             </span>
-                            <span className="bg-muted py-0.2 rounded-control text-muted-foreground px-1.5 font-mono text-[0.6875rem]">
+                            <span className="py-0.2 rounded-control bg-muted px-1.5 font-mono text-micro text-muted-foreground">
                               #{dep.roomNumber}
                             </span>
                           </div>
-                          <p className="text-caption text-muted-foreground font-mono">
+                          <p className="font-mono text-caption text-muted-foreground">
                             {dep.reference} • In since{' '}
                             {formatShort(dep.checkIn)}
                           </p>
@@ -215,8 +211,8 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
               <section>
                 <div className="mb-2.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Users className="text-brand-ink size-4" />
-                    <h3 className="text-small text-ink font-semibold tracking-wider uppercase">
+                    <Users className="size-4 text-brand-ink" />
+                    <h3 className="text-small font-semibold tracking-wider text-ink uppercase">
                       Staying Over ({data.inHouse.length})
                     </h3>
                   </div>
@@ -231,18 +227,18 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                       <Link
                         key={stay.id}
                         href={`/admin/reservations/${stay.id}`}
-                        className="hover:bg-muted/50 rounded-control border-line bg-paper flex items-center justify-between border p-3 transition-colors focus:outline-hidden"
+                        className="flex items-center justify-between rounded-control border border-line bg-paper p-3 transition-colors hover:bg-muted/50 focus:outline-hidden"
                       >
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-small text-ink font-medium">
+                            <span className="text-small font-medium text-ink">
                               {stay.guestName}
                             </span>
-                            <span className="bg-muted py-0.2 rounded-control text-muted-foreground px-1.5 font-mono text-[0.6875rem]">
+                            <span className="py-0.2 rounded-control bg-muted px-1.5 font-mono text-micro text-muted-foreground">
                               #{stay.roomNumber}
                             </span>
                           </div>
-                          <p className="text-caption text-muted-foreground font-mono">
+                          <p className="font-mono text-caption text-muted-foreground">
                             {stay.reference} • Departs{' '}
                             {formatShort(stay.checkOut)}
                           </p>
@@ -260,8 +256,8 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
               {data.blocks.length > 0 && (
                 <section>
                   <div className="mb-2.5 flex items-center gap-2">
-                    <ShieldAlert className="text-destructive size-4" />
-                    <h3 className="text-small text-ink font-semibold tracking-wider uppercase">
+                    <ShieldAlert className="size-4 text-destructive" />
+                    <h3 className="text-small font-semibold tracking-wider text-ink uppercase">
                       Active Blocks ({data.blocks.length})
                     </h3>
                   </div>
@@ -269,22 +265,22 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                     {data.blocks.map((b) => (
                       <div
                         key={b.id}
-                        className="bg-muted/30 rounded-control border-line border p-3"
+                        className="rounded-control border border-line bg-muted/30 p-3"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-small text-ink font-medium">
+                          <span className="text-small font-medium text-ink">
                             Room #{b.roomNumber} ({b.roomTypeName})
                           </span>
-                          <span className="rounded-control bg-destructive/10 text-destructive px-2 py-0.5 font-mono text-[0.6875rem] font-semibold uppercase">
+                          <span className="rounded-control bg-destructive/10 px-2 py-0.5 font-mono text-micro font-semibold text-destructive uppercase">
                             {b.reason.replace('_', ' ')}
                           </span>
                         </div>
                         {b.notes && (
-                          <p className="text-caption text-muted-foreground mt-1">
+                          <p className="mt-1 text-caption text-muted-foreground">
                             {b.notes}
                           </p>
                         )}
-                        <p className="text-muted-foreground mt-1 font-mono text-[0.6875rem]">
+                        <p className="mt-1 font-mono text-micro text-muted-foreground">
                           {formatShort(b.startDate)} → {formatShort(b.endDate)}
                         </p>
                       </div>
@@ -294,7 +290,7 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
               )}
             </>
           ) : null}
-        </div>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );

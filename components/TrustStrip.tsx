@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
+import { TextLink } from '@/components/ui/text-link';
 import { useSite } from '@/providers/site.provider';
 import type { SiteConfig, TrustItem } from '@/types/site.types';
 
@@ -40,7 +41,7 @@ export function TrustStrip({ revealDelay = 0 }: { revealDelay?: number }) {
       as="ul"
       staggerChildren={0.06}
       delayChildren={revealDelay}
-      className="text-small mt-6 grid grid-cols-1 gap-x-8 gap-y-1 font-medium sm:grid-cols-2 md:flex md:flex-wrap md:justify-center"
+      className="mt-6 grid grid-cols-1 gap-x-8 gap-y-1 text-small font-medium sm:grid-cols-2 md:flex md:flex-wrap md:justify-center"
     >
       {items.map((item) => {
         const Icon = icons[item.id];
@@ -48,22 +49,21 @@ export function TrustStrip({ revealDelay = 0 }: { revealDelay?: number }) {
           item.id === 'reviews' ? reviewsLabel(site, item.label) : item.label;
         const inner = (
           <>
-            <Icon className="text-brand-ink size-5 shrink-0" aria-hidden />
+            <Icon className="size-5 shrink-0 text-brand-ink" aria-hidden />
             <span>{label}</span>
           </>
         );
         return (
           <StaggerItem as="li" key={item.id}>
             {item.id === 'reviews' && site.googleReviewsUrl ? (
-              <a
+              <TextLink
                 href={site.googleReviewsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="decoration-brand inline-flex min-h-11 items-center gap-2 underline decoration-2 underline-offset-4"
+                external
+                className="inline-flex items-center gap-2"
               >
                 {inner}
                 <span className="sr-only">(opens in a new tab)</span>
-              </a>
+              </TextLink>
             ) : (
               <span className="inline-flex min-h-11 items-center gap-2">
                 {inner}

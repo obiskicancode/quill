@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { Check, Copy, ExternalLink, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 
+import { clickableRowProps } from '@/components/admin/clickableRow';
+import { PaymentStatusBadge } from '@/components/admin/payments/PaymentStatusBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,11 +17,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { formatHotelDate, formatMinorExact } from '@/lib/format';
 import type { PaymentListItem } from '@/types/payments.types';
-
-function formatNaira(minor: number): string {
-  return `₦${(minor / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
-}
 
 export function PaymentsTable({
   items,
@@ -49,12 +48,12 @@ export function PaymentsTable({
   return (
     <div>
       {/* Desktop Table */}
-      <div className="rounded-card border-line bg-card hidden overflow-x-auto border md:block">
-        <Table className="text-small w-full text-left">
+      <div className="hidden overflow-x-auto rounded-card border border-line bg-card md:block">
+        <Table className="w-full text-left text-small">
           <caption className="sr-only">
             Payments and transactions register
           </caption>
-          <TableHeader className="border-line bg-paper text-caption text-muted-foreground sticky top-0 z-10 border-b font-semibold uppercase">
+          <TableHeader className="sticky top-0 z-10 border-b border-line bg-paper text-caption font-semibold text-muted-foreground uppercase">
             <TableRow className="border-line hover:bg-transparent">
               <TableHead scope="col" className="w-10 px-4 py-3">
                 <Checkbox
@@ -95,7 +94,7 @@ export function PaymentsTable({
               </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-line divide-y">
+          <TableBody className="divide-y divide-line">
             {items.map((payment) => {
               const isSelected = selectedIds.includes(payment.id);
               const isRefund = payment.type === 'refund';
@@ -103,10 +102,13 @@ export function PaymentsTable({
               return (
                 <TableRow
                   key={payment.id}
-                  onClick={() => onRowClick(payment)}
-                  className={`hover:bg-paper/80 border-line cursor-pointer transition-colors ${
-                    isSelected ? 'bg-primary/5' : ''
-                  }`}
+                  {...clickableRowProps(
+                    `Open payment ${payment.reference}`,
+                    () => onRowClick(payment),
+                    `border-line transition-colors hover:bg-paper/80 ${
+                      isSelected ? 'bg-primary/5' : ''
+                    }`,
+                  )}
                 >
                   <TableCell
                     className="px-4 py-3"
@@ -118,67 +120,52 @@ export function PaymentsTable({
                       onCheckedChange={() => onToggleSelect(payment.id)}
                     />
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-caption px-3 py-3 whitespace-nowrap">
-                    {new Date(payment.createdAt).toLocaleDateString('en-GB', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
+                  <TableCell className="px-3 py-3 text-caption whitespace-nowrap text-muted-foreground">
+                    {formatHotelDate(payment.createdAt)}
                   </TableCell>
-                  <TableCell className="text-ink px-3 py-3 font-mono font-medium">
+                  <TableCell className="px-3 py-3 font-mono font-medium text-ink">
                     <Link
                       href={`/admin/reservations/${payment.reservationId}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="hover:text-primary inline-flex items-center gap-1 hover:underline"
+                      className="inline-flex items-center gap-1 hover:text-brand-ink hover:underline"
                     >
                       {payment.reservationRef}
-                      <ExternalLink className="text-muted-foreground size-3" />
+                      <ExternalLink className="size-3 text-muted-foreground" />
                     </Link>
                   </TableCell>
                   <TableCell className="px-3 py-3">
-                    <div className="text-ink max-w-35 truncate font-medium">
+                    <div className="max-w-35 truncate font-medium text-ink">
                       {payment.guestName}
                     </div>
-                    <div className="text-caption text-muted-foreground max-w-35 truncate">
+                    <div className="max-w-35 truncate text-caption text-muted-foreground">
                       {payment.guestEmail}
                     </div>
                   </TableCell>
                   <TableCell className="px-3 py-3">
-                    <Badge
-                      variant="outline"
-                      className="text-caption font-medium capitalize"
-                    >
+                    <Badge variant="outline" className="capitalize">
                       {payment.type}
                     </Badge>
                   </TableCell>
                   <TableCell className="px-3 py-3">
-                    <div className="text-ink text-caption font-medium capitalize">
+                    <div className="text-caption font-medium text-ink capitalize">
                       {payment.method.replace('_', ' ')}
                     </div>
-                    <div className="text-muted-foreground text-[0.6875rem] capitalize">
+                    <div className="text-micro text-muted-foreground capitalize">
                       {payment.provider}
                     </div>
                   </TableCell>
                   <TableCell className="px-3 py-3">
-                    <Badge
-                      variant="outline"
-                      className={`text-[0.6875rem] font-semibold ${
-                        payment.status === 'paid'
-                          ? 'bg-success/10 text-success border-success/20'
-                          : payment.status === 'pending'
-                            ? 'border-primary/30 bg-primary/15 text-brand-ink'
-                            : 'bg-destructive/10 text-destructive border-destructive/20'
-                      }`}
-                    >
-                      {payment.status}
-                    </Badge>
+                    <PaymentStatusBadge
+                      status={payment.status}
+                      className="text-micro"
+                    />
                   </TableCell>
                   <TableCell
                     className={`px-3 py-3 text-right font-mono font-medium ${isRefund ? 'text-destructive' : 'text-ink'}`}
                   >
                     {isRefund
-                      ? `-${formatNaira(payment.amountMinor)}`
-                      : formatNaira(payment.amountMinor)}
+                      ? `-${formatMinorExact(payment.amountMinor)}`
+                      : formatMinorExact(payment.amountMinor)}
                   </TableCell>
                   <TableCell className="px-3 py-3">
                     {payment.providerRef ? (
@@ -189,14 +176,14 @@ export function PaymentsTable({
                         onClick={(e) =>
                           handleCopy(e, payment.providerRef!, payment.id)
                         }
-                        className="text-caption text-muted-foreground hover:text-foreground inline-flex h-auto items-center gap-1 p-0 font-mono"
+                        className="inline-flex h-auto items-center gap-1 p-0 font-mono text-caption text-muted-foreground hover:text-foreground"
                         title="Click to copy provider reference"
                       >
                         <span className="max-w-25 truncate">
                           {payment.providerRef}
                         </span>
                         {copiedId === payment.id ? (
-                          <Check className="text-success size-3" />
+                          <Check className="size-3 text-success" />
                         ) : (
                           <Copy className="size-3" />
                         )}
@@ -209,19 +196,16 @@ export function PaymentsTable({
                   </TableCell>
                   <TableCell className="px-3 py-3">
                     {payment.reconciled ? (
-                      <span className="text-success inline-flex items-center gap-1 text-[0.6875rem] font-medium">
+                      <span className="inline-flex items-center gap-1 text-micro font-medium text-success">
                         <ShieldCheck className="size-3.5" /> Reconciled
                       </span>
                     ) : (
-                      <Badge
-                        variant="outline"
-                        className="bg-muted/10 text-muted-foreground text-[0.6875rem]"
-                      >
+                      <Badge variant="neutral" className="text-micro">
                         Unreconciled
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-caption text-muted-foreground max-w-30 truncate px-3 py-3">
+                  <TableCell className="max-w-30 truncate px-3 py-3 text-caption text-muted-foreground">
                     {payment.recordedByName || payment.provider}
                   </TableCell>
                 </TableRow>
@@ -240,10 +224,13 @@ export function PaymentsTable({
           return (
             <div
               key={payment.id}
-              onClick={() => onRowClick(payment)}
-              className={`rounded-card border-line bg-card border p-4 shadow-sm transition-colors ${
-                isSelected ? 'border-primary bg-primary/5' : ''
-              }`}
+              {...clickableRowProps(
+                `Open payment ${payment.reference}`,
+                () => onRowClick(payment),
+                `rounded-card border border-line bg-card p-4 shadow-raised transition-colors ${
+                  isSelected ? 'border-primary bg-primary/5' : ''
+                }`,
+              )}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -254,22 +241,11 @@ export function PaymentsTable({
                       onCheckedChange={() => onToggleSelect(payment.id)}
                     />
                   </div>
-                  <span className="text-ink font-mono font-medium">
+                  <span className="font-mono font-medium text-ink">
                     {payment.reservationRef}
                   </span>
                 </div>
-                <Badge
-                  variant="outline"
-                  className={`text-caption font-semibold ${
-                    payment.status === 'paid'
-                      ? 'bg-success/10 text-success border-success/20'
-                      : payment.status === 'pending'
-                        ? 'border-primary/30 bg-primary/15 text-brand-ink'
-                        : 'bg-destructive/10 text-destructive border-destructive/20'
-                  }`}
-                >
-                  {payment.status}
-                </Badge>
+                <PaymentStatusBadge status={payment.status} />
               </div>
 
               <div className="mt-2 flex items-baseline justify-between">
@@ -277,21 +253,21 @@ export function PaymentsTable({
                   {payment.guestName}
                 </span>
                 <span
-                  className={`text-small font-mono font-bold ${isRefund ? 'text-destructive' : 'text-ink'}`}
+                  className={`font-mono text-small font-bold ${isRefund ? 'text-destructive' : 'text-ink'}`}
                 >
                   {isRefund
-                    ? `-${formatNaira(payment.amountMinor)}`
-                    : formatNaira(payment.amountMinor)}
+                    ? `-${formatMinorExact(payment.amountMinor)}`
+                    : formatMinorExact(payment.amountMinor)}
                 </span>
               </div>
 
-              <div className="border-line/60 text-caption text-muted-foreground mt-2 flex flex-wrap items-center justify-between gap-1 border-t pt-2">
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-1 border-t border-line/60 pt-2 text-caption text-muted-foreground">
                 <span>
                   {payment.method.replace('_', ' ')} ({payment.provider})
                 </span>
                 <span>
                   {payment.reconciled ? (
-                    <span className="text-success font-medium">Reconciled</span>
+                    <span className="font-medium text-success">Reconciled</span>
                   ) : (
                     <span>Unreconciled</span>
                   )}

@@ -41,16 +41,16 @@ export function ReservationsPagination({
   return (
     <div
       aria-label="Pagination Navigation"
-      className="rounded-card border-line bg-card shadow-raised flex flex-col gap-3 border p-3.5 sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-col gap-3 rounded-card border border-line bg-card p-3.5 shadow-raised sm:flex-row sm:items-center sm:justify-between"
     >
-      <div className="text-small text-muted-foreground flex items-center gap-3">
+      <div className="flex items-center gap-3 text-small text-muted-foreground">
         <span>
           Showing <strong className="text-ink">{start}</strong> to{' '}
           <strong className="text-ink">{end}</strong> of{' '}
           <strong className="text-ink">{total}</strong> reservations
         </span>
 
-        <div className="border-line flex items-center gap-1.5 border-l pl-2">
+        <div className="flex items-center gap-1.5 border-l border-line pl-2">
           <Label htmlFor="pageSizeSelect" className="text-caption font-medium">
             Per page:
           </Label>
@@ -87,7 +87,7 @@ export function ReservationsPagination({
           </PaginationItem>
 
           <PaginationItem>
-            <span className="text-caption text-muted-foreground px-2 font-semibold">
+            <span className="px-2 text-caption font-semibold text-muted-foreground">
               Page {page} of {totalPages}
             </span>
           </PaginationItem>

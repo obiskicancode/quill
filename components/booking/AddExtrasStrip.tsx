@@ -7,16 +7,20 @@ import type { GuestReservation } from '@/types/booking.types';
 
 import { StaggerGroup, StaggerItem } from '../motion';
 import { ButtonLink } from '../ui/button';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '../ui/card';
 
-/** Extras the guest can still add. Omitted entirely unless the hotel supports adding extras after booking. */
-export function AddExtrasStrip({
-  v,
-  mode = 'link',
-}: {
-  v: GuestReservation;
-  /** 'whatsapp' sends the request to the hotel with the booking reference filled in. */ mode?:
-    'link' | 'whatsapp';
-}) {
+/**
+ * Extras the guest can still add. Omitted entirely unless the hotel supports
+ * adding extras after booking. There is no self-service write for these, so the
+ * request goes to the hotel on WhatsApp and the hotel adds it.
+ */
+export function AddExtrasStrip({ v }: { v: GuestReservation }) {
   const site = useSite();
   const taken = new Set(v.breakdown.extras.map((e) => e.id));
   const open = v.addExtras.catalog.filter((e) => !taken.has(e.id));
@@ -40,38 +44,41 @@ export function AddExtrasStrip({
         className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3"
       >
         {open.map((e) => (
-          <StaggerItem
-            key={e.id}
-            as="li"
-            scale
-            className="rounded-card border-line bg-card flex h-full flex-col justify-between gap-4 border p-5"
-          >
-            <div>
-              <p className="font-semibold">{e.name}</p>
-              <p className="text-small text-muted-foreground mt-1">
-                {e.description}
-              </p>
-              <p className="text-small mt-2 font-semibold tabular-nums">
-                {formatMinor(e.priceMinor)} {unitLabels[e.unit]}
-              </p>
-            </div>
-            <ButtonLink
-              href={
-                mode === 'whatsapp'
-                  ? whatsappHref(
-                      site,
-                      `Hello, please add "${e.name}" to booking ${v.reference}.`,
-                    )
-                  : `/booking/manage?ref=${encodeURIComponent(v.reference)}&add=${encodeURIComponent(e.id)}`
-              }
-              external={mode === 'whatsapp'}
-              variant="secondary"
-              size="sm"
+          <StaggerItem key={e.id} as="li" scale className="flex">
+            {/* Tighter than the default card padding, but through the spacing
+                token rather than size="sm": the sm title variant would pin the
+                name back to caption size. */}
+            <Card
+              variant="flat"
+              className="flex-1 [--card-spacing:--spacing(3)]"
             >
-              {mode === 'whatsapp'
-                ? `Ask the hotel to add ${e.name.toLowerCase()}`
-                : `Add ${e.name.toLowerCase()}`}
-            </ButtonLink>
+              <CardHeader>
+                <CardTitle render={<h3 />} className="text-body font-semibold">
+                  {e.name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grow">
+                <p className="text-small text-muted-foreground">
+                  {e.description}
+                </p>
+                <p className="mt-2 text-small font-semibold tabular-nums">
+                  {formatMinor(e.priceMinor)} {unitLabels[e.unit]}
+                </p>
+              </CardContent>
+              <CardFooter className="border-0 bg-transparent pt-0">
+                <ButtonLink
+                  href={whatsappHref(
+                    site,
+                    `Hello, please add "${e.name}" to booking ${v.reference}.`,
+                  )}
+                  external
+                  variant="secondary"
+                  size="sm"
+                >
+                  Ask the hotel to add {e.name.toLowerCase()}
+                </ButtonLink>
+              </CardFooter>
+            </Card>
           </StaggerItem>
         ))}
       </StaggerGroup>

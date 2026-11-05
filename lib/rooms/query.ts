@@ -1,4 +1,5 @@
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { formatDayMonth, fromISO, toISO } from '@/lib/dates';
 import type { ISODate } from '@/types/dates.types';
 import type {
   BedType,
@@ -7,7 +8,6 @@ import type {
   SortKey,
 } from '@/types/rooms.types';
 
-import { fromISO, toISO } from '../dates';
 import { emptyFilters, filterAmenityOptions, sortOptions } from './catalog';
 import { MAX_ADULTS, MAX_CHILDREN } from './search';
 
@@ -102,18 +102,13 @@ export function stayProblem(q: RoomQuery, today: ISODate): string | null {
 export const totalGuests = (q: Pick<RoomQuery, 'adults' | 'children'>) =>
   q.adults + q.children;
 
-const dayMonth = new Intl.DateTimeFormat('en-NG', {
-  day: 'numeric',
-  month: 'short',
-});
-
 /** "12 to 15 Nov", or "30 Oct to 2 Nov" across months. */
 export function formatRange(a: ISODate, b: ISODate): string {
   const da = fromISO(a);
   const db = fromISO(b);
   if (da.getMonth() === db.getMonth() && da.getFullYear() === db.getFullYear())
-    return `${da.getDate()} to ${dayMonth.format(db)}`;
-  return `${dayMonth.format(da)} to ${dayMonth.format(db)}`;
+    return `${da.getDate()} to ${formatDayMonth(b)}`;
+  return `${formatDayMonth(a)} to ${formatDayMonth(b)}`;
 }
 
 /** Builds a link that carries the current stay (dates and guests) to another page. */

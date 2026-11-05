@@ -55,7 +55,7 @@ export function AccountView({
         onValueChange={(val) => setTab(val as AccountTab)}
         className="w-full space-y-4"
       >
-        <div className="border-line border-b pb-2">
+        <div className="border-b border-line pb-2">
           <TabsList
             variant="line"
             className="h-auto max-w-full gap-1 p-0 sm:gap-2"
@@ -64,7 +64,7 @@ export function AccountView({
               <TabsTrigger
                 key={item.id}
                 value={item.id}
-                className="px-1 pb-2 text-xs font-semibold sm:px-2.5 sm:text-sm"
+                className="px-1 pb-2 text-caption font-semibold sm:px-2.5 sm:text-small"
               >
                 {item.label}
               </TabsTrigger>

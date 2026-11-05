@@ -29,7 +29,7 @@ export function SectionHeading({
         />
         {intro && (
           <Reveal delay={0.12}>
-            <p className="text-body-lg mt-3 opacity-80">{intro}</p>
+            <p className="mt-3 text-body-lg opacity-80">{intro}</p>
           </Reveal>
         )}
       </div>

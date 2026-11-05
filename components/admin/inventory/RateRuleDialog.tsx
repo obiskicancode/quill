@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -220,12 +221,12 @@ export function RateRuleDialog({
         if (!nextOpen && !busy) onClose();
       }}
     >
-      <DialogContent className="rounded-card border-line bg-card max-h-[90vh] max-w-xl gap-0 overflow-y-auto border p-0 shadow-2xl sm:max-w-xl">
-        <DialogHeader className="border-line border-b p-6 pr-14 pb-4">
-          <DialogTitle className="text-h3 text-foreground font-semibold">
+      <DialogContent size="xl">
+        <DialogHeader>
+          <DialogTitle>
             {isEditing ? 'Edit Rate Rule' : 'New Rate Rule'}
           </DialogTitle>
-          <DialogDescription className="text-caption text-muted-foreground">
+          <DialogDescription>
             Configure seasonal pricing, occupancy adjustments, or long-stay
             discounts.
           </DialogDescription>
@@ -233,215 +234,103 @@ export function RateRuleDialog({
 
         <form
           onSubmit={handleSubmit(handleFormSubmit)}
-          className="text-small space-y-4 p-6"
+          className="flex min-h-0 flex-1 flex-col"
           noValidate
         >
-          {errorMessage && (
-            <Alert
-              variant="destructive"
-              className="border-destructive/40 bg-destructive/10 text-destructive text-xs"
-            >
-              <AlertCircle className="size-4 shrink-0" />
-              <p>{errorMessage}</p>
-            </Alert>
-          )}
+          <DialogBody className="space-y-4">
+            {errorMessage && (
+              <Alert variant="destructive" size="sm">
+                <AlertCircle className="size-4 shrink-0" />
+                <p>{errorMessage}</p>
+              </Alert>
+            )}
 
-          {overlapData && overlapData.conflicts.length > 0 && (
-            <Alert
-              role="region"
-              aria-label="Overlap warning"
-              className="border-warning/40 bg-warning/10 text-xs"
-            >
-              <div className="flex items-start gap-2">
-                <ShieldAlert className="text-warning size-4 shrink-0" />
-                <div>
-                  <p className="text-warning-contrast font-semibold">
-                    Overlap Guidance ({overlapData.conflicts.length} existing
-                    rules in date range)
-                  </p>
-                  <p className="text-muted-foreground mt-1">
-                    The rule with the highest priority wins. If priorities are
-                    equal, a room-specific rule beats a property-wide rule.
-                  </p>
-                  <ul className="mt-2 space-y-1">
-                    {overlapData.conflicts.map((c) => (
-                      <li
-                        key={c.id}
-                        className="text-muted-foreground flex justify-between"
-                      >
-                        <span>
-                          {c.name} ({c.startDate} to {c.endDate})
-                        </span>
-                        <span
-                          className={
-                            c.equalPriority
-                              ? 'text-warning-contrast font-semibold'
-                              : ''
-                          }
+            {overlapData && overlapData.conflicts.length > 0 && (
+              <Alert
+                role="region"
+                aria-label="Overlap warning"
+                variant="warning"
+                size="sm"
+              >
+                <div className="flex items-start gap-2">
+                  <ShieldAlert className="size-4 shrink-0 text-warning" />
+                  <div>
+                    <p className="font-semibold text-warning">
+                      Overlap Guidance ({overlapData.conflicts.length} existing
+                      rules in date range)
+                    </p>
+                    <p className="mt-1 text-muted-foreground">
+                      The rule with the highest priority wins. If priorities are
+                      equal, a room-specific rule beats a property-wide rule.
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {overlapData.conflicts.map((c) => (
+                        <li
+                          key={c.id}
+                          className="flex justify-between text-muted-foreground"
                         >
-                          Priority {c.priority}{' '}
-                          {c.equalPriority ? '(Equal!)' : ''}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </Alert>
-          )}
-
-          <Field
-            id="rule-name"
-            label="Rule Name *"
-            error={errors.name?.message}
-          >
-            {(a11y) => (
-              <Input
-                {...a11y}
-                type="text"
-                placeholder="e.g. December Peak Holiday Uplift, Long Stay Discount"
-                className={inputClass(errors.name?.message)}
-                {...register('name')}
-              />
-            )}
-          </Field>
-
-          <Field
-            id="rule-room-type"
-            label="Applicable Room Type"
-            error={errors.roomTypeId?.message}
-          >
-            {(a11y) => (
-              <Controller
-                control={control}
-                name="roomTypeId"
-                render={({ field }) => (
-                  <Select
-                    items={[
-                      {
-                        value: 'all',
-                        label: 'All Room Types (Property-Wide)',
-                      },
-                      ...roomTypes.map((rt) => ({
-                        value: rt.id,
-                        label: rt.name,
-                      })),
-                    ]}
-                    value={field.value || 'all'}
-                    onValueChange={(value) =>
-                      field.onChange(value === 'all' || !value ? '' : value)
-                    }
-                    disabled={busy}
-                  >
-                    <SelectTrigger
-                      id={a11y.id}
-                      aria-describedby={a11y['aria-describedby']}
-                      aria-invalid={a11y['aria-invalid']}
-                      onBlur={field.onBlur}
-                      className="w-full"
-                    >
-                      <SelectValue placeholder="All Room Types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">
-                        All Room Types (Property-Wide)
-                      </SelectItem>
-                      {roomTypes.map((rt) => (
-                        <SelectItem key={rt.id} value={rt.id}>
-                          {rt.name}
-                        </SelectItem>
+                          <span>
+                            {c.name} ({c.startDate} to {c.endDate})
+                          </span>
+                          <span
+                            className={
+                              c.equalPriority
+                                ? 'font-semibold text-warning'
+                                : ''
+                            }
+                          >
+                            Priority {c.priority}{' '}
+                            {c.equalPriority ? '(Equal!)' : ''}
+                          </span>
+                        </li>
                       ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
+                    </ul>
+                  </div>
+                </div>
+              </Alert>
             )}
-          </Field>
 
-          <div className="grid grid-cols-2 gap-4">
             <Field
-              id="rule-start-date"
-              label="Start Date *"
-              error={errors.startDate?.message}
+              id="rule-name"
+              label="Rule Name *"
+              error={errors.name?.message}
             >
               {(a11y) => (
                 <Input
                   {...a11y}
-                  type="date"
-                  className={inputClass(errors.startDate?.message)}
-                  {...register('startDate')}
+                  type="text"
+                  placeholder="e.g. December Peak Holiday Uplift, Long Stay Discount"
+                  className={inputClass(errors.name?.message)}
+                  {...register('name')}
                 />
               )}
             </Field>
-            <Field
-              id="rule-end-date"
-              label="End Date *"
-              error={errors.endDate?.message}
-            >
-              {(a11y) => (
-                <Input
-                  {...a11y}
-                  type="date"
-                  className={inputClass(errors.endDate?.message)}
-                  {...register('endDate')}
-                />
-              )}
-            </Field>
-          </div>
 
-          <div className="space-y-1.5">
-            <Label>Days of Week (Leave all unchecked for everyday)</Label>
-            <div className="flex flex-wrap gap-2 pt-0.5">
-              {DAYS.map((d) => {
-                const isSelected = (daysOfWeek || []).includes(d.day);
-                return (
-                  <Button
-                    key={d.day}
-                    type="button"
-                    variant={isSelected ? 'default' : 'outline'}
-                    size="xs"
-                    onClick={() => toggleDay(d.day)}
-                    className="h-7 px-2.5"
-                  >
-                    {d.label}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             <Field
-              id="rule-adjustment-type"
-              label="Adjustment Type"
-              error={errors.adjustmentType?.message}
+              id="rule-room-type"
+              label="Applicable Room Type"
+              error={errors.roomTypeId?.message}
             >
               {(a11y) => (
                 <Controller
                   control={control}
-                  name="adjustmentType"
+                  name="roomTypeId"
                   render={({ field }) => (
                     <Select
                       items={[
                         {
-                          value: 'percent_markup',
-                          label: 'Percentage Markup / Discount (%)',
+                          value: 'all',
+                          label: 'All Room Types (Property-Wide)',
                         },
-                        {
-                          value: 'fixed_price',
-                          label: 'Fixed Price Replacement (₦)',
-                        },
-                        {
-                          value: 'amount_markup',
-                          label: 'Fixed Amount Adjustment (₦)',
-                        },
+                        ...roomTypes.map((rt) => ({
+                          value: rt.id,
+                          label: rt.name,
+                        })),
                       ]}
-                      value={field.value}
-                      onValueChange={(value) => {
-                        if (value) {
-                          field.onChange(value as RateAdjustmentType);
-                        }
-                      }}
+                      value={field.value || 'all'}
+                      onValueChange={(value) =>
+                        field.onChange(value === 'all' || !value ? '' : value)
+                      }
                       disabled={busy}
                     >
                       <SelectTrigger
@@ -451,18 +340,17 @@ export function RateRuleDialog({
                         onBlur={field.onBlur}
                         className="w-full"
                       >
-                        <SelectValue placeholder="Select adjustment type" />
+                        <SelectValue placeholder="All Room Types" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="percent_markup">
-                          Percentage Markup / Discount (%)
+                        <SelectItem value="all">
+                          All Room Types (Property-Wide)
                         </SelectItem>
-                        <SelectItem value="fixed_price">
-                          Fixed Price Replacement (₦)
-                        </SelectItem>
-                        <SelectItem value="amount_markup">
-                          Fixed Amount Adjustment (₦)
-                        </SelectItem>
+                        {roomTypes.map((rt) => (
+                          <SelectItem key={rt.id} value={rt.id}>
+                            {rt.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   )}
@@ -470,107 +358,220 @@ export function RateRuleDialog({
               )}
             </Field>
 
-            <Field
-              id="rule-adjustment-value"
-              label={
-                adjustmentType === 'percent_markup'
-                  ? 'Percentage (% e.g. 20 or -15)'
-                  : 'Value in Naira (₦)'
-              }
-              error={errors.adjustmentInput?.message}
-            >
-              {(a11y) => (
-                <Input
-                  {...a11y}
-                  type="text"
-                  placeholder={
-                    adjustmentType === 'percent_markup' ? '20' : '90,000'
-                  }
-                  className={inputClass(errors.adjustmentInput?.message)}
-                  {...register('adjustmentInput')}
-                />
-              )}
-            </Field>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Field
-              id="rule-min-nights"
-              label="Min Stay Nights (Optional)"
-              error={errors.minNights?.message}
-            >
-              {(a11y) => (
-                <Input
-                  {...a11y}
-                  type="number"
-                  min="1"
-                  placeholder="e.g. 3"
-                  className={inputClass(errors.minNights?.message)}
-                  {...register('minNights')}
-                />
-              )}
-            </Field>
-            <Field
-              id="rule-max-nights"
-              label="Max Stay Nights (Optional)"
-              error={errors.maxNights?.message}
-            >
-              {(a11y) => (
-                <Input
-                  {...a11y}
-                  type="number"
-                  min="1"
-                  placeholder="e.g. 14"
-                  className={inputClass(errors.maxNights?.message)}
-                  {...register('maxNights')}
-                />
-              )}
-            </Field>
-          </div>
-
-          <div className="grid grid-cols-2 items-center gap-4 pt-1">
-            <Field
-              id="rule-priority"
-              label="Priority Integer (Higher wins)"
-              error={errors.priority?.message}
-            >
-              {(a11y) => (
-                <Input
-                  {...a11y}
-                  type="number"
-                  className={inputClass(errors.priority?.message)}
-                  {...register('priority', { valueAsNumber: true })}
-                />
-              )}
-            </Field>
-
-            <div className="flex items-center gap-2.5 pt-5">
-              <Controller
-                control={control}
-                name="isActive"
-                render={({ field }) => (
-                  <Checkbox
-                    id="ruleActive"
-                    name={field.name}
-                    ref={field.ref}
-                    checked={field.value === true}
-                    onCheckedChange={(checked) =>
-                      field.onChange(checked === true)
-                    }
-                    onBlur={field.onBlur}
+            <div className="grid grid-cols-2 gap-4">
+              <Field
+                id="rule-start-date"
+                label="Start Date *"
+                error={errors.startDate?.message}
+              >
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    type="date"
+                    className={inputClass(errors.startDate?.message)}
+                    {...register('startDate')}
                   />
                 )}
-              />
-              <Label htmlFor="ruleActive" className="cursor-pointer">
-                Rule is Active
-              </Label>
+              </Field>
+              <Field
+                id="rule-end-date"
+                label="End Date *"
+                error={errors.endDate?.message}
+              >
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    type="date"
+                    className={inputClass(errors.endDate?.message)}
+                    {...register('endDate')}
+                  />
+                )}
+              </Field>
             </div>
-          </div>
 
-          <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+            <div className="space-y-1.5">
+              <Label>Days of Week (Leave all unchecked for everyday)</Label>
+              <div className="flex flex-wrap gap-2 pt-0.5">
+                {DAYS.map((d) => {
+                  const isSelected = (daysOfWeek || []).includes(d.day);
+                  return (
+                    <Button
+                      key={d.day}
+                      type="button"
+                      variant={isSelected ? 'primary' : 'secondary'}
+                      size="xs"
+                      onClick={() => toggleDay(d.day)}
+                      className="h-7 px-2.5"
+                    >
+                      {d.label}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field
+                id="rule-adjustment-type"
+                label="Adjustment Type"
+                error={errors.adjustmentType?.message}
+              >
+                {(a11y) => (
+                  <Controller
+                    control={control}
+                    name="adjustmentType"
+                    render={({ field }) => (
+                      <Select
+                        items={[
+                          {
+                            value: 'percent_markup',
+                            label: 'Percentage Markup / Discount (%)',
+                          },
+                          {
+                            value: 'fixed_price',
+                            label: 'Fixed Price Replacement (₦)',
+                          },
+                          {
+                            value: 'amount_markup',
+                            label: 'Fixed Amount Adjustment (₦)',
+                          },
+                        ]}
+                        value={field.value}
+                        onValueChange={(value) => {
+                          if (value) {
+                            field.onChange(value as RateAdjustmentType);
+                          }
+                        }}
+                        disabled={busy}
+                      >
+                        <SelectTrigger
+                          id={a11y.id}
+                          aria-describedby={a11y['aria-describedby']}
+                          aria-invalid={a11y['aria-invalid']}
+                          onBlur={field.onBlur}
+                          className="w-full"
+                        >
+                          <SelectValue placeholder="Select adjustment type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="percent_markup">
+                            Percentage Markup / Discount (%)
+                          </SelectItem>
+                          <SelectItem value="fixed_price">
+                            Fixed Price Replacement (₦)
+                          </SelectItem>
+                          <SelectItem value="amount_markup">
+                            Fixed Amount Adjustment (₦)
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                )}
+              </Field>
+
+              <Field
+                id="rule-adjustment-value"
+                label={
+                  adjustmentType === 'percent_markup'
+                    ? 'Percentage (% e.g. 20 or -15)'
+                    : 'Value in Naira (₦)'
+                }
+                error={errors.adjustmentInput?.message}
+              >
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    type="text"
+                    placeholder={
+                      adjustmentType === 'percent_markup' ? '20' : '90,000'
+                    }
+                    className={inputClass(errors.adjustmentInput?.message)}
+                    {...register('adjustmentInput')}
+                  />
+                )}
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field
+                id="rule-min-nights"
+                label="Min Stay Nights (Optional)"
+                error={errors.minNights?.message}
+              >
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 3"
+                    className={inputClass(errors.minNights?.message)}
+                    {...register('minNights')}
+                  />
+                )}
+              </Field>
+              <Field
+                id="rule-max-nights"
+                label="Max Stay Nights (Optional)"
+                error={errors.maxNights?.message}
+              >
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 14"
+                    className={inputClass(errors.maxNights?.message)}
+                    {...register('maxNights')}
+                  />
+                )}
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-2 items-center gap-4 pt-1">
+              <Field
+                id="rule-priority"
+                label="Priority Integer (Higher wins)"
+                error={errors.priority?.message}
+              >
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    type="number"
+                    className={inputClass(errors.priority?.message)}
+                    {...register('priority', { valueAsNumber: true })}
+                  />
+                )}
+              </Field>
+
+              <div className="flex items-center gap-2.5 pt-5">
+                <Controller
+                  control={control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <Checkbox
+                      id="ruleActive"
+                      name={field.name}
+                      ref={field.ref}
+                      checked={field.value === true}
+                      onCheckedChange={(checked) =>
+                        field.onChange(checked === true)
+                      }
+                      onBlur={field.onBlur}
+                    />
+                  )}
+                />
+                <Label htmlFor="ruleActive" className="cursor-pointer">
+                  Rule is Active
+                </Label>
+              </div>
+            </div>
+          </DialogBody>
+
+          <DialogFooter>
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={onClose}
               disabled={busy}

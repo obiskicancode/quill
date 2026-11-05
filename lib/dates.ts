@@ -59,17 +59,40 @@ const monthFmt = new Intl.DateTimeFormat('en-NG', {
   month: 'long',
   year: 'numeric',
 });
-
-export function formatDate(value: string): string {
-  return new Intl.DateTimeFormat('en-NG', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value));
-}
+const dayMonthFmt = new Intl.DateTimeFormat('en-NG', {
+  day: 'numeric',
+  month: 'short',
+});
+const dayMonthYearFmt = new Intl.DateTimeFormat('en-NG', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+const weekdayFmt = new Intl.DateTimeFormat('en-NG', { weekday: 'short' });
+const weekdayDayFmt = new Intl.DateTimeFormat('en-NG', {
+  weekday: 'short',
+  day: 'numeric',
+});
+const guestStampFmt = new Intl.DateTimeFormat('en-NG', {
+  day: 'numeric',
+  month: 'short',
+  hour: 'numeric',
+  minute: '2-digit',
+  timeZone: 'Africa/Lagos',
+});
 
 export const formatShort = (iso: ISODate) => shortFmt.format(fromISO(iso));
 export const formatLong = (iso: ISODate) => longFmt.format(fromISO(iso));
 export const formatMonthYear = (iso: ISODate) => monthFmt.format(fromISO(iso));
+export const formatDayMonth = (iso: ISODate) =>
+  dayMonthFmt.format(fromISO(iso));
+export const formatDayMonthYear = (iso: ISODate) =>
+  dayMonthYearFmt.format(fromISO(iso));
+export const formatWeekday = (iso: ISODate) => weekdayFmt.format(fromISO(iso));
+export const formatWeekdayDay = (iso: ISODate) =>
+  weekdayDayFmt.format(fromISO(iso));
+export const formatGuestStamp = (value: string | Date) =>
+  guestStampFmt.format(value instanceof Date ? value : new Date(value));
 
 export function hotelClock(
   now: Date = new Date(),

@@ -14,19 +14,19 @@ export function StayInfoCard({
         {/* Room Type & Number */}
         <div className="flex items-start gap-2.5">
           <Bed
-            className="text-muted-foreground mt-1 size-4 shrink-0"
+            className="mt-1 size-4 shrink-0 text-muted-foreground"
             aria-hidden="true"
           />
           <div>
-            <p className="text-caption text-muted-foreground font-semibold tracking-wider uppercase">
+            <p className="text-caption font-semibold tracking-wider text-muted-foreground uppercase">
               Assigned Room
             </p>
-            <p className="text-ink font-semibold">{reservation.roomTypeName}</p>
+            <p className="font-semibold text-ink">{reservation.roomTypeName}</p>
             <p className="text-small text-muted-foreground">
               Room #{reservation.roomNumber}
             </p>
             {reservation.extraBedAvailable && (
-              <span className="text-caption text-muted-foreground mt-1 inline-block">
+              <span className="mt-1 inline-block text-caption text-muted-foreground">
                 Extra bed available
               </span>
             )}
@@ -36,14 +36,14 @@ export function StayInfoCard({
         {/* Guests */}
         <div className="flex items-start gap-2.5">
           <Users
-            className="text-muted-foreground mt-1 size-4 shrink-0"
+            className="mt-1 size-4 shrink-0 text-muted-foreground"
             aria-hidden="true"
           />
           <div>
-            <p className="text-caption text-muted-foreground font-semibold tracking-wider uppercase">
+            <p className="text-caption font-semibold tracking-wider text-muted-foreground uppercase">
               Guests
             </p>
-            <p className="text-ink font-semibold">
+            <p className="font-semibold text-ink">
               {reservation.adults}{' '}
               {reservation.adults === 1 ? 'Adult' : 'Adults'}
               {reservation.children > 0 && `, ${reservation.children} Children`}
@@ -57,19 +57,19 @@ export function StayInfoCard({
         {/* Check-in */}
         <div className="flex items-start gap-2.5">
           <Calendar
-            className="text-muted-foreground mt-1 size-4 shrink-0"
+            className="mt-1 size-4 shrink-0 text-muted-foreground"
             aria-hidden="true"
           />
           <div>
-            <p className="text-caption text-muted-foreground font-semibold tracking-wider uppercase">
+            <p className="text-caption font-semibold tracking-wider text-muted-foreground uppercase">
               Check-in
             </p>
-            <p className="text-ink font-semibold">{reservation.checkIn}</p>
+            <p className="font-semibold text-ink">{reservation.checkIn}</p>
             <p className="text-caption text-muted-foreground">
               From {reservation.policySnapshot.checkInTime}
             </p>
             {reservation.arrivalTime && (
-              <p className="text-caption text-ink mt-0.5 flex items-center gap-1">
+              <p className="mt-0.5 flex items-center gap-1 text-caption text-ink">
                 <Clock className="size-3" aria-hidden="true" />
                 ETA: {reservation.arrivalTime}
               </p>
@@ -80,14 +80,14 @@ export function StayInfoCard({
         {/* Check-out */}
         <div className="flex items-start gap-2.5">
           <Calendar
-            className="text-muted-foreground mt-1 size-4 shrink-0"
+            className="mt-1 size-4 shrink-0 text-muted-foreground"
             aria-hidden="true"
           />
           <div>
-            <p className="text-caption text-muted-foreground font-semibold tracking-wider uppercase">
+            <p className="text-caption font-semibold tracking-wider text-muted-foreground uppercase">
               Check-out
             </p>
-            <p className="text-ink font-semibold">{reservation.checkOut}</p>
+            <p className="font-semibold text-ink">{reservation.checkOut}</p>
             <p className="text-caption text-muted-foreground">
               Until {reservation.policySnapshot.checkOutTime}
             </p>

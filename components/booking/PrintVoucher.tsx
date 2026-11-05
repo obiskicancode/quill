@@ -1,11 +1,12 @@
-import { formatDeadline, formatMinor } from '@/lib/format';
+import {
+  formatDeadline,
+  formatGuestTime,
+  formatMinor,
+  pluralCount,
+} from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import type { GuestReservation } from '@/types/booking.types';
 
-/**
- * Shown only when printing (see print.css): a clean one-page voucher with the reference, dates, address and policies.
- * Hidden on screen. Contact details stay masked unless the guest verified.
- */
 export function PrintVoucher({ v }: { v: GuestReservation }) {
   const c = v.policy.cancellation;
   const cancel = c.nonRefundable
@@ -21,15 +22,15 @@ export function PrintVoucher({ v }: { v: GuestReservation }) {
     >
       <header className="mb-4 flex items-end justify-between border-b-2 border-black pb-3">
         <div>
-          <p className="text-sm">Booking voucher</p>
-          <h1 className="text-2xl font-bold">{v.hotel.name}</h1>
+          <p className="text-small">Booking voucher</p>
+          <h1 className="text-figure font-bold">{v.hotel.name}</h1>
         </div>
         <div className="text-right">
-          <p className="text-xs">Booking reference</p>
-          <p className="text-2xl font-bold tracking-wide">{v.reference}</p>
+          <p className="text-caption">Booking reference</p>
+          <p className="text-figure font-bold tracking-wide">{v.reference}</p>
         </div>
       </header>
-      <dl className="text-sm">
+      <dl className="text-small">
         <div className={row}>
           <dt>Status</dt>
           <dd className="font-semibold">{v.payment.label}</dd>
@@ -48,20 +49,22 @@ export function PrintVoucher({ v }: { v: GuestReservation }) {
           <dt>Dates</dt>
           <dd>
             {v.stay.checkIn && v.stay.checkOut
-              ? `${formatRange(v.stay.checkIn, v.stay.checkOut)} (${v.stay.nights} nights)`
+              ? `${formatRange(v.stay.checkIn, v.stay.checkOut)} (${pluralCount(v.stay.nights, 'night')})`
               : 'To be confirmed'}
           </dd>
         </div>
         <div className={row}>
           <dt>Check-in / check-out</dt>
           <dd>
-            From {v.times.checkIn} / by {v.times.checkOut}
+            From {formatGuestTime(v.times.checkIn)} / by{' '}
+            {formatGuestTime(v.times.checkOut)}
           </dd>
         </div>
         <div className={row}>
           <dt>Guests</dt>
           <dd>
-            {v.stay.adults} adults, {v.stay.children} children
+            {pluralCount(v.stay.adults, 'adult')},{' '}
+            {pluralCount(v.stay.children, 'child', 'children')}
           </dd>
         </div>
         <div className={row}>
@@ -83,14 +86,14 @@ export function PrintVoucher({ v }: { v: GuestReservation }) {
           </dd>
         </div>
       </dl>
-      <section className="mt-4 text-sm">
+      <section className="mt-4 text-small">
         <h2 className="font-bold">Policies</h2>
         <p className="mt-1">{cancel}</p>
         <p>{v.policy.checkInRules}</p>
         <p>{v.policy.checkOutRules}</p>
         {v.policy.idRequired && <p>{v.policy.idText}</p>}
       </section>
-      <p className="mt-6 text-xs">
+      <p className="mt-6 text-caption">
         Please show this voucher or your booking reference at check-in.
       </p>
     </article>

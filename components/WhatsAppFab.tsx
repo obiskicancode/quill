@@ -8,7 +8,6 @@ import { useSite } from '@/providers/site.provider';
 
 import { spring } from './motion/variants';
 
-/** Floating WhatsApp button. On mobile it sits in the right-hand gap of the sticky Book Now bar. */
 export function WhatsAppFab() {
   const site = useSite();
   const reduced = useReducedMotion();
@@ -24,13 +23,13 @@ export function WhatsAppFab() {
       transition={{ ...spring, delay: 1.3 }}
       whileHover={reduced ? undefined : { scale: 1.07 }}
       whileTap={reduced ? undefined : { scale: 0.93 }}
-      className="bg-whatsapp shadow-float hover:bg-whatsapp-hover fixed right-4 bottom-3 z-40 grid size-14 place-items-center rounded-full text-white transition-[background-color] md:right-6 md:bottom-6"
+      className="fixed right-4 bottom-3 z-(--z-fab) grid size-12 place-items-center rounded-full bg-whatsapp text-white shadow-float transition-[background-color] hover:bg-whatsapp-hover md:right-6 md:bottom-6"
       style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
     >
       {!reduced && (
         <motion.span
           aria-hidden
-          className="bg-whatsapp absolute inset-0 rounded-full"
+          className="absolute inset-0 rounded-full bg-whatsapp"
           initial={{ opacity: 0.35, scale: 1 }}
           animate={{ opacity: 0, scale: 1.6 }}
           transition={{

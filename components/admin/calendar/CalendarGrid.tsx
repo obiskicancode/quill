@@ -13,7 +13,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useWebStorage } from '@/hooks/use-web-storage';
-import { addDays, formatShort, nightsBetween } from '@/lib/dates';
+import {
+  addDays,
+  formatShort,
+  formatWeekday,
+  nightsBetween,
+} from '@/lib/dates';
 import type {
   CalendarBlockBar,
   CalendarResponse,
@@ -152,10 +157,7 @@ export function CalendarGrid({
     }
   };
 
-  const getDayOfWeek = (isoDate: string) => {
-    const d = new Date(isoDate + 'T00:00:00');
-    return d.toLocaleDateString('en-US', { weekday: 'short' });
-  };
+  const getDayOfWeek = (isoDate: string) => formatWeekday(isoDate);
 
   const isWeekend = (isoDate: string) => {
     const d = new Date(isoDate + 'T00:00:00');
@@ -175,18 +177,18 @@ export function CalendarGrid({
 
   return (
     <TooltipProvider delay={150}>
-      <div className="rounded-card border-line bg-paper relative flex flex-col border shadow-xs">
+      <div className="relative flex flex-col rounded-card border border-line bg-paper shadow-xs">
         {/* Horizontal Scrolling Grid Container */}
         <div className="relative max-h-[75vh] overflow-auto">
           <div className="min-w-fit">
             {/* Header Row: Dates */}
-            <div className="bg-muted border-line sticky top-0 z-30 flex border-b">
+            <div className="sticky top-0 z-30 flex border-b border-line bg-muted">
               {/* Corner Cell: Sticky top and left */}
-              <div className="bg-muted border-line sticky left-0 z-40 flex w-52 shrink-0 items-center justify-between border-r px-3 py-2 shadow-xs">
-                <span className="text-small text-ink font-serif font-semibold">
+              <div className="sticky left-0 z-40 flex w-52 shrink-0 items-center justify-between border-r border-line bg-muted px-3 py-2 shadow-xs">
+                <span className="font-serif text-small font-semibold text-ink">
                   Rooms
                 </span>
-                <span className="text-caption text-muted-foreground font-mono">
+                <span className="font-mono text-caption text-muted-foreground">
                   {data.rooms.length} units
                 </span>
               </div>
@@ -207,18 +209,18 @@ export function CalendarGrid({
                       onClick={() => onSelectDate(date)}
                       title={`Click to view breakdown for ${date}`}
                       aria-label={`View daily breakdown for ${date}`}
-                      className={`border-line/60 h-auto w-24 shrink-0 flex-col rounded-none border-r py-2 font-mono ${
+                      className={`h-auto w-24 shrink-0 flex-col rounded-none border-r border-line/60 py-2 font-mono ${
                         isToday
                           ? 'bg-primary/20 text-brand-ink'
                           : weekend
                             ? 'bg-muted/90 text-ink'
                             : 'bg-muted text-ink'
-                      } ${monthBoundary ? 'border-l-ink/40 border-l-2' : ''}`}
+                      } ${monthBoundary ? 'border-l-2 border-l-ink/40' : ''}`}
                     >
-                      <span className="text-muted-foreground font-sans text-[0.6875rem] font-medium tracking-wider uppercase">
+                      <span className="font-sans text-micro font-medium tracking-wider text-muted-foreground uppercase">
                         {getDayOfWeek(date)}
                       </span>
-                      <span className="text-small font-mono font-semibold">
+                      <span className="font-mono text-small font-semibold">
                         {date.slice(8)}
                       </span>
                       {isToday && <Badge>TODAY</Badge>}
@@ -236,16 +238,16 @@ export function CalendarGrid({
             />
 
             {/* Room Rows by Room Type */}
-            <div className="divide-line/60 divide-y">
+            <div className="divide-y divide-line/60">
               {roomsByType.map((group) => {
                 const isCollapsed = !!collapsedGroups[group.id];
 
                 return (
-                  <div key={group.id} className="divide-line/40 divide-y">
+                  <div key={group.id} className="divide-y divide-line/40">
                     {/* Collapsible Room Type Header */}
-                    <div className="bg-muted/80 border-line text-small sticky left-0 flex w-full border-y font-medium">
+                    <div className="sticky left-0 flex w-full border-y border-line bg-muted/80 text-small font-medium">
                       {/* Left Sticky Label with Accordion Button */}
-                      <div className="bg-muted/95 border-line sticky left-0 z-20 flex w-52 shrink-0 items-center justify-between gap-1.5 border-r px-3 py-1.5 shadow-xs">
+                      <div className="sticky left-0 z-20 flex w-52 shrink-0 items-center justify-between gap-1.5 border-r border-line bg-muted/95 px-3 py-1.5 shadow-xs">
                         <Button
                           type="button"
                           variant="ghost"
@@ -256,13 +258,13 @@ export function CalendarGrid({
                           title={group.name}
                         >
                           {isCollapsed ? (
-                            <ChevronRight className="text-muted-foreground size-4 shrink-0" />
+                            <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                           ) : (
-                            <ChevronDown className="text-muted-foreground size-4 shrink-0" />
+                            <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
                           )}
                           <span className="truncate">{group.name}</span>
                         </Button>
-                        <span className="text-caption text-muted-foreground shrink-0 font-mono">
+                        <span className="shrink-0 font-mono text-caption text-muted-foreground">
                           ({group.rooms.length})
                         </span>
                       </div>
@@ -280,12 +282,12 @@ export function CalendarGrid({
                           return (
                             <div
                               key={date}
-                              className="border-line/40 flex w-24 shrink-0 items-center justify-center border-r px-1 py-1 font-mono text-[0.6875rem]"
+                              className="flex w-24 shrink-0 items-center justify-center border-r border-line/40 px-1 py-1 font-mono text-micro"
                             >
                               <span
                                 className={`py-0.2 rounded-control px-1 ${
                                   freeCount === 0
-                                    ? 'bg-destructive/10 text-destructive font-semibold'
+                                    ? 'bg-destructive/10 font-semibold text-destructive'
                                     : 'text-muted-foreground'
                                 }`}
                               >
@@ -307,13 +309,13 @@ export function CalendarGrid({
                         return (
                           <div
                             key={room.id}
-                            className="hover:bg-muted/20 relative flex h-14 items-center transition-colors"
+                            className="relative flex h-14 items-center transition-colors hover:bg-muted/20"
                           >
                             {/* Sticky Room Column */}
-                            <div className="border-line bg-paper sticky left-0 z-20 flex h-full w-52 shrink-0 items-center justify-between border-r px-3 shadow-xs">
+                            <div className="sticky left-0 z-20 flex h-full w-52 shrink-0 items-center justify-between border-r border-line bg-paper px-3 shadow-xs">
                               <div>
                                 <div className="flex items-center gap-1.5">
-                                  <span className="text-small text-ink font-mono font-semibold">
+                                  <span className="font-mono text-small font-semibold text-ink">
                                     #{room.roomNumber}
                                   </span>
                                   {room.floor !== null && (
@@ -322,13 +324,13 @@ export function CalendarGrid({
                                     </span>
                                   )}
                                 </div>
-                                <span className="text-muted-foreground text-[0.6875rem]">
+                                <span className="text-micro text-muted-foreground">
                                   {room.roomTypeName}
                                 </span>
                               </div>
 
                               {isOutOfService && (
-                                <span className="rounded-control bg-primary/15 text-brand-ink px-1.5 py-0.5 text-[0.625rem] font-semibold">
+                                <span className="rounded-control bg-primary/15 px-1.5 py-0.5 text-micro font-semibold text-brand-ink">
                                   Out of Service
                                 </span>
                               )}
@@ -354,11 +356,11 @@ export function CalendarGrid({
                                     onClick={() => handleCellClick(room, date)}
                                     disabled={isOutOfService}
                                     aria-label={`Room ${room.roomNumber}, ${formatShort(date)}`}
-                                    className={`border-line/40 relative h-full w-24 shrink-0 rounded-none border-r p-0 ${
+                                    className={`relative h-full w-24 shrink-0 rounded-none border-r border-line/40 p-0 ${
                                       isOutOfService
                                         ? 'bg-stripes-muted cursor-not-allowed opacity-60'
                                         : isStartCell
-                                          ? 'bg-ink/10 ring-ink ring-2 ring-inset'
+                                          ? 'bg-ink/10 ring-2 ring-ink ring-inset'
                                           : isToday
                                             ? 'bg-primary/10'
                                             : weekend
@@ -407,7 +409,8 @@ export function CalendarGrid({
                                   const widthPx = spanNights * 96 - 4; // 4px margin for turnover gap!
 
                                   // Visual style cues by status
-                                  let barBg = 'bg-success text-white';
+                                  let barBg =
+                                    'bg-success text-success-foreground';
                                   if (res.status === 'pending') {
                                     barBg =
                                       'bg-primary text-primary-foreground border border-primary/40';
@@ -429,16 +432,16 @@ export function CalendarGrid({
                                               left: `${leftPx + 2}px`,
                                               width: `${widthPx}px`,
                                             }}
-                                            className={`rounded-control absolute top-2 z-10 flex h-10 items-center justify-between px-2 shadow-xs transition-transform hover:scale-[1.01] focus:outline-hidden ${barBg}`}
+                                            className={`absolute top-2 z-10 flex h-10 items-center justify-between rounded-control px-2 shadow-xs transition-transform hover:scale-[1.01] focus:outline-hidden ${barBg}`}
                                           />
                                         }
                                       >
                                         <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
-                                          <span className="text-caption block min-w-0 truncate font-semibold">
+                                          <span className="block min-w-0 truncate text-caption font-semibold">
                                             {res.guestName}
                                           </span>
                                           {spanNights >= 2 && (
-                                            <span className="shrink-0 font-mono text-[0.625rem] opacity-80">
+                                            <span className="shrink-0 font-mono text-micro opacity-80">
                                               ({res.reference})
                                             </span>
                                           )}
@@ -446,7 +449,7 @@ export function CalendarGrid({
 
                                         {/* Hold expiration warning for pending */}
                                         {res.status === 'pending' && (
-                                          <span className="ml-1 flex shrink-0 items-center gap-0.5 font-mono text-[0.625rem] font-bold">
+                                          <span className="ml-1 flex shrink-0 items-center gap-0.5 font-mono text-micro font-bold">
                                             <Clock className="size-3 shrink-0" />
                                             {spanNights >= 2 && (
                                               <span>Held</span>
@@ -456,21 +459,21 @@ export function CalendarGrid({
                                       </TooltipTrigger>
                                       <TooltipContent
                                         side="top"
-                                        className="font-sans text-xs"
+                                        className="font-sans text-caption"
                                       >
-                                        <p className="text-paper font-semibold">
+                                        <p className="font-semibold text-paper">
                                           {res.guestName}{' '}
                                           <span className="font-mono text-white/70">
                                             ({res.reference})
                                           </span>
                                         </p>
-                                        <p className="text-[0.6875rem] text-white/80">
+                                        <p className="text-micro text-white/80">
                                           Room #{room.roomNumber} •{' '}
                                           {formatShort(res.checkIn)} →{' '}
                                           {formatShort(res.checkOut)} (
                                           {spanNights}n)
                                         </p>
-                                        <p className="text-primary mt-0.5 text-[0.625rem] capitalize">
+                                        <p className="mt-0.5 text-micro text-brand-ink capitalize">
                                           Status: {res.status.replace('_', ' ')}
                                         </p>
                                       </TooltipContent>
@@ -527,17 +530,17 @@ export function CalendarGrid({
                                               left: `${leftPx + 2}px`,
                                               width: `${widthPx}px`,
                                             }}
-                                            className="border-destructive/40 bg-destructive/15 text-destructive hover:bg-destructive/25 absolute top-2 z-10 h-10 w-auto justify-between px-2"
+                                            className="absolute top-2 z-10 h-10 w-auto justify-between border-destructive/40 bg-destructive/15 px-2 text-destructive hover:bg-destructive/25"
                                           />
                                         }
                                       >
                                         <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
                                           <ShieldAlert className="size-3.5 shrink-0" />
-                                          <span className="text-caption block min-w-0 truncate font-semibold uppercase">
+                                          <span className="block min-w-0 truncate text-caption font-semibold uppercase">
                                             {block.reason.replace('_', ' ')}
                                           </span>
                                           {spanNights >= 2 && block.notes && (
-                                            <span className="text-destructive/80 block min-w-0 truncate text-[0.6875rem]">
+                                            <span className="block min-w-0 truncate text-micro text-destructive/80">
                                               • {block.notes}
                                             </span>
                                           )}
@@ -545,19 +548,19 @@ export function CalendarGrid({
                                       </TooltipTrigger>
                                       <TooltipContent
                                         side="top"
-                                        className="font-sans text-xs"
+                                        className="font-sans text-caption"
                                       >
-                                        <p className="text-paper font-semibold uppercase">
+                                        <p className="font-semibold text-paper uppercase">
                                           Blocked:{' '}
                                           {block.reason.replace('_', ' ')}
                                         </p>
-                                        <p className="text-[0.6875rem] text-white/80">
+                                        <p className="text-micro text-white/80">
                                           Room #{room.roomNumber} •{' '}
                                           {formatShort(block.startDate)} →{' '}
                                           {formatShort(block.endDate)}
                                         </p>
                                         {block.notes && (
-                                          <p className="mt-0.5 text-[0.6875rem] text-white/70 italic">
+                                          <p className="mt-0.5 text-micro text-white/70 italic">
                                             {block.notes}
                                           </p>
                                         )}
@@ -578,7 +581,7 @@ export function CalendarGrid({
 
         {/* Floating Range Selection Action Popover */}
         {activeSelection && (
-          <div className="animate-in fade-in slide-in-from-bottom-2 rounded-card border-ink bg-ink text-paper sticky bottom-4 z-40 mx-auto flex w-full max-w-lg items-center justify-between border p-3.5 shadow-2xl">
+          <div className="sticky bottom-4 z-40 mx-auto flex w-full max-w-lg animate-in items-center justify-between rounded-card border border-ink bg-ink p-3.5 text-paper shadow-float fade-in slide-in-from-bottom-2">
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-small font-semibold">
@@ -588,17 +591,17 @@ export function CalendarGrid({
                   )}{' '}
                   Night(s) Selected
                 </span>
-                <span className="text-caption text-paper/70 font-mono">
+                <span className="font-mono text-caption text-paper/70">
                   ({formatShort(activeSelection.checkIn)} →{' '}
                   {formatShort(activeSelection.checkOut)})
                 </span>
               </div>
               {activeSelection.hasConflict ? (
-                <p className="text-caption mt-0.5 text-red-300">
+                <p className="mt-0.5 text-caption text-destructive-on-dark">
                   {activeSelection.conflictReason}
                 </p>
               ) : (
-                <p className="text-caption text-paper/70 mt-0.5">
+                <p className="mt-0.5 text-caption text-paper/70">
                   Choose an action to proceed with this room and date range:
                 </p>
               )}
@@ -640,7 +643,7 @@ export function CalendarGrid({
                 size="icon-xs"
                 onClick={() => setActiveSelection(null)}
                 aria-label="Dismiss selection"
-                className="text-paper/70 hover:text-paper hover:bg-white/10"
+                className="text-paper/70 hover:bg-white/10 hover:text-paper"
               >
                 <X className="size-4" />
               </Button>
@@ -649,36 +652,36 @@ export function CalendarGrid({
         )}
 
         {/* Grid Legend at Bottom */}
-        <div className="bg-muted/40 border-line text-caption text-muted-foreground flex flex-wrap items-center justify-between gap-3 border-t px-4 py-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-muted/40 px-4 py-2.5 text-caption text-muted-foreground">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-ink font-semibold">Legend:</span>
+            <span className="font-semibold text-ink">Legend:</span>
             <div className="flex items-center gap-1.5">
-              <span className="bg-success size-3 rounded-xs" />
+              <span className="size-3 rounded-xs bg-success" />
               <span>Confirmed</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="bg-ink size-3 rounded-xs" />
+              <span className="size-3 rounded-xs bg-ink" />
               <span>Checked In</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="bg-primary size-3 rounded-xs" />
+              <span className="size-3 rounded-xs bg-primary" />
               <span>Pending Hold</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="bg-muted-foreground/60 size-3 rounded-xs" />
+              <span className="size-3 rounded-xs bg-muted-foreground/60" />
               <span>Checked Out</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="border-destructive/50 bg-destructive/20 size-3 rounded-xs border" />
+              <span className="size-3 rounded-xs border border-destructive/50 bg-destructive/20" />
               <span>Room Block</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="bg-stripes-muted border-line size-3 rounded-xs border" />
+              <span className="bg-stripes-muted size-3 rounded-xs border border-line" />
               <span>Out of Service</span>
             </div>
           </div>
 
-          <div className="text-muted-foreground font-mono text-[0.6875rem]">
+          <div className="font-mono text-micro text-muted-foreground">
             Turnover: Adjacent bars separated by turnover divider • Check-out
             day is free for check-in
           </div>

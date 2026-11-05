@@ -7,6 +7,13 @@ import { telHref, whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 
 import { ButtonLink } from './ui/button';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from './ui/card';
 
 /** "Not sure which room fits?" Full-width section by default; `compact` is a card that can fill a gap in the room grid. */
 interface HelpBlockProps {
@@ -31,7 +38,7 @@ export function HelpBlock({
     message ??
     `Hello ${site.name}, I'm not sure which room suits us. Can you help?`;
   const buttons = (
-    <div className="flex flex-col gap-3 sm:flex-row">
+    <div className="flex flex-col flex-wrap gap-3 sm:flex-row">
       <ButtonLink
         href={whatsappHref(site, whatsappMessage)}
         external
@@ -53,31 +60,39 @@ export function HelpBlock({
 
   if (variant === 'compact') {
     return (
-      <aside
-        aria-labelledby="help-compact"
-        className="rounded-card border-line bg-card flex h-full flex-col justify-center border p-6"
+      <Card
+        render={<aside aria-labelledby="help-compact" />}
+        className="h-full justify-center text-body"
       >
-        <h2 id="help-compact" className="font-display text-h3">
-          Not sure which room fits?
-        </h2>
-        <p className="text-muted-foreground mt-2 mb-6">
+        <CardHeader>
+          <CardTitle
+            id="help-compact"
+            render={<h2 />}
+            className="font-display text-h3"
+          >
+            Not sure which room fits?
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-muted-foreground">
           Tell us who is travelling and for how long, and we will suggest a
           room.
-        </p>
-        {buttons}
-      </aside>
+        </CardContent>
+        <CardFooter className="border-0 bg-transparent pt-0">
+          {buttons}
+        </CardFooter>
+      </Card>
     );
   }
 
   return (
     <section aria-labelledby="help-heading" className="section-y pb-0">
       <div className="container-page">
-        <div className="rounded-card bg-card shadow-raised flex flex-col items-start justify-between gap-8 p-8 md:flex-row md:items-center md:p-10">
+        <div className="flex flex-col items-start justify-between gap-8 rounded-card bg-card p-8 shadow-raised md:flex-row md:items-center md:p-10">
           <div className="max-w-xl">
             <h2 id="help-heading" className="font-display text-h2">
               {title}
             </h2>
-            <p className="text-body-lg text-ink/85 mt-3">{text}</p>
+            <p className="mt-3 text-body-lg text-ink/85">{text}</p>
           </div>
           {buttons}
         </div>

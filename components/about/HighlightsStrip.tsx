@@ -17,7 +17,7 @@ export async function HighlightsStrip() {
   return (
     <section
       aria-label="Highlights"
-      className="on-dark bg-ink text-paper py-10"
+      className="on-dark bg-ink py-10 text-paper"
     >
       <StaggerGroup
         as="dl"
@@ -25,9 +25,9 @@ export async function HighlightsStrip() {
         className="container-page flex flex-wrap justify-center gap-x-16 gap-y-6 text-center"
       >
         {items.map((i) => (
-          <StaggerItem key={i.label} as="div">
-            <dd className="font-display text-display">{i.value}</dd>
+          <StaggerItem key={i.label} as="div" className="flex flex-col-reverse">
             <dt className="text-small text-paper/80">{i.label}</dt>
+            <dd className="font-display text-display">{i.value}</dd>
           </StaggerItem>
         ))}
       </StaggerGroup>

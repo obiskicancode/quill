@@ -31,6 +31,7 @@ import { getCheckoutSettings } from '@/lib/checkout/settings';
 import { addDays, fromISO, nightsBetween } from '@/lib/dates';
 import { createReference } from '@/lib/db/reference';
 import { findAvailableRoom } from '@/lib/db/repositories/rooms.repo';
+import { formatMinor } from '@/lib/format';
 import { isPaymentProviderId } from '@/lib/payments/provider';
 import {
   insertRefundPayment,
@@ -1201,10 +1202,7 @@ export async function recordAdminPayment(
 
     if (data.amountMinor > balanceMinor + 100) {
       throw new Error(
-        ERROR_MESSAGES.PAYMENT_EXCEEDS_BALANCE(
-          (data.amountMinor / 100).toLocaleString(),
-          (balanceMinor / 100).toLocaleString(),
-        ),
+        ERROR_MESSAGES.PAYMENT_EXCEEDS_BALANCE(data.amountMinor, balanceMinor),
       );
     }
 
@@ -1280,8 +1278,7 @@ export async function recordAdminPayment(
       entityId: paymentId,
       action: 'record_payment',
       reason:
-        data.note ||
-        `Recorded payment of ₦${(data.amountMinor / 100).toLocaleString()}`,
+        data.note || `Recorded payment of ${formatMinor(data.amountMinor)}`,
       changes: {
         amountMinor: data.amountMinor,
         method: data.method,
@@ -1848,8 +1845,8 @@ export async function cancelReservationAdmin(
     if (data.refundAmountMinor > netPaid) {
       throw new Error(
         ERROR_MESSAGES.REFUND_AMOUNT_EXCEEDS_REFUNDABLE(
-          (data.refundAmountMinor / 100).toLocaleString(),
-          (netPaid / 100).toLocaleString(),
+          data.refundAmountMinor,
+          netPaid,
         ),
       );
     }
@@ -2000,8 +1997,8 @@ export async function issueRefundAdmin(
     if (data.amountMinor > availableForRefund) {
       throw new Error(
         ERROR_MESSAGES.REFUND_EXCEEDS_AVAILABLE_BALANCE(
-          (data.amountMinor / 100).toLocaleString(),
-          (availableForRefund / 100).toLocaleString(),
+          data.amountMinor,
+          availableForRefund,
         ),
       );
     }
@@ -2321,10 +2318,7 @@ export async function adminCreateReservation(
       initialPaidMinor > totalMinor
     )
       throw new Error(
-        ERROR_MESSAGES.PAYMENT_EXCEEDS_BALANCE(
-          (initialPaidMinor / 100).toLocaleString(),
-          (totalMinor / 100).toLocaleString(),
-        ),
+        ERROR_MESSAGES.PAYMENT_EXCEEDS_BALANCE(initialPaidMinor, totalMinor),
       );
 
     const fullyPaid = initialPaidMinor >= totalMinor && totalMinor > 0;

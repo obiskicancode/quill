@@ -17,6 +17,7 @@ import {
   sundayIndex,
   todayISO,
 } from '@/lib/dates';
+import { cn } from '@/lib/utils';
 import type { DateRange, ISODate } from '@/types/dates.types';
 
 import { Button } from './ui/button';
@@ -122,7 +123,7 @@ export function DatePicker({
 
   return (
     <div ref={rootRef} onKeyDown={onKeyDown}>
-      <p aria-live="polite" className="text-small mb-3 font-medium">
+      <p aria-live="polite" className="mb-3 text-small font-medium">
         {guidance}
       </p>
 
@@ -185,7 +186,7 @@ export function DatePicker({
                           key={short}
                           scope="col"
                           abbr={long}
-                          className="text-caption text-muted-foreground h-8 text-center font-semibold"
+                          className="h-8 text-center text-caption font-semibold text-muted-foreground"
                         >
                           {short}
                         </th>
@@ -206,36 +207,43 @@ export function DatePicker({
                             iso < checkOut,
                           );
                           const disabled = iso < today || iso > lastDay;
-                          const band = inRange
-                            ? 'bg-primary/25'
-                            : isStart && checkOut
-                              ? 'bg-gradient-to-r from-transparent from-50% to-brand/25 to-50%'
-                              : isEnd
-                                ? 'bg-gradient-to-l from-transparent from-50% to-brand/25 to-50%'
-                                : '';
+                          const rangeStart = isStart && Boolean(checkOut);
+                          const rangeEnd = isEnd;
+                          const spanned = inRange || rangeStart || rangeEnd;
                           const state =
                             isStart || isEnd
                               ? 'bg-ink text-paper'
                               : disabled
                                 ? 'text-ink/30'
-                                : `${iso === today ? 'ring-1 ring-inset ring-ink/50 ' : ''}hover:bg-ink/10 active:bg-ink/20`;
+                                : inRange
+                                  ? 'bg-primary/20 hover:bg-primary/30 active:bg-primary/40'
+                                  : `${iso === today ? 'ring-1 ring-inset ring-ink/50 ' : ''}hover:bg-ink/10 active:bg-ink/20`;
                           return (
                             <td
                               key={d}
                               role="gridcell"
-                              className={`p-0 text-center ${band}`}
+                              data-range-start={rangeStart ? '' : undefined}
+                              data-range-end={rangeEnd ? '' : undefined}
+                              data-in-range={inRange ? '' : undefined}
+                              className={cn(
+                                'p-0 text-center',
+                                spanned && 'range-cell',
+                              )}
                             >
                               <Button
                                 type="button"
-                                variant={isStart || isEnd ? 'default' : 'ghost'}
+                                variant={isStart || isEnd ? 'primary' : 'ghost'}
                                 size="icon"
                                 data-date={iso}
+                                data-range-start={rangeStart ? '' : undefined}
+                                data-range-end={rangeEnd ? '' : undefined}
+                                data-in-range={inRange ? '' : undefined}
                                 disabled={disabled}
                                 tabIndex={iso === focusIso ? 0 : -1}
                                 aria-pressed={isStart || isEnd}
                                 aria-label={`${formatLong(iso)}${isStart ? ', check-in' : ''}${isEnd ? ', check-out' : ''}`}
                                 onClick={() => pick(iso)}
-                                className={`text-small mx-auto size-11 rounded-full font-medium tabular-nums transition-colors ${state}`}
+                                className={`mx-auto rounded-full text-small font-medium tabular-nums transition-colors ${state}`}
                               >
                                 {Number(iso.slice(8))}
                               </Button>

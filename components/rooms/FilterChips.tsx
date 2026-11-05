@@ -3,8 +3,10 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 
+import { textLinkClasses } from '@/components/ui/text-link';
 import { formatNaira } from '@/lib/format';
 import { bedTypeLabels, filterAmenityOptions } from '@/lib/rooms';
+import { cn } from '@/lib/utils';
 import type { FilterAmenity, RoomFilters } from '@/types/rooms.types';
 
 import { spring } from '../motion/variants';
@@ -88,11 +90,11 @@ export function FilterChips({
           >
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => onChange(chip.remove(filters))}
               aria-label={`Remove filter: ${chip.label}`}
-              className="border-line bg-card hover:bg-primary hover:text-primary-foreground inline-flex min-h-9 items-center gap-2 rounded-full pr-2.5 pl-3.5 font-medium transition-colors"
+              className="min-h-11 gap-2 rounded-full border-line bg-card pr-2.5 pl-3.5 font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
             >
               {chip.label}
               <X className="size-3.5" aria-hidden />
@@ -105,9 +107,9 @@ export function FilterChips({
           type="button"
           variant="link"
           onClick={onClearAll}
-          className="text-small inline-flex min-h-11 items-center px-3 font-semibold underline underline-offset-4"
+          className={cn(textLinkClasses, 'px-3 text-small')}
         >
-          Clear all
+          Clear all filters
         </Button>
       </li>
     </ul>

@@ -17,6 +17,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { AdminCard } from '@/components/admin/AdminCard';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -48,7 +49,7 @@ import {
 } from '@/hooks/services/admin/use-reservations-data';
 import { useFormDraft } from '@/hooks/use-form-draft';
 import { addDays, nightsBetween } from '@/lib/dates';
-import { formatNaira } from '@/lib/format';
+import { formatMinor, formatNaira } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import {
   createReservationSchema,
@@ -445,19 +446,19 @@ export function NewReservationClient({
   return (
     <div className="space-y-6">
       {enquiryId && (
-        <div className="rounded-card border-brand/30 bg-brand/10 flex flex-wrap items-center justify-between gap-2 border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-primary/30 bg-primary/10 p-4">
           <div className="flex items-center gap-3">
-            <span className="bg-brand text-paper rounded-full px-2 py-0.5 text-xs font-bold">
+            <span className="rounded-full bg-primary px-2 py-0.5 text-caption font-bold text-primary-foreground">
               Enquiry Conversion
             </span>
-            <p className="text-sm font-medium">
+            <p className="text-small font-medium">
               Creating a booking from enquiry{' '}
               <span className="font-bold">{prefillName || 'Guest'}</span>
             </p>
           </div>
           <Link
             href={`/admin/enquiries/${enquiryId}`}
-            className="text-brand text-xs font-semibold hover:underline"
+            className="text-caption font-semibold text-brand-ink hover:underline"
           >
             View Original Enquiry →
           </Link>
@@ -468,12 +469,12 @@ export function NewReservationClient({
       <div>
         <Link
           href="/admin/reservations"
-          className="rounded-control text-small text-muted-foreground hover:bg-paper hover:text-ink inline-flex min-h-10 items-center gap-1.5 px-2.5 font-semibold"
+          className="inline-flex min-h-10 items-center gap-1.5 rounded-control px-2.5 text-small font-semibold text-muted-foreground hover:bg-paper hover:text-ink"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
           <span>Back to reservations</span>
         </Link>
-        <h1 className="text-h1 font-display text-ink mt-2 font-bold tracking-tight">
+        <h1 className="mt-2 font-display text-h2 font-bold tracking-tight text-ink">
           New Reservation
         </h1>
         <p className="text-small text-muted-foreground">
@@ -483,13 +484,14 @@ export function NewReservationClient({
       </div>
 
       {displayError && (
-        <div
-          role="alert"
-          className="rounded-control border-destructive/30 bg-destructive/10 text-small text-destructive flex items-start gap-2.5 border p-4"
+        <Alert
+          variant="destructive"
+          size="panel"
+          className="items-start gap-2.5"
         >
-          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <AlertCircle className="shrink-0" aria-hidden="true" />
           <span>{displayError}</span>
-        </div>
+        </Alert>
       )}
 
       <form noValidate onSubmit={handleSubmit(onSubmit)}>
@@ -504,20 +506,19 @@ export function NewReservationClient({
               <div className="space-y-4">
                 {/* Dates */}
                 <div className="space-y-1.5">
-                  <Label className="text-small text-ink font-semibold">
+                  <Label className="text-small font-semibold text-ink">
                     Stay Dates <span className="text-destructive">*</span>
                   </Label>
                   <Popover>
                     <PopoverTrigger
                       render={
                         <Button
-                          variant="outline"
-                          size="md"
+                          variant="secondary"
                           className="w-full justify-start gap-2.5 text-left font-normal"
                         />
                       }
                     >
-                      <CalendarDays className="text-muted-foreground size-4 shrink-0" />
+                      <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
                       <span>
                         {checkIn && checkOut
                           ? `${format(parseISO(checkIn), 'LLL dd, y')} - ${format(parseISO(checkOut), 'LLL dd, y')}`
@@ -576,7 +577,7 @@ export function NewReservationClient({
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="new-adults"
-                      className="text-small text-ink font-semibold"
+                      className="text-small font-semibold text-ink"
                     >
                       Adults (Ages 13+){' '}
                       <span className="text-destructive">*</span>
@@ -595,7 +596,7 @@ export function NewReservationClient({
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="new-children"
-                      className="text-small text-ink font-semibold"
+                      className="text-small font-semibold text-ink"
                     >
                       Children (Ages 0-12)
                     </Label>
@@ -612,7 +613,7 @@ export function NewReservationClient({
 
                 {/* Room Type Selector */}
                 <div>
-                  <Label className="text-small text-ink block font-semibold">
+                  <Label className="block text-small font-semibold text-ink">
                     Room Category <span className="text-destructive">*</span>
                   </Label>
                   <div className="mt-1 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
@@ -622,8 +623,7 @@ export function NewReservationClient({
                         <Button
                           key={rt.id}
                           type="button"
-                          variant={selected ? 'default' : 'outline'}
-                          size="md"
+                          variant={selected ? 'primary' : 'secondary'}
                           onClick={() =>
                             setValue('roomTypeId', rt.id, {
                               shouldDirty: true,
@@ -642,7 +642,7 @@ export function NewReservationClient({
                             </p>
                           </div>
                           <span className="text-small font-bold">
-                            {formatNaira(rt.basePriceMinor / 100)}/nt
+                            {formatMinor(rt.basePriceMinor)}/nt
                           </span>
                         </Button>
                       );
@@ -654,7 +654,7 @@ export function NewReservationClient({
                 <div className="space-y-1.5">
                   <Label
                     htmlFor="room-assignment"
-                    className="text-small text-ink font-semibold"
+                    className="text-small font-semibold text-ink"
                   >
                     Room Assignment
                   </Label>
@@ -702,7 +702,7 @@ export function NewReservationClient({
                       </Select>
                     )}
                   />
-                  <p className="text-caption text-muted-foreground mt-1">
+                  <p className="mt-1 text-caption text-muted-foreground">
                     {loadingRooms
                       ? 'Checking available rooms…'
                       : availableRooms.length > 0
@@ -715,7 +715,7 @@ export function NewReservationClient({
                 {activeRoomType?.extraBedAvailable && (
                   <Label
                     htmlFor="extra-bed-toggle"
-                    className="text-small text-ink flex cursor-pointer items-center gap-2 pt-2"
+                    className="flex cursor-pointer items-center gap-2 pt-2 text-small text-ink"
                   >
                     <Controller
                       control={control}
@@ -746,7 +746,7 @@ export function NewReservationClient({
                 <div className="space-y-1.5">
                   <Label
                     htmlFor="new-guest-name"
-                    className="text-small text-ink font-semibold"
+                    className="text-small font-semibold text-ink"
                   >
                     Guest Full Name <span className="text-destructive">*</span>
                   </Label>
@@ -764,7 +764,7 @@ export function NewReservationClient({
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="new-guest-phone"
-                      className="text-small text-ink font-semibold"
+                      className="text-small font-semibold text-ink"
                     >
                       Phone Number <span className="text-destructive">*</span>
                     </Label>
@@ -781,7 +781,7 @@ export function NewReservationClient({
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="new-guest-email"
-                      className="text-small text-ink font-semibold"
+                      className="text-small font-semibold text-ink"
                     >
                       Email Address{' '}
                       {!noEmail && <span className="text-destructive">*</span>}
@@ -797,7 +797,7 @@ export function NewReservationClient({
                     />
                     <Label
                       htmlFor="no-email-checkbox"
-                      className="text-caption text-ink mt-1.5 flex cursor-pointer items-center gap-2"
+                      className="mt-1.5 flex cursor-pointer items-center gap-2 text-caption text-ink"
                     >
                       <Controller
                         control={control}
@@ -822,7 +822,7 @@ export function NewReservationClient({
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="new-guest-country"
-                      className="text-small text-ink font-semibold"
+                      className="text-small font-semibold text-ink"
                     >
                       Country
                     </Label>
@@ -842,7 +842,7 @@ export function NewReservationClient({
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="new-arrival-time"
-                      className="text-small text-ink font-semibold"
+                      className="text-small font-semibold text-ink"
                     >
                       Arrival Time
                     </Label>
@@ -858,7 +858,7 @@ export function NewReservationClient({
                   <div className="space-y-1.5">
                     <Label
                       htmlFor="booking-channel"
-                      className="text-small text-ink font-semibold"
+                      className="text-small font-semibold text-ink"
                     >
                       Booking Channel
                     </Label>
@@ -911,7 +911,7 @@ export function NewReservationClient({
                 <div className="space-y-1.5">
                   <Label
                     htmlFor="new-special-requests"
-                    className="text-small text-ink font-semibold"
+                    className="text-small font-semibold text-ink"
                   >
                     Special Requests
                   </Label>
@@ -929,7 +929,7 @@ export function NewReservationClient({
                 <div className="space-y-1.5">
                   <Label
                     htmlFor="new-internal-notes"
-                    className="text-small text-ink font-semibold"
+                    className="text-small font-semibold text-ink"
                   >
                     Internal Staff Notes
                   </Label>
@@ -950,7 +950,7 @@ export function NewReservationClient({
                 title="3. Add-on Extras"
                 description="Optional amenities and hotel services."
               >
-                <div className="divide-line divide-y">
+                <div className="divide-y divide-line">
                   {extrasCatalog.map((extra) => {
                     const quantity =
                       extras.find((selection) => selection.id === extra.id)
@@ -961,17 +961,17 @@ export function NewReservationClient({
                         className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
                       >
                         <div>
-                          <p className="text-small text-ink font-semibold">
+                          <p className="text-small font-semibold text-ink">
                             {extra.name}
                           </p>
                           <p className="text-caption text-muted-foreground">
-                            {formatNaira(extra.priceMinor / 100)} / {extra.unit}
+                            {formatMinor(extra.priceMinor)} / {extra.unit}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
                           <Button
                             type="button"
-                            variant="outline"
+                            variant="secondary"
                             size="icon-xs"
                             disabled={quantity === 0}
                             onClick={() =>
@@ -981,12 +981,12 @@ export function NewReservationClient({
                           >
                             -
                           </Button>
-                          <span className="text-small text-ink w-6 text-center font-bold">
+                          <span className="w-6 text-center text-small font-bold text-ink">
                             {quantity}
                           </span>
                           <Button
                             type="button"
-                            variant="outline"
+                            variant="secondary"
                             size="icon-xs"
                             disabled={quantity >= extra.maxQuantity}
                             onClick={() =>
@@ -1013,7 +1013,7 @@ export function NewReservationClient({
                 <div className="space-y-4">
                   <Label
                     htmlFor="discount-toggle-checkbox"
-                    className="text-small text-ink flex cursor-pointer items-center gap-2"
+                    className="flex cursor-pointer items-center gap-2 text-small text-ink"
                   >
                     <Controller
                       control={control}
@@ -1045,7 +1045,7 @@ export function NewReservationClient({
                       <div className="space-y-1.5">
                         <Label
                           htmlFor="discount-type-select"
-                          className="text-small text-ink font-semibold"
+                          className="text-small font-semibold text-ink"
                         >
                           Discount Type
                         </Label>
@@ -1091,7 +1091,7 @@ export function NewReservationClient({
                       <div className="space-y-1.5">
                         <Label
                           htmlFor="discount-value-input"
-                          className="text-small text-ink font-semibold"
+                          className="text-small font-semibold text-ink"
                         >
                           Discount Value
                         </Label>
@@ -1113,7 +1113,7 @@ export function NewReservationClient({
                       <div className="space-y-1.5">
                         <Label
                           htmlFor="discount-reason-input"
-                          className="text-small text-ink font-semibold"
+                          className="text-small font-semibold text-ink"
                         >
                           Required Reason{' '}
                           <span className="text-destructive">*</span>
@@ -1145,8 +1145,7 @@ export function NewReservationClient({
                   {/* Hold */}
                   <Button
                     type="button"
-                    variant={paymentMode === 'hold' ? 'default' : 'outline'}
-                    size="md"
+                    variant={paymentMode === 'hold' ? 'primary' : 'secondary'}
                     onClick={() =>
                       setValue('paymentMode', 'hold', {
                         shouldDirty: true,
@@ -1156,10 +1155,10 @@ export function NewReservationClient({
                     className="h-auto flex-col items-start p-4 text-left font-normal"
                   >
                     <CalendarDays
-                      className="text-brand-ink size-5"
+                      className="size-5 text-brand-ink"
                       aria-hidden="true"
                     />
-                    <p className="text-small mt-2 font-semibold">
+                    <p className="mt-2 text-small font-semibold">
                       Hold room with payment link
                     </p>
                     <p className="text-caption text-wrap opacity-80">
@@ -1173,9 +1172,10 @@ export function NewReservationClient({
                     <Button
                       type="button"
                       variant={
-                        paymentMode === 'record_payment' ? 'default' : 'outline'
+                        paymentMode === 'record_payment'
+                          ? 'primary'
+                          : 'secondary'
                       }
-                      size="md"
                       onClick={() =>
                         setValue('paymentMode', 'record_payment', {
                           shouldDirty: true,
@@ -1185,10 +1185,10 @@ export function NewReservationClient({
                       className="h-auto flex-col items-start p-4 text-left font-normal"
                     >
                       <CreditCard
-                        className="text-brand-ink size-5"
+                        className="size-5 text-brand-ink"
                         aria-hidden="true"
                       />
-                      <p className="text-small mt-2 font-semibold">
+                      <p className="mt-2 text-small font-semibold">
                         Record payment now
                       </p>
                       <p className="text-caption text-wrap opacity-80">
@@ -1202,9 +1202,8 @@ export function NewReservationClient({
                   <Button
                     type="button"
                     variant={
-                      paymentMode === 'pay_at_hotel' ? 'default' : 'outline'
+                      paymentMode === 'pay_at_hotel' ? 'primary' : 'secondary'
                     }
-                    size="md"
                     onClick={() =>
                       setValue('paymentMode', 'pay_at_hotel', {
                         shouldDirty: true,
@@ -1214,10 +1213,10 @@ export function NewReservationClient({
                     className="h-auto flex-col items-start p-4 text-left font-normal"
                   >
                     <DollarSign
-                      className="text-brand-ink size-5"
+                      className="size-5 text-brand-ink"
                       aria-hidden="true"
                     />
-                    <p className="text-small mt-2 font-semibold">
+                    <p className="mt-2 text-small font-semibold">
                       Confirm without payment
                     </p>
                     <p className="text-caption text-wrap opacity-80">
@@ -1228,8 +1227,8 @@ export function NewReservationClient({
 
                 {/* Hold parameters */}
                 {paymentMode === 'hold' && (
-                  <div className="bg-muted rounded-control border-line text-small space-y-2 border p-4">
-                    <Label className="text-ink block font-semibold">
+                  <div className="space-y-2 rounded-control border border-line bg-muted p-4 text-small">
+                    <Label className="block font-semibold text-ink">
                       Hold Duration (Hours)
                     </Label>
                     <div className="flex flex-wrap items-center gap-2">
@@ -1237,7 +1236,9 @@ export function NewReservationClient({
                         <Button
                           key={hours}
                           type="button"
-                          variant={holdHours === hours ? 'default' : 'outline'}
+                          variant={
+                            holdHours === hours ? 'primary' : 'secondary'
+                          }
                           size="xs"
                           onClick={() =>
                             setValue('holdHours', hours, {
@@ -1255,12 +1256,12 @@ export function NewReservationClient({
 
                 {/* Immediate payment inputs */}
                 {paymentMode === 'record_payment' && (
-                  <div className="bg-muted rounded-control border-line text-small space-y-3 border p-4">
+                  <div className="space-y-3 rounded-control border border-line bg-muted p-4 text-small">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                       <div className="space-y-1.5">
                         <Label
                           htmlFor="immediate-amount"
-                          className="text-ink font-semibold"
+                          className="font-semibold text-ink"
                         >
                           Amount (₦) <span className="text-destructive">*</span>
                         </Label>
@@ -1280,7 +1281,7 @@ export function NewReservationClient({
                       <div className="space-y-1.5">
                         <Label
                           htmlFor="immediate-payment-method"
-                          className="text-ink font-semibold"
+                          className="font-semibold text-ink"
                         >
                           Method
                         </Label>
@@ -1335,7 +1336,7 @@ export function NewReservationClient({
                       <div className="space-y-1.5">
                         <Label
                           htmlFor="immediate-reference"
-                          className="text-ink font-semibold"
+                          className="font-semibold text-ink"
                         >
                           Reference
                         </Label>
@@ -1352,7 +1353,7 @@ export function NewReservationClient({
                     <div className="space-y-1.5">
                       <Label
                         htmlFor="immediate-note"
-                        className="text-ink font-semibold"
+                        className="font-semibold text-ink"
                       >
                         Receipt / Note
                       </Label>
@@ -1372,29 +1373,29 @@ export function NewReservationClient({
 
           {/* Sticky Financial Summary Sidebar */}
           <div className="space-y-6">
-            <div className="rounded-card border-line bg-paper sticky top-6 space-y-5 border p-5 shadow-sm">
-              <h2 className="font-display text-h3 text-ink font-semibold">
+            <div className="sticky top-6 space-y-5 rounded-card border border-line bg-paper p-5 shadow-raised">
+              <h2 className="font-display text-h3 font-semibold text-ink">
                 Booking Summary
               </h2>
 
               {/* Basic Details */}
-              <div className="border-line text-small space-y-2 border-b pb-4">
+              <div className="space-y-2 border-b border-line pb-4 text-small">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Room:</span>
-                  <span className="text-ink font-semibold">
+                  <span className="font-semibold text-ink">
                     {activeRoomType?.name ?? 'None'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Dates:</span>
-                  <span className="text-ink font-semibold">
+                  <span className="font-semibold text-ink">
                     {checkIn} to {checkOut} ({nights}{' '}
                     {nights === 1 ? 'night' : 'nights'})
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Guests:</span>
-                  <span className="text-ink font-semibold">
+                  <span className="font-semibold text-ink">
                     {adults} Adults
                     {children > 0 ? `, ${children} Children` : ''}
                   </span>
@@ -1403,7 +1404,7 @@ export function NewReservationClient({
 
               {/* Price Breakdown from Server Quote */}
               {quoting ? (
-                <div className="text-small text-muted-foreground flex items-center justify-center p-6">
+                <div className="flex items-center justify-center p-6 text-small text-muted-foreground">
                   <Loader2
                     className="mr-2 size-4 animate-spin"
                     aria-hidden="true"
@@ -1411,30 +1412,30 @@ export function NewReservationClient({
                   Calculating price...
                 </div>
               ) : quote?.status === 'ok' ? (
-                <div className="text-small space-y-2">
+                <div className="space-y-2 text-small">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
                       Room Subtotal:
                     </span>
                     <span>
-                      {formatNaira(quote.breakdown.roomSubtotalMinor / 100)}
+                      {formatMinor(quote.breakdown.roomSubtotalMinor)}
                     </span>
                   </div>
 
                   {quote.breakdown.extras.map((extra) => (
                     <div
                       key={extra.id}
-                      className="text-caption text-muted-foreground flex justify-between"
+                      className="flex justify-between text-caption text-muted-foreground"
                     >
                       <span>
                         {extra.name} (x{extra.quantity}):
                       </span>
-                      <span>{formatNaira(extra.totalMinor / 100)}</span>
+                      <span>{formatMinor(extra.totalMinor)}</span>
                     </div>
                   ))}
 
                   {quote.breakdown.discount && (
-                    <div className="text-success flex justify-between">
+                    <div className="flex justify-between text-success">
                       <span>{quote.breakdown.discount.label}:</span>
                       <span>
                         -
@@ -1445,35 +1446,35 @@ export function NewReservationClient({
                     </div>
                   )}
 
-                  <div className="text-caption text-muted-foreground flex justify-between">
+                  <div className="flex justify-between text-caption text-muted-foreground">
                     <span>Service Charge:</span>
                     <span>
-                      {formatNaira(quote.breakdown.serviceChargeMinor / 100)}
+                      {formatMinor(quote.breakdown.serviceChargeMinor)}
                     </span>
                   </div>
 
-                  <div className="text-caption text-muted-foreground flex justify-between">
+                  <div className="flex justify-between text-caption text-muted-foreground">
                     <span>Tax:</span>
-                    <span>{formatNaira(quote.breakdown.taxMinor / 100)}</span>
+                    <span>{formatMinor(quote.breakdown.taxMinor)}</span>
                   </div>
 
-                  <div className="border-line text-ink flex justify-between border-t pt-2 text-base font-bold">
+                  <div className="flex justify-between border-t border-line pt-2 text-body font-bold text-ink">
                     <span>Total Amount:</span>
-                    <span>{formatNaira(quote.breakdown.totalMinor / 100)}</span>
+                    <span>{formatMinor(quote.breakdown.totalMinor)}</span>
                   </div>
                 </div>
               ) : quote?.status === 'unavailable' ||
                 quote?.status === 'invalid' ? (
-                <div className="rounded-control border-destructive/40 bg-destructive/10 text-caption text-destructive border p-3">
+                <Alert variant="destructive" size="sm">
                   Room category is unavailable for the selected dates.
-                </div>
+                </Alert>
               ) : null}
 
               {/* Staff Terms Acknowledgment */}
-              <div className="border-line border-t pt-4">
+              <div className="border-t border-line pt-4">
                 <Label
                   htmlFor="terms-accepted-checkbox"
-                  className="text-caption text-ink flex cursor-pointer items-start gap-2"
+                  className="flex cursor-pointer items-start gap-2 text-caption text-ink"
                 >
                   <Controller
                     control={control}

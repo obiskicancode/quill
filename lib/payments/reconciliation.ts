@@ -130,8 +130,8 @@ export function validateManualRefundPayout(params: {
     return {
       ok: false,
       error: ERROR_MESSAGES.PAYOUT_EXCEEDS_REFUND_DUE(
-        (payoutAmountMinor / 100).toLocaleString(),
-        (refundDueMinor / 100).toLocaleString(),
+        payoutAmountMinor,
+        refundDueMinor,
       ),
     };
   }
@@ -141,9 +141,7 @@ export function validateManualRefundPayout(params: {
   if (payoutAmountMinor > remainingPaid) {
     return {
       ok: false,
-      error: ERROR_MESSAGES.PAYOUT_EXCEEDS_REMAINING(
-        (remainingPaid / 100).toLocaleString(),
-      ),
+      error: ERROR_MESSAGES.PAYOUT_EXCEEDS_REMAINING(remainingPaid),
     };
   }
 

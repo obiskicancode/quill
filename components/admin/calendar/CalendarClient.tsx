@@ -188,19 +188,19 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
 
       {/* Main Content States */}
       {loading ? (
-        <div className="rounded-card border-line bg-paper flex h-96 flex-col items-center justify-center border">
-          <Loader2 className="text-muted-foreground size-8 animate-spin" />
-          <p className="text-small text-muted-foreground mt-3">
+        <div className="flex h-96 flex-col items-center justify-center rounded-card border border-line bg-paper">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
+          <p className="mt-3 text-small text-muted-foreground">
             Loading calendar availability...
           </p>
         </div>
       ) : error ? (
-        <div className="rounded-card border-destructive/30 bg-paper flex h-96 flex-col items-center justify-center border p-6 text-center">
-          <AlertCircle className="text-destructive size-10" />
-          <h2 className="text-h4 text-ink mt-2 font-semibold">
+        <div className="flex h-96 flex-col items-center justify-center rounded-card border border-destructive/30 bg-paper p-6 text-center">
+          <AlertCircle className="size-10 text-destructive" />
+          <h2 className="mt-2 text-h3 font-semibold text-ink">
             Failed to Load Calendar
           </h2>
-          <p className="text-small text-muted-foreground mt-1 max-w-md">
+          <p className="mt-1 max-w-md text-small text-muted-foreground">
             {error}
           </p>
           <Button
@@ -214,18 +214,18 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
           </Button>
         </div>
       ) : data.rooms.length === 0 ? (
-        <div className="rounded-card border-line bg-paper flex h-96 flex-col items-center justify-center border p-6 text-center">
-          <BedDouble className="text-muted-foreground size-10" />
-          <h2 className="text-h4 text-ink mt-2 font-semibold">
+        <div className="flex h-96 flex-col items-center justify-center rounded-card border border-line bg-paper p-6 text-center">
+          <BedDouble className="size-10 text-muted-foreground" />
+          <h2 className="mt-2 text-h3 font-semibold text-ink">
             No Rooms Configured
           </h2>
-          <p className="text-small text-muted-foreground mt-1 max-w-md">
+          <p className="mt-1 max-w-md text-small text-muted-foreground">
             There are no rooms found in the property inventory matching this
             filter.
           </p>
           <Link
             href="/admin/rooms"
-            className="rounded-control bg-ink text-small text-paper mt-4 inline-flex items-center gap-1.5 px-4 py-2 font-semibold hover:opacity-90 focus:outline-hidden"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-control bg-ink px-4 py-2 text-small font-semibold text-paper hover:opacity-90 focus:outline-hidden"
           >
             Manage Rooms & Room Types
           </Link>

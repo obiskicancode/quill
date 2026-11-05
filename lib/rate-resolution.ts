@@ -1,12 +1,10 @@
 import { fromISO } from '@/lib/dates';
+import { formatMinorDigits } from '@/lib/format';
 import type {
   NightRateResolution,
   RateRuleLike,
 } from '@/types/inventory.types';
 
-/**
- * Converts a Naira string or number (e.g. "85,000" or "85000.50" or 85000) into integer minor units (kobo).
- */
 export function nairaToMinor(value: string | number): number {
   if (typeof value === 'number') {
     if (isNaN(value) || value < 0) return 0;
@@ -18,49 +16,29 @@ export function nairaToMinor(value: string | number): number {
   return Math.round(num * 100);
 }
 
-/**
- * Formats minor units (kobo) into standard formatted Naira string.
- */
 export function minorToNaira(
   minor: number | null | undefined,
   includeDecimals = false,
 ): string {
   if (minor === null || minor === undefined || isNaN(minor)) return '0';
-  const naira = minor / 100;
-  return new Intl.NumberFormat('en-NG', {
-    minimumFractionDigits: includeDecimals ? 2 : 0,
-    maximumFractionDigits: includeDecimals ? 2 : 0,
-  }).format(naira);
+  return formatMinorDigits(minor, includeDecimals);
 }
 
-/**
- * Converts percentage (e.g. 20 for 20%) into basis points (2000).
- */
 export function percentageToBps(percent: number): number {
   if (isNaN(percent)) return 0;
   return Math.round(percent * 100);
 }
 
-/**
- * Converts basis points (e.g. 2000) into percentage (20).
- */
 export function bpsToPercentage(bps: number): number {
   if (isNaN(bps)) return 0;
   return bps / 100;
 }
 
-/**
- * Checks if a given ISO date is a weekend night (Friday = 5, Saturday = 6).
- * Employs native JS getDay mappings (0=Sunday ... 6=Saturday)
- */
 export function isWeekendNight(dateStr: string): boolean {
   const day = fromISO(dateStr).getDay();
   return day === 5 || day === 6;
 }
 
-/**
- * Resolves nightly rate against room base/weekend price and active rate rules.
- */
 export function resolveNightlyRate(params: {
   roomTypeId: string;
   date: string; // YYYY-MM-DD

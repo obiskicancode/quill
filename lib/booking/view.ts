@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 
+import { hotelClock, nightsBetween } from '@/lib/dates';
 import { arrivalOptions } from '@/schemas/checkout.schema';
 import type {
   GuestCancellation,
@@ -12,7 +13,7 @@ import type {
 } from '@/types/checkout.types';
 
 import { getCheckoutSettings } from '../checkout/settings';
-import { hotelClock, nightsBetween } from '../dates';
+import { formatGuestTime } from '../format';
 import { buildManageData } from '../manage/data';
 import {
   isActionableForCheckout,
@@ -87,6 +88,11 @@ export interface ViewOptions {
   manage?: { csrf: string; expiresAt: number };
 }
 
+/** Snapshots taken before formatGuestTime existed store raw "14:00:00" inside the rule text; guests still read it as "2 pm". */
+function formatEmbeddedTimes(text: string): string {
+  return text.replace(/\b\d{2}:\d{2}(?::\d{2})?\b/g, (m) => formatGuestTime(m));
+}
+
 export async function buildGuestReservation(
   r: StoredReservation,
   level: AccessLevel,
@@ -136,7 +142,11 @@ export async function buildGuestReservation(
     room: snap.room,
     times: snap.times,
     breakdown: snap.breakdown,
-    policy: snap.policy,
+    policy: {
+      ...snap.policy,
+      checkInRules: formatEmbeddedTimes(snap.policy.checkInRules),
+      checkOutRules: formatEmbeddedTimes(snap.policy.checkOutRules),
+    },
     hotel: snap.hotel,
     approvalResponse: snap.approvalResponse,
     addExtras: snap.addExtras,

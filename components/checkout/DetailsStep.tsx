@@ -1,8 +1,7 @@
 'use client';
 
-import Link from 'next/link';
-
 import { Field, inputClass } from '@/components/ui/form-field';
+import { TextLink } from '@/components/ui/text-link';
 import { countries } from '@/constants/countries';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
@@ -144,19 +143,17 @@ export function DetailsStep({
       </div>
 
       {edit && (
-        <p className="text-small -mt-2">
-          <a
+        <p className="-mt-2 text-small">
+          <TextLink
             href={whatsappHref(
               site,
               `Hello, I need to change the email on booking ${reference ?? ''}.`,
             )}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="decoration-brand inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
+            external
           >
             Change email? Contact us
             <span className="sr-only"> (opens in a new tab)</span>
-          </a>
+          </TextLink>
         </p>
       )}
 
@@ -259,7 +256,7 @@ export function DetailsStep({
       )}
 
       {!edit && stay && editHref && (
-        <div className="rounded-control bg-paper text-small flex flex-wrap items-center justify-between gap-3 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-control bg-paper p-4 text-small">
           <p>
             <span className="font-semibold">
               {stay.adults} {stay.adults === 1 ? 'adult' : 'adults'}
@@ -270,12 +267,7 @@ export function DetailsStep({
               </span>
             )}
           </p>
-          <Link
-            href={editHref}
-            className="decoration-brand inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
-          >
-            Edit stay
-          </Link>
+          <TextLink href={editHref}>Edit stay</TextLink>
         </div>
       )}
     </section>

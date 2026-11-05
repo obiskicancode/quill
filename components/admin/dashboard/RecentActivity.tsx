@@ -39,7 +39,7 @@ export function RecentActivity({ events }: { events: ActivityEvent[] }) {
             occur.
           </AdminEmpty>
         ) : (
-          <AnimatedList className="divide-line divide-y">
+          <AnimatedList className="divide-y divide-line">
             {events.map((event) => {
               const Icon = iconMap[event.type] ?? CalendarCheck;
               return (
@@ -53,14 +53,14 @@ export function RecentActivity({ events }: { events: ActivityEvent[] }) {
                 >
                   <Link
                     href={event.href}
-                    className="group rounded-control hover:bg-paper flex items-center justify-between gap-3 px-2 py-1.5 transition-colors"
+                    className="group flex items-center justify-between gap-3 rounded-control px-2 py-1.5 transition-colors hover:bg-paper"
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="rounded-control bg-paper text-muted-foreground group-hover:bg-primary group-hover:text-ink grid size-8 shrink-0 place-items-center">
+                      <span className="grid size-8 shrink-0 place-items-center rounded-control bg-paper text-muted-foreground group-hover:bg-primary group-hover:text-ink">
                         <Icon className="size-4" aria-hidden="true" />
                       </span>
                       <div className="min-w-0">
-                        <p className="text-small text-ink group-hover:text-brand-ink truncate font-medium">
+                        <p className="truncate text-small font-medium text-ink group-hover:text-brand-ink">
                           {event.label}
                         </p>
                         <p className="text-caption text-muted-foreground">
@@ -69,7 +69,7 @@ export function RecentActivity({ events }: { events: ActivityEvent[] }) {
                       </div>
                     </div>
                     <ArrowRight
-                      className="text-muted-foreground group-hover:text-ink size-4 shrink-0 transition-transform group-hover:translate-x-1"
+                      className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-ink"
                       aria-hidden="true"
                     />
                   </Link>

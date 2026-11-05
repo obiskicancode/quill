@@ -18,7 +18,7 @@ export function AmenitiesSection({ room }: { room: RoomDetail }) {
       </h2>
       <StaggerGroup
         as="ul"
-        className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-4"
+        className="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 xl:grid-cols-4"
         staggerChildren={0.05}
       >
         {shown.map((key) => (
@@ -28,7 +28,7 @@ export function AmenitiesSection({ room }: { room: RoomDetail }) {
             key={key}
             className="flex items-center gap-3"
           >
-            <span className="bg-primary/25 text-brand-ink grid size-10 shrink-0 place-items-center rounded-full">
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/25 text-brand-ink">
               <RoomAmenityIcon name={key} className="size-5" />
             </span>
             <span className="text-small font-medium">

@@ -40,7 +40,7 @@ export function SortMenu({
       >
         <SelectTrigger
           id={id}
-          className="bg-card hover:bg-paper min-h-11 min-w-[10.625rem]"
+          className="min-h-11 min-w-42.5 bg-card hover:bg-paper"
         >
           <SelectValue placeholder="Sort by" />
         </SelectTrigger>

@@ -11,6 +11,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -122,143 +123,140 @@ export function InviteStaffDialog({
         if (!open && !busy) onClose();
       }}
     >
-      <DialogContent className="rounded-card border-line bg-card max-w-lg gap-0 border p-0 shadow-xl sm:max-w-lg">
-        <DialogHeader className="border-line border-b p-6 pr-14 pb-3">
+      <DialogContent size="lg">
+        <DialogHeader>
           <div className="flex items-center gap-2">
-            <UserPlus className="text-primary size-5" aria-hidden />
-            <DialogTitle className="font-display text-h3 text-ink font-semibold">
-              Invite Staff Member
-            </DialogTitle>
+            <UserPlus className="size-5 text-primary" aria-hidden />
+            <DialogTitle>Invite Staff Member</DialogTitle>
           </div>
         </DialogHeader>
 
         <form
           onSubmit={handleSubmit(handleFormSubmit)}
-          className="text-small space-y-4 p-6"
+          className="flex min-h-0 flex-1 flex-col"
           noValidate
         >
-          <DialogDescription className="text-caption text-muted-foreground">
-            The invited staff member will receive a secure 72-hour single-use
-            link to set their password and enrol in 2FA.
-          </DialogDescription>
+          <DialogBody className="space-y-4">
+            <DialogDescription>
+              The invited staff member will receive a secure 72-hour single-use
+              link to set their password and enrol in 2FA.
+            </DialogDescription>
 
-          <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                id="invite-first-name"
+                label="First Name"
+                error={errors.firstName?.message}
+              >
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    {...register('firstName')}
+                    type="text"
+                    required
+                    placeholder="Ada"
+                    className={inputClass(errors.firstName?.message)}
+                  />
+                )}
+              </Field>
+              <Field
+                id="invite-last-name"
+                label="Last Name"
+                error={errors.lastName?.message}
+              >
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    {...register('lastName')}
+                    type="text"
+                    required
+                    placeholder="Okafor"
+                    className={inputClass(errors.lastName?.message)}
+                  />
+                )}
+              </Field>
+            </div>
+
             <Field
-              id="invite-first-name"
-              label="First Name"
-              error={errors.firstName?.message}
+              id="invite-email"
+              label="Email Address"
+              error={errors.email?.message}
             >
               {(a11y) => (
                 <Input
                   {...a11y}
-                  {...register('firstName')}
-                  type="text"
+                  {...register('email')}
+                  type="email"
                   required
-                  placeholder="Ada"
-                  className={inputClass(errors.firstName?.message)}
+                  placeholder="staff@hoteldela.com"
+                  className={inputClass(errors.email?.message)}
                 />
               )}
             </Field>
-            <Field
-              id="invite-last-name"
-              label="Last Name"
-              error={errors.lastName?.message}
-            >
-              {(a11y) => (
-                <Input
-                  {...a11y}
-                  {...register('lastName')}
-                  type="text"
-                  required
-                  placeholder="Okafor"
-                  className={inputClass(errors.lastName?.message)}
-                />
-              )}
-            </Field>
-          </div>
 
-          <Field
-            id="invite-email"
-            label="Email Address"
-            error={errors.email?.message}
-          >
-            {(a11y) => (
-              <Input
-                {...a11y}
-                {...register('email')}
-                type="email"
-                required
-                placeholder="staff@hoteldela.com"
-                className={inputClass(errors.email?.message)}
-              />
-            )}
-          </Field>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Field id="invite-role" label="Role" error={errors.role?.message}>
-              {(a11y) => (
-                <Controller
-                  control={control}
-                  name="role"
-                  render={({ field }) => (
-                    <Select
-                      items={ROLE_OPTIONS}
-                      value={field.value}
-                      onValueChange={(val) => {
-                        if (val) field.onChange(val);
-                      }}
-                    >
-                      <SelectTrigger
-                        id={a11y.id}
-                        aria-describedby={a11y['aria-describedby']}
-                        aria-invalid={a11y['aria-invalid']}
-                        onBlur={field.onBlur}
-                        className={inputClass(errors.role?.message)}
+            <div className="grid grid-cols-2 gap-3">
+              <Field id="invite-role" label="Role" error={errors.role?.message}>
+                {(a11y) => (
+                  <Controller
+                    control={control}
+                    name="role"
+                    render={({ field }) => (
+                      <Select
+                        items={ROLE_OPTIONS}
+                        value={field.value}
+                        onValueChange={(val) => {
+                          if (val) field.onChange(val);
+                        }}
                       >
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ROLE_OPTIONS.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              )}
-            </Field>
-            <Field
-              id="invite-phone"
-              label="Phone Number (Optional)"
-              error={errors.phone?.message}
-            >
-              {(a11y) => (
-                <Input
-                  {...a11y}
-                  {...register('phone')}
-                  type="tel"
-                  placeholder="+234..."
-                  className={inputClass(errors.phone?.message)}
-                />
-              )}
-            </Field>
-          </div>
+                        <SelectTrigger
+                          id={a11y.id}
+                          aria-describedby={a11y['aria-describedby']}
+                          aria-invalid={a11y['aria-invalid']}
+                          onBlur={field.onBlur}
+                          className={inputClass(errors.role?.message)}
+                        >
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLE_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                )}
+              </Field>
+              <Field
+                id="invite-phone"
+                label="Phone Number (Optional)"
+                error={errors.phone?.message}
+              >
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    {...register('phone')}
+                    type="tel"
+                    placeholder="+234..."
+                    className={inputClass(errors.phone?.message)}
+                  />
+                )}
+              </Field>
+            </div>
 
-          {error && (
-            <Alert
-              variant="destructive"
-              className="border-destructive/30 bg-destructive/5 text-caption text-destructive"
-            >
-              {error}
-            </Alert>
-          )}
+            {error && (
+              <Alert variant="destructive" size="sm">
+                {error}
+              </Alert>
+            )}
+          </DialogBody>
 
-          <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+          <DialogFooter>
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={onClose}
               disabled={busy}

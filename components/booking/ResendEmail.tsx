@@ -5,6 +5,7 @@ import { Mail } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
+import { TextLink } from '@/components/ui/text-link';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useResendConfirmation } from '@/hooks/services/guest/use-booking';
@@ -70,9 +71,9 @@ export function ResendEmail({
           : '';
 
   return (
-    <div className="text-small flex flex-wrap items-center gap-x-4 gap-y-2">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-small">
       <p className="inline-flex items-center gap-2">
-        <Mail className="text-brand-ink size-4" aria-hidden />
+        <Mail className="size-4 text-brand-ink" aria-hidden />
         <span>
           {lead} <span className="font-semibold">{maskedEmail}</span>
         </span>
@@ -88,22 +89,20 @@ export function ResendEmail({
           ? `Resend in ${formatCountdown(cooldown * 1000)}`
           : 'Resend email'}
       </Button>
-      <a
+      <TextLink
         href={whatsappHref(
           site,
           `Hello, booking ${reference} was sent to the wrong email address.`,
         )}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="decoration-brand inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
+        external
       >
         Wrong email? Contact us
         <span className="sr-only"> (opens in a new tab)</span>
-      </a>
+      </TextLink>
       <p
         role="status"
         aria-live="polite"
-        className={`text-small basis-full font-medium ${state === 'failed' || state === 'limited' ? 'text-destructive' : ''}`}
+        className={`basis-full text-small font-medium ${state === 'failed' || state === 'limited' ? 'text-destructive' : ''}`}
       >
         <AnimatePresence mode="wait" initial={false}>
           {message && (

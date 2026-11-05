@@ -8,7 +8,7 @@ import {
   ChevronRight,
   ShieldAlert,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -68,7 +68,6 @@ export function CalendarAgendaView({
             <Button
               type="button"
               variant="ghost"
-              size="md"
               onClick={() => toggleDate(stat.date)}
               className="h-auto w-full justify-between px-4 py-3 text-left font-normal"
               aria-expanded={isExpanded}
@@ -83,16 +82,16 @@ export function CalendarAgendaView({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-small text-ink font-serif font-semibold">
+                    <span className="font-serif text-small font-semibold text-ink">
                       {formatLong(stat.date)}
                     </span>
                     {isToday && (
-                      <span className="rounded-control bg-primary/20 text-brand-ink px-1.5 py-0.5 text-[0.625rem] font-bold">
+                      <span className="rounded-control bg-primary/20 px-1.5 py-0.5 text-micro font-bold text-brand-ink">
                         TODAY
                       </span>
                     )}
                   </div>
-                  <div className="text-caption text-muted-foreground mt-0.5 flex flex-wrap items-center gap-2">
+                  <div className="mt-0.5 flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
                     <span>
                       {stat.occupancyPercent}% occupancy ({stat.occupiedRooms}/
                       {stat.sellableRooms})
@@ -102,7 +101,7 @@ export function CalendarAgendaView({
                       ↓ {stat.arrivalsCount} arrivals
                     </span>
                     <span>•</span>
-                    <span className="text-blue-700 dark:text-blue-400">
+                    <span className="text-departures">
                       ↑ {stat.departuresCount} departures
                     </span>
                   </div>
@@ -117,9 +116,9 @@ export function CalendarAgendaView({
                   return (
                     <span
                       key={rt.id}
-                      className={`rounded-control border px-2 py-0.5 text-[0.6875rem] font-medium ${
+                      className={`rounded-control border px-2 py-0.5 text-micro font-medium ${
                         free > 0
-                          ? 'bg-muted border-line text-ink'
+                          ? 'border-line bg-muted text-ink'
                           : 'border-destructive/30 bg-destructive/10 text-destructive'
                       }`}
                     >
@@ -132,7 +131,7 @@ export function CalendarAgendaView({
 
             {/* Expanded Content */}
             {isExpanded && (
-              <div className="border-line/60 space-y-4 border-t p-4">
+              <div className="space-y-4 border-t border-line/60 p-4">
                 {/* Free summary on mobile */}
                 <div className="flex flex-wrap gap-1 sm:hidden">
                   {data.roomTypes.map((rt) => {
@@ -141,7 +140,7 @@ export function CalendarAgendaView({
                     return (
                       <span
                         key={rt.id}
-                        className="bg-muted rounded-control border-line text-muted-foreground border px-2 py-0.5 text-[0.6875rem]"
+                        className="rounded-control border border-line bg-muted px-2 py-0.5 text-micro text-muted-foreground"
                       >
                         {rt.name}:{' '}
                         <strong className="text-ink">
@@ -154,8 +153,8 @@ export function CalendarAgendaView({
 
                 {/* Day arrivals list */}
                 <div>
-                  <h4 className="text-caption text-muted-foreground mb-2 flex items-center gap-1.5 font-semibold tracking-wider uppercase">
-                    <ArrowDownLeft className="text-success size-3.5" />
+                  <h4 className="mb-2 flex items-center gap-1.5 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
+                    <ArrowDownLeft className="size-3.5 text-success" />
                     Arrivals ({dayArrivals.length})
                   </h4>
                   {dayArrivals.length === 0 ? (
@@ -172,16 +171,16 @@ export function CalendarAgendaView({
                           <Link
                             key={res.id}
                             href={`/admin/reservations/${res.id}`}
-                            className="bg-muted/40 hover:bg-muted rounded-control border-line text-small flex items-center justify-between border px-3 py-2 transition-colors focus:outline-hidden"
+                            className="flex items-center justify-between rounded-control border border-line bg-muted/40 px-3 py-2 text-small transition-colors hover:bg-muted focus:outline-hidden"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-caption text-muted-foreground font-mono">
+                              <span className="font-mono text-caption text-muted-foreground">
                                 #{room?.roomNumber ?? '??'}
                               </span>
-                              <span className="text-ink font-medium">
+                              <span className="font-medium text-ink">
                                 {res.guestName}
                               </span>
-                              <span className="text-caption text-muted-foreground font-mono">
+                              <span className="font-mono text-caption text-muted-foreground">
                                 ({res.reference})
                               </span>
                             </div>
@@ -197,8 +196,8 @@ export function CalendarAgendaView({
 
                 {/* Day departures list */}
                 <div>
-                  <h4 className="text-caption text-muted-foreground mb-2 flex items-center gap-1.5 font-semibold tracking-wider uppercase">
-                    <ArrowUpRight className="size-3.5 text-blue-600" />
+                  <h4 className="mb-2 flex items-center gap-1.5 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
+                    <ArrowUpRight className="size-3.5 text-departures" />
                     Departures ({dayDepartures.length})
                   </h4>
                   {dayDepartures.length === 0 ? (
@@ -215,16 +214,16 @@ export function CalendarAgendaView({
                           <Link
                             key={res.id}
                             href={`/admin/reservations/${res.id}`}
-                            className="bg-muted/40 hover:bg-muted rounded-control border-line text-small flex items-center justify-between border px-3 py-2 transition-colors focus:outline-hidden"
+                            className="flex items-center justify-between rounded-control border border-line bg-muted/40 px-3 py-2 text-small transition-colors hover:bg-muted focus:outline-hidden"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-caption text-muted-foreground font-mono">
+                              <span className="font-mono text-caption text-muted-foreground">
                                 #{room?.roomNumber ?? '??'}
                               </span>
-                              <span className="text-ink font-medium">
+                              <span className="font-medium text-ink">
                                 {res.guestName}
                               </span>
-                              <span className="text-caption text-muted-foreground font-mono">
+                              <span className="font-mono text-caption text-muted-foreground">
                                 ({res.reference})
                               </span>
                             </div>
@@ -241,8 +240,8 @@ export function CalendarAgendaView({
                 {/* Day blocks list */}
                 {dayBlocks.length > 0 && (
                   <div>
-                    <h4 className="text-caption text-muted-foreground mb-2 flex items-center gap-1.5 font-semibold tracking-wider uppercase">
-                      <ShieldAlert className="text-destructive size-3.5" />
+                    <h4 className="mb-2 flex items-center gap-1.5 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
+                      <ShieldAlert className="size-3.5 text-destructive" />
                       Active Room Blocks ({dayBlocks.length})
                     </h4>
                     <div className="space-y-1.5">
@@ -251,13 +250,13 @@ export function CalendarAgendaView({
                         return (
                           <div
                             key={b.id}
-                            className="bg-muted/40 rounded-control border-line text-small flex items-center justify-between border px-3 py-2"
+                            className="flex items-center justify-between rounded-control border border-line bg-muted/40 px-3 py-2 text-small"
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-caption text-muted-foreground font-mono">
+                              <span className="font-mono text-caption text-muted-foreground">
                                 #{room?.roomNumber ?? '??'}
                               </span>
-                              <span className="text-ink font-medium capitalize">
+                              <span className="font-medium text-ink capitalize">
                                 {b.reason.replace('_', ' ')}
                               </span>
                               {b.notes && (
@@ -266,7 +265,7 @@ export function CalendarAgendaView({
                                 </span>
                               )}
                             </div>
-                            <span className="text-muted-foreground font-mono text-[0.6875rem]">
+                            <span className="font-mono text-micro text-muted-foreground">
                               {formatShort(b.startDate)} →{' '}
                               {formatShort(b.endDate)}
                             </span>
@@ -284,7 +283,7 @@ export function CalendarAgendaView({
                     variant="link"
                     size="xs"
                     onClick={() => onSelectDate(stat.date)}
-                    className="text-caption text-ink h-auto p-0 font-medium"
+                    className="h-auto p-0 text-caption font-medium text-ink"
                   >
                     Open Full Day Breakdown →
                   </Button>

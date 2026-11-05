@@ -11,8 +11,8 @@
     color: #000 !important;
   }
 
-  /* No navigation, buttons or the floating WhatsApp button. */
-  .checkout-chrome,
+  /* No navigation, buttons or the floating WhatsApp button. The checkout shell's
+     own header and footer carry print:hidden. */
   a[href='#main'],
   a[aria-label^='Chat with us on WhatsApp'],
   button,

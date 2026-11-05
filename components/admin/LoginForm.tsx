@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
@@ -13,6 +12,7 @@ import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Button } from '@/components/ui/button';
 import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { TextLink } from '@/components/ui/text-link';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useAdminLogin } from '@/hooks/services/admin/use-auth';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
@@ -84,11 +84,11 @@ export function LoginForm({
 
   return (
     <div>
-      <p className="text-caption text-muted-foreground font-semibold tracking-wide uppercase">
+      <p className="text-caption font-semibold tracking-wide text-muted-foreground uppercase">
         Staff access
       </p>
-      <h1 className="font-display text-h2 mt-2">Sign in</h1>
-      <p className="text-small text-muted-foreground mt-2">
+      <h1 className="mt-2 font-display text-h2">Sign in</h1>
+      <p className="mt-2 text-small text-muted-foreground">
         Use your work email and password. Owners will be asked for an
         authenticator code.
       </p>
@@ -160,7 +160,7 @@ export function LoginForm({
                 size="icon"
                 onClick={() => setShowPassword((value) => !value)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 h-full w-12"
+                className="absolute inset-y-0 right-0 h-full w-12 text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? (
                   <EyeOff className="size-5" aria-hidden />
@@ -185,13 +185,10 @@ export function LoginForm({
         </Button>
       </form>
 
-      <div className="text-small mt-4 flex items-center justify-between gap-3">
-        <Link
-          href="/admin/forgot-password"
-          className="decoration-line hover:decoration-ink font-semibold underline underline-offset-4"
-        >
+      <div className="mt-4 flex items-center justify-between gap-3 text-small">
+        <TextLink href="/admin/forgot-password" tone="quiet">
           Forgot password?
-        </Link>
+        </TextLink>
       </div>
     </div>
   );

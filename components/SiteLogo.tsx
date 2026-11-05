@@ -27,7 +27,7 @@ export function SiteLogo({
           className="h-9 w-auto md:h-10"
         />
       ) : (
-        <span className="font-display max-w-[9.5rem] text-lg leading-[1.1] md:max-w-none md:text-xl">
+        <span className="max-w-[9.5rem] font-display text-body-lg leading-[1.1] md:max-w-none md:text-figure-sm">
           {site.shortName}
         </span>
       )}

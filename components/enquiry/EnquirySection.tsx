@@ -1,5 +1,6 @@
-import Link from 'next/link';
 import { CalendarSearch, MessageCircle } from 'lucide-react';
+
+import { TextLink } from '@/components/ui/text-link';
 
 import { ButtonLink } from '../ui/button';
 
@@ -15,13 +16,13 @@ export function EnquirySection({ whatsappHref, refCode }: EnquirySectionProps) {
     <section aria-labelledby="enquiry-intro-title" className="section-y">
       <div className="container-page max-w-3xl">
         <div>
-          <p className="text-small text-brand-ink font-semibold tracking-wide uppercase">
+          <p className="text-small font-semibold tracking-wide text-brand-ink uppercase">
             Booking enquiries
           </p>
-          <h2 id="enquiry-intro-title" className="font-display text-h2 mt-2">
+          <h2 id="enquiry-intro-title" className="mt-2 font-display text-h2">
             Need help with a booking?
           </h2>
-          <p className="text-body-lg text-ink/85 mt-3 max-w-3xl">
+          <p className="mt-3 max-w-3xl text-body-lg text-ink/85">
             Ask us about dates, rooms, a group booking or anything else before
             you pay. If you already have a booking, tell us its reference
             {refCode ? (
@@ -48,15 +49,9 @@ export function EnquirySection({ whatsappHref, refCode }: EnquirySectionProps) {
               Check room availability
             </ButtonLink>
           </div>
-          <p className="text-small text-muted-foreground mt-3">
+          <p className="mt-3 text-small text-muted-foreground">
             Want to send a general question instead?{' '}
-            <Link
-              href="/contact"
-              className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
-            >
-              Go to the contact page
-            </Link>
-            .
+            <TextLink href="/contact">Go to the contact page</TextLink>.
           </p>
         </div>
       </div>

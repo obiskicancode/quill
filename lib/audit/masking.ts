@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 
+import { formatHotelDateTime, formatMinorExact } from '@/lib/format';
 import type { AuditDiffField } from '@/types/audit.types';
 
 const SENSITIVE_KEY_PATTERNS = [
@@ -87,7 +88,7 @@ function formatValueForDisplay(key: string, val: unknown): string {
 
   if (typeof val === 'number') {
     if (key.endsWith('Minor') || key.endsWith('_minor')) {
-      return `₦${(val / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
+      return formatMinorExact(val);
     }
     return val.toLocaleString();
   }
@@ -97,11 +98,7 @@ function formatValueForDisplay(key: string, val: unknown): string {
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(val)) {
       try {
         const d = new Date(val);
-        return d.toLocaleString('en-GB', {
-          timeZone: 'Africa/Lagos',
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        });
+        return formatHotelDateTime(d);
       } catch {
         return val;
       }

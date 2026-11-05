@@ -2,9 +2,10 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { Breadcrumb } from '@/components/Breadcrumb';
+import { Section } from '@/components/content/Section';
+import { SectionSkeleton } from '@/components/content/Skeletons';
 import { CtaBand } from '@/components/CtaBand';
 import { GroupEventStrip } from '@/components/GroupEventStrip';
-import { HelpBlock } from '@/components/HelpBlock';
 import { Reveal } from '@/components/motion/Reveal';
 import { TextReveal } from '@/components/motion/TextReveal';
 import { PolicyHighlights } from '@/components/PolicyHighlights';
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
 function ExplorerFallback() {
   return (
     <div className="container-page pt-10" aria-busy="true">
-      <ul className="grid gap-6 lg:grid-cols-2 lg:pl-[calc(17rem+2.5rem)]">
+      <ul className="grid gap-6 lg:grid-cols-2 lg:pl-[calc(var(--rooms-rail)+2.5rem)]">
         {[0, 1].map((i) => (
           <li key={i}>
             <SkeletonCard />
@@ -51,10 +52,10 @@ export default async function RoomsPage() {
           text="Rooms & Accommodation"
           onScroll={false}
           staggerChildren={0.05}
-          className="font-display text-h2 md:text-display mt-3"
+          className="mt-3 font-display text-h2 md:text-display"
         />
         <Reveal delay={0.15}>
-          <p className="text-body-lg text-ink/85 mt-4 max-w-2xl">
+          <p className="mt-4 max-w-2xl text-body-lg text-ink/85">
             Compare our rooms and apartments side by side. Add your dates to see
             the total for your stay, with taxes and fees shown up front.
           </p>
@@ -65,15 +66,29 @@ export default async function RoomsPage() {
         <RoomsExplorer rooms={rooms} />
       </Suspense>
 
-      <Reveal>
-        <HelpBlock />
-      </Reveal>
-      <Reveal>
-        <GroupEventStrip />
-      </Reveal>
-      <Reveal>
-        <PolicyHighlights />
-      </Reveal>
+      <Section
+        label="group booking"
+        skeleton={
+          <SectionSkeleton variant="strip" label="Loading group booking" />
+        }
+      >
+        <Reveal>
+          <GroupEventStrip />
+        </Reveal>
+      </Section>
+      <Section
+        label="the booking policies"
+        skeleton={
+          <SectionSkeleton
+            variant="cards"
+            label="Loading the booking policies"
+          />
+        }
+      >
+        <Reveal>
+          <PolicyHighlights />
+        </Reveal>
+      </Section>
       <CtaBand />
     </>
   );

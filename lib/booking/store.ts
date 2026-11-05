@@ -29,6 +29,7 @@ import { recomputeReservationFinancials } from '@/lib/reservations/payment-ledge
 import type { GuestInfo, ReservationSnapshot } from '@/types/booking.types';
 import type {
   CheckoutBreakdown,
+  CheckoutQuoteOk,
   ConfirmationMode,
   ExtraSelection,
   GuestReservationStatus,
@@ -613,6 +614,203 @@ async function writeStoredReservation(
   }
 }
 
+async function writeReservationExtras(
+  executor: QueryExecutor,
+  reservationId: string,
+  lines: CheckoutQuoteOk['breakdown']['extras'],
+): Promise<void> {
+  if (lines.length === 0) return;
+  const extraRows = await executor
+    .select()
+    .from(extras)
+    .where(
+      inArray(
+        extras.slug,
+        lines.map((line) => line.id),
+      ),
+    );
+  const bySlug = new Map(extraRows.map((extra) => [extra.slug, extra]));
+  await executor.insert(reservationExtras).values(
+    lines.map((line) => {
+      const extra = bySlug.get(line.id);
+      return {
+        reservationId,
+        extraId: extra?.id ?? null,
+        name: line.name,
+        quantity: line.quantity,
+        unitPriceMinor:
+          extra?.priceMinor ??
+          Math.round(line.totalMinor / Math.max(1, line.quantity)),
+        totalMinor: line.totalMinor,
+        pricingUnit: extra?.pricingUnit ?? 'per_stay',
+      };
+    }),
+  );
+}
+
+function normalizeSelections(selections: ExtraSelection[]): ExtraSelection[] {
+  return selections
+    .filter((selection) => selection.quantity > 0)
+    .map((selection) => ({
+      id: selection.id,
+      quantity: selection.quantity,
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function sameSelections(a: ExtraSelection[], b: ExtraSelection[]): boolean {
+  const left = normalizeSelections(a);
+  const right = normalizeSelections(b);
+  return (
+    left.length === right.length &&
+    left.every(
+      (selection, index) =>
+        selection.id === right[index]?.id &&
+        selection.quantity === right[index]?.quantity,
+    )
+  );
+}
+
+function sameGuest(a: GuestInfo, b: GuestInfo): boolean {
+  return (
+    a.fullName === b.fullName &&
+    a.email === b.email &&
+    a.phone === b.phone &&
+    a.country === b.country &&
+    a.arrivalTime === b.arrivalTime &&
+    a.specialRequests === b.specialRequests
+  );
+}
+
+export type HoldUpdateOutcome =
+  'not_found' | 'not_allowed' | 'hold_expired' | 'ok';
+
+/**
+ * Updates the details and extras on a live hold. The reservation row is locked
+ * first, so a payment cannot complete while the total is being rewritten. Changing
+ * the amount supersedes any pending provider session, which the webhook guard
+ * later refunds if it still gets paid.
+ */
+export async function updateReservationHold(input: {
+  reference: string;
+  guest: GuestInfo;
+  extraBed: boolean;
+  quote: CheckoutQuoteOk;
+  executor?: QueryExecutor;
+}): Promise<{
+  outcome: HoldUpdateOutcome;
+  updated: boolean;
+  reservation: StoredReservation | null;
+}> {
+  const executor = input.executor ?? db;
+  return inTransaction(executor, async (tx) => {
+    const [row] = await tx
+      .select({ id: reservations.id })
+      .from(reservations)
+      .where(eq(reservations.reference, input.reference))
+      .limit(1)
+      .for('update');
+    if (!row) {
+      return {
+        outcome: 'not_found' as const,
+        updated: false,
+        reservation: null,
+      };
+    }
+
+    const r = await loadStoredReservation(input.reference, tx);
+    if (!r) {
+      return {
+        outcome: 'not_found' as const,
+        updated: false,
+        reservation: null,
+      };
+    }
+    if (r.status === 'expired') {
+      return {
+        outcome: 'hold_expired' as const,
+        updated: false,
+        reservation: r,
+      };
+    }
+    if (
+      !['pending_payment', 'awaiting_transfer', 'payment_failed'].includes(
+        r.status,
+      ) ||
+      r.proof !== null ||
+      r.paidMinor > 0
+    ) {
+      return {
+        outcome: 'not_allowed' as const,
+        updated: false,
+        reservation: r,
+      };
+    }
+
+    const extras = input.quote.breakdown.extras.map((line) => ({
+      id: line.id,
+      quantity: line.quantity,
+    }));
+    const changed =
+      !sameGuest(r.guest, input.guest) ||
+      r.stay.extraBed !== input.extraBed ||
+      !sameSelections(r.extras, extras);
+    if (!changed) {
+      return { outcome: 'ok' as const, updated: false, reservation: r };
+    }
+
+    const amountChanged =
+      r.totals.dueNowMinor !== input.quote.payment.dueNowMinor;
+    r.guest = input.guest;
+    r.stay.extraBed = input.extraBed;
+    r.extras = extras;
+    r.snapshot.breakdown = input.quote.breakdown;
+    r.totals = {
+      totalMinor: input.quote.payment.totalMinor,
+      dueNowMinor: input.quote.payment.dueNowMinor,
+      balanceAtHotelMinor: input.quote.payment.balanceAtHotelMinor,
+    };
+
+    await tx
+      .delete(reservationExtras)
+      .where(eq(reservationExtras.reservationId, r.id));
+    await writeReservationExtras(tx, r.id, input.quote.breakdown.extras);
+
+    if (amountChanged) {
+      await tx
+        .update(payments)
+        .set({
+          status: 'failed',
+          failedAt: new Date(),
+          providerResponse: {
+            reason: 'superseded',
+            source: 'checkout_hold_update',
+          },
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(payments.reservationId, r.id),
+            eq(payments.status, 'pending'),
+            inArray(payments.type, ['deposit', 'balance', 'full']),
+          ),
+        );
+      if (r.status === 'awaiting_transfer') r.status = 'pending_payment';
+      r.paymentReference = null;
+    }
+
+    logEvent(
+      r,
+      'details_changed',
+      amountChanged
+        ? 'Checkout details changed; the payment amount was updated.'
+        : 'Checkout details updated.',
+    );
+    await saveStoredReservation(r, tx);
+    return { outcome: 'ok' as const, updated: true, reservation: r };
+  });
+}
+
 export function toReservationResponse(r: StoredReservation) {
   return {
     reference: r.reference,
@@ -815,6 +1013,20 @@ export async function insertPayment(
   return id;
 }
 
+function supersededByHoldUpdate(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false;
+  const response = value as {
+    reason?: unknown;
+    source?: unknown;
+    supersededBy?: unknown;
+  };
+  return (
+    (response.reason === 'superseded' &&
+      response.source === 'checkout_hold_update') ||
+    response.supersededBy === 'checkout_hold_update'
+  );
+}
+
 async function recordLatePaymentRefund(
   executor: QueryExecutor,
   r: StoredReservation,
@@ -983,7 +1195,7 @@ export async function completeOnlinePayment(input: {
         : null;
     const isChangePayment = Boolean(changeRow);
 
-    const markPaid = async () => {
+    const markPaid = async (superseded = false) => {
       if (alreadyPaid) return;
       await tx
         .update(payments)
@@ -991,11 +1203,41 @@ export async function completeOnlinePayment(input: {
           status: 'paid',
           paidAt: new Date(),
           netAmountMinor: input.amountMinor,
-          providerResponse: input.payload,
+          providerResponse: superseded
+            ? {
+                ...input.payload,
+                supersededBy: 'checkout_hold_update',
+              }
+            : input.payload,
           updatedAt: new Date(),
         })
         .where(eq(payments.id, payment.id));
     };
+
+    if (supersededByHoldUpdate(payment.providerResponse)) {
+      await markPaid(true);
+      logEvent(
+        r,
+        'payment_received',
+        'Payment received after checkout details changed.',
+      );
+      await recordLatePaymentRefund(
+        tx,
+        r,
+        payment,
+        'Payment received after checkout details changed',
+      );
+      await saveStoredReservation(r, tx);
+      logStructured(
+        'payment.hold_superseded',
+        {
+          reference: payment.reference,
+          reservation: r.reference,
+        },
+        'warn',
+      );
+      return { ok: true };
+    }
 
     if (r.status === 'cancelled' || r.status === 'expired') {
       await markPaid();

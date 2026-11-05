@@ -8,8 +8,15 @@ import {
   MessageCircle,
   ShieldCheck,
 } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  ActionBarSummary,
+  MobileActionBar,
+} from '@/components/ui/mobile-action-bar';
+import { textLinkClasses } from '@/components/ui/text-link';
+import { AVAILABILITY_SEARCH_ID } from '@/constants/content';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useQuote } from '@/hooks/services/guest/use-room-quote';
 import { bookingHref, stayParams } from '@/lib/booking/links';
@@ -29,8 +36,10 @@ import { PriceBlock } from '../rooms/PriceBlock';
 import { Button, ButtonLink } from '../ui/button';
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '../ui/sheet';
@@ -43,11 +52,8 @@ interface BookingCardProps {
   bestPriceDirect: boolean;
 }
 
-/**
- * Sticky booking card (desktop) and bottom bar plus sheet (mobile). The price breakdown comes from the server;
- * this component only displays it. States: no dates, checking, available, low availability, sold out,
- * price hidden, rule violations (with a one-tap fix), error, and extra bed.
- */
+type Scope = 'rail' | 'sheet';
+
 export function BookingCard({
   room,
   initial,
@@ -56,6 +62,7 @@ export function BookingCard({
   const site = useSite();
   const router = useRouter();
   const pathname = usePathname();
+  const uid = useId();
   const [stay, setStay] = useState<StayInput>(initial);
   const [datesOpen, setDatesOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -120,10 +127,25 @@ export function BookingCard({
     setDatesOpen(true);
   };
 
+  const showViolations = () => {
+    const lists = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-violations]'),
+    );
+    const list =
+      lists.find((l) => l.getBoundingClientRect().height > 0) ?? lists[0];
+    const item = list?.querySelector<HTMLElement>('[data-violation]');
+    if (!item) return;
+    item.scrollIntoView({ block: 'center' });
+    item.focus({ preventScroll: true });
+  };
+
   // --- the one primary action ---
   let primary: ReactNode;
   if (onRequest) {
-    const p = new URLSearchParams({ room: room.slug, topic: 'price' });
+    const p = new URLSearchParams({
+      room: room.slug,
+      topic: 'booking_enquiry',
+    });
     if (stay.checkIn && stay.checkOut) {
       p.set('checkIn', stay.checkIn);
       p.set('checkOut', stay.checkOut);
@@ -161,8 +183,13 @@ export function BookingCard({
     );
   } else if (invalid) {
     primary = (
-      <Button size="lg" className="w-full" disabled>
-        Book Now
+      <Button
+        size="lg"
+        variant="secondary"
+        className="w-full"
+        onClick={showViolations}
+      >
+        See what to change
       </Button>
     );
   } else if (soldOut) {
@@ -176,9 +203,10 @@ export function BookingCard({
   }
 
   const guestsControls = (
-    <div className="divide-line border-line divide-y border-y">
+    <div className="divide-y divide-line border-y border-line">
       <GuestStepper
         label="Adults"
+        unit={{ one: 'adult', many: 'adults' }}
         hint={`Up to ${room.maxAdults}`}
         value={stay.adults}
         min={1}
@@ -187,6 +215,7 @@ export function BookingCard({
       />
       <GuestStepper
         label="Children"
+        unit={{ one: 'child', many: 'children' }}
         hint={`Up to ${room.maxChildren}`}
         value={stay.children}
         min={0}
@@ -196,34 +225,35 @@ export function BookingCard({
     </div>
   );
 
-  const extraBedControl = needsExtra ? (
-    <div className="rounded-control bg-paper flex items-start justify-between gap-4 p-4">
-      <div>
-        <p id="extra-bed-label" className="font-semibold">
-          Extra bed
-        </p>
-        <p className="text-small text-muted-foreground">
-          {guests} guests need one.{' '}
-          {room.extraBed.priceMinor
-            ? `${formatMinor(room.extraBed.priceMinor)} per night.`
-            : 'No charge.'}
-        </p>
+  const extraBedControl = (scope: Scope) =>
+    needsExtra ? (
+      <div className="flex items-start justify-between gap-4 rounded-control bg-paper p-4">
+        <div>
+          <p id={`${uid}-${scope}-extra-bed`} className="font-semibold">
+            Extra bed
+          </p>
+          <p className="text-small text-muted-foreground">
+            {guests} guests need one.{' '}
+            {room.extraBed.priceMinor
+              ? `${formatMinor(room.extraBed.priceMinor)} per night.`
+              : 'No charge.'}
+          </p>
+        </div>
+        <Switch
+          checked={stay.extraBed}
+          onCheckedChange={(checked) => patch({ extraBed: checked })}
+          aria-labelledby={`${uid}-${scope}-extra-bed`}
+          className="mt-1"
+        />
       </div>
-      <Switch
-        checked={stay.extraBed}
-        onCheckedChange={(checked) => patch({ extraBed: checked })}
-        aria-labelledby="extra-bed-label"
-        className="mt-1"
-      />
-    </div>
-  ) : !room.extraBed.available ? (
-    <p className="text-small text-muted-foreground">
-      No extra bed is available in this room. It sleeps up to {room.baseGuests}{' '}
-      guests.
-    </p>
-  ) : null;
+    ) : !room.extraBed.available ? (
+      <p className="text-small text-muted-foreground">
+        No extra bed is available in this room. It sleeps up to{' '}
+        {room.baseGuests} guests.
+      </p>
+    ) : null;
 
-  const resultArea = (() => {
+  const resultArea = (scope: Scope) => {
     if (!room.showPrice) return null;
     if (state.status === 'idle')
       return (
@@ -234,15 +264,14 @@ export function BookingCard({
     if (checking) return <BreakdownSkeleton />;
     if (failed) {
       return (
-        <div
-          role="alert"
-          className="rounded-control border-destructive/40 border p-4"
-        >
-          <p className="font-semibold">We couldn&rsquo;t check availability</p>
-          <p className="text-small text-muted-foreground mt-1">
+        <Alert variant="destructive" role="alert">
+          <AlertTitle className="font-semibold">
+            We couldn&rsquo;t check availability
+          </AlertTitle>
+          <AlertDescription>
             Your dates and guests are saved. Please try again.
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
       );
     }
     if (available) return <PriceBreakdown quote={available.quote} />;
@@ -252,14 +281,14 @@ export function BookingCard({
           <p className="font-semibold">Not available for these dates</p>
           {soldOut.suggestions.length > 0 ? (
             <>
-              <p className="text-small text-muted-foreground mt-1">
+              <p className="mt-1 text-small text-muted-foreground">
                 Nearby dates that are free:
               </p>
               <ul className="mt-3 space-y-2">
                 {soldOut.suggestions.map((s) => (
                   <li key={s.checkIn}>
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       className="w-full justify-between"
                       onClick={() =>
                         patch({ checkIn: s.checkIn, checkOut: s.checkOut })
@@ -275,15 +304,15 @@ export function BookingCard({
               </ul>
             </>
           ) : (
-            <p className="text-small text-muted-foreground mt-1">
+            <p className="mt-1 text-small text-muted-foreground">
               No nearby dates are free. Message us and we will look for options.
             </p>
           )}
-          <p className="text-small mt-3">
+          <p className="mt-3 text-small">
             <a
               href="#similar-rooms"
               onClick={() => setSheetOpen(false)}
-              className="decoration-brand inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
+              className={textLinkClasses}
             >
               See similar rooms
             </a>
@@ -293,40 +322,42 @@ export function BookingCard({
     }
     if (invalid) {
       return (
-        <ul className="space-y-4">
+        <ul data-violations={scope} className="space-y-4">
           {invalid.violations.map((v) => (
             <li
               key={v.code}
-              className="rounded-control border-destructive/40 border p-4"
+              data-violation
+              tabIndex={-1}
+              className="rounded-control focus:ring-2 focus:ring-ring"
             >
-              <p className="text-small text-destructive font-medium">
-                {v.message}
-              </p>
-              {v.fix && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="mt-3"
-                  onClick={() => patch(v.fix!.patch)}
-                >
-                  {v.fix.label}
-                </Button>
-              )}
+              <Alert variant="destructive">
+                <AlertTitle>{v.message}</AlertTitle>
+                {v.fix && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => patch(v.fix!.patch)}
+                  >
+                    {v.fix.label}
+                  </Button>
+                )}
+              </Alert>
             </li>
           ))}
         </ul>
       );
     }
     return null;
-  })();
+  };
 
-  const panel = (
+  const panel = (scope: Scope) => (
     <div className="space-y-5">
       <div className="min-h-22">
         {available ? (
           <div>
             <p>
-              <span className="font-display text-2xl">
+              <span className="font-display text-figure">
                 {formatMinor(available.quote.averageNightlyMinor)}
               </span>
               <span className="text-small text-muted-foreground">
@@ -334,7 +365,7 @@ export function BookingCard({
                 / night on average
               </span>
             </p>
-            <p className="text-small text-muted-foreground mt-1">
+            <p className="mt-1 text-small text-muted-foreground">
               for {nights} {nights === 1 ? 'night' : 'nights'}
             </p>
             <div className="mt-2">
@@ -355,17 +386,17 @@ export function BookingCard({
 
       <div>
         <Button
-          variant="outline"
+          variant="secondary"
           aria-expanded={datesOpen}
           onClick={() => setDatesOpen((o) => !o)}
           className="h-auto min-h-14 w-full items-center justify-start gap-3 px-4 text-left font-normal"
         >
           <CalendarDays
-            className="text-brand-ink size-5 shrink-0"
+            className="size-5 shrink-0 text-brand-ink"
             aria-hidden
           />
           <span className="min-w-0">
-            <span className="text-caption text-muted-foreground block font-semibold">
+            <span className="block text-caption font-semibold text-muted-foreground">
               Dates
             </span>
             <span
@@ -380,7 +411,7 @@ export function BookingCard({
           </span>
         </Button>
         {datesOpen && (
-          <div className="rounded-control border-line mt-3 border p-3">
+          <div className="mt-3 rounded-control border border-line p-3">
             <DatePicker
               value={{ checkIn: stay.checkIn, checkOut: stay.checkOut }}
               onChange={(next) => {
@@ -394,35 +425,22 @@ export function BookingCard({
       </div>
 
       {guestsControls}
-      {extraBedControl}
+      {extraBedControl(scope)}
 
-      <div aria-hidden={false}>{resultArea}</div>
+      <div>{resultArea(scope)}</div>
       <p aria-live="polite" aria-atomic="true" className="sr-only">
         {announce}
       </p>
 
-      <div className="space-y-3">
-        {primary}
-        <ButtonLink
-          href={whatsappHref(site, whatsappMessage)}
-          external
-          variant="secondary"
-          className="w-full"
-          icon={<MessageCircle className="size-5" aria-hidden />}
-        >
-          Ask on WhatsApp
-        </ButtonLink>
-      </div>
-
-      <ul className="text-small space-y-1">
+      <ul className="space-y-1 text-small">
         <li className="flex items-center gap-2">
-          <Lock className="text-brand-ink size-4 shrink-0" aria-hidden />
+          <Lock className="size-4 shrink-0 text-brand-ink" aria-hidden />
           Pay securely online
         </li>
         {available?.quote.freeCancellationUntil && (
           <li className="flex items-center gap-2">
             <BadgeCheck
-              className="text-brand-ink size-4 shrink-0"
+              className="size-4 shrink-0 text-brand-ink"
               aria-hidden
             />
             Free cancellation until{' '}
@@ -432,13 +450,28 @@ export function BookingCard({
         {bestPriceDirect && (
           <li className="flex items-center gap-2">
             <ShieldCheck
-              className="text-brand-ink size-4 shrink-0"
+              className="size-4 shrink-0 text-brand-ink"
               aria-hidden
             />
             Best price when you book direct
           </li>
         )}
       </ul>
+    </div>
+  );
+
+  const actions = (
+    <div className="space-y-3">
+      {primary}
+      <ButtonLink
+        href={whatsappHref(site, whatsappMessage)}
+        external
+        variant="secondary"
+        className="w-full"
+        icon={<MessageCircle className="size-5" aria-hidden />}
+      >
+        Ask on WhatsApp
+      </ButtonLink>
     </div>
   );
 
@@ -467,52 +500,48 @@ export function BookingCard({
   return (
     <>
       {/* Desktop */}
-      <div className="rounded-card border-line bg-card shadow-float hidden border p-6 lg:sticky lg:top-24 lg:block lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto">
-        <Reveal>{panel}</Reveal>
-      </div>
-
-      {/* Mobile and tablet bar. It carries the id the global Book Now bar watches, so the two never stack. */}
-      <div
-        id="availability-search"
-        className="border-line bg-paper/95 fixed inset-x-0 bottom-0 z-30 border-t px-4 pt-3 pr-22 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden"
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate font-semibold">{barPrice}</p>
-            {dateText && (
-              <p className="text-small text-muted-foreground truncate">
-                {dateText}, {guests} {guests === 1 ? 'guest' : 'guests'}
-              </p>
-            )}
-          </div>
-          <Button
-            size="md"
-            className="shrink-0"
-            onClick={() => {
-              setSheetOpen(true);
-              if (state.status === 'idle' && room.showPrice) setDatesOpen(true);
-            }}
-          >
-            {barLabel}
-          </Button>
+      <div className="sticky-under-header hidden rounded-card border border-line bg-card p-6 shadow-float lg:block">
+        <Reveal>{panel('rail')}</Reveal>
+        <div className="sticky bottom-0 -mx-6 -mb-6 rounded-b-card border-t border-line bg-card px-6 pt-4 pb-6">
+          {actions}
         </div>
       </div>
+
+      <MobileActionBar id={AVAILABILITY_SEARCH_ID}>
+        <ActionBarSummary
+          primary={barPrice}
+          secondary={
+            dateText &&
+            `${dateText}, ${guests} ${guests === 1 ? 'guest' : 'guests'}`
+          }
+        />
+        <Button
+          className="shrink-0"
+          onClick={() => {
+            setSheetOpen(true);
+            if (state.status === 'idle' && room.showPrice) setDatesOpen(true);
+          }}
+        >
+          {barLabel}
+        </Button>
+      </MobileActionBar>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent
           side="bottom"
-          showCloseButton
-          className="rounded-t-card border-line bg-paper text-ink max-h-[92dvh] gap-0 border-t p-0 lg:hidden"
+          surface="paper"
+          className="max-h-[92dvh] rounded-t-card lg:hidden"
         >
-          <SheetHeader className="border-line border-b px-5 py-2 pr-14">
-            <SheetTitle className="font-display text-h3">Your stay</SheetTitle>
+          <SheetHeader>
+            <SheetTitle>Your stay</SheetTitle>
             <SheetDescription className="sr-only">
               Choose your dates and guests before booking this room.
             </SheetDescription>
           </SheetHeader>
-          <div className="overflow-y-auto px-5 py-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-            {panel}
-          </div>
+          <SheetBody>{panel('sheet')}</SheetBody>
+          <SheetFooter className="border-t border-line bg-paper pb-safe">
+            {actions}
+          </SheetFooter>
         </SheetContent>
       </Sheet>
     </>

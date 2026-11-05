@@ -1,5 +1,6 @@
 'use client';
 
+import { TextLink } from '@/components/ui/text-link';
 import { useSite } from '@/providers/site.provider';
 
 import { Magnetic } from '../motion/Magnetic';
@@ -10,7 +11,6 @@ import { StaggerItem } from '../motion/StaggerItem';
 import { TextReveal } from '../motion/TextReveal';
 import { scaleIn } from '../motion/variants';
 import { Photo } from '../ui/Photo';
-import { TextLink } from '../ui/TextLink';
 
 export function Intro() {
   const site = useSite();
@@ -24,10 +24,10 @@ export function Intro() {
             as="h2"
             id="intro-heading"
             text={heading}
-            className="font-display text-h2 max-w-xl text-balance"
+            className="max-w-xl font-display text-h2 text-balance"
           />
           <StaggerGroup
-            className="text-body-lg text-ink/85 mt-6 max-w-xl space-y-4 leading-[1.7]"
+            className="mt-6 max-w-xl space-y-4 text-body-lg leading-prose text-ink/85"
             staggerChildren={0.1}
           >
             {body.map((paragraph) => (
@@ -51,7 +51,7 @@ export function Intro() {
                 src={image.src}
                 alt={image.alt}
                 sizes="(min-width: 768px) 40vw, 100vw"
-                className="rounded-card aspect-[4/5] w-full"
+                className="aspect-[4/5] w-full rounded-card"
               />
             </Reveal>
           </Parallax>

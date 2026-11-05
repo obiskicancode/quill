@@ -5,8 +5,9 @@ import { useState } from 'react';
 
 import { AdminCard } from '@/components/admin/AdminCard';
 import { AdminEmpty } from '@/components/admin/AdminStates';
+import { PaymentStatusBadge } from '@/components/admin/payments/PaymentStatusBadge';
 import { Button } from '@/components/ui/button';
-import { formatNaira } from '@/lib/format';
+import { formatHotelDate, formatMinor } from '@/lib/format';
 import type { ReservationPaymentItem } from '@/types/reservation.types';
 
 import { ProofLightbox } from './ProofLightbox';
@@ -48,17 +49,17 @@ export function PaymentsPanel({
             No payments have been recorded for this reservation.
           </AdminEmpty>
         ) : (
-          <div className="divide-line divide-y">
+          <div className="divide-y divide-line">
             {payments.map((p) => (
               <div key={p.id} className="py-3.5 first:pt-0 last:pb-0">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <span className="rounded-control bg-paper text-muted-foreground grid size-8 shrink-0 place-items-center">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-control bg-paper text-muted-foreground">
                       <CreditCard className="size-4" aria-hidden="true" />
                     </span>
                     <div>
-                      <p className="text-small text-ink font-semibold">
-                        {formatNaira(p.amountMinor / 100)}
+                      <p className="text-small font-semibold text-ink">
+                        {formatMinor(p.amountMinor)}
                       </p>
                       <p className="text-caption text-muted-foreground capitalize">
                         {p.provider} • {p.type}
@@ -66,32 +67,23 @@ export function PaymentsPanel({
                     </div>
                   </div>
 
-                  <span
-                    className={`text-caption inline-flex rounded-full border px-2 py-0.5 font-semibold capitalize ${
-                      p.status === 'paid'
-                        ? 'border-success/30 bg-success/10 text-success'
-                        : p.status === 'pending'
-                          ? 'border-primary/30 bg-primary/15 text-brand-ink'
-                          : 'border-destructive/30 bg-destructive/10 text-destructive'
-                    }`}
-                  >
-                    {p.status}
-                  </span>
+                  <PaymentStatusBadge
+                    status={p.status}
+                    className="capitalize"
+                  />
                 </div>
 
-                <div className="text-caption text-muted-foreground mt-2.5 flex flex-wrap items-center justify-between gap-2">
+                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-caption text-muted-foreground">
                   <span className="truncate">
                     Ref:{' '}
-                    <strong className="text-ink font-mono">
+                    <strong className="font-mono text-ink">
                       {p.reference}
                     </strong>
                     {p.providerRef && ` (${p.providerRef})`}
                   </span>
 
                   {p.paidAt && (
-                    <span>
-                      Paid on: {new Date(p.paidAt).toLocaleDateString('en-NG')}
-                    </span>
+                    <span>Paid on: {formatHotelDate(p.paidAt)}</span>
                   )}
                 </div>
 
@@ -100,7 +92,7 @@ export function PaymentsPanel({
                   {p.proofKey && (
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() =>
                         setSelectedProof({
@@ -111,7 +103,7 @@ export function PaymentsPanel({
                       }
                     >
                       <FileImage
-                        className="text-primary size-3.5"
+                        className="size-3.5 text-primary"
                         aria-hidden="true"
                       />
                       <span>View transfer proof</span>

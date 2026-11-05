@@ -14,6 +14,7 @@ import {
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
@@ -46,6 +47,7 @@ export function RoomTypeEditorClient({
   initialData,
   currentRole,
 }: RoomTypeEditorClientProps) {
+  const confirm = useConfirm();
   const router = useRouter();
   const roomTypeQuery = useRoomType(initialData?.id, initialData);
   const createRoomType = useCreateRoomType();
@@ -105,13 +107,14 @@ export function RoomTypeEditorClient({
 
   async function handleDelete() {
     if (!data?.id) return;
-    if (
-      !confirm(
-        'Are you sure you want to delete this room type? If any reservations have ever been booked, deletion will be blocked and you must deactivate it instead.',
-      )
-    ) {
-      return;
-    }
+    const sure = await confirm({
+      title: 'Delete this room type?',
+      description:
+        'If any reservations have ever been booked on it, deletion will be blocked and you must deactivate it instead.',
+      confirmLabel: 'Delete room type',
+      tone: 'danger',
+    });
+    if (!sure) return;
 
     try {
       await deleteRoomType.mutateAsync(data.id);
@@ -132,21 +135,21 @@ export function RoomTypeEditorClient({
   return (
     <div className="space-y-6">
       {/* Top Header & Breadcrumb */}
-      <div className="border-line flex flex-col gap-3 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <Link
             href="/admin/rooms"
-            className="hover:text-foreground text-muted-foreground flex items-center gap-1.5 text-xs"
+            className="flex items-center gap-1.5 text-caption text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" /> Back to Room Types
           </Link>
           <div className="mt-2 flex items-center gap-3">
-            <h1 className="text-foreground font-display text-h2">
+            <h1 className="font-display text-h2 text-foreground">
               {isExisting ? data?.name : 'New Room Type'}
             </h1>
             {isExisting && (
               <span
-                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                className={`rounded-full px-2.5 py-0.5 text-caption font-medium ${
                   data?.isActive
                     ? 'bg-success/15 text-success'
                     : 'bg-muted/20 text-muted-foreground'
@@ -180,7 +183,7 @@ export function RoomTypeEditorClient({
       >
         <TabsList
           variant="line"
-          className="border-line text-small h-auto w-full justify-start overflow-x-auto rounded-none border-b p-0"
+          className="h-auto w-full justify-start overflow-x-auto rounded-none border-b border-line p-0 text-small"
         >
           <TabsTrigger value="details" className="gap-2 px-4 py-2.5">
             <FileText className="size-4" /> Details

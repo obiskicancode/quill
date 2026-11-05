@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { AlertCircle, ExternalLink, Loader2, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -109,7 +110,7 @@ export function TabAmenities({
   if (loading) {
     return (
       <div className="flex justify-center p-8">
-        <Loader2 className="text-muted-foreground size-6 animate-spin" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -117,18 +118,19 @@ export function TabAmenities({
   return (
     <div className="space-y-6">
       {errorMessage && (
-        <div
-          role="alert"
-          className="rounded-card border-destructive/40 bg-destructive/10 text-small text-destructive flex items-center gap-3 border p-4"
+        <Alert
+          variant="destructive"
+          size="panel"
+          className="items-center gap-3"
         >
           <AlertCircle className="size-5 shrink-0" />
-          <p>{errorMessage}</p>
-        </div>
+          <p className="col-start-2">{errorMessage}</p>
+        </Alert>
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-foreground text-h3 font-semibold">
+          <h2 className="text-h3 font-semibold text-foreground">
             Room Amenities Checklist
           </h2>
           <p className="text-small text-muted-foreground">
@@ -138,16 +140,16 @@ export function TabAmenities({
 
         <Link
           href="/admin/amenities"
-          className="text-primary flex items-center gap-1 text-xs hover:underline"
+          className="flex items-center gap-1 text-caption text-brand-ink hover:underline"
         >
           Manage Amenities Catalogue <ExternalLink className="size-3" />
         </Link>
       </div>
 
       {/* Search and Quick Filters */}
-      <div className="rounded-card border-line bg-card flex flex-col gap-3 border p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-card border border-line bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
             value={search}
@@ -161,7 +163,7 @@ export function TabAmenities({
           <Button
             type="button"
             size="sm"
-            variant="outline"
+            variant="secondary"
             onClick={handleSelectAll}
           >
             Select Filtered
@@ -169,7 +171,7 @@ export function TabAmenities({
           <Button
             type="button"
             size="sm"
-            variant="outline"
+            variant="secondary"
             onClick={handleClearAll}
           >
             Clear All
@@ -179,7 +181,7 @@ export function TabAmenities({
 
       {/* Grid of Amenity Checkboxes */}
       {filtered.length === 0 ? (
-        <div className="rounded-card border-line bg-paper text-muted-foreground border p-8 text-center">
+        <div className="rounded-card border border-line bg-paper p-8 text-center text-muted-foreground">
           No matching amenities found.
         </div>
       ) : (
@@ -189,7 +191,7 @@ export function TabAmenities({
             return (
               <Label
                 key={a.id}
-                className={`rounded-card flex cursor-pointer items-start gap-3 border p-3 transition-colors ${
+                className={`flex cursor-pointer items-start gap-3 rounded-card border p-3 transition-colors ${
                   isChecked
                     ? 'border-primary bg-primary/5'
                     : 'border-line bg-card hover:bg-paper/40'
@@ -202,17 +204,17 @@ export function TabAmenities({
                 />
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-foreground font-medium">
+                    <span className="font-medium text-foreground">
                       {a.label}
                     </span>
                     {a.icon && (
-                      <span className="bg-paper text-muted-foreground rounded px-1.5 py-0.5 text-xs">
+                      <span className="rounded-sm bg-paper px-1.5 py-0.5 text-caption text-muted-foreground">
                         {a.icon}
                       </span>
                     )}
                   </div>
                   {a.description && (
-                    <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">
+                    <p className="mt-0.5 line-clamp-2 text-caption text-muted-foreground">
                       {a.description}
                     </p>
                   )}
@@ -224,7 +226,7 @@ export function TabAmenities({
       )}
 
       {/* Action footer */}
-      <div className="border-line flex items-center justify-between border-t pt-4">
+      <div className="flex items-center justify-between border-t border-line pt-4">
         <p className="text-small text-muted-foreground">
           {selectedIds.size} of {allAmenities.length} amenities selected
         </p>

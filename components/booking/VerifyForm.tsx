@@ -7,7 +7,9 @@ import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
 
 import { ServiceError } from '@/app/api/services/base.service';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Field, inputClass } from '@/components/ui/form-field';
+import { TextLink } from '@/components/ui/text-link';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useVerifyBooking } from '@/hooks/services/guest/use-verify-booking';
 import { formatCountdown } from '@/lib/format';
@@ -20,12 +22,10 @@ import {
 } from '@/schemas/booking.schema';
 import type { GuestReservation } from '@/types/booking.types';
 
-import { Banner } from '../checkout/CheckoutStates';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
 export type VerifyVariant = 'verify' | 'missing' | 'notfound';
-
 const copy: Record<VerifyVariant, { title: string; text: string }> = {
   verify: {
     title: 'Verify your booking',
@@ -40,7 +40,6 @@ const copy: Record<VerifyVariant, { title: string; text: string }> = {
     text: 'Check the reference and the email you used, or message us and we will help. For your privacy we show the same message whether or not a booking exists.',
   },
 };
-
 interface VerifyFormProps {
   reference: string;
   variant: VerifyVariant;
@@ -52,9 +51,7 @@ interface VerifyFormProps {
   /** Inside a dialog: no page container and a smaller heading. */
   embedded?: boolean;
 }
-
 type VerifyOutput = z.output<typeof verifyRequestSchema>;
-
 /** States: idle, loading, one generic error, and a lockout with a countdown after too many tries. */
 export function VerifyForm({
   reference,
@@ -79,7 +76,6 @@ export function VerifyForm({
   const [serverError, setServerError] = useState<string | null>(null);
   const [lockedFor, setLockedFor] = useState(0);
   const busy = isSubmitting || verifyBooking.isPending;
-
   useEffect(() => {
     if (lockedFor <= 0) return;
     const id = window.setInterval(
@@ -88,7 +84,6 @@ export function VerifyForm({
     );
     return () => window.clearInterval(id);
   }, [lockedFor]);
-
   const onSubmit = async (input: VerifyOutput) => {
     if (lockedFor > 0) return;
     setServerError(null);
@@ -108,12 +103,13 @@ export function VerifyForm({
       }
     }
   };
-
   return (
     <div className={embedded ? '' : 'container-page max-w-xl py-10 md:py-16'}>
       {notice && (
         <div className="mb-6">
-          <Banner tone="info" title={notice} />
+          <Alert role="status" variant="neutral" size="banner">
+            <AlertTitle>{notice}</AlertTitle>
+          </Alert>
         </div>
       )}
       {embedded ? (
@@ -121,8 +117,7 @@ export function VerifyForm({
       ) : (
         <h1 className="font-display text-h2">{copy[variant].title}</h1>
       )}
-      <p className="text-body-lg text-ink/85 mt-3">{copy[variant].text}</p>
-
+      <p className="mt-3 text-body-lg text-ink/85">{copy[variant].text}</p>
       <form
         noValidate
         onSubmit={form.handleSubmit(onSubmit)}
@@ -166,26 +161,23 @@ export function VerifyForm({
             />
           )}
         </Field>
-
         {serverError && (
-          <Banner
-            role="alert"
-            tone="danger"
-            title={
-              lockedFor > 0
-                ? 'Please wait'
-                : ERROR_MESSAGES.COULD_NOT_VERIFY_BOOKING
-            }
-          >
-            <p>
-              {serverError}
+          <Alert role="alert" variant="destructive" size="banner">
+            <AlertTitle>
               {lockedFor > 0
-                ? ` Try again in ${formatCountdown(lockedFor * 1000)}.`
-                : ''}
-            </p>
-          </Banner>
+                ? 'Please wait'
+                : ERROR_MESSAGES.COULD_NOT_VERIFY_BOOKING}
+            </AlertTitle>
+            <AlertDescription>
+              <p>
+                {serverError}
+                {lockedFor > 0
+                  ? ` Try again in ${formatCountdown(lockedFor * 1000)}.`
+                  : ''}
+              </p>
+            </AlertDescription>
+          </Alert>
         )}
-
         <Button
           type="submit"
           size="lg"
@@ -198,18 +190,16 @@ export function VerifyForm({
             : 'Verify and view booking'}
         </Button>
       </form>
-
-      <p className="text-small mt-6">
-        <a
+      <p className="mt-6 text-small">
+        <TextLink
           href={whatsappHref(site, 'Hello, I need help finding my booking.')}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="decoration-brand inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-2 underline-offset-4"
+          external
+          className="inline-flex items-center gap-2"
         >
           <MessageCircle className="size-4" aria-hidden />
           Message the hotel on WhatsApp
           <span className="sr-only"> (opens in a new tab)</span>
-        </a>
+        </TextLink>
       </p>
     </div>
   );

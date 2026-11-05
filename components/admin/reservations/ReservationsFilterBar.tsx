@@ -32,8 +32,10 @@ import {
 } from '@/components/ui/select';
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
@@ -189,7 +191,7 @@ export function ReservationsFilterBar({
         {/* Search Box */}
         <div className="relative min-w-0 flex-1">
           <Search
-            className="text-muted-foreground pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2"
+            className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden="true"
           />
           <Input
@@ -200,7 +202,7 @@ export function ReservationsFilterBar({
             onKeyDown={handleSearchKeyDown}
             placeholder="Search reference, guest name, email, phone, room #…"
             aria-label="Search reservations"
-            className="h-11 pr-10 pl-10 text-sm"
+            className="h-11 pr-10 pl-10 text-small"
           />
           {searchValue && (
             <Button
@@ -212,7 +214,7 @@ export function ReservationsFilterBar({
                 onFilterChange({ q: undefined });
               }}
               aria-label="Clear search query"
-              className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
+              className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="size-4" aria-hidden="true" />
             </Button>
@@ -224,25 +226,25 @@ export function ReservationsFilterBar({
           {/* Mobile bottom sheet trigger */}
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             onClick={() => setMobileSheetOpen(true)}
             aria-label="Open filter options"
-            className="h-11 gap-2 sm:hidden"
+            className="gap-2 sm:hidden"
           >
             <Filter className="size-4" aria-hidden="true" />
             <span>Filters</span>
             {hasActiveFilters && (
-              <span className="bg-primary size-2 rounded-full" />
+              <span className="size-2 rounded-full bg-primary" />
             )}
           </Button>
 
           {/* Desktop expandable filter toggle */}
           <Button
             type="button"
-            variant={filtersOpen || hasActiveFilters ? 'default' : 'outline'}
+            variant={filtersOpen || hasActiveFilters ? 'primary' : 'secondary'}
             onClick={() => setFiltersOpen(!filtersOpen)}
             aria-expanded={filtersOpen}
-            className="hidden h-11 items-center gap-2 sm:inline-flex"
+            className="hidden gap-2 sm:inline-flex"
           >
             <SlidersHorizontal className="size-4" aria-hidden="true" />
             <span>All filters</span>
@@ -267,7 +269,7 @@ export function ReservationsFilterBar({
 
       {/* Quick Filters Bar */}
       <div className="flex flex-wrap items-center gap-1.5 pt-1">
-        <span className="text-caption text-muted-foreground mr-1 font-semibold tracking-wider uppercase">
+        <span className="mr-1 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
           Filters:
         </span>
         {FILTER_OPTIONS.map((p) => {
@@ -276,7 +278,7 @@ export function ReservationsFilterBar({
             <Button
               key={p.id}
               type="button"
-              variant={active ? 'default' : 'outline'}
+              variant={active ? 'primary' : 'secondary'}
               size="xs"
               onClick={() => handleFilterToggle(p.id)}
               className="h-8"
@@ -289,11 +291,11 @@ export function ReservationsFilterBar({
 
       {/* Desktop Detailed Filter Panel (Expandable) */}
       {filtersOpen && (
-        <div className="rounded-card border-line bg-card shadow-raised hidden border p-4 sm:block">
+        <div className="hidden rounded-card border border-line bg-card p-4 shadow-raised sm:block">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {/* Status multi-select */}
             <div>
-              <p className="text-caption text-muted-foreground mb-2 font-semibold tracking-wider uppercase">
+              <p className="mb-2 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
                 Status
               </p>
               <div className="max-h-44 space-y-1.5 overflow-y-auto pr-1">
@@ -302,7 +304,7 @@ export function ReservationsFilterBar({
                   return (
                     <Label
                       key={s.id}
-                      className="text-small text-ink flex cursor-pointer items-center gap-2"
+                      className="flex cursor-pointer items-center gap-2 text-small text-ink"
                     >
                       <Checkbox
                         checked={checked}
@@ -317,7 +319,7 @@ export function ReservationsFilterBar({
 
             {/* Date field & range */}
             <div>
-              <p className="text-caption text-muted-foreground mb-2 font-semibold tracking-wider uppercase">
+              <p className="mb-2 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
                 Date Filter
               </p>
               <div className="space-y-2">
@@ -345,13 +347,13 @@ export function ReservationsFilterBar({
                   <PopoverTrigger
                     render={
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
-                        className="h-8 w-full justify-start gap-2 text-left text-xs font-normal"
+                        className="h-8 w-full justify-start gap-2 text-left text-caption font-normal"
                       />
                     }
                   >
-                    <CalendarDays className="text-muted-foreground size-3.5 shrink-0" />
+                    <CalendarDays className="size-3.5 shrink-0 text-muted-foreground" />
                     <span className="truncate">
                       {currentFilters.from
                         ? currentFilters.to
@@ -384,7 +386,7 @@ export function ReservationsFilterBar({
                       numberOfMonths={1}
                     />
                     {(currentFilters.from || currentFilters.to) && (
-                      <div className="border-line flex items-center justify-between border-t p-2">
+                      <div className="flex items-center justify-between border-t border-line p-2">
                         <span className="text-caption text-muted-foreground">
                           Date range
                         </span>
@@ -406,7 +408,7 @@ export function ReservationsFilterBar({
 
             {/* Room Type & Room */}
             <div>
-              <p className="text-caption text-muted-foreground mb-2 font-semibold tracking-wider uppercase">
+              <p className="mb-2 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
                 Room Inventory
               </p>
               <div className="space-y-2">
@@ -482,7 +484,7 @@ export function ReservationsFilterBar({
 
             {/* Source & Payment State */}
             <div>
-              <p className="text-caption text-muted-foreground mb-2 font-semibold tracking-wider uppercase">
+              <p className="mb-2 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
                 Payment & Source
               </p>
               <div className="space-y-2">
@@ -551,7 +553,7 @@ export function ReservationsFilterBar({
       {hasActiveFilters && (
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
           {currentFilters.q && (
-            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-card px-2.5 py-0.5 text-caption font-medium text-ink">
               <span>Query: {currentFilters.q}</span>
               <Button
                 type="button"
@@ -559,7 +561,7 @@ export function ReservationsFilterBar({
                 size="icon-xs"
                 onClick={() => onFilterChange({ q: undefined })}
                 aria-label="Remove search filter"
-                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
+                className="size-4 p-0 hover:bg-transparent hover:text-destructive"
               >
                 <X className="size-3" aria-hidden="true" />
               </Button>
@@ -569,7 +571,7 @@ export function ReservationsFilterBar({
           {(currentFilters.status ?? []).map((st) => (
             <span
               key={st}
-              className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium"
+              className="inline-flex items-center gap-1 rounded-full border border-line bg-card px-2.5 py-0.5 text-caption font-medium text-ink"
             >
               <span>Status: {st}</span>
               <Button
@@ -578,7 +580,7 @@ export function ReservationsFilterBar({
                 size="icon-xs"
                 onClick={() => handleStatusToggle(st)}
                 aria-label={`Remove status ${st} filter`}
-                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
+                className="size-4 p-0 hover:bg-transparent hover:text-destructive"
               >
                 <X className="size-3" aria-hidden="true" />
               </Button>
@@ -586,7 +588,7 @@ export function ReservationsFilterBar({
           ))}
 
           {currentFilters.filter && (
-            <span className="border-primary bg-primary/20 text-caption text-brand-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-semibold">
+            <span className="inline-flex items-center gap-1 rounded-full border border-primary bg-primary/20 px-2.5 py-0.5 text-caption font-semibold text-brand-ink">
               <span>Filter: {currentFilters.filter.replace('_', ' ')}</span>
               <Button
                 type="button"
@@ -594,7 +596,7 @@ export function ReservationsFilterBar({
                 size="icon-xs"
                 onClick={() => onFilterChange({ filter: undefined })}
                 aria-label="Remove filter filter"
-                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
+                className="size-4 p-0 hover:bg-transparent hover:text-destructive"
               >
                 <X className="size-3" aria-hidden="true" />
               </Button>
@@ -602,7 +604,7 @@ export function ReservationsFilterBar({
           )}
 
           {currentFilters.from && (
-            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-card px-2.5 py-0.5 text-caption font-medium text-ink">
               <span>From: {currentFilters.from}</span>
               <Button
                 type="button"
@@ -610,7 +612,7 @@ export function ReservationsFilterBar({
                 size="icon-xs"
                 onClick={() => onFilterChange({ from: undefined })}
                 aria-label="Remove from date filter"
-                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
+                className="size-4 p-0 hover:bg-transparent hover:text-destructive"
               >
                 <X className="size-3" aria-hidden="true" />
               </Button>
@@ -618,7 +620,7 @@ export function ReservationsFilterBar({
           )}
 
           {currentFilters.to && (
-            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-card px-2.5 py-0.5 text-caption font-medium text-ink">
               <span>To: {currentFilters.to}</span>
               <Button
                 type="button"
@@ -626,7 +628,7 @@ export function ReservationsFilterBar({
                 size="icon-xs"
                 onClick={() => onFilterChange({ to: undefined })}
                 aria-label="Remove to date filter"
-                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
+                className="size-4 p-0 hover:bg-transparent hover:text-destructive"
               >
                 <X className="size-3" aria-hidden="true" />
               </Button>
@@ -634,7 +636,7 @@ export function ReservationsFilterBar({
           )}
 
           {currentFilters.roomTypeId && (
-            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-card px-2.5 py-0.5 text-caption font-medium text-ink">
               <span>
                 Room type:{' '}
                 {options.roomTypes.find(
@@ -647,7 +649,7 @@ export function ReservationsFilterBar({
                 size="icon-xs"
                 onClick={() => onFilterChange({ roomTypeId: undefined })}
                 aria-label="Remove room type filter"
-                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
+                className="size-4 p-0 hover:bg-transparent hover:text-destructive"
               >
                 <X className="size-3" aria-hidden="true" />
               </Button>
@@ -655,7 +657,7 @@ export function ReservationsFilterBar({
           )}
 
           {currentFilters.roomId && (
-            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-card px-2.5 py-0.5 text-caption font-medium text-ink">
               <span>
                 Room:{' '}
                 {options.rooms.find((r) => r.id === currentFilters.roomId)
@@ -667,7 +669,7 @@ export function ReservationsFilterBar({
                 size="icon-xs"
                 onClick={() => onFilterChange({ roomId: undefined })}
                 aria-label="Remove room number filter"
-                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
+                className="size-4 p-0 hover:bg-transparent hover:text-destructive"
               >
                 <X className="size-3" aria-hidden="true" />
               </Button>
@@ -675,7 +677,7 @@ export function ReservationsFilterBar({
           )}
 
           {currentFilters.paymentState && (
-            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-card px-2.5 py-0.5 text-caption font-medium text-ink">
               <span>Payment: {currentFilters.paymentState}</span>
               <Button
                 type="button"
@@ -683,7 +685,7 @@ export function ReservationsFilterBar({
                 size="icon-xs"
                 onClick={() => onFilterChange({ paymentState: undefined })}
                 aria-label="Remove payment state filter"
-                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
+                className="size-4 p-0 hover:bg-transparent hover:text-destructive"
               >
                 <X className="size-3" aria-hidden="true" />
               </Button>
@@ -691,7 +693,7 @@ export function ReservationsFilterBar({
           )}
 
           {currentFilters.source && (
-            <span className="border-line bg-card text-caption text-ink inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-medium">
+            <span className="inline-flex items-center gap-1 rounded-full border border-line bg-card px-2.5 py-0.5 text-caption font-medium text-ink">
               <span>Source: {currentFilters.source}</span>
               <Button
                 type="button"
@@ -699,7 +701,7 @@ export function ReservationsFilterBar({
                 size="icon-xs"
                 onClick={() => onFilterChange({ source: undefined })}
                 aria-label="Remove booking source filter"
-                className="hover:text-destructive size-4 p-0 hover:bg-transparent"
+                className="size-4 p-0 hover:bg-transparent hover:text-destructive"
               >
                 <X className="size-3" aria-hidden="true" />
               </Button>
@@ -711,23 +713,20 @@ export function ReservationsFilterBar({
       <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
         <SheetContent
           side="bottom"
-          showCloseButton
-          className="rounded-t-card border-line bg-card h-[85vh] gap-0 border-t p-5 sm:hidden"
+          className="h-[85vh] rounded-t-card sm:hidden"
         >
-          <SheetHeader className="border-line border-b px-0 pr-10 pb-3">
-            <SheetTitle className="font-display text-h3 text-ink">
-              Filter Reservations
-            </SheetTitle>
+          <SheetHeader>
+            <SheetTitle>Filter Reservations</SheetTitle>
             <SheetDescription className="sr-only">
               Filter the reservations list by status, room type, and payment
               state.
             </SheetDescription>
           </SheetHeader>
 
-          <div className="flex-1 space-y-4 overflow-y-auto py-3">
+          <SheetBody className="space-y-4">
             {/* Status */}
             <div>
-              <p className="text-caption text-muted-foreground mb-2 font-semibold tracking-wider uppercase">
+              <p className="mb-2 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
                 Status
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -736,7 +735,7 @@ export function ReservationsFilterBar({
                   return (
                     <Button
                       key={s.id}
-                      variant={checked ? 'secondary' : 'outline'}
+                      variant={checked ? 'secondary' : 'secondary'}
                       size="sm"
                       className="w-full justify-between"
                       onClick={() => handleStatusToggle(s.id)}
@@ -755,7 +754,7 @@ export function ReservationsFilterBar({
             <div>
               <Label
                 htmlFor="mobDateField"
-                className="text-caption text-muted-foreground mb-1.5 block font-semibold uppercase"
+                className="mb-1.5 block text-caption font-semibold text-muted-foreground uppercase"
               >
                 Date Filter
               </Label>
@@ -784,13 +783,12 @@ export function ReservationsFilterBar({
                   <PopoverTrigger
                     render={
                       <Button
-                        variant="outline"
-                        size="md"
-                        className="h-11 w-full justify-start gap-2.5 text-left font-normal"
+                        variant="secondary"
+                        className="w-full justify-start gap-2.5 text-left font-normal"
                       />
                     }
                   >
-                    <CalendarDays className="text-muted-foreground size-4 shrink-0" />
+                    <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
                     <span className="truncate">
                       {currentFilters.from
                         ? currentFilters.to
@@ -823,7 +821,7 @@ export function ReservationsFilterBar({
                       numberOfMonths={1}
                     />
                     {(currentFilters.from || currentFilters.to) && (
-                      <div className="border-line flex items-center justify-between border-t p-2">
+                      <div className="flex items-center justify-between border-t border-line p-2">
                         <span className="text-caption text-muted-foreground">
                           Date range
                         </span>
@@ -847,7 +845,7 @@ export function ReservationsFilterBar({
             <div>
               <Label
                 htmlFor="mobRoomType"
-                className="text-caption text-muted-foreground mb-1.5 block font-semibold uppercase"
+                className="mb-1.5 block text-caption font-semibold text-muted-foreground uppercase"
               >
                 Room Type
               </Label>
@@ -884,7 +882,7 @@ export function ReservationsFilterBar({
             <div>
               <Label
                 htmlFor="mobPaymentState"
-                className="text-caption text-muted-foreground mb-1.5 block font-semibold uppercase"
+                className="mb-1.5 block text-caption font-semibold text-muted-foreground uppercase"
               >
                 Payment State
               </Label>
@@ -916,9 +914,9 @@ export function ReservationsFilterBar({
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          </SheetBody>
 
-          <div className="border-line flex gap-2 border-t pt-3">
+          <SheetFooter className="flex-row items-center border-t border-line">
             <Button
               variant="secondary"
               size="sm"
@@ -935,7 +933,7 @@ export function ReservationsFilterBar({
             >
               Apply filters
             </Button>
-          </div>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
     </div>

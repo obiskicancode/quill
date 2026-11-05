@@ -1,4 +1,3 @@
-import { cn } from 'cn';
 import type { ReactNode } from 'react';
 
 import {
@@ -9,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 export function AdminCard({
   title,
@@ -24,17 +24,12 @@ export function AdminCard({
   className?: string;
 }) {
   return (
-    <Card
-      className={cn(
-        'rounded-card border-line bg-card shadow-raised gap-0 border py-0 ring-0',
-        className,
-      )}
-    >
+    <Card className={cn('gap-0 py-0', className)}>
       {(title || description) && (
-        <CardHeader className="border-line border-b px-4 py-4 sm:px-5">
+        <CardHeader className="border-b border-line px-4 py-4 sm:px-5">
           {title && (
-            <CardTitle>
-              <h2 className="font-display text-h3">{title}</h2>
+            <CardTitle render={<h2 />} className="font-display text-h3">
+              {title}
             </CardTitle>
           )}
           {description && (
@@ -48,7 +43,7 @@ export function AdminCard({
         {children}
       </CardContent>
       {footer && (
-        <CardFooter className="border-line border-t bg-transparent px-4 py-3 sm:px-5">
+        <CardFooter className="border-t border-line bg-transparent px-4 py-3 sm:px-5">
           {footer}
         </CardFooter>
       )}

@@ -24,7 +24,7 @@ import {
   useChangeDatesQuote,
   useChangeReservationDates,
 } from '@/hooks/services/admin/use-reservations';
-import { formatNaira } from '@/lib/format';
+import { formatMinor } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import { changeDatesSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
@@ -217,13 +217,12 @@ export function ChangeDatesModal({
                     id={a.id}
                     aria-describedby={a['aria-describedby']}
                     aria-invalid={a['aria-invalid']}
-                    variant="outline"
-                    size="md"
+                    variant="secondary"
                     className="w-full justify-start gap-2.5 text-left font-normal"
                   />
                 }
               >
-                <CalendarDays className="text-muted-foreground size-4 shrink-0" />
+                <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
                 <span>
                   {checkIn && checkOut
                     ? `${format(parseISO(checkIn), 'LLL dd, y')} - ${format(parseISO(checkOut), 'LLL dd, y')}`
@@ -282,25 +281,25 @@ export function ChangeDatesModal({
 
         {/* Quote Comparison Results */}
         {quoteData && (
-          <div className="bg-muted rounded-control border-line text-small space-y-3 border p-4">
-            <h3 className="text-ink font-semibold">Stay Comparison</h3>
+          <div className="space-y-3 rounded-control border border-line bg-muted p-4 text-small">
+            <h3 className="font-semibold text-ink">Stay Comparison</h3>
 
             {/* Price Difference Indicator */}
-            <div className="border-line flex items-center justify-between border-b pb-2">
+            <div className="flex items-center justify-between border-b border-line pb-2">
               <span className="text-muted-foreground">Previous Total:</span>
-              <span className="text-ink font-medium">
-                {formatNaira(quoteData.comparison.currentTotalMinor / 100)}
+              <span className="font-medium text-ink">
+                {formatMinor(quoteData.comparison.currentTotalMinor)}
               </span>
             </div>
-            <div className="border-line flex items-center justify-between border-b pb-2">
+            <div className="flex items-center justify-between border-b border-line pb-2">
               <span className="text-muted-foreground">New Total:</span>
-              <span className="text-ink font-bold">
-                {formatNaira(quoteData.comparison.newTotalMinor / 100)}
+              <span className="font-bold text-ink">
+                {formatMinor(quoteData.comparison.newTotalMinor)}
               </span>
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <span className="text-ink font-semibold">Outcome:</span>
+              <span className="font-semibold text-ink">Outcome:</span>
               <span
                 className={`font-bold ${
                   quoteData.comparison.guestOwesMinor > 0
@@ -311,18 +310,18 @@ export function ChangeDatesModal({
                 }`}
               >
                 {quoteData.comparison.guestOwesMinor > 0
-                  ? `Guest owes ${formatNaira(quoteData.comparison.guestOwesMinor / 100)}`
+                  ? `Guest owes ${formatMinor(quoteData.comparison.guestOwesMinor)}`
                   : quoteData.comparison.refundDueMinor > 0
-                    ? `Refund due: ${formatNaira(quoteData.comparison.refundDueMinor / 100)}`
+                    ? `Refund due: ${formatMinor(quoteData.comparison.refundDueMinor)}`
                     : 'No price difference'}
               </span>
             </div>
 
             {/* Room Availability Status */}
-            <div className="border-line border-t pt-2">
+            <div className="border-t border-line pt-2">
               {!quoteData.currentRoomAvailable ? (
                 <div className="space-y-2">
-                  <div className="text-caption text-destructive flex items-start gap-2">
+                  <div className="flex items-start gap-2 text-caption text-destructive">
                     <AlertCircle
                       className="mt-0.5 size-4 shrink-0"
                       aria-hidden="true"
@@ -334,7 +333,7 @@ export function ChangeDatesModal({
                   </div>
 
                   {quoteData.candidateRooms.length === 0 ? (
-                    <p className="text-caption text-destructive font-semibold">
+                    <p className="text-caption font-semibold text-destructive">
                       No rooms of this type are available for the new dates.
                     </p>
                   ) : (
@@ -343,7 +342,7 @@ export function ChangeDatesModal({
                         <Button
                           key={r.id}
                           type="button"
-                          variant={roomId === r.id ? 'default' : 'outline'}
+                          variant={roomId === r.id ? 'primary' : 'secondary'}
                           size="sm"
                           onClick={() => setValue('roomId', r.id)}
                         >
@@ -354,7 +353,7 @@ export function ChangeDatesModal({
                   )}
                 </div>
               ) : (
-                <div className="text-caption text-success flex items-center gap-2">
+                <div className="flex items-center gap-2 text-caption text-success">
                   <Check className="size-4" aria-hidden="true" />
                   <span>
                     Current room {reservation.roomNumber} is available for the
@@ -367,10 +366,10 @@ export function ChangeDatesModal({
         )}
 
         {/* Manager Override Controls */}
-        <div className="border-line space-y-2 border-t pt-3">
+        <div className="space-y-2 border-t border-line pt-3">
           <Label
             htmlFor="override-rules-toggle"
-            className="text-small text-ink flex cursor-pointer items-center gap-2"
+            className="flex cursor-pointer items-center gap-2 text-small text-ink"
           >
             <Controller
               control={control}
@@ -414,10 +413,10 @@ export function ChangeDatesModal({
           )}
         </div>
 
-        <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
+        <div className="flex items-center justify-end gap-3 border-t border-line pt-3">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={onClose}
             disabled={busy}

@@ -1,10 +1,16 @@
 'use client';
 
-import { BedDouble, BedSingle, Camera, Ruler, Users } from 'lucide-react';
+import { Camera } from 'lucide-react';
 
+import { TextLink } from '@/components/ui/text-link';
 import { formatShort } from '@/lib/dates';
-import { formatNaira } from '@/lib/format';
-import { formatRange, roomAmenityLabels, stayHref } from '@/lib/rooms';
+import { formatNaira, pluralCount } from '@/lib/format';
+import {
+  formatRange,
+  groupAmenities,
+  roomAmenityLabels,
+  stayHref,
+} from '@/lib/rooms';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 import type { ISODate } from '@/types/dates.types';
@@ -15,9 +21,9 @@ import type {
 } from '@/types/rooms.types';
 
 import { Carousel } from '../Carousel';
+import { AmenitiesModal } from '../room-detail/AmenitiesModal';
 import { Button, ButtonLink } from '../ui/button';
 import { Photo } from '../ui/Photo';
-import { TextLink } from '../ui/TextLink';
 import { AvailabilityBadge, Badge } from './AvailabilityBadge';
 import { LazyPhoto } from './LazyPhoto';
 import { PriceBlock } from './PriceBlock';
@@ -25,16 +31,21 @@ import { RoomAmenityIcon } from './RoomAmenityIcon';
 
 const PHOTO_SIZES =
   '(min-width: 1440px) 30vw, (min-width: 1024px) 40vw, (min-width: 768px) 90vw, 100vw';
-const MAX_AMENITIES_SHOWN = 4;
+const MAX_AMENITIES_SHOWN = 3;
+
+const sleepsLabel = (adults: number, children: number, joiner = ' + ') =>
+  `${pluralCount(adults, 'adult')}${
+    children > 0 ? `${joiner}${pluralCount(children, 'child', 'children')}` : ''
+  }`;
 
 export interface RoomCardListingProps {
   room: RoomType;
   index: number;
   query: RoomQuery;
-  /** 'idle' = no dates yet, 'ready' = live result in `availability`, 'error' = live prices failed. */
-  liveState: 'idle' | 'ready' | 'error';
+  liveState: 'idle' | 'loading' | 'ready' | 'error';
   availability: RoomAvailability | null;
   onCheckAvailability: () => void;
+  onRetryPrice: () => void;
   onPickDates: (range: { checkIn: ISODate; checkOut: ISODate }) => void;
 }
 
@@ -45,6 +56,7 @@ export function RoomCardListing({
   liveState,
   availability,
   onCheckAvailability,
+  onRetryPrice,
   onPickDates,
 }: RoomCardListingProps) {
   const site = useSite();
@@ -57,17 +69,41 @@ export function RoomCardListing({
   const shown = room.amenities.slice(0, MAX_AMENITIES_SHOWN);
   const hidden = room.amenities.slice(MAX_AMENITIES_SHOWN);
 
-  const ask = (text: string) =>
-    whatsappHref(
-      site,
-      `Hello, ${text} (${room.name}${query.checkIn && query.checkOut ? `, ${formatRange(query.checkIn, query.checkOut)}` : ''}).`,
-    );
+  const sleeps = sleepsLabel(room.maxAdults, room.maxChildren);
+  const specs = [
+    `Sleeps ${sleeps}`,
+    room.bedConfig,
+    room.sizeSqm ? `${room.sizeSqm} sqm` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  const perks = [
+    room.breakfastIncluded && 'Breakfast included',
+    room.extraBed.available &&
+      (room.extraBed.feeNgn === 0
+        ? 'Extra bed free'
+        : `Extra bed ${formatNaira(room.extraBed.feeNgn ?? 0)} / night`),
+  ].filter(Boolean);
+
+  const askLink = stayHref('/contact', query, {
+    room: room.slug,
+    topic: 'booking_enquiry',
+  });
+
+  const askPriceOnWhatsApp = whatsappHref(
+    site,
+    `Hello, could you send me a price for ${room.name}${
+      query.checkIn && query.checkOut
+        ? `, ${formatRange(query.checkIn, query.checkOut)}`
+        : ''
+    }.`,
+  );
 
   const detail = (
     <ButtonLink
       href={stayHref(`/rooms/${room.slug}`, query)}
       variant="secondary"
-      size="sm"
       className="flex-1"
     >
       View Details
@@ -77,21 +113,26 @@ export function RoomCardListing({
   let primary: React.ReactNode = null;
   if (onRequest) {
     primary = (
-      <ButtonLink
-        href={stayHref('/contact', query, { room: room.slug, topic: 'price' })}
-        size="sm"
-        className="flex-1"
-      >
+      <ButtonLink href={askLink} className="flex-1">
         Enquire
       </ButtonLink>
     );
-  } else if (soldOut || overCapacity) {
-    primary = null;
+  } else if (overCapacity) {
+    primary = (
+      <ButtonLink href={askLink} className="flex-1">
+        Ask about a larger room
+      </ButtonLink>
+    );
+  } else if (soldOut) {
+    primary = (
+      <ButtonLink href={askLink} className="flex-1">
+        Ask about these dates
+      </ButtonLink>
+    );
   } else if (live?.status === 'min-stay') {
     const checkOut = live.suggestedCheckOut;
     primary = (
       <Button
-        size="sm"
         className="flex-1"
         onClick={() =>
           query.checkIn && onPickDates({ checkIn: query.checkIn, checkOut })
@@ -104,15 +145,20 @@ export function RoomCardListing({
     primary = (
       <ButtonLink
         href={stayHref(site.bookingHref, query, { room: room.slug })}
-        size="sm"
         className="flex-1"
       >
         Book Now
       </ButtonLink>
     );
+  } else if (liveState === 'loading') {
+    primary = (
+      <Button loading className="flex-1">
+        Checking
+      </Button>
+    );
   } else {
     primary = (
-      <Button size="sm" className="flex-1" onClick={onCheckAvailability}>
+      <Button className="flex-1" onClick={onCheckAvailability}>
         Check availability
       </Button>
     );
@@ -141,12 +187,16 @@ export function RoomCardListing({
   return (
     <article
       aria-labelledby={nameId}
-      className={`rounded-card shadow-raised focus-within:shadow-float hover:shadow-float flex h-full flex-col overflow-hidden border transition-shadow duration-200 ${
+      className={`flex h-full flex-col overflow-hidden rounded-card border shadow-raised transition-shadow duration-200 focus-within:shadow-float hover:shadow-float ${
         soldOut ? 'border-line bg-paper' : 'border-line bg-card'
       }`}
     >
       <div className={`relative ${soldOut ? 'grayscale' : ''}`}>
-        <Carousel label={`${room.name} photos`} slides={slides} />
+        <Carousel
+          label={`${room.name} photos`}
+          itemNoun="photo"
+          slides={slides}
+        />
         <div className="pointer-events-none absolute top-3 left-3 z-10">
           <Badge
             tone="overlay"
@@ -155,84 +205,79 @@ export function RoomCardListing({
             {room.images.length} {room.images.length === 1 ? 'photo' : 'photos'}
           </Badge>
         </div>
-        {live && (
+        {room.popular && (
           <div className="pointer-events-none absolute top-3 right-3 z-10">
-            <AvailabilityBadge
-              soldOut={soldOut}
-              remaining={
-                live.status === 'available' ? live.remaining : undefined
-              }
-            />
+            <Badge tone="accent">Most popular</Badge>
           </div>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-4 p-5">
-        <h3 id={nameId} className="font-display text-h3 line-clamp-2">
-          {room.name}
-        </h3>
-
-        <div className="flex flex-wrap gap-2">
-          {room.popular && <Badge tone="accent">Most popular</Badge>}
-          {room.breakfastIncluded && <Badge>Breakfast included</Badge>}
-          {room.extraBed.available && <Badge>Extra bed available</Badge>}
+      <div className="flex flex-1 flex-col gap-3 p-5">
+        <div>
+          <h3 id={nameId} className="line-clamp-2 font-display text-h3">
+            {room.name}
+          </h3>
+          <p className="mt-1 text-small text-muted-foreground">{specs}</p>
+          {perks.length > 0 && (
+            <p className="mt-1 text-small text-brand-ink">
+              {perks.join(' · ')}
+            </p>
+          )}
         </div>
 
-        <p className="text-small text-ink/85 line-clamp-2">
-          {room.description}
-        </p>
-
-        <ul className="text-small space-y-2">
-          <li className="flex items-center gap-2">
-            <Ruler className="text-brand-ink size-4 shrink-0" aria-hidden />
-            {room.sizeSqm} sqm
-          </li>
-          <li className="flex items-center gap-2">
-            <BedDouble className="text-brand-ink size-4 shrink-0" aria-hidden />
-            {room.bedConfig}
-          </li>
-          <li className="flex items-center gap-2">
-            <Users className="text-brand-ink size-4 shrink-0" aria-hidden />
-            Up to {room.maxAdults} {room.maxAdults === 1 ? 'adult' : 'adults'},{' '}
-            {room.maxChildren} {room.maxChildren === 1 ? 'child' : 'children'}
-          </li>
-          <li className="flex items-center gap-2">
-            <BedSingle className="text-brand-ink size-4 shrink-0" aria-hidden />
-            {room.extraBed.available
-              ? room.extraBed.feeNgn === 0
-                ? 'Extra bed: free'
-                : `Extra bed: ${formatNaira(room.extraBed.feeNgn ?? 0)} / night`
-              : 'Extra bed: not available'}
-          </li>
-        </ul>
-
-        <ul
-          aria-label="Amenities"
-          className="text-small flex flex-wrap content-start gap-x-4 gap-y-2"
-        >
-          {shown.map((key) => (
-            <li key={key} className="inline-flex items-center gap-1.5">
-              <RoomAmenityIcon name={key} className="text-brand-ink size-4" />
-              {roomAmenityLabels[key]}
-            </li>
-          ))}
-          {hidden.length > 0 && (
-            <li className="inline-flex items-center font-semibold">
-              +{hidden.length} more
-              <span className="sr-only">
-                : {hidden.map((k) => roomAmenityLabels[k]).join(', ')}
-              </span>
-            </li>
-          )}
-        </ul>
+        {shown.length > 0 && (
+          <ul
+            aria-label="Amenities"
+            className="flex flex-wrap items-center gap-x-4 gap-y-2 text-small"
+          >
+            {shown.map((key) => (
+              <li key={key} className="inline-flex items-center gap-1.5">
+                <RoomAmenityIcon name={key} className="size-4 text-brand-ink" />
+                {roomAmenityLabels[key]}
+              </li>
+            ))}
+            {hidden.length > 0 && (
+              <li className="inline-flex items-center">
+                <AmenitiesModal
+                  total={room.amenities.length}
+                  groups={groupAmenities(room.amenities)}
+                  trigger={
+                    <>
+                      +{hidden.length} more
+                      <span className="sr-only"> amenities</span>
+                    </>
+                  }
+                />
+              </li>
+            )}
+          </ul>
+        )}
 
         <div className="mt-auto space-y-4 pt-2">
-          {soldOut ? (
+          <div className="flex items-start justify-between gap-3">
+            <PriceBlock
+              room={room}
+              availability={live}
+              liveFailed={liveState === 'error'}
+              pending={liveState === 'loading'}
+              onRetry={onRetryPrice}
+            />
+            {live && (
+              <AvailabilityBadge
+                soldOut={soldOut}
+                remaining={
+                  live.status === 'available' ? live.remaining : undefined
+                }
+              />
+            )}
+          </div>
+
+          {soldOut && live.status === 'sold-out' ? (
             <div>
               <p className="font-semibold">Not available for these dates</p>
-              {live.status === 'sold-out' && live.suggestions.length > 0 ? (
+              {live.suggestions.length > 0 ? (
                 <>
-                  <p className="text-small text-muted-foreground mt-1">
+                  <p className="mt-1 text-small text-muted-foreground">
                     Nearby dates that are free:
                   </p>
                   <ul className="mt-3 flex flex-wrap gap-2">
@@ -240,7 +285,6 @@ export function RoomCardListing({
                       <li key={s.checkIn}>
                         <Button
                           variant="secondary"
-                          size="sm"
                           onClick={() =>
                             onPickDates({
                               checkIn: s.checkIn,
@@ -255,54 +299,40 @@ export function RoomCardListing({
                   </ul>
                 </>
               ) : (
-                <p className="text-small text-muted-foreground mt-1">
-                  No nearby dates are free. Message us and we will look for
-                  options.
+                <p className="mt-1 text-small text-muted-foreground">
+                  No nearby dates are free. Ask us and we will look for options.
                 </p>
               )}
             </div>
           ) : overCapacity && live.status === 'over-capacity' ? (
             <div>
               <p className="font-semibold">Too small for your group</p>
-              <p className="text-small text-muted-foreground mt-1">
-                This room sleeps up to {live.maxAdults} adults and{' '}
-                {live.maxChildren} children. Ask us about two rooms or a larger
-                apartment.
+              <p className="mt-1 text-small text-muted-foreground">
+                This room sleeps up to{' '}
+                {sleepsLabel(live.maxAdults, live.maxChildren, ' and ')}. Ask us
+                about two rooms or a larger apartment.
               </p>
             </div>
           ) : live?.status === 'min-stay' ? (
             <div>
               <p className="font-semibold">
-                Minimum stay: {live.minNights} nights
+                Minimum stay: {pluralCount(live.minNights, 'night')}
               </p>
-              <p className="text-small text-muted-foreground mt-1">
+              <p className="mt-1 text-small text-muted-foreground">
                 Move your check-out to {formatShort(live.suggestedCheckOut)} to
                 book this room.
               </p>
             </div>
-          ) : (
-            <PriceBlock
-              room={room}
-              availability={live}
-              liveFailed={liveState === 'error'}
-            />
-          )}
+          ) : null}
 
           <div className="flex flex-wrap gap-3">
             {detail}
             {primary}
           </div>
 
-          {(onRequest || soldOut || overCapacity) && (
-            <TextLink
-              href={ask(
-                onRequest
-                  ? 'could you send me a price'
-                  : 'can you help me find a room',
-              )}
-              external
-            >
-              Ask on WhatsApp
+          {onRequest && (
+            <TextLink href={askPriceOnWhatsApp} external>
+              Prefer to ask in person? Message us on WhatsApp
               <span className="sr-only"> (opens in a new tab)</span>
             </TextLink>
           )}

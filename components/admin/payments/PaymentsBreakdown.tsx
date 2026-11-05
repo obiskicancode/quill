@@ -1,10 +1,8 @@
 'use client';
 
+import { Progress } from '@/components/ui/progress';
+import { formatMinor } from '@/lib/format';
 import type { PaymentsBreakdownResponse } from '@/types/payments.types';
-
-function formatNaira(minor: number): string {
-  return `₦${(minor / 100).toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
-}
 
 export function PaymentsBreakdown({
   breakdown,
@@ -16,9 +14,9 @@ export function PaymentsBreakdown({
   if (loading || !breakdown) {
     return (
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-card border-line bg-card h-44 animate-pulse border p-4"></div>
-        <div className="rounded-card border-line bg-card h-44 animate-pulse border p-4"></div>
-        <div className="rounded-card border-line bg-card h-44 animate-pulse border p-4"></div>
+        <div className="h-44 animate-pulse rounded-card border border-line bg-card p-4"></div>
+        <div className="h-44 animate-pulse rounded-card border border-line bg-card p-4"></div>
+        <div className="h-44 animate-pulse rounded-card border border-line bg-card p-4"></div>
       </div>
     );
   }
@@ -32,67 +30,57 @@ export function PaymentsBreakdown({
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       {/* 1. By Method */}
-      <div className="rounded-card border-line bg-card border p-4 shadow-sm">
-        <h3 className="text-small text-ink font-semibold">
+      <div className="rounded-card border border-line bg-card p-4 shadow-raised">
+        <h3 className="text-small font-semibold text-ink">
           Volume by Payment Method
         </h3>
-        <p className="text-caption text-muted-foreground mb-3">
+        <p className="mb-3 text-caption text-muted-foreground">
           Card, bank transfer, cash, and USSD
         </p>
         <div className="space-y-2.5">
           {byMethod.map((item) => (
             <div key={item.key} className="space-y-1">
-              <div className="text-caption flex justify-between">
-                <span className="text-ink font-medium">{item.label}</span>
+              <div className="flex justify-between text-caption">
+                <span className="font-medium text-ink">{item.label}</span>
                 <span className="text-muted-foreground">
-                  {formatNaira(item.amountMinor)} ({item.percent}%)
+                  {formatMinor(item.amountMinor)} ({item.percent}%)
                 </span>
               </div>
-              <div className="bg-paper h-2 w-full overflow-hidden rounded-full">
-                <div
-                  className="bg-primary h-full rounded-full transition-all duration-300"
-                  style={{ width: `${item.percent}%` }}
-                />
-              </div>
+              <Progress value={item.percent} aria-label={item.label} />
             </div>
           ))}
         </div>
       </div>
 
       {/* 2. By Provider */}
-      <div className="rounded-card border-line bg-card border p-4 shadow-sm">
-        <h3 className="text-small text-ink font-semibold">
+      <div className="rounded-card border border-line bg-card p-4 shadow-raised">
+        <h3 className="text-small font-semibold text-ink">
           Volume by Provider
         </h3>
-        <p className="text-caption text-muted-foreground mb-3">
+        <p className="mb-3 text-caption text-muted-foreground">
           Paystack vs manual ledger entries
         </p>
         <div className="space-y-2.5">
           {byProvider.map((item) => (
             <div key={item.key} className="space-y-1">
-              <div className="text-caption flex justify-between">
-                <span className="text-ink font-medium">{item.label}</span>
+              <div className="flex justify-between text-caption">
+                <span className="font-medium text-ink">{item.label}</span>
                 <span className="text-muted-foreground">
-                  {formatNaira(item.amountMinor)} ({item.percent}%)
+                  {formatMinor(item.amountMinor)} ({item.percent}%)
                 </span>
               </div>
-              <div className="bg-paper h-2 w-full overflow-hidden rounded-full">
-                <div
-                  className="bg-primary h-full rounded-full transition-all duration-300"
-                  style={{ width: `${item.percent}%` }}
-                />
-              </div>
+              <Progress value={item.percent} aria-label={item.label} />
             </div>
           ))}
         </div>
       </div>
 
       {/* 3. Daily Strip */}
-      <div className="rounded-card border-line bg-card border p-4 shadow-sm">
-        <h3 className="text-small text-ink font-semibold">
+      <div className="rounded-card border border-line bg-card p-4 shadow-raised">
+        <h3 className="text-small font-semibold text-ink">
           Recent Daily Collections
         </h3>
-        <p className="text-caption text-muted-foreground mb-3">
+        <p className="mb-3 text-caption text-muted-foreground">
           Daily net inflows for selected period
         </p>
         <div className="flex h-24 items-end justify-between gap-1.5 pt-2">
@@ -107,16 +95,16 @@ export function PaymentsBreakdown({
                 className="group relative flex flex-1 flex-col items-center gap-1"
               >
                 {/* Tooltip on hover */}
-                <div className="bg-ink text-paper absolute -top-8 z-10 hidden rounded px-1.5 py-0.5 text-[0.625rem] whitespace-nowrap shadow group-hover:block">
-                  {formatNaira(day.collectedMinor)} ({day.count})
+                <div className="absolute -top-8 z-10 hidden rounded-sm bg-ink px-1.5 py-0.5 text-micro whitespace-nowrap text-paper shadow-float group-hover:block">
+                  {formatMinor(day.collectedMinor)} ({day.count})
                 </div>
-                <div className="bg-paper flex h-16 w-full items-end justify-center rounded-t">
+                <div className="flex h-16 w-full items-end justify-center rounded-t-control bg-paper">
                   <div
-                    className="bg-primary/80 group-hover:bg-primary w-full max-w-5 rounded-t transition-colors"
+                    className="w-full max-w-5 rounded-t-control bg-primary/80 transition-colors group-hover:bg-primary"
                     style={{ height: `${heightPercent}%` }}
                   />
                 </div>
-                <span className="text-muted-foreground truncate text-[0.625rem]">
+                <span className="truncate text-micro text-muted-foreground">
                   {day.label.slice(0, 3)}
                 </span>
               </div>

@@ -7,6 +7,8 @@ export interface StepInfo {
   id: string;
   label: string;
   state: 'complete' | 'current' | 'upcoming';
+  /** A step with nothing the guest has to do; it is only ticked if they use it. */
+  optional?: boolean;
 }
 
 /** Anchors to each step on the same page. The current step carries aria-current="step". */
@@ -24,12 +26,12 @@ export function ProgressSteps({ steps }: { steps: StepInfo[] }) {
               className="flex min-h-11 min-w-0 items-center gap-2"
             >
               <span
-                className={`text-small grid size-8 shrink-0 place-items-center overflow-hidden rounded-full font-semibold transition-colors duration-300 motion-reduce:transition-none ${
+                className={`grid size-8 shrink-0 place-items-center overflow-hidden rounded-full text-small font-semibold transition-colors duration-300 motion-reduce:transition-none ${
                   s.state === 'complete'
                     ? 'bg-ink text-paper'
                     : s.state === 'current'
-                      ? 'bg-primary text-ink'
-                      : 'border-ink/50 text-muted-foreground border'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'border border-ink/50 text-muted-foreground'
                 }`}
               >
                 {reduced ? (
@@ -65,18 +67,21 @@ export function ProgressSteps({ steps }: { steps: StepInfo[] }) {
                 )}
               </span>
               <span
-                className={`text-small truncate ${s.state === 'upcoming' ? 'text-muted-foreground' : 'font-semibold'}`}
+                className={`truncate text-small ${s.state === 'upcoming' ? 'text-muted-foreground' : 'font-semibold'}`}
               >
                 {s.label}
                 {s.state === 'complete' && (
                   <span className="sr-only"> (completed)</span>
+                )}
+                {s.optional && s.state !== 'complete' && (
+                  <span className="sr-only"> (optional)</span>
                 )}
               </span>
             </a>
             {i < steps.length - 1 && (
               <span
                 aria-hidden
-                className={`h-[0.0625rem] flex-1 transition-colors duration-300 motion-reduce:transition-none ${s.state === 'complete' ? 'bg-ink/40' : 'bg-line'}`}
+                className={`h-px flex-1 transition-colors duration-300 motion-reduce:transition-none ${s.state === 'complete' ? 'bg-ink/40' : 'bg-line'}`}
               />
             )}
           </li>

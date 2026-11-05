@@ -2,6 +2,8 @@ import { AlertCircle, CheckCircle2, Mail } from 'lucide-react';
 
 import { AdminCard } from '@/components/admin/AdminCard';
 import { AdminEmpty } from '@/components/admin/AdminStates';
+import { Badge } from '@/components/ui/badge';
+import { formatHotelDateTime } from '@/lib/format';
 import type { ReservationNotificationLogItem } from '@/types/reservation.types';
 
 export function NotificationsCard({
@@ -20,7 +22,7 @@ export function NotificationsCard({
           reservation.
         </AdminEmpty>
       ) : (
-        <div className="divide-line divide-y">
+        <div className="divide-y divide-line">
           {notifications.map((n) => {
             const isFailed = n.status === 'failed';
             return (
@@ -28,11 +30,11 @@ export function NotificationsCard({
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Mail
-                      className="text-muted-foreground size-4"
+                      className="size-4 text-muted-foreground"
                       aria-hidden="true"
                     />
                     <div>
-                      <p className="text-small text-ink font-semibold">
+                      <p className="text-small font-semibold text-ink">
                         {n.subject || n.templateKey || 'Automated update'}
                       </p>
                       <p className="text-caption text-muted-foreground">
@@ -41,33 +43,27 @@ export function NotificationsCard({
                     </div>
                   </div>
 
-                  <span
-                    className={`text-caption inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-semibold capitalize ${
-                      isFailed
-                        ? 'border-destructive/30 bg-destructive/10 text-destructive'
-                        : 'border-success/30 bg-success/10 text-success'
-                    }`}
+                  <Badge
+                    variant={isFailed ? 'destructive' : 'success'}
+                    className="capitalize"
                   >
                     {isFailed ? (
-                      <AlertCircle className="size-3" aria-hidden="true" />
+                      <AlertCircle aria-hidden="true" />
                     ) : (
-                      <CheckCircle2 className="size-3" aria-hidden="true" />
+                      <CheckCircle2 aria-hidden="true" />
                     )}
                     <span>{n.status}</span>
-                  </span>
+                  </Badge>
                 </div>
 
                 {isFailed && n.error && (
-                  <p className="rounded-control bg-destructive/5 text-caption text-destructive mt-1.5 p-2">
+                  <p className="mt-1.5 rounded-control bg-destructive/5 p-2 text-caption text-destructive">
                     Error: {n.error}
                   </p>
                 )}
 
-                <p className="text-caption text-muted-foreground/80 mt-1">
-                  {new Intl.DateTimeFormat('en-NG', {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  }).format(new Date(n.createdAt))}
+                <p className="mt-1 text-caption text-muted-foreground/80">
+                  {formatHotelDateTime(n.createdAt)}
                 </p>
               </div>
             );

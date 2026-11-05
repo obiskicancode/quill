@@ -10,11 +10,11 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="border-line flex flex-col gap-3 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <div className="flex flex-col gap-3 border-b border-line pb-5 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <h1 className="font-display text-h2">{title}</h1>
         {description && (
-          <p className="text-small text-muted-foreground mt-1 max-w-2xl">
+          <p className="mt-1 max-w-2xl text-small text-muted-foreground">
             {description}
           </p>
         )}

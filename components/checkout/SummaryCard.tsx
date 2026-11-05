@@ -10,9 +10,17 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { formatCountdown, formatDeadline, formatMinor } from '@/lib/format';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { TextLink, textLinkRecipe } from '@/components/ui/text-link';
+import {
+  formatCountdown,
+  formatDeadline,
+  formatGuestTime,
+  formatMinor,
+} from '@/lib/format';
 import { formatRange } from '@/lib/rooms';
 import { whatsappHref } from '@/lib/site';
+import { cn } from '@/lib/utils';
 import { useSite } from '@/providers/site.provider';
 import type {
   CheckoutQuoteOk,
@@ -28,6 +36,7 @@ import { Button } from '../ui/button';
 import { Photo } from '../ui/Photo';
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -78,23 +87,23 @@ export function StayFacts({
             src={room.image.src}
             alt={room.image.alt}
             sizes="96px"
-            className="rounded-control size-20 shrink-0"
+            className="size-20 shrink-0 rounded-control"
           />
         ) : (
           <div
             aria-hidden
-            className="rounded-control bg-ink/10 size-20 shrink-0"
+            className="size-20 shrink-0 rounded-control bg-ink/10"
           />
         )}
         <div className="min-w-0">
-          <h2 className="font-display text-h3 line-clamp-2">{room.name}</h2>
-          <p className="text-small text-muted-foreground mt-1">
+          <h2 className="line-clamp-2 font-display text-h3">{room.name}</h2>
+          <p className="mt-1 text-small text-muted-foreground">
             {room.bedConfig}
           </p>
         </div>
       </div>
 
-      <dl className="text-small space-y-1.5">
+      <dl className="space-y-1.5 text-small">
         <div className={row}>
           <dt className="text-muted-foreground">Dates</dt>
           <dd className="font-semibold">
@@ -115,27 +124,71 @@ export function StayFacts({
         </div>
         <div className={row}>
           <dt className="text-muted-foreground">Check-in</dt>
-          <dd>From {hotelTimes.checkIn}</dd>
+          <dd>From {formatGuestTime(hotelTimes.checkIn)}</dd>
         </div>
         <div className={row}>
           <dt className="text-muted-foreground">Check-out</dt>
-          <dd>By {hotelTimes.checkOut}</dd>
+          <dd>By {formatGuestTime(hotelTimes.checkOut)}</dd>
         </div>
       </dl>
     </>
   );
 }
 
+/**
+ * What the stay costs and how much of the hold is left.
+ *
+ * The rail scrolls on a short laptop, so the two facts a guest is working
+ * against disappear exactly when they are needed most: while the form below is
+ * long. Pinned to the top of the card they stay in view; the same numbers are
+ * spelled out below, so the strip is hidden from assistive tech.
+ */
+function PinnedTotals({ quote, hold }: Pick<SummaryProps, 'quote' | 'hold'>) {
+  return (
+    <div
+      aria-hidden
+      className="sticky top-0 z-10 -mx-5 -mt-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-t-card border-b border-line bg-card px-5 pt-5 pb-3"
+    >
+      <p className="flex items-baseline gap-2">
+        <span className="text-small text-muted-foreground">Total</span>
+        {quote ? (
+          <span className="font-display text-body-lg tabular-nums">
+            {formatMinor(quote.breakdown.totalMinor)}
+          </span>
+        ) : (
+          <span className="block h-6 w-24 rounded-sm bg-ink/10 motion-safe:animate-pulse" />
+        )}
+      </p>
+      {hold && (
+        <p
+          className={`flex items-center gap-2 text-small ${
+            hold.expired || hold.expiring
+              ? 'font-semibold text-destructive'
+              : 'text-brand-ink'
+          }`}
+        >
+          <Clock className="size-4 shrink-0" />
+          {hold.expired
+            ? 'Hold expired'
+            : hold.expiring
+              ? `Hold ends ${formatCountdown(hold.remainingMs ?? 0)}`
+              : `Room held ${formatCountdown(hold.remainingMs ?? 0)}`}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /** The stay, the server's price breakdown, the cancellation deadline, the hold and the trust lines. */
 export function SummaryCard({
-  room,
-  stay,
-  quote,
-  hotelTimes,
-  hold,
-  holdSeconds,
-  confirmationMode,
-}: SummaryProps) {
+  pinned = false,
+  ...props
+}: SummaryProps & {
+  /** Keep the total and the hold countdown in view while the rail scrolls. */
+  pinned?: boolean;
+}) {
+  const { room, stay, quote, hotelTimes, hold, holdSeconds, confirmationMode } =
+    props;
   const site = useSite();
   const guests = stay.adults + stay.children;
   const nights = quote?.breakdown.nights;
@@ -143,8 +196,10 @@ export function SummaryCard({
   return (
     <section
       aria-label="Your stay"
-      className="rounded-card border-line bg-card shadow-float space-y-5 border p-5"
+      className="space-y-5 rounded-card border border-line bg-card p-5 shadow-float"
     >
+      {pinned && <PinnedTotals {...props} />}
+
       <StayFacts
         room={room}
         stay={stay}
@@ -152,7 +207,7 @@ export function SummaryCard({
         hotelTimes={hotelTimes}
       />
 
-      <div className="border-line border-t pt-5" aria-busy={!quote}>
+      <div className="border-t border-line pt-5" aria-busy={!quote}>
         {quote ? (
           <PriceBreakdown quote={{ ...quote.breakdown }} />
         ) : (
@@ -162,25 +217,25 @@ export function SummaryCard({
       </div>
 
       {quote && (
-        <div className="rounded-control bg-paper text-small p-4">
-          <p className="font-semibold">
+        <Alert variant="neutral" size="panel">
+          <AlertTitle>
             {quote.policy.nonRefundable
               ? 'Non-refundable'
               : quote.policy.freeCancellationUntil
                 ? `Free cancellation until ${formatDeadline(quote.policy.freeCancellationUntil)}`
                 : quote.policy.note}
-          </p>
+          </AlertTitle>
           {quote.policy.freeCancellationUntil && (
-            <p className="text-muted-foreground mt-1">
+            <AlertDescription>
               After that, cancellation charges apply. See the Cancellation
               Policy.
-            </p>
+            </AlertDescription>
           )}
-        </div>
+        </Alert>
       )}
 
       <div
-        className={`rounded-control text-small flex items-center gap-3 border p-4 ${
+        className={`flex items-center gap-3 rounded-control border p-4 text-small ${
           hold?.expired
             ? 'border-destructive bg-destructive/5'
             : hold?.expiring
@@ -198,11 +253,11 @@ export function SummaryCard({
             minutes once you continue.
           </p>
         ) : hold.expired ? (
-          <p className="text-destructive font-semibold">
+          <p className="font-semibold text-destructive">
             Your hold has expired.
           </p>
         ) : (
-          <p className={hold.expiring ? 'text-destructive font-semibold' : ''}>
+          <p className={hold.expiring ? 'font-semibold text-destructive' : ''}>
             We&rsquo;re holding this room for you:{' '}
             <span
               className="font-display text-body-lg tabular-nums"
@@ -217,16 +272,16 @@ export function SummaryCard({
         )}
       </div>
 
-      <ul className="text-small space-y-1.5">
+      <ul className="space-y-1.5 text-small">
         <li className="flex items-center gap-2">
-          <Lock className="text-brand-ink size-4 shrink-0" aria-hidden />
+          <Lock className="size-4 shrink-0 text-brand-ink" aria-hidden />
           Secure payment
         </li>
         <li className="flex items-center gap-2">
           {confirmationMode === 'instant' ? (
             <>
               <BadgeCheck
-                className="text-brand-ink size-4 shrink-0"
+                className="size-4 shrink-0 text-brand-ink"
                 aria-hidden
               />
               Instant confirmation
@@ -234,7 +289,7 @@ export function SummaryCard({
           ) : (
             <>
               <ShieldCheck
-                className="text-brand-ink size-4 shrink-0"
+                className="size-4 shrink-0 text-brand-ink"
                 aria-hidden
               />
               Confirmed after hotel approval
@@ -242,19 +297,18 @@ export function SummaryCard({
           )}
         </li>
         <li>
-          <a
+          <TextLink
             href={whatsappHref(
               site,
               `Hello, I need help with my booking for the ${room.name}.`,
             )}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="decoration-brand inline-flex min-h-11 items-center gap-2 font-semibold underline decoration-2 underline-offset-4"
+            external
+            className="inline-flex items-center gap-2"
           >
             <MessageCircle className="size-4" aria-hidden />
             Need help? Chat on WhatsApp
             <span className="sr-only"> (opens in a new tab)</span>
-          </a>
+          </TextLink>
         </li>
       </ul>
     </section>
@@ -268,8 +322,7 @@ export function MobileSummary(props: SummaryProps) {
   return (
     <div className="lg:hidden">
       <Button
-        variant="outline"
-        size="md"
+        variant="secondary"
         aria-haspopup="dialog"
         onClick={() => setOpen(true)}
         className="h-auto w-full justify-between py-3"
@@ -282,15 +335,20 @@ export function MobileSummary(props: SummaryProps) {
           ) : (
             <span
               aria-hidden
-              className="bg-ink/10 block h-5 w-28 rounded motion-safe:animate-pulse"
+              className="block h-5 w-28 rounded-sm bg-ink/10 motion-safe:animate-pulse"
             />
           )}
-          <span className="text-small text-muted-foreground block truncate">
+          <span className="block truncate text-small text-muted-foreground">
             {props.room.name},{' '}
             {formatRange(props.stay.checkIn, props.stay.checkOut)}
           </span>
         </span>
-        <span className="text-small decoration-brand inline-flex shrink-0 items-center gap-1 font-semibold underline decoration-2 underline-offset-4">
+        <span
+          className={cn(
+            textLinkRecipe,
+            'inline-flex shrink-0 items-center gap-1 text-small',
+          )}
+        >
           View details <ChevronDown className="size-4" aria-hidden />
         </span>
       </Button>
@@ -298,20 +356,18 @@ export function MobileSummary(props: SummaryProps) {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
           side="bottom"
-          showCloseButton
-          className="rounded-t-card border-line bg-paper text-ink max-h-[92dvh] gap-0 border-t p-0"
+          surface="paper"
+          className="max-h-[92dvh] rounded-t-card"
         >
-          <SheetHeader className="border-line border-b px-5 py-2 pr-14">
-            <SheetTitle className="font-display text-h3">
-              Your booking
-            </SheetTitle>
+          <SheetHeader>
+            <SheetTitle>Your booking</SheetTitle>
             <SheetDescription className="sr-only">
               Review the room, stay dates, and total price for this booking.
             </SheetDescription>
           </SheetHeader>
-          <div className="overflow-y-auto p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+          <SheetBody className="pb-safe [--pb-safe-min:1.5rem]">
             <SummaryCard {...props} />
-          </div>
+          </SheetBody>
         </SheetContent>
       </Sheet>
     </div>

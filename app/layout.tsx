@@ -70,13 +70,13 @@ export default async function RootLayout({
   const analytics = settings.analytics;
   return (
     <html lang="en-NG" className={`${display.variable} ${body.variable}`}>
-      <body className="text-body min-w-62.5 font-sans antialiased">
+      <body className="min-w-62.5 font-sans text-body antialiased">
         <QueryProvider>
           <SiteProvider site={site}>
             <ConsentProvider>
               <a
                 href="#main"
-                className="focus:rounded-control focus:bg-ink sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-3 focus:text-white"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-control focus:bg-ink focus:px-4 focus:py-3 focus:text-white"
               >
                 Skip to main content
               </a>
@@ -87,8 +87,8 @@ export default async function RootLayout({
               <HideOnCheckout>
                 <Footer site={site} />
                 <StickyBookBar />
+                <WhatsAppFab />
               </HideOnCheckout>
-              <WhatsAppFab />
               <HideOnCheckout>
                 <ConsentBanner
                   enabled={consent.enabled}

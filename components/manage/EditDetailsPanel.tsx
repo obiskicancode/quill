@@ -8,6 +8,7 @@ import type { z } from 'zod';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useSaveDetails } from '@/hooks/services/guest/use-manage';
@@ -17,7 +18,6 @@ import { detailsPatchSchema } from '@/schemas/checkout.schema';
 import type { GuestReservation } from '@/types/booking.types';
 
 import { VerifyForm } from '../booking/VerifyForm';
-import { Banner } from '../checkout/CheckoutStates';
 import { DetailsStep, type GuestField } from '../checkout/DetailsStep';
 import { EASE_OUT } from '../motion/variants';
 import { Button, ButtonLink } from '../ui/button';
@@ -31,7 +31,6 @@ interface EditDetailsPanelProps {
   onSessionExpired: () => void;
   onReverified: () => void;
 }
-
 /** Edit name, phone, country, arrival time and special requests. Same validation as checkout. Email is read-only. */
 export function EditDetailsPanel({
   v,
@@ -81,7 +80,6 @@ export function EditDetailsPanel({
         exit: { opacity: 0, y: -6 },
         transition: { duration: 0.2, ease: EASE_OUT },
       };
-
   const save = async (details: DetailsOutput) => {
     if (busy || !dirty) return;
     setError(null);
@@ -131,10 +129,9 @@ export function EditDetailsPanel({
       }
     }
   };
-
   if (sessionExpired) {
     return (
-      <section className="rounded-card border-line bg-card shadow-raised border p-5 md:p-6 print:hidden">
+      <section className="rounded-card border border-line bg-card p-5 shadow-raised md:p-6 print:hidden">
         <VerifyForm
           embedded
           scope="manage"
@@ -146,11 +143,10 @@ export function EditDetailsPanel({
       </section>
     );
   }
-
   return (
     <section
       aria-labelledby="edit-title"
-      className="rounded-card border-line bg-card shadow-raised border p-5 md:p-6 print:hidden"
+      className="rounded-card border border-line bg-card p-5 shadow-raised md:p-6 print:hidden"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="edit-title" className="font-display text-h3">
@@ -160,7 +156,6 @@ export function EditDetailsPanel({
           Close
         </Button>
       </div>
-
       <form
         noValidate
         onSubmit={(event) => {
@@ -188,21 +183,21 @@ export function EditDetailsPanel({
             if (name !== 'email') void trigger(name);
           }}
         />
-
         {Object.values(detailsErrors).some(Boolean) && (
-          <p role="alert" className="text-small text-destructive font-medium">
+          <p role="alert" className="text-small font-medium text-destructive">
             Please fix the highlighted fields.
           </p>
         )}
         <AnimatePresence initial={false}>
           {error && (
             <motion.div {...panelMotion}>
-              <Banner
-                role="alert"
-                tone="danger"
-                title={ERROR_MESSAGES.CHANGES_NOT_SAVED}
-                actions={
-                  error.retryable ? (
+              <Alert role="alert" variant="destructive" size="banner">
+                <AlertTitle>{ERROR_MESSAGES.CHANGES_NOT_SAVED}</AlertTitle>
+                <AlertDescription>
+                  <p>{error.message}</p>
+                </AlertDescription>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {error.retryable ? (
                     <Button
                       variant="secondary"
                       size="sm"
@@ -211,11 +206,9 @@ export function EditDetailsPanel({
                     >
                       Try again
                     </Button>
-                  ) : undefined
-                }
-              >
-                <p>{error.message}</p>
-              </Banner>
+                  ) : undefined}
+                </div>
+              </Alert>
             </motion.div>
           )}
         </AnimatePresence>
@@ -224,7 +217,7 @@ export function EditDetailsPanel({
           aria-live="polite"
           className={
             justSaved
-              ? 'rounded-control bg-paper text-small p-3 font-semibold'
+              ? 'rounded-control bg-paper p-3 text-small font-semibold'
               : 'sr-only'
           }
         >
@@ -236,7 +229,6 @@ export function EditDetailsPanel({
             )}
           </AnimatePresence>
         </p>
-
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" size="lg" loading={busy} disabled={!dirty}>
             Save changes
@@ -246,10 +238,9 @@ export function EditDetailsPanel({
           </span>
         </div>
       </form>
-
-      <div className="border-line text-small mt-6 border-t pt-4">
+      <div className="mt-6 border-t border-line pt-4 text-small">
         <p className="font-semibold">Need to change something else?</p>
-        <p className="text-ink/85 mt-1">
+        <p className="mt-1 text-ink/85">
           The number of guests, the room type and prices can&rsquo;t be changed
           here.
         </p>

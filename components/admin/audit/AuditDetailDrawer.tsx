@@ -5,11 +5,13 @@ import { ExternalLink } from 'lucide-react';
 
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { formatHotelDateTime } from '@/lib/format';
 import type { AuditDetailResponse } from '@/types/audit.types';
 
 export function AuditDetailDrawer({
@@ -30,61 +32,51 @@ export function AuditDetailDrawer({
         if (!open) onClose();
       }}
     >
-      <SheetContent
-        side="right"
-        showCloseButton
-        className="border-line bg-card w-full max-w-xl gap-0 border-l p-0 sm:max-w-xl"
-      >
-        <SheetHeader className="border-line flex-row items-center justify-between border-b px-6 py-4 pr-14">
+      <SheetContent side="right" size="xl">
+        <SheetHeader className="flex-row items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <SheetTitle className="text-h3 font-display text-ink font-semibold">
-                Audit Log Entry
-              </SheetTitle>
-              <span className="border-line bg-paper text-caption rounded border px-2 py-0.5 font-mono capitalize">
+              <SheetTitle>Audit Log Entry</SheetTitle>
+              <span className="rounded-sm border border-line bg-paper px-2 py-0.5 font-mono text-caption capitalize">
                 {audit.action}
               </span>
             </div>
-            <SheetDescription className="text-caption text-muted-foreground mt-0.5 font-mono">
+            <SheetDescription className="mt-0.5 font-mono text-caption">
               {audit.entity} • ID: {audit.entityId}
             </SheetDescription>
           </div>
         </SheetHeader>
 
         {/* Content Body */}
-        <div className="text-small flex-1 space-y-6 overflow-y-auto p-6">
+        <SheetBody className="space-y-6">
           {/* Metadata Grid */}
-          <div className="border-line bg-paper/50 text-caption grid grid-cols-2 gap-3 rounded-lg border p-4">
+          <div className="grid grid-cols-2 gap-3 rounded-control border border-line bg-paper/50 p-4 text-caption">
             <div>
-              <span className="text-muted-foreground block">
+              <span className="block text-muted-foreground">
                 Timestamp (Hotel Local)
               </span>
-              <span className="text-ink font-medium">
-                {new Date(audit.createdAt).toLocaleString('en-GB', {
-                  timeZone: 'Africa/Lagos',
-                  dateStyle: 'medium',
-                  timeStyle: 'short',
-                })}
+              <span className="font-medium text-ink">
+                {formatHotelDateTime(audit.createdAt)}
               </span>
             </div>
             <div>
-              <span className="text-muted-foreground block">
+              <span className="block text-muted-foreground">
                 Timestamp (UTC)
               </span>
-              <span className="text-ink font-mono">{audit.utcTime}</span>
+              <span className="font-mono text-ink">{audit.utcTime}</span>
             </div>
             <div>
-              <span className="text-muted-foreground block">Actor</span>
-              <span className="text-ink font-medium">
+              <span className="block text-muted-foreground">Actor</span>
+              <span className="font-medium text-ink">
                 {audit.actorName} ({audit.actorRole})
               </span>
             </div>
             <div>
-              <span className="text-muted-foreground block">Linked Entity</span>
+              <span className="block text-muted-foreground">Linked Entity</span>
               {audit.entityLink && audit.isEntityAvailable ? (
                 <Link
                   href={audit.entityLink}
-                  className="text-primary inline-flex items-center gap-1 font-semibold hover:underline"
+                  className="inline-flex items-center gap-1 font-semibold text-brand-ink hover:underline"
                 >
                   <span>{audit.entityRef || audit.entityId}</span>
                   <ExternalLink className="size-3" />
@@ -98,18 +90,18 @@ export function AuditDetailDrawer({
 
             {isOwner && audit.ipAddress && (
               <div>
-                <span className="text-muted-foreground block">
+                <span className="block text-muted-foreground">
                   IP Address (Owner Only)
                 </span>
-                <span className="text-ink font-mono">{audit.ipAddress}</span>
+                <span className="font-mono text-ink">{audit.ipAddress}</span>
               </div>
             )}
             {isOwner && audit.userAgent && (
               <div className="col-span-2">
-                <span className="text-muted-foreground block">
+                <span className="block text-muted-foreground">
                   User Agent (Owner Only)
                 </span>
-                <span className="text-muted-foreground block truncate font-mono text-[0.6875rem]">
+                <span className="block truncate font-mono text-micro text-muted-foreground">
                   {audit.userAgent}
                 </span>
               </div>
@@ -118,8 +110,8 @@ export function AuditDetailDrawer({
 
           {/* Reason if provided */}
           {audit.reason && (
-            <div className="border-line space-y-1 rounded-lg border p-4">
-              <span className="text-caption text-muted-foreground font-semibold uppercase">
+            <div className="space-y-1 rounded-control border border-line p-4">
+              <span className="text-caption font-semibold text-muted-foreground uppercase">
                 Staff Reason / Justification
               </span>
               <p className="text-ink">{audit.reason}</p>
@@ -128,16 +120,16 @@ export function AuditDetailDrawer({
 
           {/* Before & After Diffs */}
           <div className="space-y-3">
-            <h3 className="text-ink flex items-center justify-between font-semibold">
+            <h3 className="flex items-center justify-between font-semibold text-ink">
               <span>Field Changes</span>
-              <span className="text-caption text-muted-foreground font-normal">
+              <span className="text-caption font-normal text-muted-foreground">
                 {audit.diffs.length} field{audit.diffs.length === 1 ? '' : 's'}{' '}
                 modified
               </span>
             </h3>
 
             {audit.diffs.length === 0 ? (
-              <div className="border-line text-caption text-muted-foreground rounded-lg border border-dashed p-4 text-center">
+              <div className="rounded-control border border-dashed border-line p-4 text-center text-caption text-muted-foreground">
                 No state diff recorded for this operation.
               </div>
             ) : (
@@ -145,20 +137,20 @@ export function AuditDetailDrawer({
                 {audit.diffs.map((diff) => (
                   <div
                     key={diff.field}
-                    className="border-line bg-card space-y-2 rounded-lg border p-3"
+                    className="space-y-2 rounded-control border border-line bg-card p-3"
                   >
-                    <div className="text-ink text-caption font-semibold">
+                    <div className="text-caption font-semibold text-ink">
                       {diff.label}
                     </div>
-                    <div className="text-caption grid grid-cols-2 gap-2 font-mono">
-                      <div className="bg-destructive/5 border-destructive/20 text-destructive rounded border p-2 wrap-break-word">
-                        <span className="text-muted-foreground mb-0.5 block text-[0.625rem] font-bold uppercase">
+                    <div className="grid grid-cols-2 gap-2 font-mono text-caption">
+                      <div className="rounded-sm border border-destructive/20 bg-destructive/5 p-2 wrap-break-word text-destructive">
+                        <span className="mb-0.5 block text-micro font-bold text-muted-foreground uppercase">
                           Before:
                         </span>
                         {diff.before}
                       </div>
-                      <div className="bg-success/5 border-success/20 text-success rounded border p-2 wrap-break-word">
-                        <span className="text-muted-foreground mb-0.5 block text-[0.625rem] font-bold uppercase">
+                      <div className="rounded-sm border border-success/20 bg-success/5 p-2 wrap-break-word text-success">
+                        <span className="mb-0.5 block text-micro font-bold text-muted-foreground uppercase">
                           After:
                         </span>
                         {diff.after}
@@ -169,7 +161,7 @@ export function AuditDetailDrawer({
               </div>
             )}
           </div>
-        </div>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );

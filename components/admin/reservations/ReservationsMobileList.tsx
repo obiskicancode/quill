@@ -4,9 +4,10 @@ import { useRouter } from 'next/navigation';
 import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 
+import { clickableRowProps } from '@/components/admin/clickableRow';
 import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { formatNaira } from '@/lib/format';
+import { formatMinor } from '@/lib/format';
 import type { ReservationListItem } from '@/types/reservation.types';
 
 import { PaymentBadge } from './PaymentBadge';
@@ -33,21 +34,15 @@ export function ReservationsMobileList({
       {rows.map((row) => (
         <div
           key={row.id}
-          tabIndex={0}
-          role="button"
-          aria-label={`Open reservation ${row.reference}`}
-          onClick={() => router.push(`/admin/reservations/${row.id}`)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              router.push(`/admin/reservations/${row.id}`);
-            }
-          }}
-          className="rounded-card border-line bg-card shadow-raised cursor-pointer border p-4 transition-all focus:outline-none active:scale-[0.99]"
+          {...clickableRowProps(
+            `Open reservation ${row.reference}`,
+            () => router.push(`/admin/reservations/${row.id}`),
+            'rounded-card border border-line bg-card p-4 shadow-raised transition-all active:scale-[0.99]',
+          )}
         >
           {/* Header row: Reference & Copy & Badges */}
           <div className="flex items-center justify-between gap-2">
-            <div className="text-ink flex items-center gap-1.5 font-semibold">
+            <div className="flex items-center gap-1.5 font-semibold text-ink">
               <span>{row.reference}</span>
               <Button
                 type="button"
@@ -57,7 +52,7 @@ export function ReservationsMobileList({
                 aria-label={`Copy reference ${row.reference}`}
               >
                 {copiedRef === row.reference ? (
-                  <Check className="text-success size-3" aria-hidden="true" />
+                  <Check className="size-3 text-success" aria-hidden="true" />
                 ) : (
                   <Copy className="size-3" aria-hidden="true" />
                 )}
@@ -72,38 +67,38 @@ export function ReservationsMobileList({
 
           {/* Guest Name & Room info */}
           <div className="mt-2.5">
-            <p className="text-ink font-semibold">{row.guestName}</p>
+            <p className="font-semibold text-ink">{row.guestName}</p>
             {row.guestPhone && (
               <p className="text-caption text-muted-foreground">
                 {row.guestPhone}
               </p>
             )}
-            <p className="text-caption text-muted-foreground mt-1">
+            <p className="mt-1 text-caption text-muted-foreground">
               {row.roomTypeName} • Room #{row.roomNumber}
             </p>
           </div>
 
           {/* Stay Dates and Financials */}
-          <div className="border-line/60 text-caption mt-3 flex items-center justify-between border-t pt-2.5">
+          <div className="mt-3 flex items-center justify-between border-t border-line/60 pt-2.5 text-caption">
             <div>
-              <span className="text-ink font-medium">
+              <span className="font-medium text-ink">
                 {row.checkIn} → {row.checkOut}
               </span>
-              <span className="text-muted-foreground ml-1">
+              <span className="ml-1 text-muted-foreground">
                 ({row.nights}n)
               </span>
             </div>
 
             <div>
-              <span className="text-muted-foreground mr-1.5">Balance:</span>
+              <span className="mr-1.5 text-muted-foreground">Balance:</span>
               <span
                 className={
                   row.balanceMinor > 0
-                    ? 'text-destructive font-bold'
+                    ? 'font-bold text-destructive'
                     : 'text-ink'
                 }
               >
-                {formatNaira(row.balanceMinor / 100)}
+                {formatMinor(row.balanceMinor)}
               </span>
             </div>
           </div>

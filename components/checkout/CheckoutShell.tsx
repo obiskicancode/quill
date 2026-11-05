@@ -28,11 +28,11 @@ export function CheckoutShell({
     'inline-flex min-h-11 items-center gap-2 px-2 text-small font-medium underline-offset-4 hover:underline';
   return (
     <>
-      <header className="checkout-chrome border-line bg-paper border-b">
+      <header className="border-b border-line bg-paper print:hidden">
         <div className="container-page flex min-h-16 items-center justify-between gap-4">
           <SiteLogo site={site} />
-          <p className="text-small inline-flex items-center gap-2 font-semibold">
-            <Lock className="text-brand-ink size-4" aria-hidden />
+          <p className="inline-flex items-center gap-2 text-small font-semibold">
+            <Lock className="size-4 text-brand-ink" aria-hidden />
             {label}
           </p>
           <div className="flex items-center">
@@ -68,23 +68,20 @@ export function CheckoutShell({
 
       {children}
 
-      <footer className="checkout-chrome border-line bg-paper border-t pt-6 pb-28 lg:pb-8">
-        <div className="container-page text-small text-muted-foreground flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+      <footer className="border-t border-line bg-paper pt-6 pb-28 lg:pb-8 print:hidden">
+        <div className="container-page flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-small text-muted-foreground">
           <p>
             &copy; {new Date().getFullYear()} {site.name}
           </p>
           <ul className="flex flex-wrap gap-x-4">
             {site.policies.map((p) => (
               <li key={p.href}>
-                <a
+                <Link
                   href={p.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="inline-flex min-h-11 items-center underline underline-offset-4"
                 >
                   {p.label}
-                  <span className="sr-only"> (opens in a new tab)</span>
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

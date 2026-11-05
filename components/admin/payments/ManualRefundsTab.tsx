@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -42,6 +43,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { formatMinorExact } from '@/lib/format';
 import { ManualRefundPayoutInputSchema } from '@/schemas/payments.schema';
 import type {
   ManualRefundItem,
@@ -70,10 +72,6 @@ const ManualRefundPayoutFormSchema = ManualRefundPayoutInputSchema.omit({
 
 type PayoutInput = z.input<typeof ManualRefundPayoutFormSchema>;
 type PayoutOutput = z.output<typeof ManualRefundPayoutFormSchema>;
-
-function formatNaira(minor: number): string {
-  return `₦${(minor / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
-}
 
 function generatePayoutReference(): string {
   return `REF-TRF-${Date.now().toString().slice(-6)}`;
@@ -144,7 +142,7 @@ export function ManualRefundsTab({
     if (input.amountMinor > selectedRefund.refundDueMinor) {
       setFormError(
         ERROR_MESSAGES.PAYOUT_EXCEEDS_REFUND_DUE_SIMPLE(
-          formatNaira(selectedRefund.refundDueMinor),
+          selectedRefund.refundDueMinor,
         ),
       );
       return;
@@ -203,7 +201,7 @@ export function ManualRefundsTab({
 
   if (loading) {
     return (
-      <div className="rounded-card border-line bg-card text-muted-foreground border p-8 text-center">
+      <div className="rounded-card border border-line bg-card p-8 text-center text-muted-foreground">
         Loading pending refunds...
       </div>
     );
@@ -211,10 +209,10 @@ export function ManualRefundsTab({
 
   if (refunds.length === 0) {
     return (
-      <div className="rounded-card border-line bg-paper border border-dashed p-8 text-center">
-        <CheckCircle2 className="text-success mx-auto mb-2 size-8" />
-        <h3 className="text-ink font-semibold">All Refunds Up to Date</h3>
-        <p className="text-small text-muted-foreground mt-1">
+      <div className="rounded-card border border-dashed border-line bg-paper p-8 text-center">
+        <CheckCircle2 className="mx-auto mb-2 size-8 text-success" />
+        <h3 className="font-semibold text-ink">All Refunds Up to Date</h3>
+        <p className="mt-1 text-small text-muted-foreground">
           There are no pending manual or provider refunds awaiting action.
         </p>
       </div>
@@ -223,9 +221,9 @@ export function ManualRefundsTab({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-card border-line bg-card overflow-x-auto border">
-        <Table className="text-small w-full text-left">
-          <TableHeader className="border-line bg-paper text-caption text-muted-foreground border-b font-semibold uppercase">
+      <div className="overflow-x-auto rounded-card border border-line bg-card">
+        <Table className="w-full text-left text-small">
+          <TableHeader className="border-b border-line bg-paper text-caption font-semibold text-muted-foreground uppercase">
             <TableRow className="border-line hover:bg-transparent">
               <TableHead className="px-4 py-3">Booking Ref</TableHead>
               <TableHead className="px-4 py-3">Guest Name</TableHead>
@@ -235,7 +233,7 @@ export function ManualRefundsTab({
               <TableHead className="px-4 py-3 text-right">Action</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-line divide-y">
+          <TableBody className="divide-y divide-line">
             {refunds.map((refund) => {
               const isManual =
                 refund.provider === 'bank_transfer' ||
@@ -244,41 +242,38 @@ export function ManualRefundsTab({
               return (
                 <TableRow
                   key={refund.id}
-                  className="hover:bg-paper/50 border-line"
+                  className="border-line hover:bg-paper/50"
                 >
-                  <TableCell className="text-ink px-4 py-3 font-mono font-medium">
+                  <TableCell className="px-4 py-3 font-mono font-medium text-ink">
                     <Link
                       href={`/admin/reservations/${refund.reservationId}`}
-                      className="hover:text-primary inline-flex items-center gap-1 hover:underline"
+                      className="inline-flex items-center gap-1 hover:text-brand-ink hover:underline"
                     >
                       {refund.reservationRef}{' '}
-                      <ExternalLink className="text-muted-foreground size-3" />
+                      <ExternalLink className="size-3 text-muted-foreground" />
                     </Link>
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    <div className="text-ink font-medium">
+                    <div className="font-medium text-ink">
                       {refund.guestName}
                     </div>
                     <div className="text-caption text-muted-foreground">
                       {refund.guestEmail}
                     </div>
                   </TableCell>
-                  <TableCell className="text-destructive px-4 py-3 font-mono font-bold">
-                    {formatNaira(refund.refundDueMinor)}
+                  <TableCell className="px-4 py-3 font-mono font-bold text-destructive">
+                    {formatMinorExact(refund.refundDueMinor)}
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    <span className="text-ink font-medium capitalize">
+                    <span className="font-medium text-ink capitalize">
                       {refund.provider}
                     </span>
-                    <span className="text-caption text-muted-foreground block capitalize">
+                    <span className="block text-caption text-muted-foreground capitalize">
                       {refund.method.replace('_', ' ')}
                     </span>
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    <Badge
-                      variant="outline"
-                      className="text-caption border-primary/30 bg-primary/15 text-brand-ink font-medium"
-                    >
+                    <Badge variant="brand">
                       {isManual
                         ? 'Manual Payout Due'
                         : refund.providerState || 'Processing at Gateway'}
@@ -296,7 +291,7 @@ export function ManualRefundsTab({
                     ) : (
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         onClick={() => handleRecheck(refund.id)}
                         disabled={recheckingId === refund.id}
@@ -323,195 +318,192 @@ export function ManualRefundsTab({
             if (!nextOpen && !isSubmitting) setSelectedRefund(null);
           }}
         >
-          <DialogContent className="rounded-card border-line bg-card max-w-lg gap-0 border p-0 shadow-xl sm:max-w-lg">
-            <DialogHeader className="border-line border-b p-6 pr-14 pb-3">
-              <DialogTitle className="font-display text-h3 text-ink font-semibold">
-                Record Manual Refund Payout
-              </DialogTitle>
-              <DialogDescription className="text-caption text-muted-foreground">
+          <DialogContent size="lg">
+            <DialogHeader>
+              <DialogTitle>Record Manual Refund Payout</DialogTitle>
+              <DialogDescription>
                 Record the offline payout details for this refund.
               </DialogDescription>
             </DialogHeader>
 
             <form
               onSubmit={handleSubmit(handleSubmitPayout)}
-              className="text-small space-y-4 p-6"
+              className="flex min-h-0 flex-1 flex-col"
               noValidate
             >
-              <div className="bg-paper border-line text-caption text-muted-foreground space-y-1 rounded-lg border p-3">
-                <div>
-                  Booking:{' '}
-                  <strong className="text-ink font-mono">
-                    {selectedRefund.reservationRef}
-                  </strong>
+              <DialogBody className="space-y-4">
+                <div className="space-y-1 rounded-control border border-line bg-paper p-3 text-caption text-muted-foreground">
+                  <div>
+                    Booking:{' '}
+                    <strong className="font-mono text-ink">
+                      {selectedRefund.reservationRef}
+                    </strong>
+                  </div>
+                  <div>
+                    Guest:{' '}
+                    <strong className="text-ink">
+                      {selectedRefund.guestName}
+                    </strong>{' '}
+                    ({selectedRefund.guestEmail})
+                  </div>
+                  <div>
+                    Total refund due:{' '}
+                    <strong className="font-mono font-bold text-destructive">
+                      {formatMinorExact(selectedRefund.refundDueMinor)}
+                    </strong>
+                  </div>
                 </div>
-                <div>
-                  Guest:{' '}
-                  <strong className="text-ink">
-                    {selectedRefund.guestName}
-                  </strong>{' '}
-                  ({selectedRefund.guestEmail})
-                </div>
-                <div>
-                  Total refund due:{' '}
-                  <strong className="text-destructive font-mono font-bold">
-                    {formatNaira(selectedRefund.refundDueMinor)}
-                  </strong>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <Field
-                  id="payout-amount"
-                  label="Amount Paid Out (₦)"
-                  error={errors.amountNaira?.message}
-                >
-                  {(a11y) => (
-                    <Input
-                      {...a11y}
-                      {...register('amountNaira')}
-                      type="number"
-                      step="any"
-                      required
-                      className={`${inputClass(errors.amountNaira?.message)} border-line bg-paper font-mono`}
-                    />
-                  )}
-                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    id="payout-amount"
+                    label="Amount Paid Out (₦)"
+                    error={errors.amountNaira?.message}
+                  >
+                    {(a11y) => (
+                      <Input
+                        {...a11y}
+                        {...register('amountNaira')}
+                        type="number"
+                        step="any"
+                        required
+                        className={`${inputClass(errors.amountNaira?.message)} border-line bg-paper font-mono`}
+                      />
+                    )}
+                  </Field>
 
-                <Field
-                  id="payout-method"
-                  label="Payout Method"
-                  error={errors.method?.message}
-                >
-                  {(a11y) => (
-                    <Controller
-                      control={control}
-                      name="method"
-                      render={({ field }) => (
-                        <Select
-                          items={[
-                            {
-                              value: 'bank_transfer',
-                              label: 'Bank Transfer',
-                            },
-                            { value: 'cash', label: 'Cash' },
-                          ]}
-                          value={field.value}
-                          onValueChange={(val) => {
-                            if (val) field.onChange(val);
-                          }}
-                        >
-                          <SelectTrigger
-                            id={a11y.id}
-                            aria-describedby={a11y['aria-describedby']}
-                            aria-invalid={a11y['aria-invalid']}
-                            onBlur={field.onBlur}
-                            className="w-full"
+                  <Field
+                    id="payout-method"
+                    label="Payout Method"
+                    error={errors.method?.message}
+                  >
+                    {(a11y) => (
+                      <Controller
+                        control={control}
+                        name="method"
+                        render={({ field }) => (
+                          <Select
+                            items={[
+                              {
+                                value: 'bank_transfer',
+                                label: 'Bank Transfer',
+                              },
+                              { value: 'cash', label: 'Cash' },
+                            ]}
+                            value={field.value}
+                            onValueChange={(val) => {
+                              if (val) field.onChange(val);
+                            }}
                           >
-                            <SelectValue placeholder="Select payout method" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="bank_transfer">
-                              Bank Transfer
-                            </SelectItem>
-                            <SelectItem value="cash">Cash</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  )}
-                </Field>
-              </div>
+                            <SelectTrigger
+                              id={a11y.id}
+                              aria-describedby={a11y['aria-describedby']}
+                              aria-invalid={a11y['aria-invalid']}
+                              onBlur={field.onBlur}
+                              className="w-full"
+                            >
+                              <SelectValue placeholder="Select payout method" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="bank_transfer">
+                                Bank Transfer
+                              </SelectItem>
+                              <SelectItem value="cash">Cash</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    )}
+                  </Field>
+                </div>
 
-              <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    id="payout-reference"
+                    label="Payout Reference / Narration"
+                    error={errors.reference?.message}
+                  >
+                    {(a11y) => (
+                      <Input
+                        {...a11y}
+                        {...register('reference')}
+                        type="text"
+                        required
+                        className={`${inputClass(errors.reference?.message)} border-line bg-paper`}
+                      />
+                    )}
+                  </Field>
+
+                  <Field
+                    id="payout-date"
+                    label="Date Paid"
+                    error={errors.paidDate?.message}
+                  >
+                    {(a11y) => (
+                      <Input
+                        {...a11y}
+                        {...register('paidDate')}
+                        type="date"
+                        required
+                        className={`${inputClass(errors.paidDate?.message)} border-line bg-paper`}
+                      />
+                    )}
+                  </Field>
+                </div>
+
                 <Field
-                  id="payout-reference"
-                  label="Payout Reference / Narration"
-                  error={errors.reference?.message}
+                  id="payout-note"
+                  label="Internal Note"
+                  optional
+                  error={errors.note?.message}
                 >
                   {(a11y) => (
-                    <Input
+                    <Textarea
                       {...a11y}
-                      {...register('reference')}
-                      type="text"
-                      required
-                      className={`${inputClass(errors.reference?.message)} border-line bg-paper`}
+                      {...register('note')}
+                      rows={2}
+                      className={`${inputClass(errors.note?.message)} border-line bg-paper`}
                     />
                   )}
                 </Field>
 
-                <Field
-                  id="payout-date"
-                  label="Date Paid"
-                  error={errors.paidDate?.message}
-                >
-                  {(a11y) => (
-                    <Input
-                      {...a11y}
-                      {...register('paidDate')}
-                      type="date"
-                      required
-                      className={`${inputClass(errors.paidDate?.message)} border-line bg-paper`}
-                    />
-                  )}
-                </Field>
-              </div>
-
-              <Field
-                id="payout-note"
-                label="Internal Note"
-                optional
-                error={errors.note?.message}
-              >
-                {(a11y) => (
-                  <Textarea
-                    {...a11y}
-                    {...register('note')}
-                    rows={2}
-                    className={`${inputClass(errors.note?.message)} border-line bg-paper`}
+                <div className="flex items-center gap-2 pt-1">
+                  <Controller
+                    control={control}
+                    name="doNotEmailGuest"
+                    render={({ field }) => (
+                      <Checkbox
+                        id="doNotEmailGuest"
+                        name={field.name}
+                        ref={field.ref}
+                        checked={field.value === true}
+                        onCheckedChange={(checked) =>
+                          field.onChange(checked === true)
+                        }
+                        onBlur={field.onBlur}
+                      />
+                    )}
                   />
+                  <Label
+                    htmlFor="doNotEmailGuest"
+                    className="cursor-pointer font-normal"
+                  >
+                    Do not email the guest about this refund (internal / offline
+                    handled)
+                  </Label>
+                </div>
+
+                {formError && (
+                  <Alert variant="destructive" size="sm">
+                    {formError}
+                  </Alert>
                 )}
-              </Field>
+              </DialogBody>
 
-              <div className="flex items-center gap-2 pt-1">
-                <Controller
-                  control={control}
-                  name="doNotEmailGuest"
-                  render={({ field }) => (
-                    <Checkbox
-                      id="doNotEmailGuest"
-                      name={field.name}
-                      ref={field.ref}
-                      checked={field.value === true}
-                      onCheckedChange={(checked) =>
-                        field.onChange(checked === true)
-                      }
-                      onBlur={field.onBlur}
-                    />
-                  )}
-                />
-                <Label
-                  htmlFor="doNotEmailGuest"
-                  className="cursor-pointer font-normal"
-                >
-                  Do not email the guest about this refund (internal / offline
-                  handled)
-                </Label>
-              </div>
-
-              {formError && (
-                <Alert
-                  variant="destructive"
-                  className="border-destructive/30 bg-destructive/5 text-caption text-destructive"
-                >
-                  {formError}
-                </Alert>
-              )}
-
-              <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+              <DialogFooter>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   onClick={() => setSelectedRefund(null)}
                   disabled={isSubmitting}
                 >

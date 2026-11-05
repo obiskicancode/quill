@@ -1,5 +1,5 @@
 import { AdminCard } from '@/components/admin/AdminCard';
-import { formatNaira } from '@/lib/format';
+import { formatMinor } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 export function PriceBreakdownCard({
@@ -9,28 +9,28 @@ export function PriceBreakdownCard({
 }) {
   return (
     <AdminCard title="Price breakdown">
-      <dl className="text-small space-y-2.5">
+      <dl className="space-y-2.5 text-small">
         <div className="flex items-center justify-between">
           <dt className="text-muted-foreground">Room subtotal</dt>
-          <dd className="text-ink font-medium">
-            {formatNaira(reservation.subtotalMinor / 100)}
+          <dd className="font-medium text-ink">
+            {formatMinor(reservation.subtotalMinor)}
           </dd>
         </div>
 
         {reservation.extrasMinor > 0 && (
           <div className="flex items-center justify-between">
             <dt className="text-muted-foreground">Extras</dt>
-            <dd className="text-ink font-medium">
-              +{formatNaira(reservation.extrasMinor / 100)}
+            <dd className="font-medium text-ink">
+              +{formatMinor(reservation.extrasMinor)}
             </dd>
           </div>
         )}
 
         {reservation.discountMinor > 0 && (
-          <div className="text-success flex items-center justify-between">
+          <div className="flex items-center justify-between text-success">
             <dt>Discount</dt>
             <dd className="font-medium">
-              -{formatNaira(reservation.discountMinor / 100)}
+              -{formatMinor(reservation.discountMinor)}
             </dd>
           </div>
         )}
@@ -38,8 +38,8 @@ export function PriceBreakdownCard({
         {reservation.serviceChargeMinor > 0 && (
           <div className="flex items-center justify-between">
             <dt className="text-muted-foreground">Service charge</dt>
-            <dd className="text-ink font-medium">
-              +{formatNaira(reservation.serviceChargeMinor / 100)}
+            <dd className="font-medium text-ink">
+              +{formatMinor(reservation.serviceChargeMinor)}
             </dd>
           </div>
         )}
@@ -47,48 +47,48 @@ export function PriceBreakdownCard({
         {reservation.taxMinor > 0 && (
           <div className="flex items-center justify-between">
             <dt className="text-muted-foreground">Taxes (VAT)</dt>
-            <dd className="text-ink font-medium">
-              +{formatNaira(reservation.taxMinor / 100)}
+            <dd className="font-medium text-ink">
+              +{formatMinor(reservation.taxMinor)}
             </dd>
           </div>
         )}
 
-        <div className="border-line text-body text-ink flex items-center justify-between border-t pt-2 font-bold">
+        <div className="flex items-center justify-between border-t border-line pt-2 text-body font-bold text-ink">
           <dt>Total stay cost</dt>
-          <dd>{formatNaira(reservation.totalMinor / 100)}</dd>
+          <dd>{formatMinor(reservation.totalMinor)}</dd>
         </div>
 
         {reservation.depositRequiredMinor > 0 && (
-          <div className="text-caption text-muted-foreground flex items-center justify-between">
+          <div className="flex items-center justify-between text-caption text-muted-foreground">
             <dt>Deposit required</dt>
-            <dd>{formatNaira(reservation.depositRequiredMinor / 100)}</dd>
+            <dd>{formatMinor(reservation.depositRequiredMinor)}</dd>
           </div>
         )}
 
-        <div className="border-line/60 flex items-center justify-between border-t pt-2">
+        <div className="flex items-center justify-between border-t border-line/60 pt-2">
           <dt className="text-muted-foreground">Amount paid</dt>
-          <dd className="text-success font-semibold">
-            {formatNaira(reservation.amountPaidMinor / 100)}
+          <dd className="font-semibold text-success">
+            {formatMinor(reservation.amountPaidMinor)}
           </dd>
         </div>
 
         {reservation.amountRefundedMinor > 0 && (
-          <div className="text-destructive flex items-center justify-between">
+          <div className="flex items-center justify-between text-destructive">
             <dt>Amount refunded</dt>
             <dd className="font-semibold">
-              -{formatNaira(reservation.amountRefundedMinor / 100)}
+              -{formatMinor(reservation.amountRefundedMinor)}
             </dd>
           </div>
         )}
 
-        <div className="border-line text-body flex items-center justify-between border-t pt-2">
-          <dt className="text-ink font-bold">Balance due</dt>
+        <div className="flex items-center justify-between border-t border-line pt-2 text-body">
+          <dt className="font-bold text-ink">Balance due</dt>
           <dd
             className={`font-bold ${
               reservation.balanceMinor > 0 ? 'text-destructive' : 'text-success'
             }`}
           >
-            {formatNaira(reservation.balanceMinor / 100)}
+            {formatMinor(reservation.balanceMinor)}
           </dd>
         </div>
       </dl>

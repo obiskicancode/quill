@@ -1,4 +1,3 @@
-import { cn } from 'cn';
 import { AlertCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -8,6 +7,7 @@ import {
   FieldLabel,
   Field as FieldRoot,
 } from '@/components/ui/field';
+import { cn } from '@/lib/utils';
 
 export interface FieldA11y {
   id: string;
@@ -47,7 +47,7 @@ export function Field({
       <FieldLabel htmlFor={id} className="text-small font-semibold">
         {label}
         {optional && (
-          <span className="text-muted-foreground font-normal"> (optional)</span>
+          <span className="font-normal text-muted-foreground"> (optional)</span>
         )}
       </FieldLabel>
       {children({

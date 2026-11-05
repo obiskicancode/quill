@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail } from 'lucide-react';
 import { useState } from 'react';
@@ -12,6 +11,7 @@ import { StatusBanner } from '@/components/admin/StatusBanner';
 import { Button } from '@/components/ui/button';
 import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { TextLink } from '@/components/ui/text-link';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useAdminForgotPassword } from '@/hooks/services/admin/use-auth';
@@ -56,11 +56,11 @@ export function ForgotPasswordForm() {
 
   return (
     <div>
-      <p className="text-caption text-muted-foreground font-semibold tracking-wide uppercase">
+      <p className="text-caption font-semibold tracking-wide text-muted-foreground uppercase">
         Account recovery
       </p>
-      <h1 className="font-display text-h2 mt-2">Forgot password</h1>
-      <p className="text-small text-muted-foreground mt-2">
+      <h1 className="mt-2 font-display text-h2">Forgot password</h1>
+      <p className="mt-2 text-small text-muted-foreground">
         Enter your staff email. If it belongs to an active account, a reset link
         is prepared.
       </p>
@@ -74,12 +74,9 @@ export function ForgotPasswordForm() {
             Reset email delivery is not connected in this environment. Ask the
             owner or manager to check the server log for the link.
           </p>
-          <Link
-            href="/admin/login"
-            className="text-small decoration-line hover:decoration-ink inline-block font-semibold underline underline-offset-4"
-          >
+          <TextLink href="/admin/login" tone="quiet" className="text-small">
             Back to sign in
-          </Link>
+          </TextLink>
         </div>
       ) : (
         <>
@@ -119,12 +116,13 @@ export function ForgotPasswordForm() {
               Send reset link
             </Button>
           </form>
-          <Link
+          <TextLink
             href="/admin/login"
-            className="text-small decoration-line hover:decoration-ink mt-4 inline-block font-semibold underline underline-offset-4"
+            tone="quiet"
+            className="mt-4 text-small"
           >
             Back to sign in
-          </Link>
+          </TextLink>
         </>
       )}
     </div>

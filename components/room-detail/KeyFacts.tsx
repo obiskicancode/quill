@@ -19,13 +19,13 @@ export function KeyFacts({ room }: { room: RoomDetail }) {
   return (
     <StaggerGroup
       as="dl"
-      className="rounded-card border-line bg-card grid grid-cols-2 gap-x-6 gap-y-5 border p-5 md:grid-cols-4"
+      className="grid grid-cols-2 gap-x-6 gap-y-5 rounded-card border border-line bg-card p-5 md:grid-cols-4"
       staggerChildren={0.08}
     >
       {facts.map(({ icon: Icon, label, value }) => (
         <StaggerItem as="div" key={label}>
-          <dt className="text-caption text-muted-foreground flex items-center gap-2 font-semibold">
-            <Icon className="text-brand-ink size-4" aria-hidden />
+          <dt className="flex items-center gap-2 text-caption font-semibold text-muted-foreground">
+            <Icon className="size-4 text-brand-ink" aria-hidden />
             {label}
           </dt>
           <dd className="mt-1 font-semibold">{value}</dd>

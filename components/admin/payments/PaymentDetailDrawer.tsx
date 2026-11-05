@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { PaymentStatusBadge } from '@/components/admin/payments/PaymentStatusBadge';
+import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,17 +25,20 @@ import {
 } from '@/components/ui/dialog';
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import {
+  formatHotelDateTime,
+  formatHotelTime,
+  formatMinorExact,
+} from '@/lib/format';
 import type { PaymentDetailResponse } from '@/types/payments.types';
-
-function formatNaira(minor: number): string {
-  return `₦${(minor / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`;
-}
 
 export function PaymentDetailDrawer({
   payment,
@@ -71,72 +76,55 @@ export function PaymentDetailDrawer({
         if (!open) onClose();
       }}
     >
-      <SheetContent
-        side="right"
-        showCloseButton
-        className="border-line bg-card w-full max-w-xl gap-0 border-l p-0 sm:max-w-xl"
-      >
-        <SheetHeader className="border-line border-b px-6 py-4 pr-14">
+      <SheetContent side="right" size="xl">
+        <SheetHeader>
           <div className="flex items-center gap-2">
-            <SheetTitle className="text-h3 font-display text-ink font-semibold">
-              Payment Details
-            </SheetTitle>
-            <Badge
-              variant="outline"
-              className={`text-caption rounded-full px-2 py-0.5 font-semibold ${
-                payment.status === 'paid'
-                  ? 'border-success/20 bg-success/10 text-success'
-                  : payment.status === 'pending'
-                    ? 'border-primary/20 bg-primary/10 text-brand-ink'
-                    : 'border-destructive/20 bg-destructive/10 text-destructive'
-              }`}
-            >
-              {payment.status}
-            </Badge>
+            <SheetTitle>Payment Details</SheetTitle>
+            <PaymentStatusBadge status={payment.status} />
           </div>
-          <SheetDescription className="text-caption text-muted-foreground mt-0.5 font-mono">
+          <SheetDescription className="font-mono text-caption">
             {payment.reference}
           </SheetDescription>
         </SheetHeader>
 
         {/* Content Body */}
-        <div className="text-small flex-1 space-y-6 overflow-y-auto p-6">
+        <SheetBody className="space-y-6">
           {/* Amount banner */}
-          <div className="bg-paper border-line flex items-center justify-between rounded-lg border p-4">
+          <div className="flex items-center justify-between rounded-control border border-line bg-paper p-4">
             <div>
               <span className="text-caption text-muted-foreground">Amount</span>
-              <div className="text-h2 text-ink font-mono font-bold">
-                {formatNaira(payment.amountMinor)}
+              <div className="font-mono text-h2 font-bold text-ink">
+                {formatMinorExact(payment.amountMinor)}
               </div>
             </div>
             {payment.feeMinor > 0 && (
-              <div className="text-caption text-muted-foreground text-right">
-                <div>Fee: {formatNaira(payment.feeMinor)}</div>
-                <div className="text-ink font-medium">
-                  Net: {formatNaira(payment.netAmountMinor)}
+              <div className="text-right text-caption text-muted-foreground">
+                <div>Fee: {formatMinorExact(payment.feeMinor)}</div>
+                <div className="font-medium text-ink">
+                  Net: {formatMinorExact(payment.netAmountMinor)}
                 </div>
               </div>
             )}
           </div>
 
           {/* Reservation Summary */}
-          <div className="border-line space-y-2 rounded-lg border p-4">
+          <div className="space-y-2 rounded-control border border-line p-4">
             <div className="flex items-center justify-between">
-              <span className="text-caption text-muted-foreground font-semibold uppercase">
+              <span className="text-caption font-semibold text-muted-foreground uppercase">
                 Linked Reservation
               </span>
               <Link
                 href={`/admin/reservations/${payment.reservationId}`}
-                className="text-caption text-primary inline-flex items-center gap-1 font-mono font-semibold hover:underline"
+                className="inline-flex items-center gap-1 font-mono text-caption font-semibold text-brand-ink hover:underline"
               >
                 {payment.reservationRef} <ExternalLink className="size-3" />
               </Link>
             </div>
-            <div className="text-ink font-medium">{payment.guestName}</div>
+            <div className="font-medium text-ink">{payment.guestName}</div>
             <div className="text-caption text-muted-foreground">
               {payment.guestEmail}
             </div>
-            <div className="text-caption text-muted-foreground border-line/60 flex justify-between border-t pt-1">
+            <div className="flex justify-between border-t border-line/60 pt-1 text-caption text-muted-foreground">
               <span>{payment.reservation.roomTypeName}</span>
               <span>
                 {payment.reservation.checkIn} → {payment.reservation.checkOut} (
@@ -148,41 +136,39 @@ export function PaymentDetailDrawer({
           {/* Payment metadata */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="text-caption text-muted-foreground block">
+              <span className="block text-caption text-muted-foreground">
                 Payment Type
               </span>
-              <span className="text-ink font-medium capitalize">
+              <span className="font-medium text-ink capitalize">
                 {payment.type}
               </span>
             </div>
             <div>
-              <span className="text-caption text-muted-foreground block">
+              <span className="block text-caption text-muted-foreground">
                 Method & Provider
               </span>
-              <span className="text-ink font-medium capitalize">
+              <span className="font-medium text-ink capitalize">
                 {payment.method.replace('_', ' ')} ({payment.provider})
               </span>
             </div>
             <div>
-              <span className="text-caption text-muted-foreground block">
+              <span className="block text-caption text-muted-foreground">
                 Provider Reference
               </span>
-              <span className="text-caption text-ink font-mono">
+              <span className="font-mono text-caption text-ink">
                 {payment.providerRef || '—'}
               </span>
             </div>
             <div>
-              <span className="text-caption text-muted-foreground block">
+              <span className="block text-caption text-muted-foreground">
                 Paid At
               </span>
-              <span className="text-caption text-ink font-mono">
-                {payment.paidAt
-                  ? new Date(payment.paidAt).toLocaleString('en-GB')
-                  : '—'}
+              <span className="font-mono text-caption text-ink">
+                {payment.paidAt ? formatHotelDateTime(payment.paidAt) : '—'}
               </span>
             </div>
             <div>
-              <span className="text-caption text-muted-foreground block">
+              <span className="block text-caption text-muted-foreground">
                 Recorded By
               </span>
               <span className="text-caption text-ink">
@@ -190,10 +176,10 @@ export function PaymentDetailDrawer({
               </span>
             </div>
             <div>
-              <span className="text-caption text-muted-foreground block">
+              <span className="block text-caption text-muted-foreground">
                 Idempotency Key
               </span>
-              <span className="text-muted-foreground block truncate font-mono text-[0.6875rem]">
+              <span className="block truncate font-mono text-micro text-muted-foreground">
                 {payment.idempotencyKey}
               </span>
             </div>
@@ -201,64 +187,65 @@ export function PaymentDetailDrawer({
 
           {/* Failure reason if any */}
           {payment.failureReason && (
-            <div className="border-destructive/30 bg-destructive/5 text-destructive text-caption rounded-lg border p-3">
+            <Alert variant="destructive" size="sm" role="note">
               <strong>Failure Reason:</strong> {payment.failureReason}
-            </div>
+            </Alert>
           )}
 
           {/* Transfer Proof Lightbox */}
           {payment.proofUrl && (
-            <div className="border-line space-y-2 rounded-lg border p-4">
-              <span className="text-caption text-muted-foreground font-semibold uppercase">
+            <div className="space-y-2 rounded-control border border-line p-4">
+              <span className="text-caption font-semibold text-muted-foreground uppercase">
                 Transfer Receipt / Proof
               </span>
-              <div
+              <Button
+                type="button"
+                variant="secondary"
                 onClick={() => setLightboxOpen(true)}
-                className="group border-line bg-paper relative flex h-32 cursor-pointer items-center justify-center overflow-hidden rounded-md border hover:opacity-90"
+                aria-label="View uploaded receipt"
+                className="group relative flex h-32 w-full cursor-pointer items-center justify-center overflow-hidden border-line bg-paper px-4 hover:bg-paper hover:text-ink hover:opacity-90"
               >
-                <div className="text-caption text-muted-foreground group-hover:text-ink flex items-center gap-1.5">
+                <span className="flex items-center gap-1.5 text-caption text-muted-foreground group-hover:text-ink">
                   <ImageIcon className="size-4" />
                   <span>Click to view uploaded receipt</span>
-                </div>
-              </div>
+                </span>
+              </Button>
             </div>
           )}
 
           {/* Reconciliation Status & Actions */}
-          <div className="border-line bg-paper/50 space-y-3 rounded-lg border p-4">
+          <div className="space-y-3 rounded-control border border-line bg-paper/50 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-caption text-muted-foreground font-semibold uppercase">
+              <span className="text-caption font-semibold text-muted-foreground uppercase">
                 Reconciliation
               </span>
               {payment.reconciled ? (
-                <span className="text-caption text-success inline-flex items-center gap-1 font-semibold">
+                <span className="inline-flex items-center gap-1 text-caption font-semibold text-success">
                   <ShieldCheck className="size-4" /> Reconciled
                 </span>
               ) : (
-                <span className="text-caption border-primary/30 bg-primary/15 text-brand-ink inline-flex items-center rounded border px-2 py-0.5 font-medium">
-                  Awaiting Reconciliation
-                </span>
+                <Badge variant="brand">Awaiting Reconciliation</Badge>
               )}
             </div>
 
             {payment.reconciled && (
-              <div className="text-caption text-muted-foreground space-y-1">
+              <div className="space-y-1 text-caption text-muted-foreground">
                 <div>
                   Reconciled by:{' '}
-                  <span className="text-ink font-medium">
+                  <span className="font-medium text-ink">
                     {payment.reconciledByName || 'Staff'}
                   </span>
                 </div>
                 {payment.reconciledAt && (
                   <div>
                     Reconciled at:{' '}
-                    <span className="text-ink font-medium">
-                      {new Date(payment.reconciledAt).toLocaleString('en-GB')}
+                    <span className="font-medium text-ink">
+                      {formatHotelDateTime(payment.reconciledAt)}
                     </span>
                   </div>
                 )}
                 {payment.note && (
-                  <div className="bg-card border-line text-ink mt-1 rounded border p-2 whitespace-pre-wrap">
+                  <div className="mt-1 rounded-sm border border-line bg-card p-2 whitespace-pre-wrap text-ink">
                     {payment.note}
                   </div>
                 )}
@@ -289,25 +276,25 @@ export function PaymentDetailDrawer({
 
           {/* Related Webhook Events */}
           {payment.webhooks && payment.webhooks.length > 0 && (
-            <div className="border-line space-y-2 rounded-lg border p-4">
-              <span className="text-caption text-muted-foreground font-semibold uppercase">
+            <div className="space-y-2 rounded-control border border-line p-4">
+              <span className="text-caption font-semibold text-muted-foreground uppercase">
                 Related Gateway Webhooks
               </span>
-              <div className="divide-line divide-y">
+              <div className="divide-y divide-line">
                 {payment.webhooks.map((wh) => (
                   <div
                     key={wh.id}
-                    className="text-caption flex items-center justify-between py-2"
+                    className="flex items-center justify-between py-2 text-caption"
                   >
                     <div>
-                      <span className="text-ink font-mono font-medium">
+                      <span className="font-mono font-medium text-ink">
                         {wh.eventType || 'event'}
                       </span>
-                      <div className="text-muted-foreground text-[0.6875rem]">
-                        {new Date(wh.receivedAt).toLocaleTimeString('en-GB')}
+                      <div className="text-micro text-muted-foreground">
+                        {formatHotelTime(wh.receivedAt)}
                       </div>
                     </div>
-                    <span className="text-success font-medium">Processed</span>
+                    <span className="font-medium text-success">Processed</span>
                   </div>
                 ))}
               </div>
@@ -316,12 +303,12 @@ export function PaymentDetailDrawer({
 
           {/* Owner Only: Raw Gateway Response Block */}
           {isOwner && payment.rawGatewayResponse && (
-            <div className="border-line overflow-hidden rounded-lg border">
+            <div className="overflow-hidden rounded-control border border-line">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => setRawCollapsed(!rawCollapsed)}
-                className="bg-paper text-caption text-muted-foreground hover:text-foreground flex h-auto w-full items-center justify-between rounded-none px-4 py-2.5 font-semibold"
+                className="flex h-auto w-full items-center justify-between rounded-none bg-paper px-4 py-2.5 text-caption font-semibold text-muted-foreground hover:text-foreground"
               >
                 <span>Raw Gateway Response (Owner Only - Masked)</span>
                 {rawCollapsed ? (
@@ -331,16 +318,16 @@ export function PaymentDetailDrawer({
                 )}
               </Button>
               {!rawCollapsed && (
-                <div className="bg-ink text-paper relative max-h-60 overflow-x-auto p-4 font-mono text-[0.6875rem]">
+                <div className="relative max-h-60 overflow-x-auto bg-ink p-4 font-mono text-micro text-paper">
                   <Button
                     type="button"
                     variant="secondary"
                     size="sm"
                     onClick={handleCopyRaw}
-                    className="bg-card/20 text-paper hover:bg-card/40 absolute top-2 right-2 h-7 gap-1 px-2 text-[0.625rem]"
+                    className="absolute top-2 right-2 h-7 gap-1 bg-card/20 px-2 text-micro text-paper hover:bg-card/40"
                   >
                     {copiedRaw ? (
-                      <Check className="text-success size-3" />
+                      <Check className="size-3 text-success" />
                     ) : (
                       <Copy className="size-3" />
                     )}
@@ -353,21 +340,18 @@ export function PaymentDetailDrawer({
               )}
             </div>
           )}
-        </div>
+        </SheetBody>
 
-        <div className="border-line bg-paper flex justify-end border-t p-4">
-          <Button variant="outline" size="sm" onClick={onClose}>
+        <SheetFooter className="items-end border-t border-line bg-paper">
+          <Button variant="secondary" size="sm" onClick={onClose}>
             Close
           </Button>
-        </div>
+        </SheetFooter>
       </SheetContent>
 
       {lightboxOpen && payment.proofUrl && (
         <Dialog open onOpenChange={setLightboxOpen}>
-          <DialogContent
-            showCloseButton={false}
-            className="max-h-[90vh] max-w-3xl gap-0 border-0 bg-transparent p-0 shadow-none ring-0 sm:max-w-3xl"
-          >
+          <DialogContent showCloseButton={false} size="3xl" surface="bare">
             <DialogTitle className="sr-only">Transfer Proof</DialogTitle>
             <DialogDescription className="sr-only">
               Uploaded proof of payment for this transaction.
@@ -375,14 +359,14 @@ export function PaymentDetailDrawer({
             <Image
               src={payment.proofUrl}
               alt="Transfer Proof"
-              className="max-h-[85vh] rounded-lg object-contain shadow-2xl"
+              className="max-h-[85vh] rounded-control object-contain shadow-float"
             />
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={() => setLightboxOpen(false)}
-              className="text-paper absolute -top-10 right-0 hover:bg-white/15 hover:text-white"
+              className="absolute -top-10 right-0 text-paper hover:bg-white/15 hover:text-white"
               aria-label="Close transfer proof"
             >
               <span aria-hidden>✕</span>

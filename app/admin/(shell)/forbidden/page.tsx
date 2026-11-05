@@ -18,16 +18,16 @@ export default async function AdminForbiddenPage() {
       />
       <AdminCard>
         <div className="mx-auto max-w-lg py-8 text-center">
-          <span className="bg-paper text-destructive mx-auto grid size-14 place-items-center rounded-full">
+          <span className="mx-auto grid size-14 place-items-center rounded-full bg-paper text-destructive">
             <ShieldAlert className="size-7" aria-hidden />
           </span>
-          <p className="text-small text-muted-foreground mt-4">
+          <p className="mt-4 text-small text-muted-foreground">
             Ask the owner or manager if you need access. Role changes take
             effect on your next request.
           </p>
           <Link
             href="/admin"
-            className="rounded-control bg-ink text-small text-paper hover:bg-ink-soft mt-5 inline-flex min-h-11 items-center gap-2 px-4 font-semibold"
+            className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-control bg-ink px-4 text-small font-semibold text-paper hover:bg-ink-soft"
           >
             <ArrowLeft className="size-4" aria-hidden />
             Back to dashboard

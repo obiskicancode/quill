@@ -192,15 +192,15 @@ export function ResendConfirmationModal({
           )}
         </Field>
 
-        <div className="bg-muted rounded-control border-line text-caption text-muted-foreground border p-3">
+        <div className="rounded-control border border-line bg-muted p-3 text-caption text-muted-foreground">
           Resend cooldown: to prevent mail provider throttling, requests are
           logged in audit history.
         </div>
 
-        <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
+        <div className="flex items-center justify-end gap-3 border-t border-line pt-3">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={onClose}
             disabled={busy}

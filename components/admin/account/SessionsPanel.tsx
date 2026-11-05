@@ -18,7 +18,7 @@ import {
   useRevokeOtherSessions,
   useRevokeSession,
 } from '@/hooks/services/admin/use-account';
-import { formatDate } from '@/lib/dates';
+import { formatHotelDateTime } from '@/lib/format';
 import type { Session } from '@/types/auth.types';
 
 type DialogState = { type: 'one'; session: Session } | { type: 'all' } | null;
@@ -72,7 +72,7 @@ export function SessionsPanel() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => void sessionsQuery.refetch()}
               loading={sessionsQuery.isFetching}
@@ -105,31 +105,26 @@ export function SessionsPanel() {
               Sign in again if you expected to see this device.
             </AdminEmpty>
           ) : (
-            <ul className="divide-line rounded-control border-line divide-y border">
+            <ul className="divide-y divide-line rounded-control border border-line">
               {sessions.map((session) => (
                 <li
                   key={session.id}
                   className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center"
                 >
-                  <span className="rounded-control bg-paper grid size-10 shrink-0 place-items-center">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-control bg-paper">
                     <MonitorSmartphone className="size-5" aria-hidden />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-small flex flex-wrap items-center gap-2 font-semibold">
+                    <p className="flex flex-wrap items-center gap-2 text-small font-semibold">
                       {deviceLabel(session.userAgent)}
                       {session.current && (
-                        <Badge
-                          variant="outline"
-                          className="border-success/30 bg-success/10 text-caption text-success rounded-full px-2 py-0.5 font-semibold"
-                        >
-                          This device
-                        </Badge>
+                        <Badge variant="success">This device</Badge>
                       )}
                     </p>
-                    <p className="text-caption text-muted-foreground mt-0.5">
+                    <p className="mt-0.5 text-caption text-muted-foreground">
                       {session.ipAddress ?? 'Unknown IP'} · Last active{' '}
-                      {formatDate(session.lastSeenAt)} · Expires{' '}
-                      {formatDate(session.expiresAt)}
+                      {formatHotelDateTime(session.lastSeenAt)} · Expires{' '}
+                      {formatHotelDateTime(session.expiresAt)}
                     </p>
                   </div>
                   {!session.current && (

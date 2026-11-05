@@ -2,13 +2,16 @@
 
 import { useId, useState } from 'react';
 
-import { formatNaira } from '@/lib/format';
+import { formatNaira, formatNairaDigits, pluralCount } from '@/lib/format';
 import {
   bedTypeLabels,
   countActiveFilters,
   emptyFilters,
   filterAmenityOptions,
+  priceBands,
+  type PriceBand,
 } from '@/lib/rooms';
+import { cn } from '@/lib/utils';
 import type { BedType, FilterAmenity, RoomFilters } from '@/types/rooms.types';
 
 import { GuestStepper } from '../GuestStepper';
@@ -16,12 +19,19 @@ import { StaggerGroup } from '../motion/StaggerGroup';
 import { StaggerItem } from '../motion/StaggerItem';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
-import { Input } from '../ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from '../ui/input-group';
 import { Label } from '../ui/label';
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '../ui/sheet';
@@ -31,6 +41,8 @@ interface PanelProps {
   onChange: (next: RoomFilters) => void;
   priceBounds: { min: number; max: number } | null;
   maxGuestsAvailable: number;
+  /** How many rooms a candidate filter set would show. */
+  countFor: (draft: RoomFilters) => number;
 }
 
 function PriceField({
@@ -45,7 +57,9 @@ function PriceField({
   onCommit: (n: number | null) => void;
 }) {
   const id = useId();
-  const [text, setText] = useState(value === null ? '' : String(value));
+  const [text, setText] = useState(
+    value === null ? '' : formatNairaDigits(value),
+  );
   const commit = () => {
     const digits = text.replace(/\D/g, '');
     onCommit(digits === '' ? null : Number(digits));
@@ -54,18 +68,15 @@ function PriceField({
     <div className="flex-1">
       <Label
         htmlFor={id}
-        className="text-caption text-muted-foreground font-semibold"
+        className="text-caption font-semibold text-muted-foreground"
       >
         {label}
       </Label>
-      <div className="relative mt-1">
-        <span
-          aria-hidden
-          className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2"
-        >
-          ₦
-        </span>
-        <Input
+      <InputGroup className="mt-1 h-11">
+        <InputGroupAddon>
+          <InputGroupText>₦</InputGroupText>
+        </InputGroupAddon>
+        <InputGroupInput
           id={id}
           inputMode="numeric"
           autoComplete="off"
@@ -79,9 +90,9 @@ function PriceField({
               commit();
             }
           }}
-          className="min-h-11 pl-7 tabular-nums"
+          className="h-full tabular-nums"
         />
-      </div>
+      </InputGroup>
     </div>
   );
 }
@@ -91,28 +102,40 @@ function CheckGroup<T extends string>({
   options,
   selected,
   onToggle,
+  countFor,
 }: {
   legend: string;
   options: { key: T; label: string }[];
   selected: T[];
   onToggle: (key: T) => void;
+  /** Rooms matching this option on its own, with every other filter kept. */
+  countFor: (key: T) => number;
 }) {
   return (
     <fieldset>
       <legend className="font-semibold">{legend}</legend>
       <div className="mt-1 space-y-1">
-        {options.map((o) => (
-          <Label
-            key={o.key}
-            className="text-small flex min-h-11 cursor-pointer items-center gap-3 font-normal"
-          >
-            <Checkbox
-              checked={selected.includes(o.key)}
-              onCheckedChange={() => onToggle(o.key)}
-            />
-            {o.label}
-          </Label>
-        ))}
+        {options.map((option) => {
+          const count = countFor(option.key);
+          const isSelected = selected.includes(option.key);
+          return (
+            <Label
+              key={option.key}
+              className={cn(
+                'flex min-h-11 cursor-pointer items-center gap-3 text-small font-normal',
+                count === 0 && 'text-muted-foreground',
+              )}
+            >
+              <Checkbox
+                checked={isSelected}
+                onCheckedChange={() => onToggle(option.key)}
+                aria-label={`${option.label}, ${pluralCount(count, 'room')}`}
+              />
+              <span className="flex-1">{option.label}</span>
+              <span className="text-caption tabular-nums">{count}</span>
+            </Label>
+          );
+        })}
       </div>
     </fieldset>
   );
@@ -121,12 +144,20 @@ function CheckGroup<T extends string>({
 const toggle = <T,>(list: T[], item: T): T[] =>
   list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
 
+const bandLabel = (band: PriceBand): string =>
+  band.minPrice === null
+    ? `Up to ${formatNaira(band.maxPrice!)}`
+    : band.maxPrice === null
+      ? `${formatNaira(band.minPrice)}+`
+      : `${formatNaira(band.minPrice)} – ${formatNaira(band.maxPrice)}`;
+
 /** Filter controls. Desktop: a left column that applies instantly. Mobile: shown inside FilterSheet. */
 export function FilterPanel({
   value,
   onChange,
   priceBounds,
   maxGuestsAvailable,
+  countFor,
 }: PanelProps) {
   const setPrice = (min: number | null, max: number | null) => {
     if (min !== null && max !== null && min > max) [min, max] = [max, min];
@@ -136,19 +167,41 @@ export function FilterPanel({
     key,
     label: bedTypeLabels[key],
   }));
+  const bands = priceBands(priceBounds);
 
   return (
     <StaggerGroup className="space-y-6" staggerChildren={0.06}>
       <StaggerItem>
         <fieldset>
           <legend className="font-semibold">Price per night</legend>
-          <div className="mt-2 flex gap-3">
+          {bands.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {bands.map((band) => {
+                const isActive =
+                  band.minPrice === value.minPrice &&
+                  band.maxPrice === value.maxPrice;
+                return (
+                  <Button
+                    key={`${band.minPrice}-${band.maxPrice}`}
+                    variant={isActive ? 'primary' : 'secondary'}
+                    size="sm"
+                    aria-pressed={isActive}
+                    className="min-h-11 rounded-full px-3.5"
+                    onClick={() => setPrice(band.minPrice, band.maxPrice)}
+                  >
+                    {bandLabel(band)}
+                  </Button>
+                );
+              })}
+            </div>
+          )}
+          <div className="mt-3 flex gap-3">
             <PriceField
               key={`min-${value.minPrice}`}
               label="From"
               value={value.minPrice}
               placeholder={
-                priceBounds ? priceBounds.min.toLocaleString('en-NG') : '0'
+                priceBounds ? formatNairaDigits(priceBounds.min) : '0'
               }
               onCommit={(n) => setPrice(n, value.maxPrice)}
             />
@@ -157,13 +210,13 @@ export function FilterPanel({
               label="To"
               value={value.maxPrice}
               placeholder={
-                priceBounds ? priceBounds.max.toLocaleString('en-NG') : 'Any'
+                priceBounds ? formatNairaDigits(priceBounds.max) : 'Any'
               }
               onCommit={(n) => setPrice(value.minPrice, n)}
             />
           </div>
           {priceBounds && (
-            <p className="text-caption text-muted-foreground mt-2">
+            <p className="mt-2 text-caption text-muted-foreground">
               Rooms run from {formatNaira(priceBounds.min)} to{' '}
               {formatNaira(priceBounds.max)}. Rooms with no published price
               always show.
@@ -173,9 +226,10 @@ export function FilterPanel({
       </StaggerItem>
 
       <StaggerItem>
-        <div className="border-line border-t">
+        <div className="border-t border-line">
           <GuestStepper
             label="Minimum guests"
+            unit={{ one: 'guest', many: 'guests' }}
             hint="Rooms that sleep at least this many"
             value={value.minGuests ?? 1}
             min={1}
@@ -188,7 +242,7 @@ export function FilterPanel({
       </StaggerItem>
 
       <StaggerItem>
-        <div className="border-line border-t pt-4">
+        <div className="border-t border-line pt-4">
           <CheckGroup
             legend="Bed type"
             options={bedOptions}
@@ -196,12 +250,13 @@ export function FilterPanel({
             onToggle={(k) =>
               onChange({ ...value, beds: toggle(value.beds, k) })
             }
+            countFor={(k) => countFor({ ...value, beds: [k] })}
           />
         </div>
       </StaggerItem>
 
       <StaggerItem>
-        <div className="border-line border-t pt-4">
+        <div className="border-t border-line pt-4">
           <CheckGroup<FilterAmenity>
             legend="Amenities"
             options={filterAmenityOptions}
@@ -209,6 +264,7 @@ export function FilterPanel({
             onToggle={(k) =>
               onChange({ ...value, amenities: toggle(value.amenities, k) })
             }
+            countFor={(k) => countFor({ ...value, amenities: [k] })}
           />
         </div>
       </StaggerItem>
@@ -220,8 +276,6 @@ interface SheetProps extends Omit<PanelProps, 'onChange'> {
   open: boolean;
   onClose: () => void;
   onApply: (next: RoomFilters) => void;
-  /** How many rooms the draft filters would show. */
-  countFor: (draft: RoomFilters) => number;
 }
 
 /** Mobile bottom sheet. Changes apply when "Show rooms" is tapped. */
@@ -255,47 +309,43 @@ export function FilterSheet({
     >
       <SheetContent
         side="bottom"
-        showCloseButton
-        className="rounded-t-card border-line bg-paper text-ink max-h-[90dvh] gap-0 border-t p-0"
+        surface="paper"
+        className="max-h-[90dvh] rounded-t-card"
       >
-        <SheetHeader className="border-line border-b px-5 py-2 pr-14">
-          <SheetTitle className="font-display text-h3">Filters</SheetTitle>
+        <SheetHeader>
+          <SheetTitle>Filters</SheetTitle>
           <SheetDescription className="sr-only">
             Filter available rooms by price, guests, room type, bed type, and
             amenities.
           </SheetDescription>
         </SheetHeader>
-        <div className="flex-1 overflow-y-auto px-5 py-5">
+        <SheetBody>
           <FilterPanel
             value={draft}
             onChange={setDraft}
             priceBounds={priceBounds}
             maxGuestsAvailable={maxGuestsAvailable}
+            countFor={countFor}
           />
-        </div>
-        <div className="border-line bg-card flex items-center gap-3 border-t px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        </SheetBody>
+        <SheetFooter className="flex-row items-center gap-3 border-t border-line bg-card pb-safe">
           <Button
             variant="ghost"
-            size="md"
             disabled={countActiveFilters(draft) === 0}
             onClick={() => setDraft(emptyFilters)}
           >
-            Clear all
+            Clear all filters
           </Button>
           <Button
-            size="md"
             className="flex-1"
-            disabled={count === 0}
             onClick={() => {
               onApply(draft);
               onClose();
             }}
           >
-            {count === 0
-              ? 'No rooms match'
-              : `Show ${count} ${count === 1 ? 'room' : 'rooms'}`}
+            Show {pluralCount(count, 'room')}
           </Button>
-        </div>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   );

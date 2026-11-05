@@ -2,13 +2,21 @@
 
 import { Check } from 'lucide-react';
 
+import { TextLink } from '@/components/ui/text-link';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
-import { formatMinor } from '@/lib/format';
+import { formatGuestTime, formatMinor } from '@/lib/format';
 import { whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
 import type { GuestReservation, HeaderKind } from '@/types/booking.types';
 
 import { StaggerGroup, StaggerItem } from '../motion';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '../ui/card';
 
 interface Step {
   title: string;
@@ -17,7 +25,7 @@ interface Step {
 
 function stepsFor(kind: HeaderKind, v: GuestReservation): Step[] {
   const arrive: Step = {
-    title: `Arrive from ${v.times.checkIn}${v.policy.idRequired ? ' with a valid photo ID' : ''}.`,
+    title: `Arrive from ${formatGuestTime(v.times.checkIn)}${v.policy.idRequired ? ' with a valid photo ID' : ''}.`,
     state: 'next',
   };
   const balance: Step[] =
@@ -101,42 +109,50 @@ export function NextSteps({
   const site = useSite();
   const steps = stepsFor(kind, v);
   return (
-    <section
-      aria-labelledby="next-title"
-      className="rounded-card border-line bg-card shadow-raised border p-5 md:p-6"
+    <Card
+      render={<section aria-labelledby="next-title" />}
+      className="text-body [--card-spacing:--spacing(5)] md:[--card-spacing:--spacing(6)]"
     >
-      <h2 id="next-title" className="font-display text-h3">
-        What happens next
-      </h2>
-      <StaggerGroup as="ol" staggerChildren={0.06} className="mt-5 space-y-4">
-        {steps.map((s, i) => (
-          <StaggerItem key={i} as="li" className="flex gap-4">
-            <span
-              className={`text-small grid size-8 shrink-0 place-items-center rounded-full font-semibold ${s.state === 'done' ? 'bg-ink text-paper' : s.state === 'now' ? 'bg-primary text-ink' : 'border-ink/50 text-muted-foreground border'}`}
-            >
-              {s.state === 'done' ? (
-                <Check className="size-4" aria-hidden />
-              ) : (
-                i + 1
-              )}
-            </span>
-            <p
-              className={`pt-1 ${s.state === 'next' ? 'text-ink/85' : 'font-semibold'}`}
-            >
-              {s.title}
-              <span className="sr-only">
-                {s.state === 'done'
-                  ? ' (done)'
-                  : s.state === 'now'
-                    ? ' (in progress)'
-                    : ''}
+      <CardHeader>
+        <CardTitle
+          id="next-title"
+          render={<h2 />}
+          className="font-display text-h3"
+        >
+          What happens next
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <StaggerGroup as="ol" staggerChildren={0.06} className="space-y-4">
+          {steps.map((s, i) => (
+            <StaggerItem key={i} as="li" className="flex gap-4">
+              <span
+                className={`grid size-8 shrink-0 place-items-center rounded-full text-small font-semibold ${s.state === 'done' ? 'bg-ink text-paper' : s.state === 'now' ? 'bg-primary text-primary-foreground' : 'border border-ink/50 text-muted-foreground'}`}
+              >
+                {s.state === 'done' ? (
+                  <Check className="size-4" aria-hidden />
+                ) : (
+                  i + 1
+                )}
               </span>
-            </p>
-          </StaggerItem>
-        ))}
-      </StaggerGroup>
+              <p
+                className={`pt-1 ${s.state === 'next' ? 'text-ink/85' : 'font-semibold'}`}
+              >
+                {s.title}
+                <span className="sr-only">
+                  {s.state === 'done'
+                    ? ' (done)'
+                    : s.state === 'now'
+                      ? ' (in progress)'
+                      : ''}
+                </span>
+              </p>
+            </StaggerItem>
+          ))}
+        </StaggerGroup>
+      </CardContent>
       {kind !== 'ended' && (
-        <div className="border-line text-small mt-6 space-y-2 border-t pt-4">
+        <CardFooter className="flex-col items-start gap-2 bg-transparent pt-0 text-small">
           {v.policy.idRequired && (
             <p>
               <span className="font-semibold">ID at check-in: </span>
@@ -147,22 +163,20 @@ export function NextSteps({
             <p>
               <span className="font-semibold">Your arrival: </span>
               {v.guest.arrival}.{' '}
-              <a
+              <TextLink
                 href={whatsappHref(
                   site,
                   `Hello, my plans changed for booking ${v.reference}. I will now arrive at: `,
                 )}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="decoration-brand inline-flex min-h-11 items-center font-semibold underline decoration-2 underline-offset-4"
+                external
               >
                 Tell the hotel about changes
                 <span className="sr-only"> (opens WhatsApp in a new tab)</span>
-              </a>
+              </TextLink>
             </p>
           )}
-        </div>
+        </CardFooter>
       )}
-    </section>
+    </Card>
   );
 }

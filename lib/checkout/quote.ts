@@ -1,4 +1,6 @@
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { fromISO, hotelClock, nightsBetween, toISO } from '@/lib/dates';
+import { unitLabels } from '@/lib/format';
 import type {
   BreakdownExtraLine,
   CheckoutQuoteResponse,
@@ -10,8 +12,6 @@ import type {
 } from '@/types/checkout.types';
 import type { Clock, ISODate } from '@/types/dates.types';
 
-import { fromISO, hotelClock, nightsBetween, toISO } from '../dates';
-import { unitLabels } from '../format';
 import { getRoomDetail } from '../rooms/detail';
 import { getQuoteResponse, needsExtraBed } from '../rooms/pricing';
 import { getCheckoutSettings } from './settings';

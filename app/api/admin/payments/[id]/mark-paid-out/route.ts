@@ -4,6 +4,7 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import { requireStepUp } from '@/lib/auth/step-up';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
 import { markManualRefundPaidOut } from '@/lib/db/repositories/payments.repo';
+import { formatMinor } from '@/lib/format';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
 import { ManualRefundPayoutInputSchema } from '@/schemas/payments.schema';
@@ -64,7 +65,7 @@ export async function POST(
     entity: 'payment',
     entityId: id,
     action: 'manual_refund_paid_out',
-    reason: `Manual refund paid out: ₦${(parsed.data.amountMinor / 100).toLocaleString()} via ${parsed.data.method}`,
+    reason: `Manual refund paid out: ${formatMinor(parsed.data.amountMinor)} via ${parsed.data.method}`,
     ipAddress: clientIp(request),
     userAgent: userAgent(request),
   }).catch(() => {});

@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { ArrowRight, LogOut } from 'lucide-react';
-import { useState } from 'react';
 
 import { AdminCard } from '@/components/admin/AdminCard';
 import { AdminEmpty } from '@/components/admin/AdminStates';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm';
 import {
   Table,
   TableBody,
@@ -16,10 +16,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { formatNaira } from '@/lib/format';
+import { formatMinor } from '@/lib/format';
 import type { DashboardReservationRow } from '@/types/dashboard.types';
 
-import { ConfirmDialog } from './ConfirmDialog';
 import { StatusBadge } from './StatusBadge';
 
 interface DeparturesTableProps {
@@ -33,25 +32,24 @@ export function DeparturesTable({
   canManage,
   onCheckOut,
 }: DeparturesTableProps) {
-  const [targetRow, setTargetRow] = useState<DashboardReservationRow | null>(
-    null,
-  );
-  const [isConfirming, setIsConfirming] = useState(false);
-  const [dialogError, setDialogError] = useState<string | null>(null);
+  const confirm = useConfirm();
 
-  async function handleConfirmCheckOut() {
-    if (!targetRow) return;
-    setIsConfirming(true);
-    setDialogError(null);
-
-    const result = await onCheckOut(targetRow.id);
-    setIsConfirming(false);
-
-    if (result.success) {
-      setTargetRow(null);
-    } else {
-      setDialogError(result.error ?? ERROR_MESSAGES.CHECKOUT_FAILED);
-    }
+  function askCheckOut(row: DashboardReservationRow) {
+    const balance =
+      row.balanceMinor > 0
+        ? ` Outstanding balance ${formatMinor(row.balanceMinor)}.`
+        : '';
+    void confirm({
+      title: 'Check out guest',
+      description: `Confirm check-out for ${row.guestName} (${row.reference}) from Room #${row.roomNumber}?${balance}`,
+      confirmLabel: 'Confirm check-out',
+      run: async () => {
+        const result = await onCheckOut(row.id);
+        if (!result.success) {
+          throw new Error(result.error ?? ERROR_MESSAGES.CHECKOUT_FAILED);
+        }
+      },
+    });
   }
 
   return (
@@ -67,61 +65,61 @@ export function DeparturesTable({
         ) : (
           <div>
             {/* Desktop Table View */}
-            <Table className="text-small hidden w-full text-left md:table">
+            <Table className="hidden w-full text-left text-small md:table">
               <caption className="sr-only">
                 List of guests departing today
               </caption>
-              <TableHeader className="border-line text-caption text-muted-foreground border-b font-semibold tracking-wider uppercase">
+              <TableHeader className="border-b border-line text-caption font-semibold tracking-wider text-muted-foreground uppercase">
                 <TableRow className="hover:bg-transparent">
                   <TableHead
                     scope="col"
-                    className="text-muted-foreground pr-3 pb-3"
+                    className="pr-3 pb-3 text-muted-foreground"
                   >
                     Reference
                   </TableHead>
                   <TableHead
                     scope="col"
-                    className="text-muted-foreground px-3 pb-3"
+                    className="px-3 pb-3 text-muted-foreground"
                   >
                     Guest
                   </TableHead>
                   <TableHead
                     scope="col"
-                    className="text-muted-foreground px-3 pb-3"
+                    className="px-3 pb-3 text-muted-foreground"
                   >
                     Room
                   </TableHead>
                   <TableHead
                     scope="col"
-                    className="text-muted-foreground px-3 pb-3"
+                    className="px-3 pb-3 text-muted-foreground"
                   >
                     Nights
                   </TableHead>
                   <TableHead
                     scope="col"
-                    className="text-muted-foreground px-3 pb-3"
+                    className="px-3 pb-3 text-muted-foreground"
                   >
                     Balance
                   </TableHead>
                   <TableHead
                     scope="col"
-                    className="text-muted-foreground px-3 pb-3"
+                    className="px-3 pb-3 text-muted-foreground"
                   >
                     Status
                   </TableHead>
                   <TableHead
                     scope="col"
-                    className="text-muted-foreground pb-3 pl-3 text-right"
+                    className="pb-3 pl-3 text-right text-muted-foreground"
                   >
                     Action
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody className="divide-line divide-y">
+              <TableBody className="divide-y divide-line">
                 {rows.map((row) => (
                   <TableRow
                     key={row.id}
-                    className="hover:bg-paper/60 transition-colors"
+                    className="transition-colors hover:bg-paper/60"
                   >
                     <TableCell className="py-3 pr-3 font-semibold">
                       <Link
@@ -132,28 +130,28 @@ export function DeparturesTable({
                       </Link>
                     </TableCell>
                     <TableCell className="px-3 py-3">
-                      <span className="text-ink font-medium">
+                      <span className="font-medium text-ink">
                         {row.guestName}
                       </span>
                     </TableCell>
-                    <TableCell className="text-muted-foreground px-3 py-3">
+                    <TableCell className="px-3 py-3 text-muted-foreground">
                       <span>{row.roomTypeName}</span>
-                      <span className="text-ink ml-1 font-semibold">
+                      <span className="ml-1 font-semibold text-ink">
                         #{row.roomNumber}
                       </span>
                     </TableCell>
-                    <TableCell className="text-muted-foreground px-3 py-3">
+                    <TableCell className="px-3 py-3 text-muted-foreground">
                       {row.nights} nights
                     </TableCell>
                     <TableCell className="px-3 py-3">
                       <span
                         className={
                           row.balanceMinor > 0
-                            ? 'text-destructive font-semibold'
+                            ? 'font-semibold text-destructive'
                             : 'text-muted-foreground'
                         }
                       >
-                        {formatNaira(row.balanceMinor / 100)}
+                        {formatMinor(row.balanceMinor)}
                       </span>
                     </TableCell>
                     <TableCell className="px-3 py-3">
@@ -167,18 +165,14 @@ export function DeparturesTable({
                           icon={
                             <LogOut className="size-3.5" aria-hidden="true" />
                           }
-                          onClick={() => {
-                            setDialogError(null);
-                            setTargetRow(row);
-                          }}
-                          className="!text-caption !min-h-9 !px-2.5"
+                          onClick={() => askCheckOut(row)}
                         >
                           Check out
                         </Button>
                       ) : (
                         <Link
                           href={`/admin/reservations/${row.id}`}
-                          className="text-caption text-muted-foreground hover:text-ink inline-flex items-center gap-1 font-semibold"
+                          className="inline-flex items-center gap-1 text-caption font-semibold text-muted-foreground hover:text-ink"
                         >
                           Details
                           <ArrowRight className="size-3" aria-hidden="true" />
@@ -195,21 +189,21 @@ export function DeparturesTable({
               {rows.map((row) => (
                 <div
                   key={row.id}
-                  className="rounded-control border-line bg-paper/40 border p-3.5"
+                  className="rounded-control border border-line bg-paper/40 p-3.5"
                 >
                   <div className="flex items-center justify-between">
                     <Link
                       href={`/admin/reservations/${row.id}`}
-                      className="text-ink font-semibold underline-offset-4 hover:underline"
+                      className="font-semibold text-ink underline-offset-4 hover:underline"
                     >
                       {row.reference}
                     </Link>
                     <StatusBadge status={row.status} />
                   </div>
 
-                  <p className="text-ink mt-1 font-medium">{row.guestName}</p>
+                  <p className="mt-1 font-medium text-ink">{row.guestName}</p>
 
-                  <div className="text-caption text-muted-foreground mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-muted-foreground">
                     <span>
                       {row.roomTypeName} #{row.roomNumber}
                     </span>
@@ -219,18 +213,18 @@ export function DeparturesTable({
                     <span
                       className={
                         row.balanceMinor > 0
-                          ? 'text-destructive font-semibold'
+                          ? 'font-semibold text-destructive'
                           : ''
                       }
                     >
-                      Due: {formatNaira(row.balanceMinor / 100)}
+                      Due: {formatMinor(row.balanceMinor)}
                     </span>
                   </div>
 
-                  <div className="border-line/60 mt-3 flex items-center justify-end gap-2 border-t pt-2">
+                  <div className="mt-3 flex items-center justify-end gap-2 border-t border-line/60 pt-2">
                     <Link
                       href={`/admin/reservations/${row.id}`}
-                      className="text-caption text-muted-foreground hover:text-ink inline-flex min-h-11 items-center px-3 font-semibold"
+                      className="inline-flex min-h-11 items-center px-3 text-caption font-semibold text-muted-foreground hover:text-ink"
                     >
                       View
                     </Link>
@@ -238,10 +232,7 @@ export function DeparturesTable({
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => {
-                          setDialogError(null);
-                          setTargetRow(row);
-                        }}
+                        onClick={() => askCheckOut(row)}
                       >
                         Check out
                       </Button>
@@ -253,26 +244,6 @@ export function DeparturesTable({
           </div>
         )}
       </AdminCard>
-
-      <ConfirmDialog
-        open={Boolean(targetRow)}
-        title="Check out guest"
-        description={`Confirm check-out for ${targetRow?.guestName} (${targetRow?.reference}) from Room #${targetRow?.roomNumber}? ${
-          (targetRow?.balanceMinor ?? 0) > 0
-            ? `Note: Outstanding balance of ${formatNaira((targetRow?.balanceMinor ?? 0) / 100)}.`
-            : ''
-        }`}
-        confirmLabel="Confirm check-out"
-        isConfirming={isConfirming}
-        errorMessage={dialogError}
-        onConfirm={handleConfirmCheckOut}
-        onCancel={() => {
-          if (!isConfirming) {
-            setTargetRow(null);
-            setDialogError(null);
-          }
-        }}
-      />
     </>
   );
 }

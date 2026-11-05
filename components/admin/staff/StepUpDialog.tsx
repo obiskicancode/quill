@@ -11,6 +11,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -108,79 +109,74 @@ export function StepUpDialog({
         if (!open && !busy) onClose();
       }}
     >
-      <DialogContent className="rounded-card border-line bg-card max-w-md gap-0 border p-0 shadow-2xl sm:max-w-md">
-        <DialogHeader className="border-line border-b p-6 pr-14 pb-3">
+      <DialogContent size="md">
+        <DialogHeader>
           <div className="flex items-center gap-2">
-            <ShieldAlert className="text-primary size-5" aria-hidden />
-            <DialogTitle className="font-display text-h3 text-ink font-semibold">
-              {title}
-            </DialogTitle>
+            <ShieldAlert className="size-5 text-primary" aria-hidden />
+            <DialogTitle>{title}</DialogTitle>
           </div>
         </DialogHeader>
 
         <form
           onSubmit={handleSubmit(handleFormSubmit)}
-          className="text-small space-y-4 p-6"
+          className="flex min-h-0 flex-1 flex-col"
           noValidate
         >
-          <DialogDescription className="text-caption text-muted-foreground">
-            {description}
-          </DialogDescription>
+          <DialogBody className="space-y-4">
+            <DialogDescription>{description}</DialogDescription>
 
-          <Field
-            id="stepup-password"
-            label="Admin Password"
-            error={errors.password?.message}
-          >
-            {(a11y) => (
-              <Input
-                {...a11y}
-                {...register('password')}
-                type="password"
-                placeholder="Enter your current password"
-                className={inputClass(errors.password?.message)}
-              />
-            )}
-          </Field>
-
-          <div className="text-caption text-muted-foreground text-center">
-            — OR —
-          </div>
-
-          <Field
-            id="stepup-totp"
-            label="6-digit Authenticator Code (2FA)"
-            error={errors.totpCode?.message}
-          >
-            {(a11y) => (
-              <Input
-                {...a11y}
-                {...totpField}
-                onChange={(event) => {
-                  event.target.value = event.target.value.replace(/\D/g, '');
-                  void onTotpChange(event);
-                }}
-                type="text"
-                maxLength={6}
-                placeholder="123456"
-                className={`${inputClass(errors.totpCode?.message)} text-center font-mono tracking-widest`}
-              />
-            )}
-          </Field>
-
-          {error && (
-            <Alert
-              variant="destructive"
-              className="border-destructive/30 bg-destructive/5 text-caption text-destructive"
+            <Field
+              id="stepup-password"
+              label="Admin Password"
+              error={errors.password?.message}
             >
-              {error}
-            </Alert>
-          )}
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  {...register('password')}
+                  type="password"
+                  placeholder="Enter your current password"
+                  className={inputClass(errors.password?.message)}
+                />
+              )}
+            </Field>
 
-          <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+            <div className="text-center text-caption text-muted-foreground">
+              — OR —
+            </div>
+
+            <Field
+              id="stepup-totp"
+              label="6-digit Authenticator Code (2FA)"
+              error={errors.totpCode?.message}
+            >
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  {...totpField}
+                  onChange={(event) => {
+                    event.target.value = event.target.value.replace(/\D/g, '');
+                    void onTotpChange(event);
+                  }}
+                  type="text"
+                  maxLength={6}
+                  placeholder="123456"
+                  className={`${inputClass(errors.totpCode?.message)} text-center font-mono tracking-widest`}
+                />
+              )}
+            </Field>
+
+            {error && (
+              <Alert variant="destructive" size="sm">
+                {error}
+              </Alert>
+            )}
+          </DialogBody>
+
+          <DialogFooter>
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={onClose}
               disabled={busy}

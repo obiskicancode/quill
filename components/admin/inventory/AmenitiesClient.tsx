@@ -28,8 +28,10 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
+import { StatusDotBadge } from '@/components/admin/StatusDotBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm';
 import {
   Table,
   TableBody,
@@ -71,6 +73,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
+  const confirm = useConfirm();
   const amenitiesQuery = useAmenities(initialAmenities);
   const deleteAmenity = useDeleteAmenity();
   const amenities = amenitiesQuery.data ?? [];
@@ -105,9 +108,13 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete amenity "${item.label}"?`)) {
-      return;
-    }
+    const sure = await confirm({
+      title: `Delete amenity "${item.label}"?`,
+      description: 'Rooms and pages that list it stop showing it right away.',
+      confirmLabel: 'Delete amenity',
+      tone: 'danger',
+    });
+    if (!sure) return;
 
     try {
       await deleteAmenity.mutateAsync(item.id);
@@ -130,9 +137,9 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
 
   function renderIcon(iconName: string | null) {
     if (!iconName)
-      return <HelpCircle className="text-muted-foreground size-4" />;
+      return <HelpCircle className="size-4 text-muted-foreground" />;
     const Component = ICON_MAP[iconName] || HelpCircle;
-    return <Component className="text-brand size-4" />;
+    return <Component className="size-4 text-brand" />;
   }
 
   return (
@@ -186,9 +193,9 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
           balconies.
         </AdminEmpty>
       ) : (
-        <div className="rounded-card border-line bg-card overflow-hidden border">
-          <Table className="text-small w-full text-left">
-            <TableHeader className="border-line bg-paper text-muted-foreground border-b">
+        <div className="overflow-hidden rounded-card border border-line bg-card">
+          <Table className="w-full text-left text-small">
+            <TableHeader className="border-b border-line bg-paper text-muted-foreground">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="py-3 pr-2 pl-4 font-medium">
                   Icon
@@ -206,64 +213,53 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="divide-line divide-y">
+            <TableBody className="divide-y divide-line">
               {amenities.map((item) => (
                 <TableRow
                   key={item.id}
-                  className="hover:bg-paper/40 transition-colors"
+                  className="transition-colors hover:bg-paper/40"
                 >
                   <TableCell className="py-3 pr-2 pl-4">
-                    <div className="border-line bg-paper flex size-8 items-center justify-center rounded border">
+                    <div className="flex size-8 items-center justify-center rounded-sm border border-line bg-paper">
                       {renderIcon(item.icon)}
                     </div>
                   </TableCell>
 
                   <TableCell className="px-4 py-3">
                     <div>
-                      <span className="text-foreground font-semibold">
+                      <span className="font-semibold text-foreground">
                         {item.label}
                       </span>
                       {item.description && (
-                        <p className="text-muted-foreground line-clamp-1 text-xs">
+                        <p className="line-clamp-1 text-caption text-muted-foreground">
                           {item.description}
                         </p>
                       )}
                     </div>
                   </TableCell>
 
-                  <TableCell className="text-muted-foreground px-4 py-3 font-mono text-xs">
+                  <TableCell className="px-4 py-3 font-mono text-caption text-muted-foreground">
                     {item.key}
                   </TableCell>
 
                   <TableCell className="px-4 py-3">
                     <Badge
-                      variant="outline"
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      variant={
                         item.usageCount && item.usageCount > 0
-                          ? 'border-brand/30 bg-brand/15 text-brand'
-                          : 'border-muted/30 bg-muted/15 text-muted-foreground'
-                      }`}
+                          ? 'brand'
+                          : 'neutral'
+                      }
                     >
                       {item.usageCount || 0} room type(s)
                     </Badge>
                   </TableCell>
 
                   <TableCell className="px-4 py-3">
-                    <Badge
-                      variant="outline"
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        item.isActive
-                          ? 'border-success/30 bg-success/15 text-success'
-                          : 'border-muted/30 bg-muted/20 text-muted-foreground'
-                      }`}
+                    <StatusDotBadge
+                      tone={item.isActive ? 'success' : 'neutral'}
                     >
-                      <span
-                        className={`size-1.5 rounded-full ${
-                          item.isActive ? 'bg-success' : 'bg-muted'
-                        }`}
-                      />
                       {item.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
+                    </StatusDotBadge>
                   </TableCell>
 
                   <TableCell className="py-3 pr-4 pl-3 text-right">

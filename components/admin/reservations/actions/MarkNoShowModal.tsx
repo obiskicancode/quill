@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Field, inputClass } from '@/components/ui/form-field';
@@ -21,7 +22,7 @@ import type { ReservationDetail } from '@/types/reservation.types';
 
 import { ActionModal } from './ActionModal';
 
-function makeNoShowFormSchema(netPaidNaira: number) {
+function makeNoShowFormSchema(netPaidMinor: number) {
   return noShowSchema
     .omit({ version: true, idempotencyKey: true, refundAmountMinor: true })
     .extend({
@@ -32,13 +33,15 @@ function makeNoShowFormSchema(netPaidNaira: number) {
       if (!value.overrideRefund) return;
 
       const amount = Number.parseFloat(value.refundNaira);
-      if (Number.isNaN(amount) || amount < 0 || amount > netPaidNaira) {
+      if (
+        Number.isNaN(amount) ||
+        amount < 0 ||
+        Math.round(amount * 100) > netPaidMinor
+      ) {
         ctx.addIssue({
           code: 'custom',
           path: ['refundNaira'],
-          message: ERROR_MESSAGES.REFUND_AMOUNT_BETWEEN(
-            formatNaira(netPaidNaira),
-          ),
+          message: ERROR_MESSAGES.REFUND_AMOUNT_BETWEEN(netPaidMinor),
         });
       }
 
@@ -70,11 +73,12 @@ export function MarkNoShowModal({
   onSuccess,
   onRefresh,
 }: MarkNoShowModalProps) {
-  const netPaidNaira =
-    (reservation.amountPaidMinor - reservation.amountRefundedMinor) / 100;
+  const netPaidMinor =
+    reservation.amountPaidMinor - reservation.amountRefundedMinor;
+  const netPaidNaira = netPaidMinor / 100;
   const markNoShow = useMarkReservationNoShow();
   const form = useForm<NoShowFormInput, unknown, NoShowFormOutput>({
-    resolver: zodResolver(makeNoShowFormSchema(netPaidNaira)),
+    resolver: zodResolver(makeNoShowFormSchema(netPaidMinor)),
     defaultValues: {
       overrideRefund: false,
       refundNaira: '0',
@@ -139,16 +143,16 @@ export function MarkNoShowModal({
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4"
       >
-        <div className="rounded-control border-destructive/30 bg-destructive/10 text-small text-destructive flex items-start gap-2.5 border p-3">
-          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+        <Alert variant="destructive" className="items-start gap-2.5">
+          <AlertCircle className="shrink-0" aria-hidden="true" />
           <span>
             Marking as no-show frees room {reservation.roomNumber} for the
             remaining nights of the stay.
           </span>
-        </div>
+        </Alert>
 
-        <div className="bg-muted rounded-control border-line text-small space-y-1 border p-3.5">
-          <p className="text-ink font-semibold">Hotel No-Show Policy:</p>
+        <div className="space-y-1 rounded-control border border-line bg-muted p-3.5 text-small">
+          <p className="font-semibold text-ink">Hotel No-Show Policy:</p>
           <p className="text-caption text-muted-foreground">
             Guests who fail to arrive by the scheduled date are considered
             no-shows and forfeit the deposit or paid stay under hotel terms.
@@ -157,7 +161,7 @@ export function MarkNoShowModal({
 
         {/* Override refund toggle */}
         {netPaidNaira > 0 && (
-          <div className="border-line space-y-3 border-t pt-3">
+          <div className="space-y-3 border-t border-line pt-3">
             <div className="flex items-center gap-2">
               <Controller
                 control={control}
@@ -243,10 +247,10 @@ export function MarkNoShowModal({
           )}
         </Field>
 
-        <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
+        <div className="flex items-center justify-end gap-3 border-t border-line pt-3">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={onClose}
             disabled={busy}

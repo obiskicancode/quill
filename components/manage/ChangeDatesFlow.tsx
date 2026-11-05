@@ -1,11 +1,12 @@
 'use client';
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { ServiceError } from '@/app/api/services/base.service';
 import { newKey } from '@/app/api/services/checkout.service';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { SuccessMark } from '@/components/ui/icon-badge';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
@@ -25,7 +26,6 @@ import type {
 } from '@/types/manage.types';
 
 import { VerifyForm } from '../booking/VerifyForm';
-import { Banner } from '../checkout/CheckoutStates';
 import { DatePicker } from '../DatePicker';
 import { EASE_OUT } from '../motion/variants';
 import { PriceBreakdown } from '../room-detail/PriceBreakdown';
@@ -44,7 +44,6 @@ interface ChangeDatesFlowProps {
   onSessionExpired: () => void;
   onReverified: () => void;
 }
-
 function describe(d: PriceDifference): { title: string; detail: string } {
   if (d.kind === 'pay') {
     return d.settle === 'now'
@@ -72,7 +71,6 @@ function describe(d: PriceDifference): { title: string; detail: string } {
   }
   return { title: 'No price difference', detail: 'Your total stays the same.' };
 }
-
 /** Pick new dates, see the server's quote for the same room type, then confirm. Safe to retry. */
 export function ChangeDatesFlow({
   open,
@@ -105,7 +103,6 @@ export function ChangeDatesFlow({
   const [notice, setNotice] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<ChangeQuoteResponse | null>(null);
   const [key, setKey] = useState(() => newKey());
-
   // Reset the flow each time the dialog opens.
   const [prevOpen, setPrevOpen] = useState(open);
   if (prevOpen !== open) {
@@ -131,7 +128,6 @@ export function ChangeDatesFlow({
         exit: { opacity: 0, y: -6 },
         transition: { duration: 0.2, ease: EASE_OUT },
       };
-
   async function runQuote(r: DateRange) {
     if (!r.checkIn || !r.checkOut) return;
     setQuoting(true);
@@ -156,19 +152,16 @@ export function ChangeDatesFlow({
       setQuoting(false);
     }
   }
-
   // Quote when a new full range is picked; the range-changing handlers below call it.
   function isCurrentRange(r: DateRange) {
     return r.checkIn === current.checkIn && r.checkOut === current.checkOut;
   }
-
   function pickRange(r: DateRange) {
     setRange(r);
     setQuote(null);
     setNotice(null);
     if (r.checkIn && r.checkOut && !isCurrentRange(r)) void runQuote(r);
   }
-
   async function confirm() {
     if (busy || quote?.status !== 'ok') return;
     setBusy(true);
@@ -213,7 +206,6 @@ export function ChangeDatesFlow({
       setBusy(false);
     }
   }
-
   const askHotel = (extra: string) =>
     whatsappHref(
       site,
@@ -228,7 +220,6 @@ export function ChangeDatesFlow({
     : quoteFailed
       ? 'failed'
       : (quote?.status ?? 'idle');
-
   let body: React.ReactNode;
   if (sessionExpired) {
     body = (
@@ -249,13 +240,10 @@ export function ChangeDatesFlow({
     body = (
       <div className="space-y-5">
         <div role="status" className="flex items-start gap-4">
-          <CheckCircle2
-            className="text-brand-ink size-8 shrink-0"
-            aria-hidden
-          />
+          <SuccessMark size="inline" />
           <div>
             <p className="font-display text-h3">Your dates are changed</p>
-            <p className="text-ink/85 mt-2">
+            <p className="mt-2 text-ink/85">
               You are now booked for{' '}
               <span className="font-semibold">
                 {v.stay.checkIn && v.stay.checkOut
@@ -265,11 +253,11 @@ export function ChangeDatesFlow({
               .
             </p>
             {refund && (
-              <p className="text-small mt-2">
+              <p className="mt-2 text-small">
                 {refund.title}. {refund.detail}
               </p>
             )}
-            <p className="text-small text-muted-foreground mt-2">
+            <p className="mt-2 text-small text-muted-foreground">
               We emailed your updated booking to {v.guest.email}.
             </p>
           </div>
@@ -298,19 +286,21 @@ export function ChangeDatesFlow({
           {v.manage?.allowed.changesRemaining ?? 0} more{' '}
           {v.manage?.allowed.changesRemaining === 1 ? 'time' : 'times'}.
         </p>
-        <div className="rounded-card border-line bg-card max-w-sm border p-3">
+        <div className="max-w-sm rounded-card border border-line bg-card p-3">
           <DatePicker
             value={range}
             onChange={(r) => pickRange(r)}
             monthsShown={1}
           />
         </div>
-
         <div aria-live="polite" className="space-y-4">
           {notice && (
-            <Banner tone="warn" title="Please review">
-              <p>{notice}</p>
-            </Banner>
+            <Alert role="status" variant="warning" size="banner">
+              <AlertTitle>Please review</AlertTitle>
+              <AlertDescription>
+                <p>{notice}</p>
+              </AlertDescription>
+            </Alert>
           )}
           <AnimatePresence mode="wait" initial={false}>
             <motion.div key={quoteKey} {...panelMotion} className="space-y-4">
@@ -321,18 +311,24 @@ export function ChangeDatesFlow({
                     {[0, 1, 2].map((i) => (
                       <div
                         key={i}
-                        className="bg-ink/10 h-8 rounded motion-safe:animate-pulse"
+                        className="h-8 rounded-sm bg-ink/10 motion-safe:animate-pulse"
                       />
                     ))}
                   </div>
                 </div>
               )}
               {quoteFailed && (
-                <Banner
-                  role="alert"
-                  tone="danger"
-                  title={ERROR_MESSAGES.COULD_NOT_CHECK_DATES}
-                  actions={
+                <Alert role="alert" variant="destructive" size="banner">
+                  <AlertTitle>
+                    {ERROR_MESSAGES.COULD_NOT_CHECK_DATES}
+                  </AlertTitle>
+                  <AlertDescription>
+                    <p>
+                      Your booking has not changed. This only checks prices, so
+                      trying again is safe.
+                    </p>
+                  </AlertDescription>
+                  <div className="mt-4 flex flex-wrap gap-3">
                     <Button
                       variant="secondary"
                       size="sm"
@@ -340,18 +336,12 @@ export function ChangeDatesFlow({
                     >
                       Try again
                     </Button>
-                  }
-                >
-                  <p>
-                    Your booking has not changed. This only checks prices, so
-                    trying again is safe.
-                  </p>
-                </Banner>
+                  </div>
+                </Alert>
               )}
-
               {!quoting && quote?.status === 'ok' && (
                 <div className="space-y-4">
-                  <div className="rounded-card border-ink border-2 p-4">
+                  <div className="rounded-card border-2 border-ink p-4">
                     <p className="text-small text-muted-foreground">
                       New dates
                     </p>
@@ -359,33 +349,38 @@ export function ChangeDatesFlow({
                       {formatRange(quote.checkIn, quote.checkOut)} (
                       {quote.nights} {quote.nights === 1 ? 'night' : 'nights'})
                     </p>
-                    <p className="font-display text-h3 mt-3">
+                    <p className="mt-3 font-display text-h3">
                       {describe(quote.difference).title}
                     </p>
-                    <p className="text-small text-ink/85 mt-1">
+                    <p className="mt-1 text-small text-ink/85">
                       {describe(quote.difference).detail}
                     </p>
-                    <p className="text-small text-muted-foreground mt-3">
+                    <p className="mt-3 text-small text-muted-foreground">
                       New total {formatMinor(quote.newTotalMinor)}, was{' '}
                       {formatMinor(quote.oldTotalMinor)}.
                     </p>
                   </div>
                   {quote.roomReassigned && (
-                    <Banner tone="info" title="Your room may change">
-                      <p>
-                        The same room is taken for these dates, so we will give
-                        you another room of the same type.
-                      </p>
-                    </Banner>
+                    <Alert role="status" variant="neutral" size="banner">
+                      <AlertTitle>Your room may change</AlertTitle>
+                      <AlertDescription>
+                        <p>
+                          The same room is taken for these dates, so we will
+                          give you another room of the same type.
+                        </p>
+                      </AlertDescription>
+                    </Alert>
                   )}
-                  <p className="rounded-control bg-paper text-small p-3 font-semibold">
-                    {quote.newPolicy.nonRefundable
-                      ? 'Non-refundable'
-                      : quote.newPolicy.freeCancellationUntil
-                        ? `Free cancellation until ${formatDeadline(quote.newPolicy.freeCancellationUntil)}`
-                        : 'The free cancellation window has ended for these dates.'}
-                  </p>
-                  <details className="rounded-control border-line border p-3">
+                  <Alert variant="neutral" size="panel">
+                    <AlertTitle>
+                      {quote.newPolicy.nonRefundable
+                        ? 'Non-refundable'
+                        : quote.newPolicy.freeCancellationUntil
+                          ? `Free cancellation until ${formatDeadline(quote.newPolicy.freeCancellationUntil)}`
+                          : 'The free cancellation window has ended for these dates.'}
+                    </AlertTitle>
+                  </Alert>
+                  <details className="rounded-control border border-line p-3">
                     <summary className="min-h-11 cursor-pointer py-2 font-semibold">
                       See the new price breakdown
                     </summary>
@@ -394,12 +389,15 @@ export function ChangeDatesFlow({
                     </div>
                   </details>
                   {error && (
-                    <Banner
-                      role="alert"
-                      tone="danger"
-                      title={ERROR_MESSAGES.DATES_NOT_CHANGED_YET}
-                      actions={
-                        error.retryable ? (
+                    <Alert role="alert" variant="destructive" size="banner">
+                      <AlertTitle>
+                        {ERROR_MESSAGES.DATES_NOT_CHANGED_YET}
+                      </AlertTitle>
+                      <AlertDescription>
+                        <p>{error.message}</p>
+                      </AlertDescription>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        {error.retryable ? (
                           <Button
                             variant="secondary"
                             size="sm"
@@ -408,13 +406,11 @@ export function ChangeDatesFlow({
                           >
                             Try again
                           </Button>
-                        ) : undefined
-                      }
-                    >
-                      <p>{error.message}</p>
-                    </Banner>
+                        ) : undefined}
+                      </div>
+                    </Alert>
                   )}
-                  <div className="flex flex-col gap-3 sm:flex-row">
+                  <div className="flex flex-col flex-wrap gap-3 sm:flex-row">
                     <Button
                       size="lg"
                       loading={busy}
@@ -436,28 +432,26 @@ export function ChangeDatesFlow({
                   </div>
                 </div>
               )}
-
               {!quoting && quote?.status === ERROR_CODES.UNAVAILABLE && (
                 <div className="space-y-4">
-                  <Banner
-                    role="alert"
-                    tone="danger"
-                    title="Those dates aren't available"
-                  >
-                    <p>
-                      Your room type is booked for{' '}
-                      {range.checkIn && range.checkOut
-                        ? formatRange(range.checkIn, range.checkOut)
-                        : 'those dates'}
-                      .
-                    </p>
-                  </Banner>
+                  <Alert role="alert" variant="destructive" size="banner">
+                    <AlertTitle>{"Those dates aren't available"}</AlertTitle>
+                    <AlertDescription>
+                      <p>
+                        Your room type is booked for{' '}
+                        {range.checkIn && range.checkOut
+                          ? formatRange(range.checkIn, range.checkOut)
+                          : 'those dates'}
+                        .
+                      </p>
+                    </AlertDescription>
+                  </Alert>
                   {quote.suggestions.length > 0 && (
                     <ul className="grid gap-3 sm:grid-cols-3">
                       {quote.suggestions.map((s) => (
                         <li key={s.checkIn}>
                           <Button
-                            variant="outline"
+                            variant="secondary"
                             className="h-auto min-h-14 w-full flex-col items-start justify-center px-4 text-left font-normal"
                             onClick={() =>
                               pickRange({
@@ -487,27 +481,27 @@ export function ChangeDatesFlow({
                   </ButtonLink>
                 </div>
               )}
-
               {!quoting && quote?.status === 'rule' && (
-                <Banner
-                  role="alert"
-                  tone="danger"
-                  title={ERROR_MESSAGES.DATES_CANNOT_BE_USED}
-                >
-                  <ul className="list-disc space-y-1 pl-5">
-                    {quote.violations.map((x) => (
-                      <li key={x.message}>{x.message}</li>
-                    ))}
-                  </ul>
-                </Banner>
+                <Alert role="alert" variant="destructive" size="banner">
+                  <AlertTitle>{ERROR_MESSAGES.DATES_CANNOT_BE_USED}</AlertTitle>
+                  <AlertDescription>
+                    <ul className="list-disc space-y-1 pl-5">
+                      {quote.violations.map((x) => (
+                        <li key={x.message}>{x.message}</li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
               )}
-
               {!quoting && quote?.status === 'not_allowed' && (
-                <Banner
-                  role="alert"
-                  tone="warn"
-                  title={ERROR_MESSAGES.DATES_CANNOT_CHANGE_ONLINE_TITLE}
-                  actions={
+                <Alert role="alert" variant="warning" size="banner">
+                  <AlertTitle>
+                    {ERROR_MESSAGES.DATES_CANNOT_CHANGE_ONLINE_TITLE}
+                  </AlertTitle>
+                  <AlertDescription>
+                    <p>{quote.reason}</p>
+                  </AlertDescription>
+                  <div className="mt-4 flex flex-wrap gap-3">
                     <ButtonLink
                       href={askHotel('Please can you help?')}
                       external
@@ -517,10 +511,8 @@ export function ChangeDatesFlow({
                       Ask the hotel on WhatsApp
                       <span className="sr-only"> (opens in a new tab)</span>
                     </ButtonLink>
-                  }
-                >
-                  <p>{quote.reason}</p>
-                </Banner>
+                  </div>
+                </Alert>
               )}
             </motion.div>
           </AnimatePresence>
@@ -528,7 +520,6 @@ export function ChangeDatesFlow({
       </div>
     );
   }
-
   return (
     <FlowDialog
       open={open}

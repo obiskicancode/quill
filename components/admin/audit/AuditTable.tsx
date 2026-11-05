@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
 
+import { clickableRowProps } from '@/components/admin/clickableRow';
 import {
   Table,
   TableBody,
@@ -11,6 +12,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  formatHotelDateTime,
+  formatHotelDayMonth,
+  formatHotelTime,
+} from '@/lib/format';
 import type { AuditListItem } from '@/types/audit.types';
 
 export function AuditTable({
@@ -25,85 +31,80 @@ export function AuditTable({
   return (
     <div>
       {/* Desktop Table */}
-      <div className="rounded-card border-line bg-card hidden overflow-hidden border md:block">
-        <Table className="text-small w-full text-left">
+      <div className="hidden overflow-hidden rounded-card border border-line bg-card md:block">
+        <Table className="w-full text-left text-small">
           <caption className="sr-only">Audit log entries</caption>
-          <TableHeader className="border-line bg-paper text-caption text-muted-foreground sticky top-0 z-10 border-b font-semibold uppercase">
+          <TableHeader className="sticky top-0 z-10 border-b border-line bg-paper text-caption font-semibold text-muted-foreground uppercase">
             <TableRow className="hover:bg-transparent">
               <TableHead
                 scope="col"
-                className="text-muted-foreground px-4 py-3"
+                className="px-4 py-3 text-muted-foreground"
               >
                 Time
               </TableHead>
               <TableHead
                 scope="col"
-                className="text-muted-foreground px-3 py-3"
+                className="px-3 py-3 text-muted-foreground"
               >
                 Actor
               </TableHead>
               <TableHead
                 scope="col"
-                className="text-muted-foreground px-3 py-3"
+                className="px-3 py-3 text-muted-foreground"
               >
                 Action
               </TableHead>
               <TableHead
                 scope="col"
-                className="text-muted-foreground px-3 py-3"
+                className="px-3 py-3 text-muted-foreground"
               >
                 Entity
               </TableHead>
               <TableHead
                 scope="col"
-                className="text-muted-foreground px-3 py-3"
+                className="px-3 py-3 text-muted-foreground"
               >
                 Target Ref / ID
               </TableHead>
               <TableHead
                 scope="col"
-                className="text-muted-foreground px-4 py-3"
+                className="px-4 py-3 text-muted-foreground"
               >
                 Summary
               </TableHead>
               {isOwner && (
                 <TableHead
                   scope="col"
-                  className="text-muted-foreground px-3 py-3"
+                  className="px-3 py-3 text-muted-foreground"
                 >
                   IP Address
                 </TableHead>
               )}
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-line divide-y">
+          <TableBody className="divide-y divide-line">
             {items.map((entry) => (
               <TableRow
                 key={entry.id}
-                onClick={() => onRowClick(entry)}
-                className="hover:bg-paper/80 cursor-pointer transition-colors"
+                {...clickableRowProps(
+                  `Open audit entry: ${entry.action}`,
+                  () => onRowClick(entry),
+                  'transition-colors hover:bg-paper/80',
+                )}
               >
                 <TableCell className="px-4 py-3 whitespace-nowrap">
                   <span
-                    className="text-ink border-muted/50 cursor-help border-b border-dotted font-medium"
+                    className="cursor-help border-b border-dotted border-muted/50 font-medium text-ink"
                     title={`Exact UTC: ${entry.utcTime}`}
                   >
-                    {new Date(entry.createdAt).toLocaleTimeString('en-GB', {
-                      timeZone: 'Africa/Lagos',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {formatHotelTime(entry.createdAt)}
                   </span>
-                  <div className="text-muted-foreground text-caption">
-                    {new Date(entry.createdAt).toLocaleDateString('en-GB', {
-                      timeZone: 'Africa/Lagos',
-                      day: '2-digit',
-                      month: 'short',
-                    })}
+                  <div className="text-caption text-muted-foreground">
+                    {formatHotelDayMonth(entry.createdAt)}
                   </div>
                 </TableCell>
                 <TableCell className="px-3 py-3">
-                  <div className="text-ink max-w-32.5 truncate font-semibold">
+                  <div className="max-w-32.5 truncate font-semibold text-ink">
                     {entry.actorName}
                   </div>
                   <div className="text-caption text-muted-foreground capitalize">
@@ -111,36 +112,36 @@ export function AuditTable({
                   </div>
                 </TableCell>
                 <TableCell className="px-3 py-3">
-                  <span className="text-caption bg-paper border-line rounded border px-2 py-0.5 font-mono capitalize">
+                  <span className="rounded-sm border border-line bg-paper px-2 py-0.5 font-mono text-caption capitalize">
                     {entry.action}
                   </span>
                 </TableCell>
-                <TableCell className="text-caption text-ink px-3 py-3 font-mono capitalize">
+                <TableCell className="px-3 py-3 font-mono text-caption text-ink capitalize">
                   {entry.entity.replace('_', ' ')}
                 </TableCell>
-                <TableCell className="text-caption px-3 py-3 font-mono">
+                <TableCell className="px-3 py-3 font-mono text-caption">
                   {entry.entityLink ? (
                     <Link
                       href={entry.entityLink}
                       onClick={(e) => e.stopPropagation()}
-                      className="text-primary inline-flex items-center gap-1 font-semibold hover:underline"
+                      className="inline-flex items-center gap-1 font-semibold text-brand-ink hover:underline"
                     >
                       <span className="max-w-30 truncate">
                         {entry.entityRef || entry.entityId}
                       </span>
-                      <ExternalLink className="text-muted-foreground size-3" />
+                      <ExternalLink className="size-3 text-muted-foreground" />
                     </Link>
                   ) : (
-                    <span className="text-muted-foreground block max-w-30 truncate">
+                    <span className="block max-w-30 truncate text-muted-foreground">
                       {entry.entityRef || entry.entityId}
                     </span>
                   )}
                 </TableCell>
-                <TableCell className="text-caption text-muted-foreground max-w-sm truncate px-4 py-3">
+                <TableCell className="max-w-sm truncate px-4 py-3 text-caption text-muted-foreground">
                   {entry.summary}
                 </TableCell>
                 {isOwner && (
-                  <TableCell className="text-caption text-muted-foreground px-3 py-3 font-mono whitespace-nowrap">
+                  <TableCell className="px-3 py-3 font-mono text-caption whitespace-nowrap text-muted-foreground">
                     {entry.ipAddress || '—'}
                   </TableCell>
                 )}
@@ -155,23 +156,22 @@ export function AuditTable({
         {items.map((entry) => (
           <div
             key={entry.id}
-            onClick={() => onRowClick(entry)}
-            className="rounded-card border-line bg-card hover:bg-paper/50 cursor-pointer space-y-2 border p-4 shadow-sm transition-colors"
+            {...clickableRowProps(
+              `Open audit entry: ${entry.action}`,
+              () => onRowClick(entry),
+              'space-y-2 rounded-card border border-line bg-card p-4 shadow-raised transition-colors hover:bg-paper/50',
+            )}
           >
             <div className="flex items-center justify-between">
-              <span className="text-caption bg-paper border-line text-ink rounded border px-2 py-0.5 font-mono font-semibold capitalize">
+              <span className="rounded-sm border border-line bg-paper px-2 py-0.5 font-mono text-caption font-semibold text-ink capitalize">
                 {entry.action}
               </span>
               <span className="text-caption text-muted-foreground">
-                {new Date(entry.createdAt).toLocaleString('en-GB', {
-                  timeZone: 'Africa/Lagos',
-                  dateStyle: 'short',
-                  timeStyle: 'short',
-                })}
+                {formatHotelDateTime(entry.createdAt)}
               </span>
             </div>
 
-            <div className="text-small text-ink font-semibold">
+            <div className="text-small font-semibold text-ink">
               {entry.actorName} ({entry.actorRole})
             </div>
 
@@ -179,7 +179,7 @@ export function AuditTable({
               {entry.summary}
             </p>
 
-            <div className="border-line/60 text-muted-foreground flex items-center justify-between border-t pt-2 text-[0.6875rem]">
+            <div className="flex items-center justify-between border-t border-line/60 pt-2 text-micro text-muted-foreground">
               <span>Entity: {entry.entity}</span>
               <span className="font-mono">
                 {entry.entityRef || entry.entityId}

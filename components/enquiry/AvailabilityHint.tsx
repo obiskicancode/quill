@@ -3,8 +3,9 @@
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { Alert, AlertTitle } from '@/components/ui/alert';
 import { useAvailability } from '@/hooks/services/guest/use-availability';
-import { formatNaira } from '@/lib/format';
+import { formatNaira, pluralCount } from '@/lib/format';
 import type { RoomType, StayParams } from '@/types/rooms.types';
 
 import { Button } from '../ui/button';
@@ -16,11 +17,6 @@ interface AvailabilityHintProps {
   stay: StayParams | null;
 }
 
-/**
- * A small live-availability note for the dates and room picked above. It is a convenience,
- * never a commitment: the real check runs again at checkout. The block keeps its height while
- * loading so nothing jumps.
- */
 export function AvailabilityHint({
   rooms,
   roomSlug,
@@ -36,37 +32,46 @@ export function AvailabilityHint({
 
   if (!stay) {
     return (
-      <div className="rounded-card border-line bg-card text-small text-muted-foreground min-h-14 border px-4 py-3">
+      <Alert
+        variant="default"
+        size="panel"
+        className="min-h-14 text-muted-foreground"
+      >
         Choose your dates to see live availability.
-      </div>
+      </Alert>
     );
   }
 
   if (status === 'loading' || status === 'idle') {
     return (
-      <div
-        className="rounded-card border-line bg-card text-small text-muted-foreground min-h-14 border px-4 py-3"
+      <Alert
+        variant="default"
+        size="panel"
         role="status"
         aria-live="polite"
+        className="min-h-14 items-center gap-2 text-muted-foreground"
       >
-        <span className="inline-flex items-center gap-2">
-          <Loader2
-            className="size-4 animate-spin motion-reduce:animate-none"
-            aria-hidden
-          />
-          Checking availability for your dates…
-        </span>
-      </div>
+        <Loader2
+          className="animate-spin motion-reduce:animate-none"
+          aria-hidden
+        />
+        Checking availability for your dates…
+      </Alert>
     );
   }
 
   if (status === 'error' || !data) {
     return (
-      <div className="rounded-card border-destructive bg-destructive/5 text-small min-h-14 border-2 px-4 py-3">
-        <p className="text-destructive flex items-center gap-2 font-medium">
-          <AlertTriangle className="size-4 shrink-0" aria-hidden />
+      <Alert
+        variant="destructive"
+        size="panel"
+        role="alert"
+        className="min-h-14 gap-2"
+      >
+        <AlertTitle className="flex items-center gap-2 font-medium">
+          <AlertTriangle aria-hidden />
           Live availability could not be loaded.
-        </p>
+        </AlertTitle>
         <Button
           variant="secondary"
           size="sm"
@@ -76,7 +81,7 @@ export function AvailabilityHint({
         >
           Check again
         </Button>
-      </div>
+      </Alert>
     );
   }
 
@@ -97,19 +102,19 @@ export function AvailabilityHint({
         return {
           room,
           tone: 'bad' as const,
-          text: 'Fully booked for these dates. Try the suggested dates above, or send the enquiry anyway and we will suggest alternatives.',
+          text: 'Fully booked for these dates. Send the enquiry anyway and we will suggest alternatives.',
         };
       case 'min-stay':
         return {
           room,
           tone: 'warn' as const,
-          text: `Needs a stay of at least ${result!.minNights} nights.`,
+          text: `Needs a stay of at least ${pluralCount(result!.minNights, 'night')}.`,
         };
       case 'over-capacity':
         return {
           room,
           tone: 'warn' as const,
-          text: `Seats up to ${result!.maxAdults} adults and ${result!.maxChildren} children.`,
+          text: `Seats up to ${pluralCount(result!.maxAdults, 'adult')} and ${pluralCount(result!.maxChildren, 'child', 'children')}.`,
         };
       default:
         return {
@@ -121,13 +126,9 @@ export function AvailabilityHint({
   });
 
   return (
-    <div
-      className="rounded-card border-line bg-card text-small border px-4 py-3"
-      role="status"
-      aria-live="polite"
-    >
+    <Alert variant="default" size="panel" role="status" aria-live="polite">
       <p className="flex items-center gap-2 font-semibold">
-        <CheckCircle2 className="text-brand-ink size-4 shrink-0" aria-hidden />
+        <CheckCircle2 className="size-4 shrink-0 text-brand-ink" aria-hidden />
         Live availability
       </p>
       <ul className="mt-2 space-y-1.5">
@@ -138,7 +139,7 @@ export function AvailabilityHint({
               tone === 'bad'
                 ? 'text-destructive'
                 : tone === 'warn'
-                  ? 'text-ink/85'
+                  ? 'text-warning'
                   : 'text-ink/85'
             }
           >
@@ -151,14 +152,14 @@ export function AvailabilityHint({
       </ul>
       {notes.every((n) => n.tone === 'ok') &&
         results[0]?.result?.status === 'available' && (
-          <p className="text-muted-foreground mt-2">
+          <p className="mt-2 text-muted-foreground">
             From{' '}
-            <span className="text-ink font-semibold">
+            <span className="font-semibold text-ink">
               {formatNaira(results[0].result!.averageNgn)}
             </span>{' '}
             a night.
           </p>
         )}
-    </div>
+    </Alert>
   );
 }

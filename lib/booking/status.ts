@@ -36,3 +36,18 @@ export function headerKind(
       return 'ended';
   }
 }
+
+/**
+ * A booking that is paid, confirmed and still in the future. Only this one state
+ * puts its calendar action in the header, so the action row below can skip it
+ * rather than offering the same button twice.
+ */
+export function headerOwnsCalendar(
+  kind: HeaderKind,
+  status: GuestReservationStatus,
+): boolean {
+  return (
+    status === 'confirmed' &&
+    (kind === 'confirmed' || kind === 'confirmed-deposit')
+  );
+}

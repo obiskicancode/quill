@@ -84,7 +84,7 @@ export function MapCard({
           </h2>
           <address className="mt-6 flex gap-3 not-italic">
             <MapPin
-              className="text-brand-ink mt-1 size-5 shrink-0"
+              className="mt-1 size-5 shrink-0 text-brand-ink"
               aria-hidden
             />
             <span>
@@ -98,7 +98,7 @@ export function MapCard({
           {d.reception && (
             <p className="mt-4 flex gap-3">
               <Clock
-                className="text-brand-ink mt-1 size-5 shrink-0"
+                className="mt-1 size-5 shrink-0 text-brand-ink"
                 aria-hidden
               />
               <span>
@@ -108,10 +108,10 @@ export function MapCard({
             </p>
           )}
           {d.directionsText && (
-            <p className="text-small text-ink/85 mt-4">{d.directionsText}</p>
+            <p className="mt-4 text-small text-ink/85">{d.directionsText}</p>
           )}
           {d.airportNote && (
-            <p className="text-small text-ink/85 mt-2">
+            <p className="mt-2 text-small text-ink/85">
               <span className="font-semibold">Airport: </span>
               {d.airportNote}
             </p>
@@ -119,7 +119,7 @@ export function MapCard({
           {d.landmarks.length > 0 && (
             <ul
               aria-label="Nearby landmarks"
-              className="text-small text-muted-foreground mt-4 space-y-1"
+              className="mt-4 space-y-1 text-small text-muted-foreground"
             >
               {d.landmarks.slice(0, 4).map((l) => (
                 <li key={l.name}>
@@ -128,7 +128,11 @@ export function MapCard({
               ))}
             </ul>
           )}
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          {/* Wrap rather than switch to a row at `sm`: two nowrap buttons need
+              ~400px side by side, and at 390-420px viewports the row is wider
+              than the content box, which put the whole page into horizontal
+              scroll. */}
+          <div className="mt-8 flex flex-wrap gap-3">
             {d.directionsHref ? (
               <ButtonLink
                 href={d.directionsHref}
@@ -159,7 +163,7 @@ export function MapCard({
         <Reveal className="lg:col-span-7" variants={scaleIn} delay={0.12}>
           <div
             ref={frame}
-            className="rounded-card bg-ink/10 relative aspect-[4/3] w-full overflow-hidden md:aspect-[16/10]"
+            className="relative aspect-[4/3] w-full overflow-hidden rounded-card bg-ink/10 md:aspect-[16/10]"
           >
             {loaded && d.embedSrc ? (
               <iframe
@@ -194,7 +198,7 @@ export function MapCard({
                       </Button>
                     )
                   ) : (
-                    <p className="text-small max-w-xs">
+                    <p className="max-w-xs text-small">
                       The map appears here once the hotel address is added.
                     </p>
                   )}

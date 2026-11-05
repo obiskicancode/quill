@@ -117,7 +117,7 @@ export function PasswordPanel() {
                 size="icon"
                 onClick={() => setShowNew((value) => !value)}
                 aria-label={showNew ? 'Hide new password' : 'Show new password'}
-                className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 h-full w-12"
+                className="absolute inset-y-0 right-0 h-full w-12 text-muted-foreground hover:text-foreground"
               >
                 {showNew ? (
                   <EyeOff className="size-5" aria-hidden />

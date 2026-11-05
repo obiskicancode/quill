@@ -15,12 +15,12 @@ export function RoomReviews({ reviews }: { reviews: RoomTestimonial[] }) {
       </h2>
       <StaggerGroup
         as="ul"
-        className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2"
+        className="mt-5 grid gap-4 md:grid-cols-2"
         staggerChildren={0.08}
       >
         {reviews.map((r) => (
           <StaggerItem as="li" key={r.id} className="h-full">
-            <figure className="rounded-card border-line bg-card h-full border p-5">
+            <figure className="h-full rounded-card border border-line bg-card p-5">
               <p
                 role="img"
                 aria-label={`Rated ${r.rating} out of 5`}
@@ -29,15 +29,15 @@ export function RoomReviews({ reviews }: { reviews: RoomTestimonial[] }) {
                 {Array.from({ length: 5 }, (_, i) => (
                   <Star
                     key={i}
-                    className={`size-5 ${i < r.rating ? 'fill-accent text-brand-ink' : 'text-ink/25'}`}
+                    className={`size-5 ${i < r.rating ? 'fill-primary text-brand-ink' : 'text-ink/25'}`}
                     aria-hidden
                   />
                 ))}
               </p>
-              <blockquote className="text-ink/90 mt-3">
+              <blockquote className="mt-3 text-ink/90">
                 &ldquo;{r.quote}&rdquo;
               </blockquote>
-              <figcaption className="text-small mt-3">
+              <figcaption className="mt-3 text-small">
                 <span className="font-semibold">{r.guestName}</span>
                 <span className="text-muted-foreground">, {r.stayType}</span>
               </figcaption>

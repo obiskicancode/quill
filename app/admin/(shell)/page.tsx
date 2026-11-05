@@ -4,6 +4,7 @@ import { DashboardClient } from '@/components/admin/dashboard/DashboardClient';
 import { requireAdminPage } from '@/lib/auth/guards';
 import { ROLE_PERMISSIONS } from '@/lib/auth/permissions';
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
+import { formatHotelFullDate } from '@/lib/format';
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -18,13 +19,7 @@ export default async function AdminDashboardPage() {
   const settings = await getHotelSettings();
   const timezone = settings?.timezone ?? 'Africa/Lagos';
 
-  const formattedToday = new Intl.DateTimeFormat('en-NG', {
-    timeZone: timezone,
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date());
+  const formattedToday = formatHotelFullDate(new Date(), timezone);
 
   return (
     <DashboardClient

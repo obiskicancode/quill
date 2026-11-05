@@ -7,6 +7,7 @@ import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -24,14 +25,6 @@ interface ActionModalProps {
   error?: string | null;
   onRefresh?: () => void;
 }
-
-const maxWidthClass = {
-  sm: 'sm:max-w-sm',
-  md: 'sm:max-w-md',
-  lg: 'sm:max-w-lg',
-  xl: 'sm:max-w-xl',
-  '2xl': 'sm:max-w-2xl',
-} as const;
 
 export function ActionModal({
   open,
@@ -52,25 +45,14 @@ export function ActionModal({
         if (!next) onClose();
       }}
     >
-      <DialogContent
-        className={`border-line bg-paper shadow-float sm:rounded-card flex max-h-[90vh] w-full flex-col gap-0 overflow-hidden rounded-t-2xl border p-0 sm:max-h-[85vh] ${maxWidthClass[maxWidth]}`}
-      >
-        <DialogHeader className="border-line shrink-0 border-b px-5 py-4 pr-14">
-          <DialogTitle className="font-display text-h3 text-ink font-semibold">
-            {title}
-          </DialogTitle>
-          {description && (
-            <DialogDescription className="text-small text-muted-foreground">
-              {description}
-            </DialogDescription>
-          )}
+      <DialogContent size={maxWidth} surface="paper">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
 
         {isStaleVersion && (
-          <Alert
-            variant="destructive"
-            className="border-destructive/40 bg-destructive/10 text-small text-destructive mx-5 mt-4"
-          >
+          <Alert variant="destructive" className="mx-5 mt-4">
             <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
             <AlertTitle>Reservation updated elsewhere</AlertTitle>
             <div className="col-start-2 mt-1">
@@ -79,7 +61,7 @@ export function ActionModal({
               {onRefresh && (
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={onRefresh}
                   className="mt-2"
@@ -92,16 +74,13 @@ export function ActionModal({
         )}
 
         {error && !isStaleVersion && (
-          <Alert
-            variant="destructive"
-            className="border-destructive/30 bg-destructive/10 text-small text-destructive mx-5 mt-4"
-          >
+          <Alert variant="destructive" className="mx-5 mt-4">
             <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span className="col-start-2">{error}</span>
           </Alert>
         )}
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <DialogBody>{children}</DialogBody>
       </DialogContent>
     </Dialog>
   );

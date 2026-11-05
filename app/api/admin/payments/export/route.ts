@@ -5,6 +5,7 @@ import { guardAdminApi } from '@/lib/auth/guards';
 import { recordAuditLog } from '@/lib/db/repositories/audit.repo';
 import { listPayments } from '@/lib/db/repositories/payments.repo';
 import { generateCsvStream } from '@/lib/export/csv';
+import { formatMinorExact } from '@/lib/format';
 import { apiFail } from '@/lib/http/envelope';
 import { clientIp, userAgent } from '@/lib/http/request';
 import { PaymentsQuerySchema } from '@/schemas/payments.schema';
@@ -59,7 +60,7 @@ export async function GET(request: Request) {
     p.provider,
     p.method,
     p.status,
-    `₦${(p.amountMinor / 100).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`,
+    formatMinorExact(p.amountMinor),
     p.providerRef || '',
     p.reconciled ? 'Yes' : 'No',
     p.reconciledByName || '',

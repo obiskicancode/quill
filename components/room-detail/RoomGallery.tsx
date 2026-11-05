@@ -74,7 +74,7 @@ export function RoomGallery({
       {/* Desktop: 1 large + up to 4 small */}
       <div className="relative hidden md:block">
         <div
-          className={`rounded-card grid gap-2 overflow-hidden ${layout.grid}`}
+          className={`grid gap-2 overflow-hidden rounded-card ${layout.grid}`}
         >
           {tiles.map((img, i) => (
             <motion.div
@@ -112,9 +112,10 @@ export function RoomGallery({
 
       {/* Mobile: swipeable carousel */}
       <div className="relative md:hidden">
-        <div className="rounded-card overflow-hidden">
+        <div className="overflow-hidden rounded-card">
           <Carousel
             label={`${roomName} photos`}
+            itemNoun="photo"
             slides={images.map((img, i) => (
               <Button
                 key={img.src}

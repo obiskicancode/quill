@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 
 import { StaggerGroup, StaggerItem } from '@/components/motion';
+import { IconBadge } from '@/components/ui/icon-badge';
 import { getValueCards } from '@/lib/content/data';
 import type { ValueIcon } from '@/types/content.types';
 
@@ -29,9 +30,9 @@ export async function ValueCards() {
   const cards = await getValueCards();
   if (cards.length === 0) return null;
   return (
-    <section aria-labelledby="values-title" className="section-y bg-card">
+    <section aria-labelledby="values-title" className="bg-card section-y">
       <div className="container-page">
-        <h2 id="values-title" className="font-display text-h2 mb-10">
+        <h2 id="values-title" className="mb-10 font-display text-h2">
           What to expect
         </h2>
         <StaggerGroup
@@ -45,13 +46,13 @@ export async function ValueCards() {
                 key={c.title}
                 as="li"
                 scale
-                className="rounded-card border-line bg-paper border p-6"
+                className="rounded-card border border-line bg-paper p-6"
               >
-                <span className="bg-primary text-ink grid size-12 place-items-center rounded-full">
-                  <Icon className="size-6" aria-hidden />
-                </span>
-                <h3 className="font-display text-h3 mt-4">{c.title}</h3>
-                <p className="text-small text-ink/85 mt-2">{c.text}</p>
+                <IconBadge>
+                  <Icon />
+                </IconBadge>
+                <h3 className="mt-4 font-display text-h3">{c.title}</h3>
+                <p className="mt-2 text-small text-ink/85">{c.text}</p>
               </StaggerItem>
             );
           })}

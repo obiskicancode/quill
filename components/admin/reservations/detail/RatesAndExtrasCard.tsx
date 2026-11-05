@@ -1,5 +1,5 @@
 import { AdminCard } from '@/components/admin/AdminCard';
-import { formatNaira } from '@/lib/format';
+import { formatMinor } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 export function RatesAndExtrasCard({
@@ -12,13 +12,13 @@ export function RatesAndExtrasCard({
       <div className="space-y-5">
         {/* Nightly Rates Table */}
         <div>
-          <h4 className="text-caption text-muted-foreground font-semibold tracking-wider uppercase">
+          <h4 className="text-caption font-semibold tracking-wider text-muted-foreground uppercase">
             Nightly inventory rates ({reservation.nightsList.length} nights)
           </h4>
           <div className="mt-2 overflow-x-auto">
-            <table className="text-small w-full text-left">
+            <table className="w-full text-left text-small">
               <caption className="sr-only">List of nightly room rates</caption>
-              <thead className="border-line text-caption text-muted-foreground border-b font-medium">
+              <thead className="border-b border-line text-caption font-medium text-muted-foreground">
                 <tr>
                   <th scope="col" className="pb-2">
                     Date
@@ -31,15 +31,15 @@ export function RatesAndExtrasCard({
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-line divide-y">
+              <tbody className="divide-y divide-line">
                 {reservation.nightsList.map((n) => (
                   <tr key={n.id}>
-                    <td className="text-ink py-2.5 font-medium">{n.date}</td>
-                    <td className="text-caption text-muted-foreground py-2.5">
+                    <td className="py-2.5 font-medium text-ink">{n.date}</td>
+                    <td className="py-2.5 text-caption text-muted-foreground">
                       {n.ruleName ?? 'Standard base rate'}
                     </td>
-                    <td className="text-ink py-2.5 text-right font-semibold">
-                      {formatNaira(n.rateMinor / 100)}
+                    <td className="py-2.5 text-right font-semibold text-ink">
+                      {formatMinor(n.rateMinor)}
                     </td>
                   </tr>
                 ))}
@@ -50,16 +50,16 @@ export function RatesAndExtrasCard({
 
         {/* Extras Table */}
         {reservation.extrasList.length > 0 && (
-          <div className="border-line border-t pt-3">
-            <h4 className="text-caption text-muted-foreground font-semibold tracking-wider uppercase">
+          <div className="border-t border-line pt-3">
+            <h4 className="text-caption font-semibold tracking-wider text-muted-foreground uppercase">
               Add-on extras ({reservation.extrasList.length})
             </h4>
             <div className="mt-2 overflow-x-auto">
-              <table className="text-small w-full text-left">
+              <table className="w-full text-left text-small">
                 <caption className="sr-only">
                   List of booking add-on extras
                 </caption>
-                <thead className="border-line text-caption text-muted-foreground border-b font-medium">
+                <thead className="border-b border-line text-caption font-medium text-muted-foreground">
                   <tr>
                     <th scope="col" className="pb-2">
                       Item
@@ -75,18 +75,18 @@ export function RatesAndExtrasCard({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-line divide-y">
+                <tbody className="divide-y divide-line">
                   {reservation.extrasList.map((e) => (
                     <tr key={e.id}>
-                      <td className="text-ink py-2.5 font-medium">{e.name}</td>
-                      <td className="text-muted-foreground py-2.5">
+                      <td className="py-2.5 font-medium text-ink">{e.name}</td>
+                      <td className="py-2.5 text-muted-foreground">
                         {e.quantity}
                       </td>
-                      <td className="text-muted-foreground py-2.5">
-                        {formatNaira(e.unitPriceMinor / 100)}
+                      <td className="py-2.5 text-muted-foreground">
+                        {formatMinor(e.unitPriceMinor)}
                       </td>
-                      <td className="text-ink py-2.5 text-right font-semibold">
-                        {formatNaira(e.totalMinor / 100)}
+                      <td className="py-2.5 text-right font-semibold text-ink">
+                        {formatMinor(e.totalMinor)}
                       </td>
                     </tr>
                   ))}

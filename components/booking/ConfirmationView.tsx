@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Settings2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import {
   useGuestBooking,
@@ -13,13 +14,13 @@ import { trackBookingConfirmedOnce } from '@/lib/booking/analytics';
 import { headerKind } from '@/lib/booking/status';
 import type { GuestReservation } from '@/types/booking.types';
 
-import { Banner } from '../checkout/CheckoutStates';
 import { HelpBlock } from '../HelpBlock';
 import { Reveal } from '../motion';
 import { EASE_OUT } from '../motion/variants';
 import { Button, ButtonLink } from '../ui/button';
 import { ActionRow } from './ActionRow';
 import { AddExtrasStrip } from './AddExtrasStrip';
+import { BookingDoc } from './BookingDoc';
 import { GettingHere } from './GettingHere';
 import { NextSteps } from './NextSteps';
 import { PaymentSummary } from './PaymentSummary';
@@ -31,7 +32,6 @@ import { StayDetailsCard } from './StayDetailsCard';
 import { TransferPanel } from './TransferPanel';
 
 const POLL_TIMEOUT_MS = 30_000;
-
 const emailLead = {
   confirmed: 'A confirmation was sent to',
   'confirmed-deposit': 'A confirmation was sent to',
@@ -41,7 +41,6 @@ const emailLead = {
   'pay-at-hotel': 'We emailed your booking details to',
   ended: '',
 } as const;
-
 /**
  * The confirmation page. The top block always follows the real status and never says "confirmed" early.
  * While a payment is still being verified it polls the status endpoint and updates in place.
@@ -68,7 +67,6 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
         exit: { opacity: 0, y: -8 },
       };
   const presenceTransition = { duration: reduced ? 0 : 0.22, ease: EASE_OUT };
-
   /**
    * One source for the page: the detail, overlaid with the polled status, so the
    * header follows the payment as soon as the poll sees it.
@@ -85,7 +83,6 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
     [booking, statusQuery.data],
   );
   const kind = headerKind(v);
-
   /** A read-only reload. Retrying it can never change the reservation. */
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -102,13 +99,11 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
       setRefreshing(false);
     }
   }, [refetch, v]);
-
   useEffect(() => {
     if (kind !== 'confirming' || timedOut) return;
     const timer = window.setTimeout(() => setTimedOut(true), POLL_TIMEOUT_MS);
     return () => window.clearTimeout(timer);
   }, [kind, timedOut]);
-
   // Once, and never from a reload: no personal data in the event.
   useEffect(() => {
     if (v.status === 'confirmed')
@@ -117,16 +112,11 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
         v.amounts.paidMinor || v.amounts.totalMinor,
       );
   }, [v.status, v.reference, v.amounts.paidMinor, v.amounts.totalMinor]);
-
   const active = kind !== 'ended';
-
   return (
-    <div className="confirmation-page">
-      <p role="status" aria-live="polite" className="sr-only">
-        {announcement}
-      </p>
-
-      <div className="container-page max-w-5xl space-y-8 py-8 md:py-12 print:hidden">
+    <BookingDoc
+      announcement={announcement}
+      status={
         <StatusHeader v={v} kind={kind} timedOut={timedOut}>
           {kind === 'transfer' && (
             <TransferPanel v={v} onUploaded={() => void refresh()} />
@@ -145,7 +135,8 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
             </Button>
           )}
         </StatusHeader>
-
+      }
+      notices={
         <AnimatePresence initial={false}>
           {refreshError && (
             <motion.div
@@ -153,11 +144,17 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
               {...presence}
               transition={presenceTransition}
             >
-              <Banner
-                role="alert"
-                tone="danger"
-                title={ERROR_MESSAGES.COULD_NOT_REFRESH_BOOKING}
-                actions={
+              <Alert role="alert" variant="destructive" size="banner">
+                <AlertTitle>
+                  {ERROR_MESSAGES.COULD_NOT_REFRESH_BOOKING}
+                </AlertTitle>
+                <AlertDescription>
+                  <p>
+                    Your booking is safe. This only reloads what you see, so
+                    trying again changes nothing.
+                  </p>
+                </AlertDescription>
+                <div className="mt-4 flex flex-wrap gap-3">
                   <Button
                     variant="secondary"
                     size="sm"
@@ -166,67 +163,69 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
                   >
                     Try again
                   </Button>
-                }
+                </div>
+              </Alert>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      }
+      actions={
+        <>
+          <AnimatePresence initial={false}>
+            {active && (
+              <motion.div
+                key="resend-email"
+                {...presence}
+                transition={presenceTransition}
               >
-                <p>
-                  Your booking is safe. This only reloads what you see, so
-                  trying again changes nothing.
-                </p>
-              </Banner>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence initial={false}>
-          {active && (
-            <motion.div
-              key="resend-email"
-              {...presence}
-              transition={presenceTransition}
-            >
-              <ResendEmail
-                reference={v.reference}
-                maskedEmail={v.guest.email}
-                lead={emailLead[kind]}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <Reveal delay={0.05}>
-          <ActionRow v={v} />
-        </Reveal>
-
+                <ResendEmail
+                  reference={v.reference}
+                  maskedEmail={v.guest.email}
+                  lead={emailLead[kind]}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <Reveal delay={0.05}>
+            <ActionRow v={v} />
+          </Reveal>
+        </>
+      }
+      facts={
         <Reveal delay={0.1}>
           <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
             <StayDetailsCard v={v} />
             <PaymentSummary v={v} />
           </div>
         </Reveal>
-
+      }
+      story={
         <Reveal delay={0.15}>
           <NextSteps v={v} kind={kind} />
         </Reveal>
-        <AnimatePresence initial={false}>
-          {active && (
-            <motion.div
-              key="getting-here"
-              {...presence}
-              transition={presenceTransition}
-            >
-              <GettingHere hotel={v.hotel} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <Reveal delay={0.2}>
-          <PolicySection v={v} />
-        </Reveal>
-        <Reveal delay={0.24}>
-          <AddExtrasStrip v={v} mode="whatsapp" />
-        </Reveal>
-      </div>
-
-      <div className="print:hidden">
+      }
+      reference={
+        <>
+          <AnimatePresence initial={false}>
+            {active && (
+              <motion.div
+                key="getting-here"
+                {...presence}
+                transition={presenceTransition}
+              >
+                <GettingHere hotel={v.hotel} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <Reveal delay={0.2}>
+            <PolicySection v={v} />
+          </Reveal>
+          <Reveal delay={0.24}>
+            <AddExtrasStrip v={v} />
+          </Reveal>
+        </>
+      }
+      help={
         <HelpBlock
           title={
             active
@@ -246,10 +245,8 @@ export function ConfirmationView({ initial }: { initial: GuestReservation }) {
             </ButtonLink>
           )}
         </HelpBlock>
-        <div className="h-16" aria-hidden />
-      </div>
-
-      <PrintVoucher v={v} />
-    </div>
+      }
+      print={<PrintVoucher v={v} />}
+    />
   );
 }

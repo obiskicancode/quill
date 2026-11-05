@@ -20,12 +20,14 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
+import { StatusDotBadge } from '@/components/admin/StatusDotBadge';
 import { Alert } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useConfirm } from '@/components/ui/confirm';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -62,6 +64,7 @@ import {
   useUpdateExtra,
 } from '@/hooks/services/admin/use-inventory';
 import { queryKeys } from '@/hooks/services/query-keys';
+import { formatMinor } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import { minorToNaira, nairaToMinor } from '@/lib/rate-resolution';
 import type { AdminExtra, ExtraInput } from '@/types/inventory.types';
@@ -76,6 +79,7 @@ type ExtraFormInput = z.input<typeof extraFormSchema>;
 type ExtraFormOutput = z.output<typeof extraFormSchema>;
 
 export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
+  const confirm = useConfirm();
   const queryClient = useQueryClient();
   const extrasQuery = useExtras(initialExtras);
   const createExtra = useCreateExtra();
@@ -227,13 +231,14 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
   }
 
   async function handleDelete(item: AdminExtra) {
-    if (
-      !confirm(
-        `Are you sure you want to delete "${item.name}"? If it has been booked in existing reservations, deletion will be blocked and you must deactivate it instead.`,
-      )
-    ) {
-      return;
-    }
+    const sure = await confirm({
+      title: `Delete "${item.name}"?`,
+      description:
+        'If it has been booked in existing reservations, deletion will be blocked and you must deactivate it instead.',
+      confirmLabel: 'Delete extra',
+      tone: 'danger',
+    });
+    if (!sure) return;
 
     try {
       await deleteExtra.mutateAsync(item.id);
@@ -311,9 +316,9 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
           breakfast, or spa packages.
         </AdminEmpty>
       ) : (
-        <div className="rounded-card border-line bg-card overflow-hidden border">
-          <Table className="text-small w-full text-left">
-            <TableHeader className="border-line bg-paper text-muted-foreground border-b">
+        <div className="overflow-hidden rounded-card border border-line bg-card">
+          <Table className="w-full text-left text-small">
+            <TableHeader className="border-b border-line bg-paper text-muted-foreground">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="py-3 pr-2 pl-4 font-medium">
                   Order
@@ -334,11 +339,11 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="divide-line divide-y">
+            <TableBody className="divide-y divide-line">
               {extras.map((item, idx) => (
                 <TableRow
                   key={item.id}
-                  className="hover:bg-paper/40 transition-colors"
+                  className="transition-colors hover:bg-paper/40"
                 >
                   <TableCell className="py-3 pr-2 pl-4">
                     <div className="flex items-center gap-1">
@@ -367,22 +372,22 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
 
                   <TableCell className="px-4 py-3">
                     <div>
-                      <span className="text-foreground font-semibold">
+                      <span className="font-semibold text-foreground">
                         {item.name}
                       </span>
                       {item.description && (
-                        <p className="text-muted-foreground line-clamp-1 text-xs">
+                        <p className="line-clamp-1 text-caption text-muted-foreground">
                           {item.description}
                         </p>
                       )}
                     </div>
                   </TableCell>
 
-                  <TableCell className="text-foreground px-4 py-3 font-semibold">
-                    ₦{minorToNaira(item.priceMinor)}
+                  <TableCell className="px-4 py-3 font-semibold text-foreground">
+                    {formatMinor(item.priceMinor)}
                   </TableCell>
 
-                  <TableCell className="text-muted-foreground px-4 py-3">
+                  <TableCell className="px-4 py-3 text-muted-foreground">
                     {item.pricingUnit === 'per_stay'
                       ? 'Per stay'
                       : item.pricingUnit === 'per_night'
@@ -392,26 +397,16 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
                           : 'Per guest, per night'}
                   </TableCell>
 
-                  <TableCell className="text-muted-foreground px-4 py-3">
+                  <TableCell className="px-4 py-3 text-muted-foreground">
                     {item.maxQuantity}
                   </TableCell>
 
                   <TableCell className="px-4 py-3">
-                    <Badge
-                      variant="outline"
-                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        item.isActive
-                          ? 'border-success/30 bg-success/15 text-success'
-                          : 'border-muted/30 bg-muted/20 text-muted-foreground'
-                      }`}
+                    <StatusDotBadge
+                      tone={item.isActive ? 'success' : 'neutral'}
                     >
-                      <span
-                        className={`size-1.5 rounded-full ${
-                          item.isActive ? 'bg-success' : 'bg-muted'
-                        }`}
-                      />
                       {item.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
+                    </StatusDotBadge>
                   </TableCell>
 
                   <TableCell className="py-3 pr-4 pl-3 text-right">
@@ -448,218 +443,226 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
           if (!nextOpen && !isSaving) setDialogOpen(false);
         }}
       >
-        <DialogContent className="rounded-card border-line bg-card max-h-[90vh] max-w-lg gap-0 overflow-y-auto border p-0 shadow-2xl sm:max-w-lg">
-          <DialogHeader className="border-line border-b p-6 pr-14 pb-4">
-            <DialogTitle className="text-h3 text-foreground font-semibold">
+        <DialogContent size="lg">
+          <DialogHeader>
+            <DialogTitle>
               {editingExtra ? 'Edit Extra' : 'New Extra / Add-on'}
             </DialogTitle>
-            <DialogDescription className="text-small text-muted-foreground">
+            <DialogDescription>
               Configure guest services, pricing calculations, and unit models.
             </DialogDescription>
           </DialogHeader>
 
           <form
             onSubmit={handleSubmit(handleSave)}
-            className="text-small space-y-4 p-6"
+            className="flex min-h-0 flex-1 flex-col"
             noValidate
           >
-            {dialogError && (
-              <Alert
-                variant="destructive"
-                className="border-destructive/40 bg-destructive/10 text-destructive text-xs"
-              >
-                <AlertCircle className="size-4 shrink-0" />
-                <p>{dialogError}</p>
-              </Alert>
-            )}
-            <Field id="extra-name" label="Name *" error={errors.name?.message}>
-              {(a11y) => (
-                <Input
-                  {...a11y}
-                  type="text"
-                  placeholder="e.g. Airport Transfer (SUV)"
-                  className={inputClass(errors.name?.message)}
-                  {...register('name', {
-                    onChange: (event) => {
-                      if (!editingExtra) {
-                        setValue('slug', slugify(event.target.value));
-                      }
-                    },
-                  })}
-                />
+            <DialogBody className="space-y-4">
+              {dialogError && (
+                <Alert variant="destructive" size="sm">
+                  <AlertCircle className="size-4 shrink-0" />
+                  <p>{dialogError}</p>
+                </Alert>
               )}
-            </Field>
-
-            <Field id="extra-slug" label="Slug *" error={errors.slug?.message}>
-              {(a11y) => (
-                <Input
-                  {...a11y}
-                  type="text"
-                  placeholder="e.g. airport-transfer-suv"
-                  className={inputClass(errors.slug?.message)}
-                  {...register('slug', {
-                    onChange: (event) =>
-                      setValue('slug', slugify(event.target.value)),
-                  })}
-                />
-              )}
-            </Field>
-
-            <Field
-              id="extra-description"
-              label="Description"
-              error={errors.description?.message}
-            >
-              {(a11y) => (
-                <Textarea
-                  {...a11y}
-                  rows={2}
-                  placeholder="e.g. Chauffeured pickup or drop-off to Murtala Muhammed Airport."
-                  className={inputClass(errors.description?.message)}
-                  {...register('description')}
-                />
-              )}
-            </Field>
-
-            <div className="grid grid-cols-2 gap-4">
               <Field
-                id="extra-price"
-                label="Price in Naira (₦) *"
-                error={errors.priceNaira?.message}
+                id="extra-name"
+                label="Name *"
+                error={errors.name?.message}
               >
                 {(a11y) => (
                   <Input
                     {...a11y}
                     type="text"
-                    placeholder="25,000"
-                    className={inputClass(errors.priceNaira?.message)}
-                    {...register('priceNaira')}
+                    placeholder="e.g. Airport Transfer (SUV)"
+                    className={inputClass(errors.name?.message)}
+                    {...register('name', {
+                      onChange: (event) => {
+                        if (!editingExtra) {
+                          setValue('slug', slugify(event.target.value));
+                        }
+                      },
+                    })}
                   />
                 )}
               </Field>
 
               <Field
-                id="extra-max-qty"
-                label="Max Quantity per Booking"
-                error={errors.maxQuantity?.message}
+                id="extra-slug"
+                label="Slug *"
+                error={errors.slug?.message}
               >
                 {(a11y) => (
                   <Input
                     {...a11y}
-                    type="number"
-                    min="1"
-                    max="50"
-                    className={inputClass(errors.maxQuantity?.message)}
-                    {...register('maxQuantity', { valueAsNumber: true })}
+                    type="text"
+                    placeholder="e.g. airport-transfer-suv"
+                    className={inputClass(errors.slug?.message)}
+                    {...register('slug', {
+                      onChange: (event) =>
+                        setValue('slug', slugify(event.target.value)),
+                    })}
                   />
                 )}
               </Field>
-            </div>
 
-            <Field
-              id="extra-pricing-unit"
-              label="Pricing Unit"
-              error={errors.pricingUnit?.message}
-            >
-              {(a11y) => (
-                <Controller
-                  control={control}
-                  name="pricingUnit"
-                  render={({ field }) => (
-                    <Select
-                      items={[
-                        {
-                          value: 'per_stay',
-                          label:
-                            'Per stay (flat fee regardless of duration or guests)',
-                        },
-                        {
-                          value: 'per_night',
-                          label: 'Per night (charged for each night of stay)',
-                        },
-                        {
-                          value: 'per_guest',
-                          label: 'Per guest (charged once per guest)',
-                        },
-                        {
-                          value: 'per_guest_per_night',
-                          label: 'Per guest per night (e.g. breakfast buffet)',
-                        },
-                      ]}
-                      value={field.value}
-                      onValueChange={(value) => {
-                        if (value) field.onChange(value);
-                      }}
-                      disabled={isSaving}
-                    >
-                      <SelectTrigger
-                        id={a11y.id}
-                        aria-describedby={a11y['aria-describedby']}
-                        aria-invalid={a11y['aria-invalid']}
-                        onBlur={field.onBlur}
-                        className={inputClass(errors.pricingUnit?.message)}
-                      >
-                        <SelectValue placeholder="Select pricing unit" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="per_stay">
-                          Per stay (flat fee regardless of duration or guests)
-                        </SelectItem>
-                        <SelectItem value="per_night">
-                          Per night (charged for each night of stay)
-                        </SelectItem>
-                        <SelectItem value="per_guest">
-                          Per guest (charged once per guest)
-                        </SelectItem>
-                        <SelectItem value="per_guest_per_night">
-                          Per guest per night (e.g. breakfast buffet)
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              )}
-            </Field>
-
-            {/* Live Calculation Preview */}
-            <div className="border-line bg-paper rounded border p-3 text-xs">
-              <span className="text-foreground font-semibold">
-                Live Calculation Example:
-              </span>
-              <p className="text-muted-foreground mt-1">
-                For a 3-night stay with 2 guests, 1 unit of this extra adds:{' '}
-                <strong className="text-primary font-bold">
-                  ₦{minorToNaira(livePreviewTotalMinor)}
-                </strong>
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2.5 pt-2">
-              <Controller
-                control={control}
-                name="isActive"
-                render={({ field }) => (
-                  <Checkbox
-                    id="extraActive"
-                    name={field.name}
-                    ref={field.ref}
-                    checked={field.value === true}
-                    onCheckedChange={(checked) =>
-                      field.onChange(checked === true)
-                    }
-                    onBlur={field.onBlur}
+              <Field
+                id="extra-description"
+                label="Description"
+                error={errors.description?.message}
+              >
+                {(a11y) => (
+                  <Textarea
+                    {...a11y}
+                    rows={2}
+                    placeholder="e.g. Chauffeured pickup or drop-off to Murtala Muhammed Airport."
+                    className={inputClass(errors.description?.message)}
+                    {...register('description')}
                   />
                 )}
-              />
-              <Label htmlFor="extraActive" className="cursor-pointer">
-                Active (offered during checkout)
-              </Label>
-            </div>
+              </Field>
 
-            <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+              <div className="grid grid-cols-2 gap-4">
+                <Field
+                  id="extra-price"
+                  label="Price in Naira (₦) *"
+                  error={errors.priceNaira?.message}
+                >
+                  {(a11y) => (
+                    <Input
+                      {...a11y}
+                      type="text"
+                      placeholder="25,000"
+                      className={inputClass(errors.priceNaira?.message)}
+                      {...register('priceNaira')}
+                    />
+                  )}
+                </Field>
+
+                <Field
+                  id="extra-max-qty"
+                  label="Max Quantity per Booking"
+                  error={errors.maxQuantity?.message}
+                >
+                  {(a11y) => (
+                    <Input
+                      {...a11y}
+                      type="number"
+                      min="1"
+                      max="50"
+                      className={inputClass(errors.maxQuantity?.message)}
+                      {...register('maxQuantity', { valueAsNumber: true })}
+                    />
+                  )}
+                </Field>
+              </div>
+
+              <Field
+                id="extra-pricing-unit"
+                label="Pricing Unit"
+                error={errors.pricingUnit?.message}
+              >
+                {(a11y) => (
+                  <Controller
+                    control={control}
+                    name="pricingUnit"
+                    render={({ field }) => (
+                      <Select
+                        items={[
+                          {
+                            value: 'per_stay',
+                            label:
+                              'Per stay (flat fee regardless of duration or guests)',
+                          },
+                          {
+                            value: 'per_night',
+                            label: 'Per night (charged for each night of stay)',
+                          },
+                          {
+                            value: 'per_guest',
+                            label: 'Per guest (charged once per guest)',
+                          },
+                          {
+                            value: 'per_guest_per_night',
+                            label:
+                              'Per guest per night (e.g. breakfast buffet)',
+                          },
+                        ]}
+                        value={field.value}
+                        onValueChange={(value) => {
+                          if (value) field.onChange(value);
+                        }}
+                        disabled={isSaving}
+                      >
+                        <SelectTrigger
+                          id={a11y.id}
+                          aria-describedby={a11y['aria-describedby']}
+                          aria-invalid={a11y['aria-invalid']}
+                          onBlur={field.onBlur}
+                          className={inputClass(errors.pricingUnit?.message)}
+                        >
+                          <SelectValue placeholder="Select pricing unit" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="per_stay">
+                            Per stay (flat fee regardless of duration or guests)
+                          </SelectItem>
+                          <SelectItem value="per_night">
+                            Per night (charged for each night of stay)
+                          </SelectItem>
+                          <SelectItem value="per_guest">
+                            Per guest (charged once per guest)
+                          </SelectItem>
+                          <SelectItem value="per_guest_per_night">
+                            Per guest per night (e.g. breakfast buffet)
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                )}
+              </Field>
+
+              {/* Live Calculation Preview */}
+              <div className="rounded-sm border border-line bg-paper p-3 text-caption">
+                <span className="font-semibold text-foreground">
+                  Live Calculation Example:
+                </span>
+                <p className="mt-1 text-muted-foreground">
+                  For a 3-night stay with 2 guests, 1 unit of this extra adds:{' '}
+                  <strong className="font-bold text-brand-ink">
+                    {formatMinor(livePreviewTotalMinor)}
+                  </strong>
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5 pt-2">
+                <Controller
+                  control={control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <Checkbox
+                      id="extraActive"
+                      name={field.name}
+                      ref={field.ref}
+                      checked={field.value === true}
+                      onCheckedChange={(checked) =>
+                        field.onChange(checked === true)
+                      }
+                      onBlur={field.onBlur}
+                    />
+                  )}
+                />
+                <Label htmlFor="extraActive" className="cursor-pointer">
+                  Active (offered during checkout)
+                </Label>
+              </div>
+            </DialogBody>
+
+            <DialogFooter>
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={() => setDialogOpen(false)}
                 disabled={isSaving}

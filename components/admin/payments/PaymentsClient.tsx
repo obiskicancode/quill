@@ -9,6 +9,7 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Pagination,
@@ -388,7 +389,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
       <PaymentsBreakdown breakdown={breakdown} loading={loading} />
 
       {/* Tabs Navigation */}
-      <div className="border-line flex flex-wrap items-center justify-between gap-3 border-b pb-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2">
         <Tabs
           value={activeTab}
           onValueChange={(val) =>
@@ -405,9 +406,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
             >
               Manual Refunds Due
               {manualRefunds.length > 0 && (
-                <span className="text-caption bg-primary/15 text-brand-ink rounded-full px-2 py-0.5 font-bold">
-                  {manualRefunds.length}
-                </span>
+                <Badge variant="brand">{manualRefunds.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger
@@ -416,9 +415,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
             >
               Webhook Events
               {webhooks.some((w) => w.isOverdue) && (
-                <span className="bg-destructive/10 text-caption text-destructive rounded-full px-2 py-0.5 font-bold">
-                  !
-                </span>
+                <Badge variant="destructive">!</Badge>
               )}
             </TabsTrigger>
           </TabsList>
@@ -444,7 +441,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
 
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={handleExportCsv}
             title="Download CSV of current filtered view (max 10,000 rows)"
@@ -455,7 +452,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
 
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={() => {
               void refetchSummary();
@@ -502,7 +499,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
               message={error}
               action={
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => void refetchPayments()}
                 >
@@ -523,7 +520,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
                 onSelectAll={handleSelectAll}
                 onRowClick={handleOpenDetail}
               />
-              <div className="bg-muted/30 border-line text-caption text-muted-foreground flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-line bg-muted/30 px-4 py-3 text-caption text-muted-foreground">
                 <span>
                   Showing {payments.length} of {totalPayments} payment record(s)
                 </span>
@@ -540,7 +537,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
                       />
                     </PaginationItem>
                     <PaginationItem>
-                      <span className="text-caption text-muted-foreground px-2 font-medium">
+                      <span className="px-2 text-caption font-medium text-muted-foreground">
                         Page {filters.page ?? 1} of{' '}
                         {Math.max(
                           1,

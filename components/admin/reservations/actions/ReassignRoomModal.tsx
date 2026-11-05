@@ -135,11 +135,11 @@ export function ReassignRoomModal({
         className="space-y-4"
       >
         <div className="space-y-1.5">
-          <Label className="text-small text-ink font-semibold">
+          <Label className="text-small font-semibold text-ink">
             Current Room
           </Label>
-          <div className="bg-muted rounded-control border-line text-small text-ink flex items-center gap-2 border p-3">
-            <Home className="text-muted-foreground size-4" aria-hidden="true" />
+          <div className="flex items-center gap-2 rounded-control border border-line bg-muted p-3 text-small text-ink">
+            <Home className="size-4 text-muted-foreground" aria-hidden="true" />
             <span>
               Room <strong>{reservation.roomNumber}</strong> (
               {reservation.roomTypeName})
@@ -154,7 +154,7 @@ export function ReassignRoomModal({
         >
           {() =>
             roomsQuery.isPending ? (
-              <div className="text-small text-muted-foreground flex items-center justify-center p-6">
+              <div className="flex items-center justify-center p-6 text-small text-muted-foreground">
                 <Loader2
                   className="mr-2 size-4 animate-spin"
                   aria-hidden="true"
@@ -162,7 +162,7 @@ export function ReassignRoomModal({
                 Checking availability...
               </div>
             ) : rooms.length === 0 ? (
-              <div className="rounded-control border-primary/40 bg-primary/10 text-small text-ink mt-1 border p-3">
+              <div className="mt-1 rounded-control border border-primary/40 bg-primary/10 p-3 text-small text-ink">
                 No other rooms of this type are currently available for the full
                 stay dates ({reservation.checkIn} to {reservation.checkOut}).
               </div>
@@ -174,13 +174,12 @@ export function ReassignRoomModal({
                     <Button
                       key={r.id}
                       type="button"
-                      variant={selected ? 'default' : 'outline'}
-                      size="md"
+                      variant={selected ? 'primary' : 'secondary'}
                       onClick={() => setValue('roomId', r.id)}
                       disabled={busy}
                       className="h-auto flex-col py-3"
                     >
-                      <span className="font-mono text-base font-bold">
+                      <span className="font-mono text-body font-bold">
                         {r.roomNumber}
                       </span>
                       <span className="text-caption opacity-80">
@@ -211,10 +210,10 @@ export function ReassignRoomModal({
           )}
         </Field>
 
-        <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
+        <div className="flex items-center justify-end gap-3 border-t border-line pt-3">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={onClose}
             disabled={busy}

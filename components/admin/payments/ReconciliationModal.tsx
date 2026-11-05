@@ -10,6 +10,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -97,15 +98,15 @@ export function ReconciliationModal({
         if (!open && !busy) onClose();
       }}
     >
-      <DialogContent className="rounded-card border-line bg-card max-w-md gap-0 border p-0 shadow-xl sm:max-w-md">
-        <DialogHeader className="border-line border-b p-6 pr-14 pb-3">
+      <DialogContent size="md">
+        <DialogHeader>
           <div className="flex items-center gap-2">
             {isReconcile ? (
-              <ShieldCheck className="text-success size-5" aria-hidden />
+              <ShieldCheck className="size-5 text-success" aria-hidden />
             ) : (
-              <AlertCircle className="text-destructive size-5" aria-hidden />
+              <AlertCircle className="size-5 text-destructive" aria-hidden />
             )}
-            <DialogTitle className="font-display text-h3 text-ink font-semibold">
+            <DialogTitle>
               {isReconcile
                 ? `Reconcile Payment${paymentIds.length > 1 ? 's' : ''}`
                 : 'Unreconcile Payment'}
@@ -115,52 +116,51 @@ export function ReconciliationModal({
 
         <form
           onSubmit={handleSubmit(handleFormSubmit)}
-          className="space-y-4 p-6"
+          className="flex min-h-0 flex-1 flex-col"
           noValidate
         >
-          <DialogDescription className="text-small text-muted-foreground">
-            {isReconcile
-              ? `You are marking ${paymentIds.length} payment(s) as verified against the hotel bank or physical cash records.`
-              : 'Unreconciling will reset this payment to unverified and clear reconciliation timestamps. This action will be audited.'}
-          </DialogDescription>
+          <DialogBody className="space-y-4">
+            <DialogDescription>
+              {isReconcile
+                ? `You are marking ${paymentIds.length} payment(s) as verified against the hotel bank or physical cash records.`
+                : 'Unreconciling will reset this payment to unverified and clear reconciliation timestamps. This action will be audited.'}
+            </DialogDescription>
 
-          <Field
-            id="reconcile-note"
-            label={
-              isReconcile
-                ? 'Audit Note (Optional)'
-                : 'Reason for Unreconciling (Required)'
-            }
-            error={errors.noteOrReason?.message}
-          >
-            {(a11y) => (
-              <Textarea
-                {...a11y}
-                {...register('noteOrReason')}
-                rows={3}
-                required={!isReconcile}
-                placeholder={
-                  isReconcile
-                    ? 'e.g., Verified against Zenith Bank statement dated 26-Oct...'
-                    : 'e.g., Bank chargeback received or ledger mismatch...'
-                }
-              />
-            )}
-          </Field>
-
-          {error && (
-            <Alert
-              variant="destructive"
-              className="border-destructive/30 bg-destructive/5 text-caption text-destructive"
+            <Field
+              id="reconcile-note"
+              label={
+                isReconcile
+                  ? 'Audit Note (Optional)'
+                  : 'Reason for Unreconciling (Required)'
+              }
+              error={errors.noteOrReason?.message}
             >
-              {error}
-            </Alert>
-          )}
+              {(a11y) => (
+                <Textarea
+                  {...a11y}
+                  {...register('noteOrReason')}
+                  rows={3}
+                  required={!isReconcile}
+                  placeholder={
+                    isReconcile
+                      ? 'e.g., Verified against Zenith Bank statement dated 26-Oct...'
+                      : 'e.g., Bank chargeback received or ledger mismatch...'
+                  }
+                />
+              )}
+            </Field>
 
-          <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+            {error && (
+              <Alert variant="destructive" size="sm">
+                {error}
+              </Alert>
+            )}
+          </DialogBody>
+
+          <DialogFooter>
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={onClose}
               disabled={busy}

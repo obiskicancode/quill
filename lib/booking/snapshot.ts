@@ -10,6 +10,7 @@ import {
   getLandmarks,
   getPolicySettings,
 } from '../content/data';
+import { formatGuestTime } from '../format';
 import { paymentProviderLabel } from '../payments';
 import { getPricingSettings } from '../rooms/detail';
 
@@ -46,8 +47,8 @@ export async function buildSnapshot(
     breakdown: quote.breakdown,
     policy: {
       cancellation: quote.policy,
-      checkInRules: `Check-in from ${pricing.checkInTime}. Early check-in depends on availability.`,
-      checkOutRules: `Check-out by ${pricing.checkOutTime}. Late check-out can be arranged on request.`,
+      checkInRules: `Check-in from ${formatGuestTime(pricing.checkInTime)}. Early check-in depends on availability.`,
+      checkOutRules: `Check-out by ${formatGuestTime(pricing.checkOutTime)}. Late check-out can be arranged on request.`,
       houseRules: [
         policies.houseRules.childrenPolicy,
         policies.houseRules.petsAllowed

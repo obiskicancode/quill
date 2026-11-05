@@ -132,15 +132,14 @@ export function ApproveDeclineModal({
         <div className="grid grid-cols-2 gap-2">
           <Button
             type="button"
-            variant={action === 'approve' ? 'default' : 'outline'}
-            size="md"
+            variant={action === 'approve' ? 'primary' : 'secondary'}
             onClick={() => {
               setValue('action', 'approve');
               clearErrors('reason');
             }}
             className={
               action === 'approve'
-                ? 'bg-success hover:bg-success/90 text-white'
+                ? 'bg-success text-success-foreground hover:bg-success/90'
                 : ''
             }
           >
@@ -149,8 +148,7 @@ export function ApproveDeclineModal({
           </Button>
           <Button
             type="button"
-            variant={action === 'decline' ? 'destructive' : 'outline'}
-            size="md"
+            variant={action === 'decline' ? 'destructive' : 'secondary'}
             onClick={() => setValue('action', 'decline')}
           >
             <X className="size-4" aria-hidden="true" />
@@ -159,7 +157,7 @@ export function ApproveDeclineModal({
         </div>
 
         {/* Stay Summary */}
-        <div className="bg-muted rounded-control border-line text-small space-y-1 border p-3">
+        <div className="space-y-1 rounded-control border border-line bg-muted p-3 text-small">
           <p>
             <span className="text-muted-foreground">Room:</span>{' '}
             {reservation.roomTypeName} (Room {reservation.roomNumber})
@@ -205,10 +203,10 @@ export function ApproveDeclineModal({
           </Field>
         )}
 
-        <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
+        <div className="flex items-center justify-end gap-3 border-t border-line pt-3">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={onClose}
             disabled={busy}
@@ -217,7 +215,7 @@ export function ApproveDeclineModal({
           </Button>
           <Button
             type="submit"
-            variant={action === 'approve' ? 'default' : 'destructive'}
+            variant={action === 'approve' ? 'primary' : 'destructive'}
             size="sm"
             loading={busy}
           >

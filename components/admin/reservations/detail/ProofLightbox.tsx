@@ -6,8 +6,10 @@ import { useEffect, useRef } from 'react';
 
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -54,29 +56,26 @@ export function ProofLightbox({
         if (!nextOpen) onClose();
       }}
     >
-      <DialogContent className="rounded-card border-line bg-card shadow-float max-h-[90vh] max-w-2xl gap-0 overflow-hidden border p-0 sm:max-w-2xl">
-        <DialogHeader className="border-line border-b px-5 py-3.5 pr-14">
-          <DialogTitle className="font-display text-h3 text-ink">
-            Bank Transfer Proof
-          </DialogTitle>
+      <DialogContent size="2xl">
+        <DialogHeader>
+          <DialogTitle>Bank Transfer Proof</DialogTitle>
           <DialogDescription className="sr-only">
             Preview and download the uploaded bank transfer receipt.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Lightbox Content Area */}
-        <div className="bg-paper flex max-h-[70vh] items-center justify-center overflow-auto p-4">
+        <DialogBody className="flex items-center justify-center bg-paper">
           {isPdf ? (
             <div className="py-12 text-center">
-              <p className="text-ink font-semibold">PDF Payment Document</p>
-              <p className="text-small text-muted-foreground mt-1">
+              <p className="font-semibold text-ink">PDF Payment Document</p>
+              <p className="mt-1 text-small text-muted-foreground">
                 {proofKey}
               </p>
               <a
                 href={`/api/admin/reservations/${reservationId}/proof`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-control bg-primary text-small text-primary-foreground hover:bg-brand-hover mt-4 inline-flex items-center gap-1.5 px-4 py-2 font-semibold"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-control bg-primary px-4 py-2 text-small font-semibold text-primary-foreground hover:bg-brand-hover"
               >
                 <ExternalLink className="size-4" aria-hidden="true" />
                 <span>Open PDF in new tab</span>
@@ -86,23 +85,22 @@ export function ProofLightbox({
             <Image
               src={`/api/admin/reservations/${reservationId}/proof`}
               alt="Payment bank transfer receipt"
-              className="rounded-control shadow-raised max-h-[65vh] w-auto object-contain"
+              className="max-h-[65vh] w-auto rounded-control object-contain shadow-raised"
             />
           )}
-        </div>
+        </DialogBody>
 
-        {/* Lightbox Footer */}
-        <div className="border-line text-caption text-muted-foreground flex items-center justify-between border-t px-5 py-3">
+        <DialogFooter className="flex-row items-center justify-between py-3 text-caption text-muted-foreground sm:justify-between">
           <span>Receipt key: {proofKey}</span>
           <a
             href={`/api/admin/reservations/${reservationId}/proof`}
             download
-            className="text-ink inline-flex items-center gap-1 font-semibold hover:underline"
+            className="inline-flex items-center gap-1 font-semibold text-ink hover:underline"
           >
             <Download className="size-3.5" aria-hidden="true" />
             <span>Download</span>
           </a>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -46,7 +46,7 @@ export default async function AdminNewReservationPage() {
     <div className="space-y-6">
       <Suspense
         fallback={
-          <div className="text-muted-foreground p-8 text-center">
+          <div className="p-8 text-center text-muted-foreground">
             Loading form...
           </div>
         }

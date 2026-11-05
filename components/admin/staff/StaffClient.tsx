@@ -29,6 +29,7 @@ import {
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useStaffDetail, useStaffList } from '@/hooks/services/admin/use-staff';
+import { formatHotelDate, formatHotelDateTime } from '@/lib/format';
 import type {
   StaffDetailResponse,
   StaffListItem,
@@ -37,6 +38,7 @@ import type {
 
 import { InviteStaffDialog } from './InviteStaffDialog';
 import { StaffDetailSheet } from './StaffDetailSheet';
+import { StaffStatusBadge } from './StaffStatusBadge';
 import { StepUpDialog } from './StepUpDialog';
 
 const ROLE_FILTER_OPTIONS = [
@@ -124,7 +126,7 @@ export function StaffClient() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <div className="relative max-w-sm min-w-55 flex-1">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search by name or email..."
@@ -212,40 +214,40 @@ export function StaffClient() {
           Adjust your filters or invite your first team member.
         </AdminEmpty>
       ) : (
-        <div className="rounded-card border-line bg-card overflow-hidden border">
-          <Table className="text-small w-full text-left">
+        <div className="overflow-hidden rounded-card border border-line bg-card">
+          <Table className="w-full text-left text-small">
             <caption className="sr-only">Staff directory</caption>
-            <TableHeader className="border-line bg-paper text-caption text-muted-foreground border-b font-semibold uppercase">
+            <TableHeader className="border-b border-line bg-paper text-caption font-semibold text-muted-foreground uppercase">
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-muted-foreground px-4 py-3">
+                <TableHead className="px-4 py-3 text-muted-foreground">
                   Staff Member
                 </TableHead>
-                <TableHead className="text-muted-foreground px-4 py-3">
+                <TableHead className="px-4 py-3 text-muted-foreground">
                   Role
                 </TableHead>
-                <TableHead className="text-muted-foreground px-4 py-3">
+                <TableHead className="px-4 py-3 text-muted-foreground">
                   Status
                 </TableHead>
-                <TableHead className="text-muted-foreground px-4 py-3">
+                <TableHead className="px-4 py-3 text-muted-foreground">
                   Two-Factor (2FA)
                 </TableHead>
-                <TableHead className="text-muted-foreground px-4 py-3">
+                <TableHead className="px-4 py-3 text-muted-foreground">
                   Last Login
                 </TableHead>
-                <TableHead className="text-muted-foreground px-4 py-3">
+                <TableHead className="px-4 py-3 text-muted-foreground">
                   Created
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="divide-line divide-y">
+            <TableBody className="divide-y divide-line">
               {staffList.map((staff) => (
                 <TableRow
                   key={staff.id}
                   onClick={() => handleRowClick(staff)}
-                  className="hover:bg-paper/70 cursor-pointer transition-colors"
+                  className="cursor-pointer transition-colors hover:bg-paper/70"
                 >
                   <TableCell className="px-4 py-3">
-                    <div className="text-ink font-semibold">
+                    <div className="font-semibold text-ink">
                       {staff.fullName}
                     </div>
                     <div className="text-caption text-muted-foreground">
@@ -253,47 +255,29 @@ export function StaffClient() {
                     </div>
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    <Badge
-                      variant="outline"
-                      className="border-line bg-paper text-caption text-ink rounded border px-2 py-0.5 font-medium capitalize"
-                    >
-                      {staff.role}
-                    </Badge>
+                    <Badge variant="info">{staff.role}</Badge>
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    <Badge
-                      variant="outline"
-                      className={`text-caption rounded-full px-2 py-0.5 font-semibold capitalize ${
-                        staff.status === 'active'
-                          ? 'border-success/20 bg-success/10 text-success'
-                          : staff.status === 'invited'
-                            ? 'border-primary/30 bg-primary/15 text-brand-ink'
-                            : staff.status === 'locked'
-                              ? 'border-destructive/20 bg-destructive/10 text-destructive'
-                              : 'border-muted/20 bg-muted/10 text-muted-foreground'
-                      }`}
-                    >
-                      {staff.status}
-                    </Badge>
+                    <StaffStatusBadge status={staff.status} />
                   </TableCell>
                   <TableCell className="px-4 py-3">
                     {staff.mfaEnabled ? (
-                      <span className="text-success text-caption inline-flex items-center gap-1 font-medium">
+                      <span className="inline-flex items-center gap-1 text-caption font-medium text-success">
                         <ShieldCheck className="size-3.5" /> Enrolled
                       </span>
                     ) : (
-                      <span className="text-muted-foreground text-caption">
+                      <span className="text-caption text-muted-foreground">
                         Disabled
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="text-caption text-muted-foreground px-4 py-3">
+                  <TableCell className="px-4 py-3 text-caption text-muted-foreground">
                     {staff.lastLoginAt
-                      ? new Date(staff.lastLoginAt).toLocaleString('en-GB')
+                      ? formatHotelDateTime(staff.lastLoginAt)
                       : 'Never'}
                   </TableCell>
-                  <TableCell className="text-caption text-muted-foreground px-4 py-3">
-                    {new Date(staff.createdAt).toLocaleDateString('en-GB')}
+                  <TableCell className="px-4 py-3 text-caption text-muted-foreground">
+                    {formatHotelDate(staff.createdAt)}
                   </TableCell>
                 </TableRow>
               ))}

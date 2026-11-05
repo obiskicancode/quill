@@ -39,7 +39,7 @@ export async function StorySection() {
               </div>
               {image && (
                 <HoverZoom
-                  className={`rounded-card aspect-[4/3] w-full ${i % 2 === 1 ? 'md:order-1' : ''}`}
+                  className={`aspect-[4/3] w-full rounded-card ${i % 2 === 1 ? 'md:order-1' : ''}`}
                 >
                   <Photo
                     src={image.src}

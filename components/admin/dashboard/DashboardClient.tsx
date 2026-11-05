@@ -206,9 +206,9 @@ export function DashboardClient({
 
               {/* 5. Next 14 days occupancy */}
               {occupancyLoading && !occupancyData ? (
-                <div className="rounded-card border-line bg-card border p-6">
-                  <div className="bg-line/80 h-5 w-40 animate-pulse rounded" />
-                  <div className="bg-line/30 mt-6 h-32 animate-pulse rounded" />
+                <div className="rounded-card border border-line bg-card p-6">
+                  <div className="h-5 w-40 animate-pulse rounded-sm bg-line/80" />
+                  <div className="mt-6 h-32 animate-pulse rounded-sm bg-line/30" />
                 </div>
               ) : occupancyError && !occupancyData ? (
                 <AdminError

@@ -1,7 +1,23 @@
-import type { CalendarEvent } from '@/types/booking.types';
+import type { CalendarEvent, GuestReservation } from '@/types/booking.types';
 import type { ISODate } from '@/types/dates.types';
 
 /** Pure helpers: build a downloadable .ics file, a Google Calendar link and the WhatsApp share text. */
+
+/** The stay as a calendar event, or null until the check-in date is confirmed. */
+export function calendarEventFor(v: GuestReservation): CalendarEvent | null {
+  const { checkIn, checkOut } = v.stay;
+  if (!checkIn || !checkOut) return null;
+  return {
+    reference: v.reference,
+    hotelName: v.hotel.name,
+    address: v.hotel.addressLines.join(', '),
+    checkIn,
+    checkOut,
+    checkInTime: v.times.checkIn24,
+    checkOutTime: v.times.checkOut24,
+    timeZone: v.times.timeZone,
+  };
+}
 
 const stamp = (date: ISODate, time: string) =>
   `${date.replace(/-/g, '')}T${time.replace(':', '')}00`;

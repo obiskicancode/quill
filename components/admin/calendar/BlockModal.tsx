@@ -14,6 +14,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { ActionModal } from '@/components/admin/reservations/actions/ActionModal';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
@@ -364,16 +365,16 @@ export function BlockModal({
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         {formError && (
-          <div className="rounded-control border-destructive/30 bg-destructive/10 text-small text-destructive flex items-start gap-2 border p-3">
-            <AlertCircle className="mt-0.5 size-4 shrink-0" />
+          <Alert variant="destructive" className="items-start gap-2">
+            <AlertCircle className="shrink-0" />
             <span>{formError}</span>
-          </div>
+          </Alert>
         )}
 
         {/* Delete Confirmation Banner */}
         {confirmDelete && (
-          <div className="rounded-control border-destructive/40 bg-destructive/10 space-y-2 border p-3.5">
-            <div className="text-small text-destructive flex items-center gap-2 font-semibold">
+          <Alert variant="destructive" size="panel" className="gap-2">
+            <div className="flex items-center gap-2 font-semibold">
               <AlertTriangle className="size-4" />
               <span>Are you sure you want to remove this block?</span>
             </div>
@@ -393,7 +394,7 @@ export function BlockModal({
               </Button>
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 disabled={deleting}
                 onClick={() => setConfirmDelete(false)}
@@ -401,23 +402,23 @@ export function BlockModal({
                 Cancel
               </Button>
             </div>
-          </div>
+          </Alert>
         )}
 
         {/* Room Selection */}
         <div>
           <div className="flex items-center justify-between">
-            <Label className="text-small text-ink block font-semibold">
+            <Label className="block text-small font-semibold text-ink">
               Select Rooms ({selectedRoomIds.length} selected)
             </Label>
             {!isEditing && (
-              <div className="text-caption flex items-center gap-2">
+              <div className="flex items-center gap-2 text-caption">
                 <Button
                   type="button"
                   variant="link"
                   size="sm"
                   onClick={handleSelectWholeProperty}
-                  className="text-ink h-auto p-0 underline hover:opacity-80"
+                  className="h-auto p-0 text-ink underline hover:opacity-80"
                 >
                   Whole Property
                 </Button>
@@ -426,16 +427,16 @@ export function BlockModal({
           </div>
 
           {!isEditing && (
-            <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-1 text-[0.6875rem]">
+            <div className="mt-1 flex flex-wrap items-center gap-1 text-micro text-muted-foreground">
               <span>Quick select:</span>
               {roomTypes.map((rt) => (
                 <Button
                   key={rt.id}
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => handleSelectAllOfType(rt.id)}
-                  className="h-6 px-1.5 py-0.5 text-[0.6875rem]"
+                  className="h-6 px-1.5 py-0.5 text-micro"
                 >
                   All {rt.name}
                 </Button>
@@ -444,17 +445,17 @@ export function BlockModal({
           )}
 
           {/* Room Pills */}
-          <div className="bg-muted/30 rounded-control border-line mt-2 flex max-h-36 flex-wrap gap-1.5 overflow-y-auto border p-2">
+          <div className="mt-2 flex max-h-36 flex-wrap gap-1.5 overflow-y-auto rounded-control border border-line bg-muted/30 p-2">
             {rooms.map((room) => {
               const isSelected = selectedRoomIds.includes(room.id);
               return (
                 <Button
                   key={room.id}
                   type="button"
-                  variant={isSelected ? 'default' : 'outline'}
+                  variant={isSelected ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={() => handleToggleRoom(room.id)}
-                  className="h-auto rounded-full px-2.5 py-1 text-xs font-medium"
+                  className="h-auto rounded-full px-2.5 py-1 text-caption font-medium"
                 >
                   #{room.roomNumber} ({room.roomTypeName})
                 </Button>
@@ -462,7 +463,7 @@ export function BlockModal({
             })}
           </div>
           {errors.roomIds?.message && (
-            <p className="text-small text-destructive mt-1.5 font-medium">
+            <p className="mt-1.5 text-small font-medium text-destructive">
               {errors.roomIds.message}
             </p>
           )}
@@ -508,8 +509,8 @@ export function BlockModal({
 
         {/* Backdate Reason Banner (Manager/Owner only) */}
         {isBackdated && (
-          <div className="rounded-control border-primary/30 bg-primary/10 space-y-1.5 border p-3">
-            <div className="text-small text-brand-ink flex items-center gap-1.5 font-semibold">
+          <Alert variant="brand" className="gap-1.5">
+            <div className="flex items-center gap-1.5 font-semibold">
               <AlertTriangle className="size-4" />
               <span>Backdating Room Block</span>
             </div>
@@ -535,12 +536,12 @@ export function BlockModal({
             {errors.backdateReason?.message && (
               <p
                 id="block-backdate-reason-error"
-                className="text-small text-destructive font-medium"
+                className="text-small font-medium text-destructive"
               >
                 {errors.backdateReason.message}
               </p>
             )}
-          </div>
+          </Alert>
         )}
 
         {/* Reason and Note */}
@@ -621,13 +622,13 @@ export function BlockModal({
         {/* Live Conflict Alerts */}
         <div className="pt-1">
           {checking ? (
-            <div className="text-caption text-muted-foreground flex items-center gap-2">
+            <div className="flex items-center gap-2 text-caption text-muted-foreground">
               <Loader2 className="size-3.5 animate-spin" />
               <span>Verifying calendar availability...</span>
             </div>
           ) : conflicts.length > 0 ? (
-            <div className="rounded-control border-destructive/40 bg-destructive/10 space-y-2 border p-3">
-              <div className="text-small text-destructive flex items-center gap-2 font-semibold">
+            <Alert variant="destructive" className="gap-2">
+              <div className="flex items-center gap-2 font-semibold">
                 <AlertCircle className="size-4 shrink-0" />
                 <span>
                   {conflicts.length} Conflict(s) Detected — Cannot Save Block
@@ -641,35 +642,35 @@ export function BlockModal({
                 {conflicts.map((c) => (
                   <div
                     key={`${c.roomId}-${c.id}`}
-                    className="rounded-control border-line bg-paper text-caption flex items-center justify-between border px-2.5 py-1"
+                    className="flex items-center justify-between rounded-control border border-line bg-paper px-2.5 py-1 text-caption"
                   >
                     <div className="flex items-center gap-1.5">
-                      <span className="text-ink font-mono font-semibold">
+                      <span className="font-mono font-semibold text-ink">
                         #{c.roomNumber}
                       </span>
                       <span>•</span>
                       {c.type === 'reservation' ? (
                         <>
                           <span className="text-ink">{c.guestName}</span>
-                          <span className="text-muted-foreground font-mono">
+                          <span className="font-mono text-muted-foreground">
                             ({c.reference})
                           </span>
                         </>
                       ) : (
-                        <span className="text-destructive font-medium uppercase">
+                        <span className="font-medium text-destructive uppercase">
                           Existing Block ({c.reason})
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground font-mono text-[0.6875rem]">
+                      <span className="font-mono text-micro text-muted-foreground">
                         {formatShort(c.startDate)} → {formatShort(c.endDate)}
                       </span>
                       {c.type === 'reservation' && (
                         <Link
                           href={`/admin/reservations/${c.id}`}
                           target="_blank"
-                          className="text-ink text-[0.6875rem] font-medium underline"
+                          className="text-micro font-medium text-ink underline"
                         >
                           View
                         </Link>
@@ -678,9 +679,9 @@ export function BlockModal({
                   </div>
                 ))}
               </div>
-            </div>
+            </Alert>
           ) : (
-            <div className="text-caption text-success flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 text-caption text-success">
               <CheckCircle2 className="size-3.5" />
               <span>All selected rooms and dates are free of conflicts.</span>
             </div>
@@ -688,7 +689,7 @@ export function BlockModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="border-line flex items-center justify-between border-t pt-3">
+        <div className="flex items-center justify-between border-t border-line pt-3">
           {isEditing && !confirmDelete ? (
             <Button
               type="button"
@@ -708,7 +709,7 @@ export function BlockModal({
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={onClose}
               disabled={busy}

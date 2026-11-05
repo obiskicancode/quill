@@ -18,7 +18,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { ServiceError } from '@/app/api/services/base.service';
-import { Badge } from '@/components/ui/badge';
+import { StaffStatusBadge } from '@/components/admin/staff/StaffStatusBadge';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
@@ -31,6 +32,7 @@ import {
 } from '@/components/ui/select';
 import {
   Sheet,
+  SheetBody,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -50,6 +52,11 @@ import {
   useUnlockStaff,
   useUpdateStaff,
 } from '@/hooks/services/admin/use-staff';
+import {
+  formatHotelDate,
+  formatHotelDateTime,
+  formatHotelTime,
+} from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import { StaffUpdateInputSchema } from '@/schemas/staff.schema';
 import type { StaffDetailResponse } from '@/types/staff.types';
@@ -234,63 +241,42 @@ export function StaffDetailSheet({
         if (!open) onClose();
       }}
     >
-      <SheetContent
-        side="right"
-        showCloseButton
-        className="border-line bg-card w-full max-w-2xl gap-0 border-l p-0 sm:max-w-2xl"
-      >
-        <SheetHeader className="border-line flex-row items-center gap-3 border-b px-6 py-4 pr-14">
-          <div className="bg-primary/10 text-brand-ink flex size-10 items-center justify-center rounded-full font-bold">
+      <SheetContent side="right" size="2xl">
+        <SheetHeader className="flex-row items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 font-bold text-brand-ink">
             {staff.firstName[0]}
             {staff.lastName[0]}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <SheetTitle className="text-h3 font-display text-ink font-semibold">
-                {staff.fullName}
-              </SheetTitle>
-              <Badge
-                variant="outline"
-                className={`text-caption rounded-full px-2 py-0.5 font-semibold capitalize ${
-                  staff.status === 'active'
-                    ? 'border-success/20 bg-success/10 text-success'
-                    : staff.status === 'invited'
-                      ? 'border-primary/20 bg-primary/10 text-brand-ink'
-                      : staff.status === 'locked'
-                        ? 'border-destructive/20 bg-destructive/10 text-destructive'
-                        : 'border-muted/20 bg-muted/10 text-muted-foreground'
-                }`}
-              >
-                {staff.status}
-              </Badge>
+              <SheetTitle>{staff.fullName}</SheetTitle>
+              <StaffStatusBadge status={staff.status} />
             </div>
-            <SheetDescription className="text-caption text-muted-foreground">
+            <SheetDescription className="text-caption">
               {staff.email}
             </SheetDescription>
           </div>
         </SheetHeader>
 
         {/* Content Body */}
-        <div className="text-small flex-1 space-y-6 overflow-y-auto p-6">
+        <SheetBody className="space-y-6">
           {message && (
-            <div
-              className={`text-caption rounded-lg border p-3 font-medium ${
-                message.isError
-                  ? 'border-destructive/30 bg-destructive/5 text-destructive'
-                  : 'border-success/30 bg-success/5 text-success'
-              }`}
+            <Alert
+              role={message.isError ? 'alert' : 'status'}
+              variant={message.isError ? 'destructive' : 'success'}
+              size="sm"
             >
               {message.text}
-            </div>
+            </Alert>
           )}
 
           {/* Edit Form */}
           <form
             onSubmit={handleSubmit(handleSaveProfile)}
-            className="border-line bg-paper/30 space-y-4 rounded-lg border p-4"
+            className="space-y-4 rounded-control border border-line bg-paper/30 p-4"
             noValidate
           >
-            <h3 className="text-ink font-semibold">Account Profile</h3>
+            <h3 className="font-semibold text-ink">Account Profile</h3>
 
             <div className="grid grid-cols-2 gap-3">
               <Field
@@ -384,16 +370,16 @@ export function StaffDetailSheet({
           </form>
 
           {/* Quick Security Actions */}
-          <div className="border-line space-y-3 rounded-lg border p-4">
-            <h3 className="text-ink font-semibold">
+          <div className="space-y-3 rounded-control border border-line p-4">
+            <h3 className="font-semibold text-ink">
               Administrative & Security Actions
             </h3>
-            <div className="text-caption grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 text-caption sm:grid-cols-2">
               {/* Resend invite (invited accounts only) */}
               {staff.status === 'invited' && (
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() =>
                     handleAction('resend', () =>
@@ -403,7 +389,7 @@ export function StaffDetailSheet({
                   loading={actionLoading === 'resend'}
                   className="h-auto justify-start py-2"
                 >
-                  <Mail className="text-primary size-4" />
+                  <Mail className="size-4 text-primary" />
                   <span>Resend Invitation Email</span>
                 </Button>
               )}
@@ -412,7 +398,7 @@ export function StaffDetailSheet({
               {staff.status === 'locked' && (
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() =>
                     handleAction('unlock', () =>
@@ -422,7 +408,7 @@ export function StaffDetailSheet({
                   loading={actionLoading === 'unlock'}
                   className="h-auto justify-start py-2"
                 >
-                  <UserCheck className="text-success size-4" />
+                  <UserCheck className="size-4 text-success" />
                   <span>Unlock Account</span>
                 </Button>
               )}
@@ -430,7 +416,7 @@ export function StaffDetailSheet({
               {/* Password reset email */}
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={() =>
                   handleAction('reset_pwd', () =>
@@ -440,14 +426,14 @@ export function StaffDetailSheet({
                 loading={actionLoading === 'reset_pwd'}
                 className="h-auto justify-start py-2"
               >
-                <KeyRound className="text-muted-foreground size-4" />
+                <KeyRound className="size-4 text-muted-foreground" />
                 <span>Send Password Reset</span>
               </Button>
 
               {/* Sign out of all sessions */}
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 onClick={() =>
                   handleAction('revoke_sess', () =>
@@ -457,7 +443,7 @@ export function StaffDetailSheet({
                 loading={actionLoading === 'revoke_sess'}
                 className="h-auto justify-start py-2"
               >
-                <LogOut className="text-warning size-4" />
+                <LogOut className="size-4 text-warning" />
                 <span>Revoke All Sessions</span>
               </Button>
 
@@ -465,7 +451,7 @@ export function StaffDetailSheet({
               {staff.mfaEnabled && (
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() =>
                     handleAction(
@@ -477,7 +463,7 @@ export function StaffDetailSheet({
                   loading={actionLoading === 'reset_2fa'}
                   className="h-auto justify-start py-2"
                 >
-                  <ShieldAlert className="text-destructive size-4" />
+                  <ShieldAlert className="size-4 text-destructive" />
                   <span>Reset 2FA</span>
                 </Button>
               )}
@@ -504,7 +490,7 @@ export function StaffDetailSheet({
               ) : (
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() =>
                     handleAction('reactivate', () =>
@@ -512,7 +498,7 @@ export function StaffDetailSheet({
                     )
                   }
                   loading={actionLoading === 'reactivate'}
-                  className="text-success hover:text-success border-success/30 hover:bg-success/10 h-auto justify-start py-2"
+                  className="h-auto justify-start border-success/30 py-2 text-success hover:bg-success/10 hover:text-success"
                 >
                   <UserCheck className="size-4" />
                   <span>Reactivate Account</span>
@@ -522,9 +508,9 @@ export function StaffDetailSheet({
           </div>
 
           {/* Active Sessions */}
-          <div className="border-line space-y-3 rounded-lg border p-4">
-            <h3 className="text-ink flex items-center gap-1.5 font-semibold">
-              <Smartphone className="text-muted-foreground size-4" /> Active
+          <div className="space-y-3 rounded-control border border-line p-4">
+            <h3 className="flex items-center gap-1.5 font-semibold text-ink">
+              <Smartphone className="size-4 text-muted-foreground" /> Active
               Sessions
             </h3>
             {staff.activeSessions.length === 0 ? (
@@ -532,24 +518,24 @@ export function StaffDetailSheet({
                 No active sessions.
               </p>
             ) : (
-              <div className="divide-line divide-y">
+              <div className="divide-y divide-line">
                 {staff.activeSessions.map((s) => (
                   <div
                     key={s.id}
-                    className="text-caption flex items-center justify-between py-2"
+                    className="flex items-center justify-between py-2 text-caption"
                   >
                     <div>
-                      <div className="text-ink font-medium">
+                      <div className="font-medium text-ink">
                         {s.deviceLabel}
                       </div>
-                      <div className="text-muted-foreground text-[0.6875rem]">
+                      <div className="text-micro text-muted-foreground">
                         IP: {s.ipAddress || 'unknown'} • Created:{' '}
-                        {new Date(s.createdAt).toLocaleDateString()}
+                        {formatHotelDate(s.createdAt)}
                       </div>
                     </div>
-                    <span className="text-muted-foreground text-[0.6875rem]">
+                    <span className="text-micro text-muted-foreground">
                       {s.lastSeenAt
-                        ? `Active ${new Date(s.lastSeenAt).toLocaleTimeString()}`
+                        ? `Active ${formatHotelTime(s.lastSeenAt)}`
                         : 'Active'}
                     </span>
                   </div>
@@ -559,15 +545,15 @@ export function StaffDetailSheet({
           </div>
 
           {/* Recent Audit Entries */}
-          <div className="border-line space-y-3 rounded-lg border p-4">
+          <div className="space-y-3 rounded-control border border-line p-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-ink flex items-center gap-1.5 font-semibold">
-                <History className="text-muted-foreground size-4" />
+              <h3 className="flex items-center gap-1.5 font-semibold text-ink">
+                <History className="size-4 text-muted-foreground" />
                 Recent Audit Entries
               </h3>
               <Link
                 href={`/admin/audit?q=${encodeURIComponent(staff.email)}`}
-                className="text-caption text-primary flex items-center gap-1 font-semibold hover:underline"
+                className="flex items-center gap-1 text-caption font-semibold text-brand-ink hover:underline"
               >
                 Full Audit Log <ExternalLink className="size-3" />
               </Link>
@@ -577,18 +563,18 @@ export function StaffDetailSheet({
                 No recent audit events recorded for this user.
               </p>
             ) : (
-              <div className="divide-line divide-y">
+              <div className="divide-y divide-line">
                 {staff.recentAudits.map((a) => (
-                  <div key={a.id} className="text-caption space-y-0.5 py-2">
+                  <div key={a.id} className="space-y-0.5 py-2 text-caption">
                     <div className="flex items-center justify-between">
-                      <span className="text-ink font-mono font-medium capitalize">
+                      <span className="font-mono font-medium text-ink capitalize">
                         {a.action} ({a.entity})
                       </span>
-                      <span className="text-muted-foreground text-[0.6875rem]">
-                        {new Date(a.createdAt).toLocaleString('en-GB')}
+                      <span className="text-micro text-muted-foreground">
+                        {formatHotelDateTime(a.createdAt)}
                       </span>
                     </div>
-                    <div className="text-muted-foreground text-[0.6875rem]">
+                    <div className="text-micro text-muted-foreground">
                       {a.summary}
                     </div>
                   </div>
@@ -596,7 +582,7 @@ export function StaffDetailSheet({
               </div>
             )}
           </div>
-        </div>
+        </SheetBody>
       </SheetContent>
     </Sheet>
   );

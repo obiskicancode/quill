@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { KeyRound, ShieldCheck } from 'lucide-react';
@@ -19,6 +18,7 @@ import {
   InputOTPSlot,
 } from '@/components/ui/input-otp';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TextLink } from '@/components/ui/text-link';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useAdminVerify2fa } from '@/hooks/services/admin/use-auth';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
@@ -67,11 +67,11 @@ export function VerifyForm({ next }: { next?: string }) {
 
   return (
     <div>
-      <p className="text-caption text-muted-foreground font-semibold tracking-wide uppercase">
+      <p className="text-caption font-semibold tracking-wide text-muted-foreground uppercase">
         Two-factor authentication
       </p>
-      <h1 className="font-display text-h2 mt-2">Enter your code</h1>
-      <p className="text-small text-muted-foreground mt-2">
+      <h1 className="mt-2 font-display text-h2">Enter your code</h1>
+      <p className="mt-2 text-small text-muted-foreground">
         {mode === 'totp'
           ? 'Open your authenticator app and enter the current six-digit code.'
           : 'Enter one of the recovery codes you saved when you set up two-factor authentication.'}
@@ -139,27 +139,27 @@ export function VerifyForm({ next }: { next?: string }) {
                       <InputOTPGroup className="gap-2">
                         <InputOTPSlot
                           index={0}
-                          className="rounded-control text-h3 size-12"
+                          className="size-12 rounded-control text-h3"
                         />
                         <InputOTPSlot
                           index={1}
-                          className="rounded-control text-h3 size-12"
+                          className="size-12 rounded-control text-h3"
                         />
                         <InputOTPSlot
                           index={2}
-                          className="rounded-control text-h3 size-12"
+                          className="size-12 rounded-control text-h3"
                         />
                         <InputOTPSlot
                           index={3}
-                          className="rounded-control text-h3 size-12"
+                          className="size-12 rounded-control text-h3"
                         />
                         <InputOTPSlot
                           index={4}
-                          className="rounded-control text-h3 size-12"
+                          className="size-12 rounded-control text-h3"
                         />
                         <InputOTPSlot
                           index={5}
-                          className="rounded-control text-h3 size-12"
+                          className="size-12 rounded-control text-h3"
                         />
                       </InputOTPGroup>
                     </InputOTP>
@@ -190,13 +190,10 @@ export function VerifyForm({ next }: { next?: string }) {
         </Button>
       </form>
 
-      <div className="text-small mt-4 flex items-center justify-between">
-        <Link
-          href="/admin/login"
-          className="decoration-line hover:decoration-ink font-semibold underline underline-offset-4"
-        >
+      <div className="mt-4 flex items-center justify-between text-small">
+        <TextLink href="/admin/login" tone="quiet">
           Back to sign in
-        </Link>
+        </TextLink>
       </div>
     </div>
   );

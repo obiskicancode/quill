@@ -1,8 +1,8 @@
 import { StaggerGroup, TextReveal } from '@/components/motion';
+import { TextLink } from '@/components/ui/text-link';
 import { getRoomAmenities } from '@/lib/content/data';
 
 import { AmenityItem } from '../AmenityItem';
-import { TextLink } from '../ui/TextLink';
 
 /** The in-room amenities most room types share, worked out from the real room data. */
 export async function RoomAmenitiesSummary() {
@@ -11,7 +11,7 @@ export async function RoomAmenitiesSummary() {
   return (
     <section
       aria-labelledby="room-amenities-title"
-      className="section-y bg-card"
+      className="bg-card section-y"
     >
       <div className="container-page">
         <div className="mb-10 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
@@ -22,7 +22,7 @@ export async function RoomAmenitiesSummary() {
               text="In every room"
               className="font-display text-h2"
             />
-            <p className="text-body-lg text-ink/85 mt-3">
+            <p className="mt-3 text-body-lg text-ink/85">
               What most of our rooms and apartments include.
             </p>
           </div>

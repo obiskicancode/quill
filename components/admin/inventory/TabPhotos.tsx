@@ -16,9 +16,12 @@ import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm';
 import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
@@ -48,6 +51,7 @@ export function TabPhotos({
   initialPhotos,
   onRefresh,
 }: TabPhotosProps) {
+  const confirm = useConfirm();
   const uploadImage = useUploadRoomImage(roomTypeId);
   const updateImage = useUpdateImage(roomTypeId);
   const deleteImage = useDeleteImage(roomTypeId);
@@ -207,7 +211,13 @@ export function TabPhotos({
   }
 
   async function handleDelete(photoId: string) {
-    if (!confirm('Are you sure you want to delete this photo?')) return;
+    const sure = await confirm({
+      title: 'Delete this photo?',
+      description: 'The image is removed from the room gallery immediately.',
+      confirmLabel: 'Delete photo',
+      tone: 'danger',
+    });
+    if (!sure) return;
     try {
       await deleteImage.mutateAsync(photoId);
       toast.add({ title: SUCCESS_MESSAGES.IMAGE_DELETED, type: 'success' });
@@ -220,23 +230,24 @@ export function TabPhotos({
   return (
     <div className="space-y-6">
       {errorMessage && (
-        <div
-          role="alert"
-          className="rounded-card border-destructive/40 bg-destructive/10 text-small text-destructive flex items-center gap-3 border p-4"
+        <Alert
+          variant="destructive"
+          size="panel"
+          className="items-center gap-3"
         >
           <AlertCircle className="size-5 shrink-0" />
-          <p>{errorMessage}</p>
-        </div>
+          <p className="col-start-2">{errorMessage}</p>
+        </Alert>
       )}
 
       {/* Upload Zone */}
       {!atMaxPhotos ? (
-        <div className="rounded-card border-line bg-card border-2 border-dashed p-6 text-center">
-          <UploadCloud className="text-muted-foreground mx-auto size-10" />
-          <p className="text-foreground text-small mt-2 font-medium">
+        <div className="rounded-card border-2 border-dashed border-line bg-card p-6 text-center">
+          <UploadCloud className="mx-auto size-10 text-muted-foreground" />
+          <p className="mt-2 text-small font-medium text-foreground">
             Upload Room Photos (Up to 8 images, JPEG, PNG, or WebP)
           </p>
-          <p className="text-muted-foreground mt-1 text-xs">
+          <p className="mt-1 text-caption text-muted-foreground">
             Max 10 MB per image. Processed automatically into responsive WebP
             formats with EXIF stripped.
           </p>
@@ -273,10 +284,10 @@ export function TabPhotos({
           ) : (
             <form
               onSubmit={uploadForm.handleSubmit(handleUpload)}
-              className="border-line bg-paper mx-auto mt-4 max-w-lg rounded border p-4 text-left text-sm"
+              className="mx-auto mt-4 max-w-lg rounded-sm border border-line bg-paper p-4 text-left text-small"
               noValidate
             >
-              <p className="text-foreground text-small font-semibold">
+              <p className="text-small font-semibold text-foreground">
                 Selected: {pendingFile.name} (
                 {(pendingFile.size / 1024 / 1024).toFixed(2)} MB)
               </p>
@@ -323,13 +334,15 @@ export function TabPhotos({
 
               {uploadProgress !== null && (
                 <div className="mt-3">
-                  <div className="bg-line h-2 w-full overflow-hidden rounded">
-                    <div
-                      className="bg-brand h-full transition-all duration-300"
-                      style={{ width: `${uploadProgress}%` }}
-                    />
-                  </div>
-                  <p className="text-muted-foreground mt-1 text-xs">
+                  <Progress
+                    value={uploadProgress}
+                    aria-label="Upload progress"
+                    aria-describedby="upload-progress-status"
+                  />
+                  <p
+                    id="upload-progress-status"
+                    className="mt-1 text-caption text-muted-foreground"
+                  >
                     Uploading and processing...
                   </p>
                 </div>
@@ -362,27 +375,29 @@ export function TabPhotos({
           )}
         </div>
       ) : (
-        <div className="rounded-card border-line bg-paper text-small text-muted-foreground border p-4 text-center">
-          Maximum of 8 photos reached. Delete an existing photo to upload a new
-          one.
-        </div>
+        <Alert variant="neutral" size="panel">
+          <AlertDescription>
+            Maximum of 8 photos reached. Delete an existing photo to upload a
+            new one.
+          </AlertDescription>
+        </Alert>
       )}
 
       {/* Photos Grid / List */}
       <div>
         <div className="flex items-center justify-between">
-          <h3 className="text-foreground font-semibold">
+          <h3 className="font-semibold text-foreground">
             Current Photos ({photos.length} of 8)
           </h3>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-caption text-muted-foreground">
             First photo or photo marked with ★ is used as the cover on listings.
           </p>
         </div>
 
         {photos.length === 0 ? (
-          <div className="rounded-card border-line bg-paper text-muted-foreground mt-4 border p-8 text-center">
+          <div className="mt-4 rounded-card border border-line bg-paper p-8 text-center text-muted-foreground">
             <ImageIcon className="mx-auto size-8 opacity-40" />
-            <p className="text-small mt-2">
+            <p className="mt-2 text-small">
               No photos uploaded for this room type yet.
             </p>
           </div>
@@ -391,12 +406,14 @@ export function TabPhotos({
             {photos.map((p, idx) => (
               <div
                 key={p.id}
-                className={`rounded-card relative flex flex-col overflow-hidden border ${
-                  p.isCover ? 'border-brand ring-brand ring-1' : 'border-line'
+                className={`relative flex flex-col overflow-hidden rounded-card border ${
+                  p.isCover
+                    ? 'border-primary ring-1 ring-primary'
+                    : 'border-line'
                 } bg-card`}
               >
                 {/* Image display */}
-                <div className="bg-paper relative aspect-4/3 w-full">
+                <div className="relative aspect-4/3 w-full bg-paper">
                   <Image
                     src={p.thumbnailUrl || p.imageUrl}
                     alt={p.altText}
@@ -405,7 +422,7 @@ export function TabPhotos({
                     sizes="(max-width: 768px) 100vw, 300px"
                   />
                   {p.isCover && (
-                    <span className="bg-brand absolute top-2 left-2 inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-semibold text-white shadow">
+                    <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-sm bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground shadow-raised">
                       <Star className="size-3 fill-white" /> Cover
                     </span>
                   )}
@@ -422,18 +439,18 @@ export function TabPhotos({
                       <Input
                         type="text"
                         placeholder="Alt text"
-                        className="h-7 text-xs"
+                        className="h-7 text-caption"
                         {...editForm.register('altText')}
                       />
                       {editForm.formState.errors.altText?.message && (
-                        <p className="text-destructive text-xs">
+                        <p className="text-caption text-destructive">
                           {editForm.formState.errors.altText.message}
                         </p>
                       )}
                       <Input
                         type="text"
                         placeholder="Caption"
-                        className="h-7 text-xs"
+                        className="h-7 text-caption"
                         {...editForm.register('caption')}
                       />
                       <div className="flex justify-end gap-1">
@@ -452,11 +469,11 @@ export function TabPhotos({
                     </form>
                   ) : (
                     <div>
-                      <p className="text-foreground line-clamp-2 text-xs font-medium">
+                      <p className="line-clamp-2 text-caption font-medium text-foreground">
                         {p.altText}
                       </p>
                       {p.caption && (
-                        <p className="text-muted-foreground mt-0.5 line-clamp-1 text-xs italic">
+                        <p className="mt-0.5 line-clamp-1 text-caption text-muted-foreground italic">
                           {p.caption}
                         </p>
                       )}
@@ -471,14 +488,14 @@ export function TabPhotos({
                             caption: p.caption || '',
                           });
                         }}
-                        className="h-auto p-0 text-xs"
+                        className="h-auto p-0 text-caption"
                       >
                         Edit text
                       </Button>
                     </div>
                   )}
 
-                  <div className="border-line mt-3 flex items-center justify-between border-t pt-2">
+                  <div className="mt-3 flex items-center justify-between border-t border-line pt-2">
                     <div className="flex items-center gap-1">
                       <Button
                         type="button"

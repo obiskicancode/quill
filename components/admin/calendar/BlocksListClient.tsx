@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
+import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -214,18 +215,18 @@ export function BlocksListClient({
   return (
     <div className="space-y-5">
       {/* Page Header */}
-      <div className="border-line flex flex-wrap items-center justify-between gap-3 border-b pb-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
         <div>
           <div className="flex items-center gap-2">
             <Link
               href="/admin/calendar"
-              className="text-caption text-muted-foreground hover:text-ink inline-flex items-center gap-1 focus:outline-hidden"
+              className="inline-flex items-center gap-1 text-caption text-muted-foreground hover:text-ink focus:outline-hidden"
             >
               <ArrowLeft className="size-3.5" />
               <span>Back to Calendar</span>
             </Link>
           </div>
-          <h1 className="text-h2 text-ink mt-1 font-serif font-semibold">
+          <h1 className="mt-1 font-serif text-h2 font-semibold text-ink">
             Room Blocks
           </h1>
           <p className="text-small text-muted-foreground">
@@ -247,10 +248,10 @@ export function BlocksListClient({
       </div>
 
       {/* Filter Bar */}
-      <div className="rounded-card border-line bg-paper flex flex-wrap items-center justify-between gap-3 border p-3 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-paper p-3 shadow-xs">
         <div className="flex flex-wrap items-center gap-2">
           {/* Status Tabs */}
-          <div className="bg-muted rounded-control border-line flex items-center border p-0.5">
+          <div className="flex items-center rounded-control border border-line bg-muted p-0.5">
             {(['all', 'upcoming', 'current', 'past'] as const).map((s) => (
               <Button
                 key={s}
@@ -369,7 +370,7 @@ export function BlocksListClient({
                   status: 'all',
                 })
               }
-              className="text-muted-foreground hover:text-ink h-8 px-2 text-xs"
+              className="h-8 px-2 text-caption text-muted-foreground hover:text-ink"
             >
               Clear filters
             </Button>
@@ -378,7 +379,7 @@ export function BlocksListClient({
 
         <Button
           type="button"
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={fetchBlocks}
           className="px-2"
@@ -390,8 +391,12 @@ export function BlocksListClient({
 
       {/* Delete Confirmation Alert */}
       {deletingId && (
-        <div className="rounded-card border-destructive/40 bg-destructive/10 flex items-center justify-between border p-3.5">
-          <div className="text-small text-destructive flex items-center gap-2">
+        <Alert
+          variant="destructive"
+          size="panel"
+          className="grid-cols-[1fr_auto] items-center gap-3"
+        >
+          <div className="flex items-center gap-2">
             <AlertTriangle className="size-4 shrink-0" />
             <span>
               Are you sure you want to remove this block? Dates will become
@@ -416,18 +421,18 @@ export function BlocksListClient({
               Cancel
             </Button>
           </div>
-        </div>
+        </Alert>
       )}
 
       {/* Blocks Table */}
       {loading ? (
-        <div className="rounded-card border-line bg-paper flex h-64 items-center justify-center border">
-          <Loader2 className="text-muted-foreground size-6 animate-spin" />
+        <div className="flex h-64 items-center justify-center rounded-card border border-line bg-paper">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
       ) : error ? (
-        <div className="rounded-card border-destructive/30 bg-paper flex h-64 flex-col items-center justify-center border p-6 text-center">
-          <AlertCircle className="text-destructive size-8" />
-          <p className="text-small text-destructive mt-2">{error}</p>
+        <div className="flex h-64 flex-col items-center justify-center rounded-card border border-destructive/30 bg-paper p-6 text-center">
+          <AlertCircle className="size-8 text-destructive" />
+          <p className="mt-2 text-small text-destructive">{error}</p>
           <Button
             type="button"
             variant="secondary"
@@ -438,49 +443,49 @@ export function BlocksListClient({
           </Button>
         </div>
       ) : !data || data.blocks.length === 0 ? (
-        <div className="rounded-card border-line bg-paper flex h-64 flex-col items-center justify-center border p-6 text-center">
-          <ShieldAlert className="text-muted-foreground size-8" />
-          <h3 className="text-small text-ink mt-2 font-semibold">
+        <div className="flex h-64 flex-col items-center justify-center rounded-card border border-line bg-paper p-6 text-center">
+          <ShieldAlert className="size-8 text-muted-foreground" />
+          <h3 className="mt-2 text-small font-semibold text-ink">
             No Room Blocks Found
           </h3>
-          <p className="text-caption text-muted-foreground mt-1">
+          <p className="mt-1 text-caption text-muted-foreground">
             {roomTypeId || roomId || reason || status !== 'all'
               ? 'No room blocks match the selected filter criteria.'
               : 'No administrative room blocks currently exist on this property.'}
           </p>
         </div>
       ) : (
-        <div className="rounded-card border-line bg-paper overflow-hidden border shadow-xs">
-          <Table className="text-small w-full border-collapse text-left">
+        <div className="overflow-hidden rounded-card border border-line bg-paper shadow-xs">
+          <Table className="w-full border-collapse text-left text-small">
             <TableHeader>
-              <TableRow className="bg-muted/60 border-line text-caption text-muted-foreground border-b font-semibold tracking-wider uppercase hover:bg-transparent">
-                <TableHead className="text-muted-foreground px-4 py-2.5">
+              <TableRow className="border-b border-line bg-muted/60 text-caption font-semibold tracking-wider text-muted-foreground uppercase hover:bg-transparent">
+                <TableHead className="px-4 py-2.5 text-muted-foreground">
                   Room
                 </TableHead>
-                <TableHead className="text-muted-foreground px-4 py-2.5">
+                <TableHead className="px-4 py-2.5 text-muted-foreground">
                   Dates & Nights
                 </TableHead>
-                <TableHead className="text-muted-foreground px-4 py-2.5">
+                <TableHead className="px-4 py-2.5 text-muted-foreground">
                   Reason
                 </TableHead>
-                <TableHead className="text-muted-foreground px-4 py-2.5">
+                <TableHead className="px-4 py-2.5 text-muted-foreground">
                   Notes
                 </TableHead>
-                <TableHead className="text-muted-foreground px-4 py-2.5">
+                <TableHead className="px-4 py-2.5 text-muted-foreground">
                   Created By
                 </TableHead>
-                <TableHead className="text-muted-foreground px-4 py-2.5 text-right">
+                <TableHead className="px-4 py-2.5 text-right text-muted-foreground">
                   Actions
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="divide-line/60 divide-y">
+            <TableBody className="divide-y divide-line/60">
               {data.blocks.map((b) => (
                 <TableRow
                   key={b.id}
-                  className="hover:bg-muted/30 transition-colors"
+                  className="transition-colors hover:bg-muted/30"
                 >
-                  <TableCell className="text-ink px-4 py-3 font-medium">
+                  <TableCell className="px-4 py-3 font-medium text-ink">
                     <div className="flex items-center gap-1.5">
                       <span className="font-mono font-semibold">
                         #{b.roomNumber}
@@ -491,11 +496,11 @@ export function BlocksListClient({
                     </div>
                   </TableCell>
 
-                  <TableCell className="text-caption text-ink px-4 py-3 font-mono">
+                  <TableCell className="px-4 py-3 font-mono text-caption text-ink">
                     <div>
                       {formatShort(b.startDate)} → {formatShort(b.endDate)}
                     </div>
-                    <div className="text-muted-foreground text-caption">
+                    <div className="text-caption text-muted-foreground">
                       {b.nights} night(s)
                     </div>
                   </TableCell>
@@ -503,19 +508,19 @@ export function BlocksListClient({
                   <TableCell className="px-4 py-3">
                     <Badge
                       variant="destructive"
-                      className="rounded-control border-destructive/40 bg-destructive/10 text-destructive text-caption border px-2 py-0.5 font-mono font-semibold uppercase"
+                      className="rounded-control border border-destructive/40 bg-destructive/10 px-2 py-0.5 font-mono text-caption font-semibold text-destructive uppercase"
                     >
                       {b.reason.replace('_', ' ')}
                     </Badge>
                   </TableCell>
 
-                  <TableCell className="text-caption text-muted-foreground max-w-xs truncate px-4 py-3">
+                  <TableCell className="max-w-xs truncate px-4 py-3 text-caption text-muted-foreground">
                     {b.notes || '—'}
                   </TableCell>
 
-                  <TableCell className="text-caption text-muted-foreground px-4 py-3">
+                  <TableCell className="px-4 py-3 text-caption text-muted-foreground">
                     <div>{b.createdByName || 'Staff'}</div>
-                    <div className="text-caption font-mono">
+                    <div className="font-mono text-caption">
                       {formatShort(b.createdAt.slice(0, 10))}
                     </div>
                   </TableCell>
@@ -549,7 +554,7 @@ export function BlocksListClient({
           </Table>
 
           {/* Pagination Footer */}
-          <div className="bg-muted/30 border-line text-caption text-muted-foreground flex flex-wrap items-center justify-between gap-3 border-t px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-muted/30 px-4 py-3 text-caption text-muted-foreground">
             <div className="flex items-center gap-3">
               <span>
                 Showing {data.blocks.length} of {data.total} room block(s)
@@ -591,7 +596,7 @@ export function BlocksListClient({
                   />
                 </PaginationItem>
                 <PaginationItem>
-                  <span className="text-caption text-muted-foreground px-2 font-medium">
+                  <span className="px-2 text-caption font-medium text-muted-foreground">
                     Page {data.page} of {Math.max(1, data.totalPages)}
                   </span>
                 </PaginationItem>

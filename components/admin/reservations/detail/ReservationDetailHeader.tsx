@@ -16,7 +16,15 @@ import { useState } from 'react';
 
 import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
+import { formatHotelDateTime } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
 import { PaymentBadge } from '../PaymentBadge';
@@ -40,7 +48,6 @@ export function ReservationDetailHeader({
   onAction,
 }: ReservationDetailHeaderProps) {
   const [copied, setCopied] = useState(false);
-  const [showMoreMenu, setShowMoreMenu] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(reservation.reference);
@@ -48,32 +55,29 @@ export function ReservationDetailHeader({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const formattedBookedDate = new Intl.DateTimeFormat('en-NG', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(reservation.createdAt));
+  const formattedBookedDate = formatHotelDateTime(reservation.createdAt);
 
   const acts = reservation.allowedActions;
 
   return (
-    <div className="border-line flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
       {/* Reference, Badges and Source */}
       <div>
         <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="font-display text-h2 text-ink font-semibold tracking-tight">
+          <h1 className="font-display text-h2 font-semibold tracking-tight text-ink">
             {reservation.reference}
           </h1>
 
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={handleCopy}
             aria-label={`Copy reference ${reservation.reference}`}
           >
             {copied ? (
               <>
-                <Check className="text-success size-3.5" aria-hidden="true" />
+                <Check className="size-3.5 text-success" aria-hidden="true" />
                 <span className="text-success">{SUCCESS_MESSAGES.COPIED}</span>
               </>
             ) : (
@@ -88,9 +92,9 @@ export function ReservationDetailHeader({
           <PaymentBadge state={reservation.paymentState} />
         </div>
 
-        <p className="text-small text-muted-foreground mt-1">
+        <p className="mt-1 text-small text-muted-foreground">
           Booked on {formattedBookedDate} via{' '}
-          <span className="text-ink font-semibold capitalize">
+          <span className="font-semibold text-ink capitalize">
             {reservation.bookingSource}
           </span>
           {reservation.channel ? ` (${reservation.channel})` : ''}
@@ -164,65 +168,42 @@ export function ReservationDetailHeader({
           </Button>
         </div>
 
-        {/* More Actions Menu */}
-        <div className="relative inline-block">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowMoreMenu((prev) => !prev)}
-            aria-label="More actions"
-            icon={<MoreVertical className="size-3.5" aria-hidden="true" />}
-          >
-            <span className="sr-only">More</span>
-          </Button>
-
-          {showMoreMenu && (
-            <div
-              className="animate-in fade-in rounded-control border-line bg-paper absolute top-full right-0 z-20 mt-1 w-52 border p-1 shadow-lg"
-              onMouseLeave={() => setShowMoreMenu(false)}
-            >
-              {/* Mark No-Show */}
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
               <Button
-                type="button"
-                variant="ghost"
+                variant="secondary"
                 size="sm"
+                aria-label="More actions"
+                icon={<MoreVertical className="size-3.5" aria-hidden="true" />}
+              >
+                <span className="sr-only">More</span>
+              </Button>
+            }
+          />
+
+          <DropdownMenuContent className="w-52">
+            <DropdownMenuGroup>
+              <DropdownMenuItem
                 disabled={!acts.no_show.allowed}
                 title={acts.no_show.reason}
-                onClick={() => {
-                  setShowMoreMenu(false);
-                  onAction('no_show');
-                }}
-                className="w-full justify-start gap-2"
+                onClick={() => onAction('no_show')}
               >
-                <UserX
-                  className="text-muted-foreground size-4"
-                  aria-hidden="true"
-                />
-                <span>Mark as No-Show</span>
-              </Button>
+                <UserX className="text-muted-foreground" aria-hidden="true" />
+                Mark as No-Show
+              </DropdownMenuItem>
 
-              {/* Resend Confirmation */}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
+              <DropdownMenuItem
                 disabled={!acts.resend_confirmation.allowed}
                 title={acts.resend_confirmation.reason}
-                onClick={() => {
-                  setShowMoreMenu(false);
-                  onAction('resend');
-                }}
-                className="w-full justify-start gap-2"
+                onClick={() => onAction('resend')}
               >
-                <Mail
-                  className="text-muted-foreground size-4"
-                  aria-hidden="true"
-                />
-                <span>Resend Confirmation</span>
-              </Button>
-            </div>
-          )}
-        </div>
+                <Mail className="text-muted-foreground" aria-hidden="true" />
+                Resend Confirmation
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

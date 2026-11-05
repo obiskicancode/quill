@@ -3,7 +3,9 @@
 import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 
+import { textLinkRecipe } from '@/components/ui/text-link';
 import { formatMinor } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import type { GuestReservation } from '@/types/booking.types';
 
 import { StayFacts } from '../checkout/SummaryCard';
@@ -43,9 +45,9 @@ export function StayDetailsCard({
   return (
     <section
       aria-labelledby="stay-title"
-      className="rounded-card border-line bg-card shadow-raised space-y-5 border p-5 md:p-6"
+      className="space-y-5 rounded-card border border-line bg-card p-5 shadow-raised md:p-6"
     >
-      <h2 id="stay-title" className="sr-only">
+      <h2 id="stay-title" className="font-display text-h3">
         Your stay
       </h2>
       <StayFacts
@@ -56,9 +58,9 @@ export function StayDetailsCard({
       />
 
       {extras.length > 0 && (
-        <div className="border-line border-t pt-4">
+        <div className="border-t border-line pt-4">
           <h3 className="text-small font-semibold">Extras</h3>
-          <ul className="text-small mt-2 space-y-1">
+          <ul className="mt-2 space-y-1 text-small">
             {extras.map((e) => (
               <li key={e.id} className="flex justify-between gap-4">
                 <span>{e.name}</span>
@@ -72,17 +74,17 @@ export function StayDetailsCard({
       )}
 
       {v.guest.specialRequests && (
-        <div className="border-line border-t pt-4">
+        <div className="border-t border-line pt-4">
           <h3 className="text-small font-semibold">Special requests</h3>
-          <p className="text-small text-ink/85 mt-1 whitespace-pre-line">
+          <p className="mt-1 text-small whitespace-pre-line text-ink/85">
             {v.guest.specialRequests}
           </p>
         </div>
       )}
 
-      <div className="border-line border-t pt-4">
+      <div className="border-t border-line pt-4">
         <h3 className="text-small font-semibold">Guest</h3>
-        <dl className="text-small mt-2 space-y-1">
+        <dl className="mt-2 space-y-1 text-small">
           <div className="flex justify-between gap-4">
             <dt className="text-muted-foreground">Name</dt>
             <dd className="font-semibold">{v.guest.fullName}</dd>
@@ -102,7 +104,7 @@ export function StayDetailsCard({
             variant="link"
             aria-pressed={revealed}
             onClick={() => setRevealed((r) => !r)}
-            className="decoration-brand mt-2 inline-flex h-auto min-h-11 items-center gap-2 p-0 font-semibold underline decoration-2 underline-offset-4 print:hidden"
+            className={cn(textLinkRecipe, 'mt-2 gap-2 p-0 print:hidden')}
             icon={
               revealed ? (
                 <EyeOff className="size-4" aria-hidden />
@@ -115,7 +117,7 @@ export function StayDetailsCard({
           </Button>
         )}
         {!v.verified && !contact && (
-          <p className="text-caption text-muted-foreground mt-2">
+          <p className="mt-2 text-caption text-muted-foreground">
             Contact details are partly hidden for your privacy. Verify your
             booking to see them in full.
           </p>

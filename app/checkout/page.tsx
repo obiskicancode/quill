@@ -118,6 +118,7 @@ export default async function CheckoutPage({
         seenTotalMinor={Number.isInteger(seen) && seen > 0 ? seen : null}
         resumeReference={returning ? reference : null}
         pendingRecovery={pending}
+        initialGuest={pricedAs?.guest ?? null}
         hotelTimes={{
           checkIn: pricing.checkInTime,
           checkOut: pricing.checkOutTime,

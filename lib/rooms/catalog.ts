@@ -80,6 +80,33 @@ export function matchesFilters(room: RoomType, f: RoomFilters): boolean {
   );
 }
 
+const PRICE_BAND_STEP = 5000;
+
+export type PriceBand = { minPrice: number | null; maxPrice: number | null };
+
+/**
+ * Up to three price bands cut on ₦5,000 lines from the live bounds, so the
+ * panel offers real shortcuts instead of a slider nobody can aim at. Empty when
+ * the catalogue is flat or narrow enough that no band would exclude a room.
+ */
+export function priceBands(
+  bounds: { min: number; max: number } | null,
+): PriceBand[] {
+  if (!bounds || bounds.max <= bounds.min) return [];
+  const cut = (share: number) =>
+    Math.round(
+      (bounds.min + (bounds.max - bounds.min) * share) / PRICE_BAND_STEP,
+    ) * PRICE_BAND_STEP;
+  const low = cut(1 / 3);
+  const high = cut(2 / 3);
+  if (!(bounds.min < low && low < high && high < bounds.max)) return [];
+  return [
+    { minPrice: null, maxPrice: low },
+    { minPrice: low, maxPrice: high },
+    { minPrice: high, maxPrice: null },
+  ];
+}
+
 /** Hidden-price rooms go last when sorting by price. */
 export function sortRooms(rooms: RoomType[], sort: SortKey): RoomType[] {
   const list = [...rooms];

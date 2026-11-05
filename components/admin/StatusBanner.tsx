@@ -1,4 +1,3 @@
-import { cn } from 'cn';
 import { AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import type { ReactNode } from 'react';
 
@@ -6,10 +5,10 @@ import { Alert } from '@/components/ui/alert';
 
 type Tone = 'error' | 'success' | 'info';
 
-const tones: Record<Tone, string> = {
-  error: 'border-destructive/30 bg-destructive/5 text-destructive',
-  success: 'border-success/30 bg-success/5 text-success',
-  info: 'border-line bg-paper text-ink',
+const toneVariant: Record<Tone, 'destructive' | 'success' | 'neutral'> = {
+  error: 'destructive',
+  success: 'success',
+  info: 'neutral',
 };
 
 const icons = {
@@ -29,10 +28,8 @@ export function StatusBanner({
   return (
     <Alert
       role={tone === 'error' ? 'alert' : 'status'}
-      className={cn(
-        'rounded-control text-small items-start gap-2.5 border px-3.5 py-3',
-        tones[tone],
-      )}
+      variant={toneVariant[tone]}
+      className="items-start gap-2.5 px-3.5 py-3"
     >
       <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
       <div className="col-start-2">{children}</div>

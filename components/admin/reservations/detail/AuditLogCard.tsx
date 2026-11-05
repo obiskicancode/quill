@@ -1,5 +1,6 @@
 import { AdminCard } from '@/components/admin/AdminCard';
 import { AdminEmpty } from '@/components/admin/AdminStates';
+import { formatHotelDateTime } from '@/lib/format';
 import type { ReservationAuditEntry } from '@/types/reservation.types';
 
 export function AuditLogCard({
@@ -19,28 +20,25 @@ export function AuditLogCard({
           No staff actions have been logged on this booking yet.
         </AdminEmpty>
       ) : (
-        <div className="divide-line divide-y">
+        <div className="divide-y divide-line">
           {auditLogs.map((a) => (
-            <div key={a.id} className="text-small py-2.5 first:pt-0 last:pb-0">
+            <div key={a.id} className="py-2.5 text-small first:pt-0 last:pb-0">
               <div className="flex items-center justify-between">
-                <span className="text-ink font-semibold capitalize">
+                <span className="font-semibold text-ink capitalize">
                   {a.action.replace('_', ' ')}
                 </span>
                 <span className="text-caption text-muted-foreground">
-                  {new Intl.DateTimeFormat('en-NG', {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                  }).format(new Date(a.createdAt))}
+                  {formatHotelDateTime(a.createdAt)}
                 </span>
               </div>
 
-              <p className="text-caption text-muted-foreground mt-0.5">
+              <p className="mt-0.5 text-caption text-muted-foreground">
                 Actor: <strong className="text-ink">{a.actorName}</strong>
                 {a.actorRole && ` (${a.actorRole})`}
               </p>
 
               {a.reason && (
-                <p className="text-caption text-muted-foreground/90 mt-1 italic">
+                <p className="mt-1 text-caption text-muted-foreground/90 italic">
                   &ldquo;{a.reason}&rdquo;
                 </p>
               )}

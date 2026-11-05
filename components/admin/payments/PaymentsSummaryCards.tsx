@@ -12,11 +12,8 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { formatMinor } from '@/lib/format';
 import type { PaymentSummaryResponse } from '@/types/payments.types';
-
-function formatNaira(minor: number): string {
-  return `₦${(minor / 100).toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
-}
 
 export function PaymentsSummaryCards({
   summary,
@@ -35,11 +32,11 @@ export function PaymentsSummaryCards({
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
-            className="rounded-card border-line bg-card animate-pulse border p-4"
+            className="animate-pulse rounded-card border border-line bg-card p-4"
           >
-            <div className="bg-line mb-2 h-4 w-24 rounded"></div>
-            <div className="bg-line mb-1 h-7 w-32 rounded"></div>
-            <div className="bg-line h-3 w-20 rounded"></div>
+            <div className="mb-2 h-4 w-24 rounded-sm bg-line"></div>
+            <div className="mb-1 h-7 w-32 rounded-sm bg-line"></div>
+            <div className="h-3 w-20 rounded-sm bg-line"></div>
           </div>
         ))}
       </div>
@@ -51,11 +48,11 @@ export function PaymentsSummaryCards({
   return (
     <div className="space-y-3">
       {/* Date presets toolbar */}
-      <div className="text-small flex flex-wrap items-center justify-between gap-2">
-        <span className="text-muted-foreground font-semibold">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-small">
+        <span className="font-semibold text-muted-foreground">
           Summary period:
         </span>
-        <div className="border-line bg-paper text-caption inline-flex rounded-lg border p-0.5">
+        <div className="inline-flex rounded-control border border-line bg-paper p-0.5 text-caption">
           {['today', '7d', 'this_month', 'last_month'].map((preset) => {
             const labels: Record<string, string> = {
               today: 'Today',
@@ -68,7 +65,7 @@ export function PaymentsSummaryCards({
               <Button
                 key={preset}
                 type="button"
-                variant={active ? 'default' : 'ghost'}
+                variant={active ? 'primary' : 'ghost'}
                 size="xs"
                 onClick={() => onRangeShortcut?.(preset)}
                 className="h-7 px-2.5"
@@ -82,28 +79,28 @@ export function PaymentsSummaryCards({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {/* 1. Collected */}
-        <div className="rounded-card border-line bg-card border p-4 shadow-sm">
-          <div className="text-muted-foreground flex items-center justify-between">
+        <div className="rounded-card border border-line bg-card p-4 shadow-raised">
+          <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-caption font-semibold tracking-wider uppercase">
               Collected
             </span>
-            <CreditCard className="text-success size-4" />
+            <CreditCard className="size-4 text-success" />
           </div>
-          <div className="text-h3 text-ink mt-2 font-bold">
-            {formatNaira(summary.collectedMinor)}
+          <div className="mt-2 text-h3 font-bold text-ink">
+            {formatMinor(summary.collectedMinor)}
           </div>
-          <div className="text-caption mt-1 flex items-center gap-1">
+          <div className="mt-1 flex items-center gap-1 text-caption">
             {delta.collectedPercent > 0 ? (
-              <span className="text-success flex items-center font-medium">
+              <span className="flex items-center font-medium text-success">
                 <ArrowUpRight className="size-3.5" /> +{delta.collectedPercent}%
               </span>
             ) : delta.collectedPercent < 0 ? (
-              <span className="text-destructive flex items-center font-medium">
+              <span className="flex items-center font-medium text-destructive">
                 <ArrowDownRight className="size-3.5" /> {delta.collectedPercent}
                 %
               </span>
             ) : (
-              <span className="text-muted-foreground flex items-center">
+              <span className="flex items-center text-muted-foreground">
                 <Minus className="size-3.5" /> 0%
               </span>
             )}
@@ -112,23 +109,23 @@ export function PaymentsSummaryCards({
         </div>
 
         {/* 2. Refunds */}
-        <div className="rounded-card border-line bg-card border p-4 shadow-sm">
-          <div className="text-muted-foreground flex items-center justify-between">
+        <div className="rounded-card border border-line bg-card p-4 shadow-raised">
+          <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-caption font-semibold tracking-wider uppercase">
               Refunds Issued
             </span>
-            <RefreshCcw className="text-warning size-4" />
+            <RefreshCcw className="size-4 text-warning" />
           </div>
-          <div className="text-h3 text-ink mt-2 font-bold">
-            {formatNaira(summary.refundsMinor)}
+          <div className="mt-2 text-h3 font-bold text-ink">
+            {formatMinor(summary.refundsMinor)}
           </div>
-          <div className="text-caption mt-1 flex items-center gap-1">
+          <div className="mt-1 flex items-center gap-1 text-caption">
             {delta.refundsPercent > 0 ? (
-              <span className="text-destructive flex items-center font-medium">
+              <span className="flex items-center font-medium text-destructive">
                 <ArrowUpRight className="size-3.5" /> +{delta.refundsPercent}%
               </span>
             ) : delta.refundsPercent < 0 ? (
-              <span className="text-success flex items-center font-medium">
+              <span className="flex items-center font-medium text-success">
                 <ArrowDownRight className="size-3.5" /> {delta.refundsPercent}%
               </span>
             ) : (
@@ -139,50 +136,50 @@ export function PaymentsSummaryCards({
         </div>
 
         {/* 3. Pending Bank Transfers */}
-        <div className="rounded-card border-line bg-card border p-4 shadow-sm">
-          <div className="text-muted-foreground flex items-center justify-between">
+        <div className="rounded-card border border-line bg-card p-4 shadow-raised">
+          <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-caption font-semibold tracking-wider uppercase">
               Pending Transfers
             </span>
-            <Clock className="text-brand-ink size-4" />
+            <Clock className="size-4 text-brand-ink" />
           </div>
-          <div className="text-h3 text-ink mt-2 font-bold">
+          <div className="mt-2 text-h3 font-bold text-ink">
             {summary.pendingTransfersCount}
           </div>
-          <div className="text-caption text-muted-foreground mt-1">
-            Totaling {formatNaira(summary.pendingTransfersMinor)}
+          <div className="mt-1 text-caption text-muted-foreground">
+            Totaling {formatMinor(summary.pendingTransfersMinor)}
           </div>
         </div>
 
         {/* 4. Failed Payments */}
-        <div className="rounded-card border-line bg-card border p-4 shadow-sm">
-          <div className="text-muted-foreground flex items-center justify-between">
+        <div className="rounded-card border border-line bg-card p-4 shadow-raised">
+          <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-caption font-semibold tracking-wider uppercase">
               Failed
             </span>
-            <XCircle className="text-destructive size-4" />
+            <XCircle className="size-4 text-destructive" />
           </div>
-          <div className="text-h3 text-ink mt-2 font-bold">
+          <div className="mt-2 text-h3 font-bold text-ink">
             {summary.failedCount}
           </div>
-          <div className="text-caption text-muted-foreground mt-1">
+          <div className="mt-1 text-caption text-muted-foreground">
             Card declines & abandoned
           </div>
         </div>
 
         {/* 5. Awaiting Reconciliation */}
-        <div className="rounded-card border-line bg-card border p-4 shadow-sm">
-          <div className="text-muted-foreground flex items-center justify-between">
+        <div className="rounded-card border border-line bg-card p-4 shadow-raised">
+          <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-caption font-semibold tracking-wider uppercase">
               Needs Reconciliation
             </span>
-            <CheckCircle2 className="text-primary size-4" />
+            <CheckCircle2 className="size-4 text-primary" />
           </div>
-          <div className="text-h3 text-primary mt-2 font-bold">
+          <div className="mt-2 text-h3 font-bold text-brand-ink">
             {summary.awaitingReconciledCount}
           </div>
-          <div className="text-caption text-muted-foreground mt-1">
-            {formatNaira(summary.awaitingReconciledMinor)} cash & transfers
+          <div className="mt-1 text-caption text-muted-foreground">
+            {formatMinor(summary.awaitingReconciledMinor)} cash & transfers
           </div>
         </div>
       </div>

@@ -78,7 +78,7 @@ export default async function AdminSectionPage({
         actions={
           <Link
             href="/admin"
-            className="rounded-control border-line text-small hover:bg-ink/5 inline-flex min-h-10 items-center gap-2 border px-3 font-semibold"
+            className="inline-flex min-h-10 items-center gap-2 rounded-control border border-line px-3 text-small font-semibold hover:bg-ink/5"
           >
             <ArrowLeft className="size-4" aria-hidden />
             Dashboard
@@ -88,11 +88,11 @@ export default async function AdminSectionPage({
 
       <AdminCard>
         <div className="mx-auto max-w-xl py-6 text-center">
-          <span className="bg-paper mx-auto grid size-14 place-items-center rounded-full">
+          <span className="mx-auto grid size-14 place-items-center rounded-full bg-paper">
             <Construction className="size-7" aria-hidden />
           </span>
-          <h2 className="font-display text-h3 mt-4">Access confirmed</h2>
-          <p className="text-small text-muted-foreground mt-2">
+          <h2 className="mt-4 font-display text-h3">Access confirmed</h2>
+          <p className="mt-2 text-small text-muted-foreground">
             Your role can open this section. The working screens are part of the
             next build phase, so no live records are shown yet.
           </p>
@@ -100,9 +100,9 @@ export default async function AdminSectionPage({
             {(sectionDetails[section] ?? []).map((item) => (
               <li
                 key={item}
-                className="rounded-control border-line text-small flex items-start gap-2 border px-3 py-2"
+                className="flex items-start gap-2 rounded-control border border-line px-3 py-2 text-small"
               >
-                <span className="bg-primary mt-2 size-1.5 shrink-0 rounded-full" />
+                <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
                 {item}
               </li>
             ))}

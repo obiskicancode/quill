@@ -74,7 +74,7 @@ export function HeroVideo({ src, type }: HeroVideoProps) {
         aria-label={
           playing ? 'Pause background video' : 'Play background video'
         }
-        className="bg-ink/70 hover:bg-ink absolute right-4 bottom-4 z-10 hidden size-11 rounded-full text-white transition-colors md:inline-flex"
+        className="absolute right-4 bottom-4 z-10 hidden rounded-full bg-ink/70 text-white transition-colors hover:bg-ink md:inline-flex"
       >
         {playing ? (
           <Pause className="size-5" aria-hidden />

@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -146,144 +147,143 @@ export function AmenityDialog({
         if (!nextOpen && !busy) onClose();
       }}
     >
-      <DialogContent className="rounded-card border-line bg-card max-h-[90vh] max-w-lg gap-0 overflow-y-auto border p-0 shadow-2xl sm:max-w-lg">
-        <DialogHeader className="border-line border-b p-6 pr-14 pb-4">
-          <DialogTitle className="text-h3 text-foreground font-semibold">
+      <DialogContent size="lg">
+        <DialogHeader>
+          <DialogTitle>
             {isEditing ? 'Edit Amenity' : 'New Amenity'}
           </DialogTitle>
-          <DialogDescription className="text-small text-muted-foreground">
+          <DialogDescription>
             Add or edit features in the hotel amenities catalogue.
           </DialogDescription>
         </DialogHeader>
 
         <form
           onSubmit={handleSubmit(handleFormSubmit)}
-          className="text-small space-y-4 p-6"
+          className="flex min-h-0 flex-1 flex-col"
           noValidate
         >
-          {errorMessage && (
-            <Alert
-              variant="destructive"
-              className="border-destructive/40 bg-destructive/10 text-destructive text-xs"
+          <DialogBody className="space-y-4">
+            {errorMessage && (
+              <Alert variant="destructive" size="sm">
+                <AlertCircle className="size-4 shrink-0" />
+                <p>{errorMessage}</p>
+              </Alert>
+            )}
+
+            <Field
+              id="amenity-label"
+              label="Label *"
+              error={errors.label?.message}
             >
-              <AlertCircle className="size-4 shrink-0" />
-              <p>{errorMessage}</p>
-            </Alert>
-          )}
-
-          <Field
-            id="amenity-label"
-            label="Label *"
-            error={errors.label?.message}
-          >
-            {(a11y) => (
-              <Input
-                {...a11y}
-                type="text"
-                placeholder="e.g. High-Speed Wi-Fi"
-                className={inputClass(errors.label?.message)}
-                {...register('label', {
-                  onChange: (event) => {
-                    if (!isEditing) {
-                      setValue('key', keyify(event.target.value));
-                    }
-                  },
-                })}
-              />
-            )}
-          </Field>
-
-          <Field
-            id="amenity-key"
-            label="Unique Key *"
-            error={errors.key?.message}
-            hint="Used in system filters and room templates (lowercase, underscores)."
-          >
-            {(a11y) => (
-              <Input
-                {...a11y}
-                type="text"
-                placeholder="e.g. high_speed_wifi"
-                className={inputClass(errors.key?.message)}
-                {...register('key', {
-                  onChange: (event) =>
-                    setValue('key', keyify(event.target.value)),
-                })}
-              />
-            )}
-          </Field>
-
-          <div className="space-y-1.5">
-            <Label>Visual Icon</Label>
-            <div className="mt-1 grid grid-cols-4 gap-2 sm:grid-cols-7">
-              {AVAILABLE_ICONS.map((item) => {
-                const IconComponent = item.icon;
-                const isSelected = icon === item.key;
-                return (
-                  <Button
-                    key={item.key}
-                    type="button"
-                    variant={isSelected ? 'secondary' : 'outline'}
-                    onClick={() => setValue('icon', item.key)}
-                    className={`h-auto flex-col p-2 text-xs ${
-                      isSelected
-                        ? 'border-primary bg-primary/10 text-primary ring-primary ring-1'
-                        : ''
-                    }`}
-                    title={item.label}
-                  >
-                    <IconComponent className="size-5" />
-                    <span className="mt-1 truncate text-[0.625rem]">
-                      {item.label}
-                    </span>
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-
-          <Field
-            id="amenity-description"
-            label="Description (Optional)"
-            error={errors.description?.message}
-          >
-            {(a11y) => (
-              <Textarea
-                {...a11y}
-                rows={2}
-                placeholder="e.g. Fibre optic 100Mbps unlimited wireless internet"
-                className={inputClass(errors.description?.message)}
-                {...register('description')}
-              />
-            )}
-          </Field>
-
-          <div className="flex items-center gap-2.5 pt-2">
-            <Controller
-              control={control}
-              name="isActive"
-              render={({ field }) => (
-                <Checkbox
-                  id="amenityActive"
-                  name={field.name}
-                  ref={field.ref}
-                  checked={field.value === true}
-                  onCheckedChange={(checked) =>
-                    field.onChange(checked === true)
-                  }
-                  onBlur={field.onBlur}
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  type="text"
+                  placeholder="e.g. High-Speed Wi-Fi"
+                  className={inputClass(errors.label?.message)}
+                  {...register('label', {
+                    onChange: (event) => {
+                      if (!isEditing) {
+                        setValue('key', keyify(event.target.value));
+                      }
+                    },
+                  })}
                 />
               )}
-            />
-            <Label htmlFor="amenityActive" className="cursor-pointer">
-              Active (available to assign to room types)
-            </Label>
-          </div>
+            </Field>
 
-          <DialogFooter className="border-line border-t bg-transparent px-0 pb-0">
+            <Field
+              id="amenity-key"
+              label="Unique Key *"
+              error={errors.key?.message}
+              hint="Used in system filters and room templates (lowercase, underscores)."
+            >
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  type="text"
+                  placeholder="e.g. high_speed_wifi"
+                  className={inputClass(errors.key?.message)}
+                  {...register('key', {
+                    onChange: (event) =>
+                      setValue('key', keyify(event.target.value)),
+                  })}
+                />
+              )}
+            </Field>
+
+            <div className="space-y-1.5">
+              <Label>Visual Icon</Label>
+              <div className="mt-1 grid grid-cols-4 gap-2 sm:grid-cols-7">
+                {AVAILABLE_ICONS.map((item) => {
+                  const IconComponent = item.icon;
+                  const isSelected = icon === item.key;
+                  return (
+                    <Button
+                      key={item.key}
+                      type="button"
+                      variant={isSelected ? 'secondary' : 'secondary'}
+                      onClick={() => setValue('icon', item.key)}
+                      className={`h-auto flex-col p-2 text-caption ${
+                        isSelected
+                          ? 'border-primary bg-primary/10 text-brand-ink ring-1 ring-primary'
+                          : ''
+                      }`}
+                      title={item.label}
+                    >
+                      <IconComponent className="size-5" />
+                      <span className="mt-1 truncate text-micro">
+                        {item.label}
+                      </span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <Field
+              id="amenity-description"
+              label="Description (Optional)"
+              error={errors.description?.message}
+            >
+              {(a11y) => (
+                <Textarea
+                  {...a11y}
+                  rows={2}
+                  placeholder="e.g. Fibre optic 100Mbps unlimited wireless internet"
+                  className={inputClass(errors.description?.message)}
+                  {...register('description')}
+                />
+              )}
+            </Field>
+
+            <div className="flex items-center gap-2.5 pt-2">
+              <Controller
+                control={control}
+                name="isActive"
+                render={({ field }) => (
+                  <Checkbox
+                    id="amenityActive"
+                    name={field.name}
+                    ref={field.ref}
+                    checked={field.value === true}
+                    onCheckedChange={(checked) =>
+                      field.onChange(checked === true)
+                    }
+                    onBlur={field.onBlur}
+                  />
+                )}
+              />
+              <Label htmlFor="amenityActive" className="cursor-pointer">
+                Active (available to assign to room types)
+              </Label>
+            </div>
+          </DialogBody>
+
+          <DialogFooter>
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={onClose}
               disabled={busy}

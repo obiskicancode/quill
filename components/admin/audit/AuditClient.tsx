@@ -158,7 +158,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
   return (
     <div className="space-y-4">
       {/* Preset Filters Strip */}
-      <div className="border-line flex flex-wrap items-center justify-between gap-1.5 border-b pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-line pb-3">
         <div className="flex flex-wrap items-center gap-1.5">
           {presets
             .filter((p) => !p.ownerOnly || isOwner)
@@ -167,7 +167,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
               return (
                 <Button
                   key={preset.key}
-                  variant={active ? 'default' : 'outline'}
+                  variant={active ? 'primary' : 'secondary'}
                   size="xs"
                   className="rounded-full"
                   onClick={() =>
@@ -180,7 +180,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
             })}
         </div>
         {total > 0 && (
-          <span className="text-caption text-muted-foreground font-medium">
+          <span className="text-caption font-medium text-muted-foreground">
             {total} recorded entries
           </span>
         )}
@@ -189,7 +189,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
       {/* Search Bar & Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="relative max-w-md min-w-60 flex-1">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
             placeholder={
@@ -207,7 +207,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
           {isOwner && (
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={handleExportCsv}
               title="Export filtered audit logs to CSV (owner only, capped at 10k rows)"
@@ -219,7 +219,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
 
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={loadLogs}
             title="Refresh audit logs"
@@ -237,7 +237,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
         <AdminError
           message={error}
           action={
-            <Button variant="outline" size="sm" onClick={loadLogs}>
+            <Button variant="secondary" size="sm" onClick={loadLogs}>
               Retry
             </Button>
           }
@@ -253,7 +253,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
             isOwner={isOwner}
             onRowClick={handleRowClick}
           />
-          <div className="bg-muted/30 border-line text-caption text-muted-foreground flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-line bg-muted/30 px-4 py-3 text-caption text-muted-foreground">
             <span>
               Showing {logs.length} of {total} audit log record(s)
             </span>
@@ -270,7 +270,7 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
                   />
                 </PaginationItem>
                 <PaginationItem>
-                  <span className="text-caption text-muted-foreground px-2 font-medium">
+                  <span className="px-2 text-caption font-medium text-muted-foreground">
                     Page {filters.page ?? 1} of{' '}
                     {Math.max(1, Math.ceil(total / (filters.pageSize ?? 25)))}
                   </span>

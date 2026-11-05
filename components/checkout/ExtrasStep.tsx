@@ -47,12 +47,12 @@ export function ExtrasStep({
       </h2>
 
       {extraBed.needed && extraBed.available && (
-        <div className="rounded-card border-line bg-card flex items-start justify-between gap-4 border p-5">
+        <div className="flex items-start justify-between gap-4 rounded-card border border-line bg-card p-5">
           <div>
             <p id="extra-bed-label" className="font-semibold">
               Extra bed
             </p>
-            <p className="text-small text-muted-foreground mt-1">
+            <p className="mt-1 text-small text-muted-foreground">
               {guests} guests need one.{' '}
               {extraBed.priceMinor
                 ? `${formatMinor(extraBed.priceMinor)} per night.`
@@ -75,7 +75,7 @@ export function ExtrasStep({
           return (
             <li
               key={item.id}
-              className="rounded-card border-line bg-card border px-5"
+              className="rounded-card border border-line bg-card px-5"
             >
               <GuestStepper
                 label={item.name}
@@ -94,7 +94,7 @@ export function ExtrasStep({
                     exit={reduced ? undefined : { opacity: 0, height: 0 }}
                     transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
                     style={{ overflow: 'hidden' }}
-                    className="text-small -mt-2 pb-4 font-semibold"
+                    className="-mt-2 pb-4 text-small font-semibold"
                   >
                     Adds {formatMinor(lineTotals[item.id])} to your stay
                   </motion.p>

@@ -1,5 +1,7 @@
+import { textLinkRecipe } from '@/components/ui/text-link';
 import { formatShort } from '@/lib/dates';
 import { formatMinor } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import type { PriceBreakdownQuote } from '@/types/checkout.types';
 
 /** Display only. Every number comes from the server quote. Per-night rates open only when they differ. */
@@ -10,7 +12,7 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
 
   return (
     <div className="min-h-52">
-      <dl className="text-small space-y-3">
+      <dl className="space-y-3 text-small">
         <div>
           <div className={row}>
             <dt>
@@ -24,10 +26,15 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
           </div>
           {varies && (
             <details className="mt-1">
-              <summary className="decoration-brand inline-flex min-h-11 cursor-pointer items-center font-semibold underline decoration-2 underline-offset-4">
+              <summary
+                className={cn(
+                  textLinkRecipe,
+                  'inline-flex min-h-11 cursor-pointer items-center',
+                )}
+              >
                 See the rate for each night
               </summary>
-              <ul className="border-line mb-1 space-y-1 border-l-2 pl-3">
+              <ul className="mb-1 space-y-1 border-l-2 border-line pl-3">
                 {lines.map((l) => (
                   <li key={l.date} className={row}>
                     <span>
@@ -109,15 +116,15 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
         </div>
 
         <div
-          className={`${row} border-line text-body border-t pt-3 font-semibold`}
+          className={`${row} border-t border-line pt-3 text-body font-semibold`}
         >
           <dt>Total</dt>
-          <dd className="font-display text-xl tabular-nums">
+          <dd className="font-display text-figure-sm tabular-nums">
             {formatMinor(quote.totalMinor)}
           </dd>
         </div>
       </dl>
-      <p className="text-caption text-muted-foreground mt-2">
+      <p className="mt-2 text-caption text-muted-foreground">
         {quote.taxIncluded
           ? 'The total includes tax. Nothing else is added at checkout.'
           : 'Tax is added to the total above. Nothing else is added at checkout.'}
@@ -127,7 +134,7 @@ export function PriceBreakdown({ quote }: { quote: PriceBreakdownQuote }) {
 }
 
 export function BreakdownSkeleton() {
-  const bar = 'rounded bg-ink/10 motion-safe:animate-pulse';
+  const bar = 'rounded-sm bg-ink/10 motion-safe:animate-pulse';
   return (
     <div aria-hidden className="min-h-52 space-y-4">
       {[0, 1, 2, 3].map((i) => (
@@ -136,7 +143,7 @@ export function BreakdownSkeleton() {
           <div className={`${bar} h-4 w-1/5`} />
         </div>
       ))}
-      <div className="border-line flex justify-between gap-4 border-t pt-4">
+      <div className="flex justify-between gap-4 border-t border-line pt-4">
         <div className={`${bar} h-6 w-1/4`} />
         <div className={`${bar} h-6 w-1/3`} />
       </div>

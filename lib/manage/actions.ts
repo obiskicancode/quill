@@ -2,6 +2,7 @@ import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { db } from '@/db';
+import { nightsBetween } from '@/lib/dates';
 import { detailsPatchSchema } from '@/schemas/checkout.schema';
 import type { CancelRequest, DetailsRequest } from '@/schemas/manage.schema';
 import type { CheckoutBreakdown } from '@/types/checkout.types';
@@ -28,7 +29,6 @@ import {
   type StoredReservation,
 } from '../booking/store';
 import { buildCheckoutQuote } from '../checkout/quote';
-import { nightsBetween } from '../dates';
 import { isPaymentProviderId } from '../payments';
 import { insertRefundPayment } from '../reservations/payment-ledger';
 import { formatRange } from '../rooms';
@@ -37,9 +37,6 @@ import { validateStay } from '../rooms/pricing';
 import { allowedActions, freeDeadline, previewCancellation } from './rules';
 import { getManageSettings } from './settings';
 
-/** Server actions for managing a booking. Every one re-checks the rules, writes the status history and audit log, and queues guest notifications. */
-
-// ---------------------------------------------------------------- cancel
 export type CancelOutcome =
   | { status: 'cancelled' }
   | { status: 'not_allowed'; reason: string }

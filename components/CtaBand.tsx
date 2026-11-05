@@ -16,7 +16,7 @@ export function CtaBand() {
   return (
     <section
       aria-labelledby="cta-heading"
-      className="bg-primary text-ink py-14 md:py-20"
+      className="bg-primary py-14 text-ink md:py-20"
     >
       <div className="container-page flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
         <div className="max-w-xl">
@@ -28,15 +28,15 @@ export function CtaBand() {
             staggerChildren={0.05}
           />
           <Reveal delay={0.15}>
-            <p className="text-body-lg mt-3">{site.cta.text}</p>
+            <p className="mt-3 text-body-lg">{site.cta.text}</p>
           </Reveal>
         </div>
         <Reveal
           delay={0.2}
-          className="flex w-full flex-col gap-3 sm:flex-row md:w-auto"
+          className="flex w-full flex-col flex-wrap gap-3 sm:flex-row md:w-auto"
         >
           <Magnetic className="inline-flex w-full sm:w-auto">
-            <span className="group rounded-control relative inline-flex w-full overflow-hidden">
+            <span className="group relative inline-flex w-full overflow-hidden rounded-control">
               <ButtonLink
                 href={site.bookingHref}
                 variant="dark"

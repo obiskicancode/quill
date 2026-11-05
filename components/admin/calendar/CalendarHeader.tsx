@@ -61,11 +61,11 @@ export function CalendarHeader({
   };
 
   return (
-    <div className="border-line flex flex-col gap-4 border-b pb-4">
+    <div className="flex flex-col gap-4 border-b border-line pb-4">
       {/* Top row: Title and Primary Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-h2 text-ink font-serif font-semibold">
+          <h1 className="font-serif text-h2 font-semibold text-ink">
             Calendar
           </h1>
           <p className="text-small text-muted-foreground">
@@ -78,7 +78,7 @@ export function CalendarHeader({
           {/* Blocks Management Link */}
           <ButtonLink
             href="/admin/calendar/blocks"
-            variant="outline"
+            variant="secondary"
             size="sm"
             icon={<ShieldAlert className="size-4" />}
           >
@@ -99,7 +99,7 @@ export function CalendarHeader({
           {/* New Reservation */}
           <ButtonLink
             href="/admin/reservations/new"
-            variant="default"
+            variant="primary"
             size="sm"
             icon={<Plus className="size-4" />}
           >
@@ -112,7 +112,7 @@ export function CalendarHeader({
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Date stepper & Jump */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="rounded-control border-line bg-paper flex h-8 items-center border p-0.5 shadow-xs">
+          <div className="flex h-8 items-center rounded-control border border-line bg-paper p-0.5 shadow-xs">
             <Button
               type="button"
               variant="ghost"
@@ -125,7 +125,7 @@ export function CalendarHeader({
             </Button>
             <Button
               type="button"
-              variant={from === today ? 'default' : 'ghost'}
+              variant={from === today ? 'primary' : 'ghost'}
               size="xs"
               onClick={handleToday}
               className="h-7 px-2.5"
@@ -153,17 +153,17 @@ export function CalendarHeader({
               onChange={(e) => {
                 if (e.target.value) onFromChange(e.target.value);
               }}
-              className="h-8 w-auto px-2.5 text-xs font-medium"
+              className="h-8 w-auto px-2.5 text-caption font-medium"
             />
           </div>
 
           {/* Range tabs (14, 30, 60 days) */}
-          <div className="rounded-control border-line bg-paper flex h-8 items-center border p-0.5 shadow-xs">
+          <div className="flex h-8 items-center rounded-control border border-line bg-paper p-0.5 shadow-xs">
             {[14, 30, 60].map((d) => (
               <Button
                 key={d}
                 type="button"
-                variant={days === d ? 'default' : 'ghost'}
+                variant={days === d ? 'primary' : 'ghost'}
                 size="xs"
                 onClick={() => onDaysChange(d)}
                 className="h-7 px-2.5"
@@ -178,7 +178,7 @@ export function CalendarHeader({
         <div className="flex items-center gap-2">
           {/* Room Type Filter */}
           <div className="flex items-center gap-1.5">
-            <Filter className="text-muted-foreground size-3.5" />
+            <Filter className="size-3.5 text-muted-foreground" />
             <Select
               items={[
                 { value: 'all', label: 'All Room Types' },
@@ -204,10 +204,10 @@ export function CalendarHeader({
           </div>
 
           {/* Grid vs Agenda Toggle */}
-          <div className="rounded-control border-line bg-paper flex h-8 items-center border p-0.5 shadow-xs">
+          <div className="flex h-8 items-center rounded-control border border-line bg-paper p-0.5 shadow-xs">
             <Button
               type="button"
-              variant={view === 'grid' ? 'default' : 'ghost'}
+              variant={view === 'grid' ? 'primary' : 'ghost'}
               size="icon-sm"
               onClick={() => onViewChange('grid')}
               title="Grid View"
@@ -217,7 +217,7 @@ export function CalendarHeader({
             </Button>
             <Button
               type="button"
-              variant={view === 'agenda' ? 'default' : 'ghost'}
+              variant={view === 'agenda' ? 'primary' : 'ghost'}
               size="icon-sm"
               onClick={() => onViewChange('agenda')}
               title="Agenda View"

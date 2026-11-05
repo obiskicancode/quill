@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Field, inputClass } from '@/components/ui/form-field';
@@ -24,7 +25,7 @@ import {
   useCancellationPreview,
   useCancelReservation,
 } from '@/hooks/services/admin/use-reservations';
-import { formatNaira } from '@/lib/format';
+import { formatMinor } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import { cancelSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
@@ -165,48 +166,45 @@ export function CancelModal({
     >
       <form noValidate onSubmit={submit} className="space-y-4">
         {/* Warning Alert */}
-        <div className="rounded-control border-destructive/30 bg-destructive/10 text-small text-destructive flex items-start gap-2.5 border p-3">
-          <AlertTriangle
-            className="mt-0.5 size-4 shrink-0"
-            aria-hidden="true"
-          />
+        <Alert variant="destructive" className="items-start gap-2.5">
+          <AlertTriangle className="shrink-0" aria-hidden="true" />
           <span>
             Cancelling frees room {reservation.roomNumber} immediately for new
             bookings. This action cannot be reversed.
           </span>
-        </div>
+        </Alert>
 
         {/* Policy Refund Preview */}
         {previewQuery.isPending ? (
-          <div className="text-small text-muted-foreground flex items-center justify-center p-6">
+          <div className="flex items-center justify-center p-6 text-small text-muted-foreground">
             <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
             Calculating policy refund...
           </div>
         ) : preview ? (
-          <div className="bg-muted rounded-control border-line text-small space-y-2 border p-4">
-            <h3 className="text-ink font-semibold">
+          <div className="space-y-2 rounded-control border border-line bg-muted p-4 text-small">
+            <h3 className="font-semibold text-ink">
               Cancellation Policy Evaluation
             </h3>
             <p className="text-caption text-muted-foreground">{preview.rule}</p>
-            <div className="border-line flex items-center justify-between border-t pt-2">
+            <div className="flex items-center justify-between border-t border-line pt-2">
               <span className="text-muted-foreground">
                 Calculated Policy Refund:
               </span>
-              <span className="text-success font-bold">
-                {formatNaira(preview.calculatedRefundMinor / 100)}
+              <span className="font-bold text-success">
+                {formatMinor(preview.calculatedRefundMinor)}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Amount Retained:</span>
-              <span className="text-ink font-medium">
-                {formatNaira(preview.retainedMinor / 100)}
+              <span className="font-medium text-ink">
+                {formatMinor(preview.retainedMinor)}
               </span>
             </div>
           </div>
         ) : null}
 
         {/* Override Refund Option */}
-        <div className="border-line space-y-3 border-t pt-3">
+        <div className="space-y-3 border-t border-line pt-3">
           <div className="flex items-center gap-2">
             <Controller
               control={control}
@@ -236,7 +234,7 @@ export function CancelModal({
                 id="cancel-refund-amount"
                 label="Custom Refund Amount (₦)"
                 error={errors.refundNaira?.message}
-                hint={`Maximum refundable: ${formatNaira((preview?.maxRefundMinor ?? 0) / 100)}`}
+                hint={`Maximum refundable: ${formatMinor(preview?.maxRefundMinor ?? 0)}`}
               >
                 {(a) => (
                   <Input
@@ -360,7 +358,7 @@ export function CancelModal({
         </Field>
 
         {/* Options */}
-        <div className="border-line space-y-2 border-t pt-3">
+        <div className="space-y-2 border-t border-line pt-3">
           <div className="flex items-center gap-2">
             <Controller
               control={control}
@@ -404,17 +402,17 @@ export function CancelModal({
             />
             <Label
               htmlFor="cancel-acknowledged"
-              className="text-destructive cursor-pointer font-semibold"
+              className="cursor-pointer font-semibold text-destructive"
             >
               I understand that this cancellation cannot be undone
             </Label>
           </div>
         </div>
 
-        <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
+        <div className="flex items-center justify-end gap-3 border-t border-line pt-3">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={onClose}
             disabled={busy}

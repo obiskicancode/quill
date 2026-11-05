@@ -8,26 +8,26 @@ export function DashboardSkeleton() {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="rounded-card border-line bg-card shadow-raised flex min-h-[7.5rem] flex-col justify-between border p-4 sm:p-5"
+            className="flex min-h-30 flex-col justify-between rounded-card border border-line bg-card p-4 shadow-raised sm:p-5"
           >
             <div className="flex items-center justify-between">
-              <Skeleton className="h-4 w-24 rounded" />
-              <Skeleton className="rounded-control size-7" />
+              <Skeleton className="h-4 w-24 rounded-sm" />
+              <Skeleton className="size-7 rounded-control" />
             </div>
             <div className="space-y-2">
-              <Skeleton className="h-8 w-16 rounded" />
-              <Skeleton className="h-3 w-28 rounded" />
+              <Skeleton className="h-8 w-16 rounded-sm" />
+              <Skeleton className="h-3 w-28 rounded-sm" />
             </div>
           </div>
         ))}
       </div>
 
       {/* Attention Skeleton */}
-      <div className="rounded-card border-line bg-card shadow-raised border p-5">
-        <Skeleton className="h-5 w-36 rounded" />
+      <div className="rounded-card border border-line bg-card p-5 shadow-raised">
+        <Skeleton className="h-5 w-36 rounded-sm" />
         <div className="mt-4 space-y-3">
-          <Skeleton className="rounded-control h-10 w-full" />
-          <Skeleton className="rounded-control h-10 w-full" />
+          <Skeleton className="h-10 w-full rounded-control" />
+          <Skeleton className="h-10 w-full rounded-control" />
         </div>
       </div>
 
@@ -36,15 +36,15 @@ export function DashboardSkeleton() {
         {[1, 2].map((i) => (
           <div
             key={i}
-            className="rounded-card border-line bg-card shadow-raised border p-5"
+            className="rounded-card border border-line bg-card p-5 shadow-raised"
           >
-            <div className="border-line flex items-center justify-between border-b pb-4">
-              <Skeleton className="h-5 w-32 rounded" />
-              <Skeleton className="h-4 w-20 rounded" />
+            <div className="flex items-center justify-between border-b border-line pb-4">
+              <Skeleton className="h-5 w-32 rounded-sm" />
+              <Skeleton className="h-4 w-20 rounded-sm" />
             </div>
             <div className="mt-4 space-y-3">
               {[1, 2, 3].map((j) => (
-                <Skeleton key={j} className="rounded-control h-12 w-full" />
+                <Skeleton key={j} className="h-12 w-full rounded-control" />
               ))}
             </div>
           </div>
@@ -52,13 +52,13 @@ export function DashboardSkeleton() {
       </div>
 
       {/* Occupancy Strip Skeleton */}
-      <div className="rounded-card border-line bg-card shadow-raised border p-5">
-        <Skeleton className="h-5 w-44 rounded" />
+      <div className="rounded-card border border-line bg-card p-5 shadow-raised">
+        <Skeleton className="h-5 w-44 rounded-sm" />
         <div className="mt-6 flex h-36 items-end gap-2">
           {Array.from({ length: 14 }).map((_, i) => (
             <Skeleton
               key={i}
-              className="flex-1 rounded-t"
+              className="flex-1 rounded-t-control"
               style={{ height: `${30 + (i % 5) * 15}%` }}
             />
           ))}

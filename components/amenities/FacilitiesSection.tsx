@@ -1,16 +1,12 @@
 import { Clock, Users } from 'lucide-react';
 
-import {
-  HoverZoom,
-  Reveal,
-  StaggerGroup,
-  StaggerItem,
-} from '@/components/motion';
+import { HoverZoom, Reveal } from '@/components/motion';
 import { getFacilities } from '@/lib/content/data';
 
 import { Badge } from '../rooms/AvailabilityBadge';
 import { ButtonLink } from '../ui/button';
 import { Photo } from '../ui/Photo';
+import { FacilitiesNav } from './FacilitiesNav';
 
 /**
  * One block per facility, in sort order. Image and text alternate on desktop and stack on mobile.
@@ -31,27 +27,13 @@ export async function FacilitiesSection() {
         </h2>
 
         {facilities.length >= 4 && (
-          <nav
-            aria-label="Jump to a facility"
-            className="border-line bg-paper/95 sticky top-16 z-20 -mx-5 mb-10 border-b px-5 py-2 backdrop-blur md:-mx-8 md:px-8 xl:-mx-10 xl:px-10"
-          >
-            <StaggerGroup
-              as="ul"
-              staggerChildren={0.04}
-              className="flex [scrollbar-width:none] gap-2 overflow-x-auto py-1 [&::-webkit-scrollbar]:hidden"
-            >
-              {facilities.map((f) => (
-                <StaggerItem key={f.id} as="li" scale className="shrink-0">
-                  <a
-                    href={`#facility-${f.slug}`}
-                    className="border-ink/50 bg-card text-small hover:bg-ink hover:text-paper inline-flex min-h-11 items-center rounded-full border px-4 font-semibold transition-colors"
-                  >
-                    {f.name}
-                  </a>
-                </StaggerItem>
-              ))}
-            </StaggerGroup>
-          </nav>
+          <FacilitiesNav
+            items={facilities.map((f) => ({
+              id: f.id,
+              slug: f.slug,
+              name: f.name,
+            }))}
+          />
         )}
 
         <div className="space-y-16 md:space-y-24">
@@ -69,7 +51,7 @@ export async function FacilitiesSection() {
                 <div className="flex flex-wrap items-center gap-3">
                   <h3
                     id={`facility-${f.slug}-name`}
-                    className="font-display text-h2"
+                    className="font-display text-h3"
                   >
                     {f.name}
                   </h3>
@@ -78,18 +60,18 @@ export async function FacilitiesSection() {
                   </Badge>
                 </div>
                 {f.priceNote && (
-                  <p className="text-small text-brand-ink mt-1 font-semibold">
+                  <p className="mt-1 text-small font-semibold text-brand-ink">
                     {f.priceNote}
                   </p>
                 )}
-                <p className="text-body-lg text-ink/90 mt-4 max-w-xl leading-[1.7]">
+                <p className="mt-4 max-w-xl text-body-lg leading-prose text-ink/90">
                   {f.description}
                 </p>
-                <ul className="text-small mt-4 space-y-2">
+                <ul className="mt-4 space-y-2 text-small">
                   {f.openingHours && (
                     <li className="flex items-center gap-2">
                       <Clock
-                        className="text-brand-ink size-4 shrink-0"
+                        className="size-4 shrink-0 text-brand-ink"
                         aria-hidden
                       />
                       <span>
@@ -101,7 +83,7 @@ export async function FacilitiesSection() {
                   {f.capacity && (
                     <li className="flex items-center gap-2">
                       <Users
-                        className="text-brand-ink size-4 shrink-0"
+                        className="size-4 shrink-0 text-brand-ink"
                         aria-hidden
                       />
                       <span>
@@ -124,7 +106,7 @@ export async function FacilitiesSection() {
               </Reveal>
               {f.image && (
                 <HoverZoom
-                  className={`rounded-card aspect-[4/3] w-full ${i % 2 === 1 ? 'md:order-1' : ''}`}
+                  className={`aspect-4/3 w-full rounded-card ${i % 2 === 1 ? 'md:order-1' : ''}`}
                 >
                   <Photo
                     src={f.image.src}

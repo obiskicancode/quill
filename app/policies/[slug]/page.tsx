@@ -10,20 +10,15 @@ import {
 } from '@/components/policies/PolicySummary';
 import { PolicyToc } from '@/components/policies/PolicyToc';
 import { PrintButton } from '@/components/policies/PrintButton';
+import { TextLink } from '@/components/ui/text-link';
 import { POLICY_SLUGS } from '@/constants/content';
 import { getPolicyPage, getPolicySettings } from '@/lib/content/data';
 import { policyHeadings } from '@/lib/content/rich';
+import { formatDayMonthYear } from '@/lib/dates';
 import type { PolicySlug } from '@/types/content.types';
 
 const isPolicySlug = (s: string): s is PolicySlug =>
   (POLICY_SLUGS as readonly string[]).includes(s);
-
-const formatDate = (iso: string) =>
-  new Date(`${iso}T00:00:00`).toLocaleDateString('en-NG', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
 
 // The four policy slugs are known ahead of time, so they are pre-rendered and anything else 404s.
 export const dynamicParams = false;
@@ -64,12 +59,12 @@ export default async function PolicyPage({
 
   return (
     <div className="container-page section-y">
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-start lg:gap-12">
+      <div className="booking-rail">
         <article className="max-w-[70ch] min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Link
               href="/policies"
-              className="text-small inline-flex min-h-11 items-center gap-2 font-semibold underline-offset-4 hover:underline"
+              className="inline-flex min-h-11 items-center gap-2 text-small font-semibold underline-offset-4 hover:underline"
             >
               <ArrowLeft className="size-4" aria-hidden />
               All policies
@@ -80,12 +75,12 @@ export default async function PolicyPage({
           <h1
             id="policy-title"
             tabIndex={-1}
-            className="font-display text-h2 mt-4 text-balance"
+            className="mt-4 font-display text-h2 text-balance"
           >
             {page.title}
           </h1>
-          <p className="text-small text-muted-foreground mt-2">
-            Last updated {formatDate(page.updatedAt)}
+          <p className="mt-2 text-small text-muted-foreground">
+            Last updated {formatDayMonthYear(page.updatedAt)}
           </p>
 
           {slug === 'cancellation-policy' && (
@@ -113,21 +108,15 @@ export default async function PolicyPage({
             <RichText blocks={page.body} />
           </div>
 
-          <p className="text-small text-muted-foreground mt-10">
+          <p className="mt-10 text-small text-muted-foreground">
             Questions about this policy?{' '}
-            <Link
-              href="/contact"
-              className="decoration-brand font-semibold underline decoration-2 underline-offset-4"
-            >
-              Contact us
-            </Link>
-            .
+            <TextLink href="/contact">Contact us</TextLink>.
           </p>
         </article>
 
         <aside
           aria-label="On this page"
-          className="mt-8 lg:sticky lg:top-6 lg:mt-0"
+          className="sticky-under-header mt-8 lg:mt-0"
         >
           <PolicyToc headings={headings} />
         </aside>

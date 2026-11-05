@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Menu, MessageCircle, Phone, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { telHref, whatsappHref } from '@/lib/site';
 import { useSite } from '@/providers/site.provider';
@@ -33,17 +33,20 @@ export function Header() {
   // eslint-disable-next-line react-hooks/set-state-in-effect -- close the mobile menu on navigation
   useEffect(() => setOpen(false), [pathname]);
 
+  // Any dismissal returns focus to the control that opened the overlay.
+  const closeMenu = useCallback(() => {
+    setOpen(false);
+    toggleRef.current?.focus();
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setOpen(false);
-        toggleRef.current?.focus();
-      }
+      if (e.key === 'Escape') closeMenu();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [open]);
+  }, [open, closeMenu]);
 
   useEffect(() => {
     if (!open) return;
@@ -55,24 +58,26 @@ export function Header() {
   }, [open]);
 
   const solid = scrolled || open || !overHero;
+  // A raw anchor carries its own 44px target; the menu toggle gets it from
+  // size="icon" and only needs the circular treatment.
   const iconButton =
     'grid size-11 place-items-center rounded-full transition-colors hover:bg-current/10';
 
   return (
     <>
-      {!overHero && <div aria-hidden className="h-16 lg:h-20" />}
+      {!overHero && (
+        <div aria-hidden className="h-(--header-h) lg:h-(--header-h-lg)" />
+      )}
       <header
-        className={`fixed inset-x-0 top-0 transition-[background-color,box-shadow,z-index] duration-200 ${
-          open ? 'z-80' : 'z-40'
+        className={`fixed inset-x-0 top-0 transition-[background-color,box-shadow] duration-200 ${
+          open ? 'z-(--z-panel-trigger)' : 'z-(--z-header)'
         } ${
           solid
             ? 'bg-paper/95 text-ink shadow-raised backdrop-blur'
-            : 'on-dark from-ink/70 bg-linear-to-b to-transparent text-white'
+            : 'on-dark bg-linear-to-b from-ink/70 to-transparent text-white'
         }`}
       >
-        <div
-          className={`container-page flex items-center justify-between gap-3 transition-[height] duration-200 ${scrolled ? 'h-16' : 'h-18 lg:h-20'}`}
-        >
+        <div className="container-page flex h-(--header-h) items-center justify-between gap-3 lg:h-(--header-h-lg)">
           <SiteLogo site={site} />
 
           <nav aria-label="Primary" className="hidden lg:block">
@@ -82,7 +87,7 @@ export function Header() {
                   <Link
                     href={item.href}
                     aria-current={pathname === item.href ? 'page' : undefined}
-                    className="decoration-brand inline-flex min-h-11 items-center px-3 font-medium decoration-2 underline-offset-[0.625rem] hover:underline aria-[current=page]:underline"
+                    className="inline-flex min-h-11 items-center px-3 font-medium decoration-brand decoration-2 underline-offset-[0.625rem] hover:underline aria-[current=page]:underline"
                   >
                     {item.label}
                   </Link>
@@ -106,9 +111,7 @@ export function Header() {
             >
               <Phone className="size-5" aria-hidden />
             </a>
-            <ButtonLink href={site.bookingHref} size="sm">
-              Book Now
-            </ButtonLink>
+            <ButtonLink href={site.bookingHref}>Book Now</ButtonLink>
             <Button
               ref={toggleRef}
               type="button"
@@ -118,7 +121,7 @@ export function Header() {
               aria-controls="mobile-nav"
               aria-label={open ? 'Close menu' : 'Open menu'}
               onClick={() => setOpen((o) => !o)}
-              className={`${iconButton} lg:hidden`}
+              className="rounded-full transition-colors hover:bg-current/10 lg:hidden"
             >
               {open ? (
                 <X className="size-6" aria-hidden />
@@ -135,15 +138,17 @@ export function Header() {
           <motion.div
             id="mobile-nav"
             onClick={(e) => {
-              if (e.target === e.currentTarget) setOpen(false);
+              if (e.target === e.currentTarget) closeMenu();
             }}
             initial={reduced ? false : { opacity: 0, scale: 0.98, y: 10 }}
             animate={reduced ? undefined : { opacity: 1, scale: 1, y: 0 }}
             exit={reduced ? undefined : { opacity: 0, scale: 0.985, y: 6 }}
             transition={{ duration: reduced ? 0 : 0.32, ease: EASE_OUT }}
-            className="bg-paper/95 text-ink supports-backdrop-filter:bg-paper/90 fixed inset-0 z-70 backdrop-blur lg:hidden"
+            className="fixed inset-0 z-(--z-panel) overflow-y-auto bg-paper/95 text-ink backdrop-blur supports-backdrop-filter:bg-paper/90 lg:hidden"
           >
-            <div className="flex h-full flex-col items-center justify-center px-6">
+            {/* min-h-full, not h-full: with a fixed height the centred stack is
+                clipped at both ends and the top links cannot be scrolled to. */}
+            <div className="flex min-h-full flex-col items-center justify-center px-6 py-24">
               <nav aria-label="Mobile" className="w-full">
                 <ul className="flex flex-col items-center">
                   {site.nav.map((item, i) => (
@@ -162,8 +167,8 @@ export function Header() {
                         aria-current={
                           pathname === item.href ? 'page' : undefined
                         }
-                        onClick={() => setOpen(false)}
-                        className="decoration-brand aria-[current=page]:text-brand-ink block py-4 text-center text-xl font-medium tracking-tight decoration-2 underline-offset-[0.625rem] transition-colors hover:opacity-80 aria-[current=page]:underline sm:text-2xl"
+                        onClick={closeMenu}
+                        className="block py-4 text-center text-figure-sm font-medium tracking-tight decoration-brand decoration-2 underline-offset-[0.625rem] transition-colors hover:opacity-80 aria-[current=page]:text-brand-ink aria-[current=page]:underline sm:text-figure"
                       >
                         {item.label}
                       </Link>

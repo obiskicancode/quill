@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 import { Button } from '@/components/ui/button';
 import type { CalendarNightStat } from '@/types/calendar.types';
 
@@ -17,11 +15,11 @@ export function CalendarSummaryRow({
   onSelectDate,
 }: CalendarSummaryRowProps) {
   return (
-    <div className="bg-muted/70 border-line text-caption flex border-b font-mono">
+    <div className="flex border-b border-line bg-muted/70 font-mono text-caption">
       {/* Sticky Room Column Header Label */}
-      <div className="border-line bg-paper sticky left-0 z-20 flex w-52 shrink-0 flex-col justify-center border-r px-3 py-1.5 shadow-xs">
-        <span className="text-ink font-sans font-semibold">Occupancy</span>
-        <span className="text-muted-foreground font-sans text-[0.6875rem]">
+      <div className="sticky left-0 z-20 flex w-52 shrink-0 flex-col justify-center border-r border-line bg-paper px-3 py-1.5 shadow-xs">
+        <span className="font-sans font-semibold text-ink">Occupancy</span>
+        <span className="font-sans text-micro text-muted-foreground">
           Arrivals & Departures
         </span>
       </div>
@@ -39,7 +37,7 @@ export function CalendarSummaryRow({
               onClick={() => onSelectDate(stat.date)}
               title={`${stat.date}: ${stat.occupancyPercent}% occupancy (${stat.occupiedRooms} of ${stat.sellableRooms} sellable). ${stat.arrivalsCount} arrivals, ${stat.departuresCount} departures. Click for details.`}
               aria-label={`Occupancy for ${stat.date}: ${stat.occupancyPercent} percent`}
-              className={`border-line/60 h-auto w-24 shrink-0 flex-col rounded-none border-r p-1 font-mono ${
+              className={`h-auto w-24 shrink-0 flex-col rounded-none border-r border-line/60 p-1 font-mono ${
                 isToday ? 'bg-primary/10' : ''
               }`}
             >
@@ -56,13 +54,13 @@ export function CalendarSummaryRow({
                 >
                   {stat.occupancyPercent}%
                 </span>
-                <span className="text-muted-foreground text-[0.625rem]">
+                <span className="text-micro text-muted-foreground">
                   ({stat.occupiedRooms}/{stat.sellableRooms})
                 </span>
               </div>
 
               {/* Arrivals and Departures */}
-              <div className="mt-0.5 flex items-center gap-1.5 text-[0.625rem]">
+              <div className="mt-0.5 flex items-center gap-1.5 text-micro">
                 {stat.arrivalsCount > 0 ? (
                   <span
                     className="text-success"
@@ -75,7 +73,7 @@ export function CalendarSummaryRow({
                 )}
                 {stat.departuresCount > 0 ? (
                   <span
-                    className="text-blue-700 dark:text-blue-400"
+                    className="text-departures"
                     title={`${stat.departuresCount} departures`}
                   >
                     ↑{stat.departuresCount}

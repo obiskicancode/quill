@@ -211,11 +211,11 @@ export default async function RoomPage({ params, searchParams }: PageProps) {
         <TitleBlock room={room} />
       </div>
 
-      <div className="container-page pt-8 lg:grid lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_26rem]">
+      <div className="container-page booking-rail pt-8">
         <div className="space-y-12">
           <section aria-labelledby="about-title">
             <Reveal>
-              <h2 id="about-title" className="font-display text-h3 mb-3">
+              <h2 id="about-title" className="mb-3 font-display text-h3">
                 About this room
               </h2>
               <ReadMore text={room.description} />

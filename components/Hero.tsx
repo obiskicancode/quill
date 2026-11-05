@@ -21,7 +21,7 @@ export function Hero() {
   return (
     <section
       aria-labelledby="hero-heading"
-      className="on-dark bg-ink relative isolate flex min-h-[34rem] items-end overflow-hidden text-white md:min-h-[40rem] xl:min-h-[44rem]"
+      className="on-dark relative isolate flex min-h-[34rem] items-end overflow-hidden bg-ink text-white md:min-h-[40rem] xl:min-h-[44rem]"
     >
       <motion.div
         className="absolute inset-0 z-0"
@@ -40,14 +40,14 @@ export function Hero() {
       {video && <HeroVideo src={video.src} type={video.type} />}
       <motion.div
         aria-hidden
-        className="from-ink/90 via-ink/60 to-ink/50 absolute inset-0 z-[2] bg-gradient-to-t"
+        className="absolute inset-0 z-[2] bg-gradient-to-t from-ink/90 via-ink/60 to-ink/50"
         initial={reduced ? false : { opacity: 0 }}
         animate={reduced ? undefined : { opacity: 1 }}
         transition={{ duration: 1.2, ease: EASE_OUT }}
       />
 
       <motion.div
-        className="container-page relative z-10 pt-32 pb-24 md:pb-32"
+        className="relative z-10 container-page pt-32 pb-24 md:pb-32"
         variants={stagger(0.14, 0.9)}
         initial={reduced ? false : 'hidden'}
         animate={reduced ? undefined : 'visible'}
@@ -59,17 +59,17 @@ export function Hero() {
           onScroll={false}
           delayChildren={0.15}
           staggerChildren={0.06}
-          className="font-display text-display max-w-3xl text-balance"
+          className="max-w-3xl font-display text-display text-balance"
         />
         <motion.p
           variants={fadeUp}
-          className="text-body-lg mt-5 max-w-xl text-white/90"
+          className="mt-5 max-w-xl text-body-lg text-white/90"
         >
           {subheadline}
         </motion.p>
         <motion.div
           variants={fadeUp}
-          className="mt-8 flex flex-col gap-3 sm:flex-row"
+          className="mt-8 flex flex-col flex-wrap gap-3 sm:flex-row"
         >
           <ButtonLink href={site.bookingHref} size="lg">
             Book Now

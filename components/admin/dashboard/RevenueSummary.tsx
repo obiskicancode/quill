@@ -5,8 +5,9 @@ import { TrendingDown, TrendingUp } from 'lucide-react';
 import { AdminCard } from '@/components/admin/AdminCard';
 import { AdminError, AdminLoading } from '@/components/admin/AdminStates';
 import { Reveal } from '@/components/motion/Reveal';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatNaira } from '@/lib/format';
+import { formatMinor } from '@/lib/format';
 import type { RevenueData, RevenueRange } from '@/types/dashboard.types';
 
 interface RevenueSummaryProps {
@@ -40,25 +41,20 @@ function ChangeIndicator({
 
   if (isZero) {
     return (
-      <span className="text-caption text-muted-foreground bg-muted/30 border-line/60 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-semibold">
+      <Badge variant="neutral">
         <span>0%</span>
         <span>vs prior</span>
-      </span>
+      </Badge>
     );
   }
 
   const Icon = isUp ? TrendingUp : TrendingDown;
-  const colorClass = isPositive
-    ? 'border-success/20 bg-success/10 text-success'
-    : 'border-destructive/20 bg-destructive/10 text-destructive';
 
   return (
-    <span
-      className={`text-caption inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-semibold ${colorClass}`}
-    >
-      <Icon className="size-3.5" aria-hidden="true" />
+    <Badge variant={isPositive ? 'success' : 'destructive'}>
+      <Icon aria-hidden="true" />
       <span>{isUp ? `+${percent}%` : `${percent}%`} vs prior</span>
-    </span>
+    </Badge>
   );
 }
 
@@ -76,21 +72,21 @@ export function RevenueSummary({
         title="Revenue summary"
         description="Gross payments minus refunds, bookings and rate metrics for property management."
         footer={
-          <div className="text-caption text-muted-foreground flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-caption text-muted-foreground">
             <span>All amounts in Nigerian Naira (₦).</span>
             <span>Based on hotel timezone (Africa/Lagos).</span>
           </div>
         }
       >
         {/* Range Selector Controls */}
-        <div className="border-line mb-6 flex flex-wrap items-center gap-2 border-b pb-4">
-          <span className="text-caption text-muted-foreground mr-2 font-semibold tracking-wider uppercase">
+        <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-line pb-4">
+          <span className="mr-2 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
             Period:
           </span>
           <div
             role="tablist"
             aria-label="Revenue time periods"
-            className="rounded-control border-line bg-paper inline-flex border p-0.5"
+            className="inline-flex rounded-control border border-line bg-paper p-0.5"
           >
             {ranges.map((r) => {
               const active = selectedRange === r.id;
@@ -103,7 +99,7 @@ export function RevenueSummary({
                   size="xs"
                   aria-selected={active}
                   onClick={() => onRangeChange(r.id)}
-                  className={`text-caption h-7 px-2.5 font-semibold ${
+                  className={`h-7 px-2.5 text-caption font-semibold ${
                     active ? 'shadow-xs' : 'text-muted-foreground'
                   }`}
                 >
@@ -128,12 +124,12 @@ export function RevenueSummary({
         ) : data ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* 1. Payments Received */}
-            <div className="rounded-control border-line bg-paper/50 border p-4">
-              <span className="text-small text-muted-foreground font-medium">
+            <div className="rounded-control border border-line bg-paper/50 p-4">
+              <span className="text-small font-medium text-muted-foreground">
                 Payments received
               </span>
-              <p className="font-display text-h3 text-ink mt-1 font-semibold">
-                {formatNaira(data.current.paymentsReceivedMinor / 100)}
+              <p className="mt-1 font-display text-h3 font-semibold text-ink">
+                {formatMinor(data.current.paymentsReceivedMinor)}
               </p>
               <div className="mt-2">
                 <ChangeIndicator percent={data.changePercent.payments} />
@@ -141,11 +137,11 @@ export function RevenueSummary({
             </div>
 
             {/* 2. New Bookings */}
-            <div className="rounded-control border-line bg-paper/50 border p-4">
-              <span className="text-small text-muted-foreground font-medium">
+            <div className="rounded-control border border-line bg-paper/50 p-4">
+              <span className="text-small font-medium text-muted-foreground">
                 New bookings
               </span>
-              <p className="font-display text-h3 text-ink mt-1 font-semibold">
+              <p className="mt-1 font-display text-h3 font-semibold text-ink">
                 {data.current.newBookings}
               </p>
               <div className="mt-2">
@@ -154,12 +150,12 @@ export function RevenueSummary({
             </div>
 
             {/* 3. Average Nightly Rate */}
-            <div className="rounded-control border-line bg-paper/50 border p-4">
-              <span className="text-small text-muted-foreground font-medium">
+            <div className="rounded-control border border-line bg-paper/50 p-4">
+              <span className="text-small font-medium text-muted-foreground">
                 Average nightly rate
               </span>
-              <p className="font-display text-h3 text-ink mt-1 font-semibold">
-                {formatNaira(data.current.avgNightlyRateMinor / 100)}
+              <p className="mt-1 font-display text-h3 font-semibold text-ink">
+                {formatMinor(data.current.avgNightlyRateMinor)}
               </p>
               <div className="mt-2">
                 <ChangeIndicator percent={data.changePercent.avgRate} />
@@ -167,11 +163,11 @@ export function RevenueSummary({
             </div>
 
             {/* 4. Cancellations */}
-            <div className="rounded-control border-line bg-paper/50 border p-4">
-              <span className="text-small text-muted-foreground font-medium">
+            <div className="rounded-control border border-line bg-paper/50 p-4">
+              <span className="text-small font-medium text-muted-foreground">
                 Cancellations
               </span>
-              <p className="font-display text-h3 text-ink mt-1 font-semibold">
+              <p className="mt-1 font-display text-h3 font-semibold text-ink">
                 {data.current.cancellations}
               </p>
               <div className="mt-2">

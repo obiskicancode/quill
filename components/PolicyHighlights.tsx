@@ -1,8 +1,9 @@
 import { CalendarClock, Lock, Undo2 } from 'lucide-react';
 
+import { IconBadge } from '@/components/ui/icon-badge';
+import { TextLink } from '@/components/ui/text-link';
 import { getPolicySettings } from '@/lib/content/data';
-
-import { TextLink } from './ui/TextLink';
+import { formatGuestTime } from '@/lib/format';
 
 export async function PolicyHighlights() {
   const policies = await getPolicySettings();
@@ -19,7 +20,7 @@ export async function PolicyHighlights() {
     {
       icon: CalendarClock,
       title: 'Check-in and check-out',
-      text: `Check-in from ${p.checkIn}. Check-out by ${p.checkOut}.`,
+      text: `Check-in from ${formatGuestTime(p.checkIn)}. Check-out by ${formatGuestTime(p.checkOut)}.`,
     },
     { icon: Undo2, title: 'Cancellation', text: p.cancellation },
     {
@@ -40,12 +41,12 @@ export async function PolicyHighlights() {
         <ul className="grid gap-6 md:grid-cols-3">
           {items.map(({ icon: Icon, title, text }) => (
             <li key={title} className="flex gap-4">
-              <span className="bg-primary text-ink grid size-12 shrink-0 place-items-center rounded-full">
-                <Icon className="size-6" aria-hidden />
-              </span>
+              <IconBadge>
+                <Icon />
+              </IconBadge>
               <div>
                 <h3 className="font-semibold">{title}</h3>
-                <p className="text-small text-muted-foreground mt-1">{text}</p>
+                <p className="mt-1 text-small text-muted-foreground">{text}</p>
               </div>
             </li>
           ))}

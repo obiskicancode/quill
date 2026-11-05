@@ -1,4 +1,3 @@
-import { cn } from 'cn';
 import type { ReactNode } from 'react';
 
 import { Alert, AlertTitle } from '@/components/ui/alert';
@@ -9,7 +8,8 @@ export function AdminLoading({ label = 'Loading' }: { label?: string }) {
   return (
     <Card
       role="status"
-      className="rounded-card border-line bg-card text-small text-muted-foreground min-h-40 items-center justify-center gap-3 border py-0 shadow-none ring-0"
+      variant="flat"
+      className="min-h-40 items-center justify-center gap-3 py-0 text-muted-foreground"
     >
       <Spinner className="size-6" aria-hidden />
       <span>{label}</span>
@@ -25,10 +25,13 @@ export function AdminEmpty({
   children?: ReactNode;
 }) {
   return (
-    <Card className="rounded-card border-line bg-paper border border-dashed px-5 py-10 text-center shadow-none ring-0">
+    <Card
+      variant="flat"
+      className="border-dashed bg-paper px-5 py-10 text-center"
+    >
       <p className="font-semibold">{title}</p>
       {children && (
-        <p className="text-small text-muted-foreground mx-auto mt-1 max-w-md">
+        <p className="mx-auto mt-1 max-w-md text-small text-muted-foreground">
           {children}
         </p>
       )}
@@ -44,12 +47,7 @@ export function AdminError({
   action?: ReactNode;
 }) {
   return (
-    <Alert
-      variant="destructive"
-      className={cn(
-        'rounded-card border-destructive/30 bg-destructive/5 text-small text-destructive border px-5 py-6',
-      )}
-    >
+    <Alert variant="destructive" size="panel" className="px-5 py-6">
       <AlertTitle>{message}</AlertTitle>
       {action && <div className="col-start-2 mt-3">{action}</div>}
     </Alert>

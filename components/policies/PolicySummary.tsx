@@ -1,3 +1,5 @@
+import { Alert, AlertTitle } from '@/components/ui/alert';
+import { formatGuestTime } from '@/lib/format';
 import type { PolicySettings } from '@/types/content.types';
 
 const policyTypeLabels: Record<
@@ -48,19 +50,19 @@ export function CancellationSummary({
   return (
     <section
       aria-labelledby="cancel-summary-title"
-      className="rounded-card border-line bg-card shadow-raised border p-5 md:p-6"
+      className="rounded-card border border-line bg-card p-5 shadow-raised md:p-6"
     >
       <h2 id="cancel-summary-title" className="font-display text-h3">
         The short version
       </h2>
-      <p className="rounded-control bg-paper mt-3 p-4 font-semibold">
-        {policyTypeLabels[policy.policyType]}
-      </p>
-      <p className="text-small text-ink/85 mt-2">
+      <Alert variant="neutral" size="panel" className="mt-3">
+        <AlertTitle>{policyTypeLabels[policy.policyType]}</AlertTitle>
+      </Alert>
+      <p className="mt-2 text-small text-ink/85">
         The cancellation terms shown on your booking when you booked always
         apply to that booking.
       </p>
-      <dl className="text-small mt-5 space-y-3">
+      <dl className="mt-5 space-y-3 text-small">
         {rows
           .filter((r): r is { term: string; detail: string } =>
             Boolean(r.detail),
@@ -76,11 +78,11 @@ export function CancellationSummary({
           ))}
         <div className="grid gap-1 sm:grid-cols-[11rem_1fr] sm:gap-6">
           <dt className="font-semibold">Check-in</dt>
-          <dd className="text-ink/85">From {checkInTime}</dd>
+          <dd className="text-ink/85">From {formatGuestTime(checkInTime)}</dd>
         </div>
         <div className="grid gap-1 sm:grid-cols-[11rem_1fr] sm:gap-6">
           <dt className="font-semibold">Check-out</dt>
-          <dd className="text-ink/85">By {checkOutTime}</dd>
+          <dd className="text-ink/85">By {formatGuestTime(checkOutTime)}</dd>
         </div>
       </dl>
     </section>
@@ -94,8 +96,11 @@ export function HouseRulesList({
   policy: PolicySettings['houseRules'];
 }) {
   const rows: { term: string; detail: string | null }[] = [
-    { term: 'Check-in', detail: `From ${policy.checkInTime}` },
-    { term: 'Check-out', detail: `By ${policy.checkOutTime}` },
+    { term: 'Check-in', detail: `From ${formatGuestTime(policy.checkInTime)}` },
+    {
+      term: 'Check-out',
+      detail: `By ${formatGuestTime(policy.checkOutTime)}`,
+    },
     { term: 'Children', detail: policy.childrenPolicy },
     {
       term: 'Pets',
@@ -116,7 +121,7 @@ export function HouseRulesList({
   ];
 
   return (
-    <dl className="divide-line border-line mt-5 divide-y border-y">
+    <dl className="mt-5 divide-y divide-line border-y border-line">
       {rows
         .filter((r): r is { term: string; detail: string } => Boolean(r.detail))
         .map((r) => (

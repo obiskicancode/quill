@@ -8,6 +8,7 @@ import { EASE_OUT, fadeUp, stagger } from '../motion/variants';
 import { Photo } from '../ui/Photo';
 
 interface PageHeroProps {
+  id?: string;
   crumbs: Crumb[];
   title: string;
   intro: string;
@@ -19,13 +20,19 @@ interface PageHeroProps {
  * The image gets a slow zoom (scale only, never opacity, so the LCP paints immediately); the copy reveals
  * from behind a mask like the home hero.
  */
-export function PageHero({ crumbs, title, intro, image }: PageHeroProps) {
+export function PageHero({
+  id = 'page-title',
+  crumbs,
+  title,
+  intro,
+  image,
+}: PageHeroProps) {
   const reduced = useReducedMotion();
 
   return (
     <section
-      aria-labelledby="page-title"
-      className="on-dark bg-ink relative isolate flex min-h-[15rem] items-end overflow-hidden text-white md:min-h-[19rem]"
+      aria-labelledby={id}
+      className="on-dark relative isolate flex min-h-[15rem] items-end overflow-hidden bg-ink text-white md:min-h-[19rem]"
     >
       <motion.div
         className="absolute inset-0 z-0"
@@ -43,13 +50,13 @@ export function PageHero({ crumbs, title, intro, image }: PageHeroProps) {
       </motion.div>
       <motion.div
         aria-hidden
-        className="from-ink/90 via-ink/65 to-ink/55 absolute inset-0 z-[1] bg-gradient-to-t"
+        className="absolute inset-0 z-[1] bg-gradient-to-t from-ink/90 via-ink/65 to-ink/55"
         initial={reduced ? false : { opacity: 0 }}
         animate={reduced ? undefined : { opacity: 1 }}
         transition={{ duration: 1.1, ease: EASE_OUT }}
       />
       <motion.div
-        className="container-page relative z-10 py-8 md:py-12"
+        className="relative z-10 container-page py-8 md:py-12"
         variants={stagger(0.12, 0.1)}
         initial={reduced ? false : 'hidden'}
         animate={reduced ? undefined : 'visible'}
@@ -58,17 +65,17 @@ export function PageHero({ crumbs, title, intro, image }: PageHeroProps) {
           <Breadcrumb tone="dark" items={crumbs} />
         </motion.div>
         <TextReveal
-          id="page-title"
+          id={id}
           as="h1"
           text={title}
           onScroll={false}
           staggerChildren={0.05}
           delayChildren={0.1}
-          className="font-display text-h2 md:text-display mt-2 max-w-3xl text-balance"
+          className="mt-2 max-w-3xl font-display text-h2 text-balance md:text-display"
         />
         <motion.p
           variants={fadeUp}
-          className="text-body-lg mt-3 max-w-xl text-white/90"
+          className="mt-3 max-w-xl text-body-lg text-white/90"
         >
           {intro}
         </motion.p>

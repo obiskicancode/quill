@@ -20,6 +20,7 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
+import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,7 +40,7 @@ import {
   useRoomTypes,
 } from '@/hooks/services/admin/use-inventory';
 import { queryKeys } from '@/hooks/services/query-keys';
-import { minorToNaira } from '@/lib/rate-resolution';
+import { formatMinor } from '@/lib/format';
 import type { AdminRoomTypeListItem } from '@/types/inventory.types';
 
 interface RoomTypesListClientProps {
@@ -113,15 +114,20 @@ export function RoomTypesListClient({
     <div className="space-y-6">
       {/* Soft Limit Alert Banner */}
       {atLimit && (
-        <div
+        <Alert
+          variant="warning"
+          size="panel"
           role="region"
           aria-label="Room type limit warning"
-          className="border-warning/40 bg-warning/10 rounded-card text-small flex flex-col gap-2 border p-4 sm:flex-row sm:items-center sm:justify-between"
+          className="gap-3 sm:grid-cols-[1fr_auto] sm:items-center"
         >
           <div className="flex items-start gap-3">
-            <ShieldAlert className="text-warning mt-0.5 size-5 shrink-0" />
+            <ShieldAlert
+              className="mt-0.5 size-5 shrink-0"
+              aria-hidden="true"
+            />
             <div>
-              <p className="text-warning-contrast font-semibold">
+              <p className="font-semibold">
                 Maximum Room Types Reached ({roomTypes.length} of{' '}
                 {MAX_ROOM_TYPES})
               </p>
@@ -145,7 +151,7 @@ export function RoomTypesListClient({
               </Button>
             </Link>
           )}
-        </div>
+        </Alert>
       )}
 
       {/* Action Header */}
@@ -207,9 +213,9 @@ export function RoomTypesListClient({
           </div>
         </AdminEmpty>
       ) : (
-        <div className="rounded-card border-line bg-card overflow-hidden border">
-          <Table className="text-small w-full text-left">
-            <TableHeader className="border-line bg-paper text-muted-foreground border-b">
+        <div className="overflow-hidden rounded-card border border-line bg-card">
+          <Table className="w-full text-left text-small">
+            <TableHeader className="border-b border-line bg-paper text-muted-foreground">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="py-3 pr-2 pl-4 font-medium">
                   Order
@@ -230,11 +236,11 @@ export function RoomTypesListClient({
                 </TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="divide-line divide-y">
+            <TableBody className="divide-y divide-line">
               {roomTypes.map((rt, idx) => (
                 <TableRow
                   key={rt.id}
-                  className="hover:bg-paper/40 transition-colors"
+                  className="transition-colors hover:bg-paper/40"
                 >
                   {/* Order controls */}
                   <TableCell className="py-3 pr-2 pl-4">
@@ -259,7 +265,7 @@ export function RoomTypesListClient({
                       >
                         <ArrowDown className="size-3.5" />
                       </Button>
-                      <span className="text-muted-foreground w-5 text-center text-xs">
+                      <span className="w-5 text-center text-caption text-muted-foreground">
                         {idx + 1}
                       </span>
                     </div>
@@ -268,7 +274,7 @@ export function RoomTypesListClient({
                   {/* Room Type info */}
                   <TableCell className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="border-line bg-paper relative size-12 shrink-0 overflow-hidden rounded border">
+                      <div className="relative size-12 shrink-0 overflow-hidden rounded-sm border border-line bg-paper">
                         {rt.coverImageUrl ? (
                           <Image
                             src={rt.coverImageUrl}
@@ -278,7 +284,7 @@ export function RoomTypesListClient({
                             sizes="48px"
                           />
                         ) : (
-                          <div className="text-muted-foreground flex size-full items-center justify-center">
+                          <div className="flex size-full items-center justify-center text-muted-foreground">
                             <Hotel className="size-5" />
                           </div>
                         )}
@@ -286,11 +292,11 @@ export function RoomTypesListClient({
                       <div>
                         <Link
                           href={`/admin/rooms/${rt.id}`}
-                          className="text-foreground font-medium hover:underline"
+                          className="font-medium text-foreground hover:underline"
                         >
                           {rt.name}
                         </Link>
-                        <p className="text-muted-foreground text-xs">
+                        <p className="text-caption text-muted-foreground">
                           /{rt.slug}
                         </p>
                       </div>
@@ -300,12 +306,12 @@ export function RoomTypesListClient({
                   {/* Base Price */}
                   <TableCell className="px-4 py-3">
                     <div>
-                      <span className="text-foreground font-semibold">
-                        ₦{minorToNaira(rt.basePriceMinor)}
+                      <span className="font-semibold text-foreground">
+                        {formatMinor(rt.basePriceMinor)}
                       </span>
                       {rt.weekendPriceMinor && (
-                        <p className="text-muted-foreground text-xs">
-                          Wknd: ₦{minorToNaira(rt.weekendPriceMinor)}
+                        <p className="text-caption text-muted-foreground">
+                          Wknd: {formatMinor(rt.weekendPriceMinor)}
                         </p>
                       )}
                     </div>
@@ -313,20 +319,13 @@ export function RoomTypesListClient({
 
                   {/* Units */}
                   <TableCell className="px-4 py-3">
-                    <Badge
-                      variant="outline"
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                        rt.activeRooms > 0
-                          ? 'border-success/30 bg-success/15 text-success'
-                          : 'border-muted/30 bg-muted/15 text-muted-foreground'
-                      }`}
-                    >
+                    <Badge variant={rt.activeRooms > 0 ? 'success' : 'neutral'}>
                       {rt.activeRooms} of {rt.totalRooms} active
                     </Badge>
                   </TableCell>
 
                   {/* Photos */}
-                  <TableCell className="text-muted-foreground px-4 py-3">
+                  <TableCell className="px-4 py-3 text-muted-foreground">
                     {rt.photoCount} / 8
                   </TableCell>
 
@@ -334,7 +333,7 @@ export function RoomTypesListClient({
                   <TableCell className="px-4 py-3">
                     <div className="flex flex-col gap-1">
                       <span
-                        className={`inline-flex w-fit items-center gap-1 text-xs font-medium ${
+                        className={`inline-flex w-fit items-center gap-1 text-caption font-medium ${
                           rt.isActive ? 'text-success' : 'text-muted-foreground'
                         }`}
                       >
@@ -346,12 +345,12 @@ export function RoomTypesListClient({
                         {rt.isActive ? 'Active' : 'Draft / Inactive'}
                       </span>
                       {rt.showPrice ? (
-                        <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                          <Eye className="text-brand size-3" /> Price visible
+                        <span className="flex items-center gap-1 text-caption text-muted-foreground">
+                          <Eye className="size-3 text-brand" /> Price visible
                         </span>
                       ) : (
-                        <span className="text-muted-foreground flex items-center gap-1 text-xs">
-                          <EyeOff className="text-muted-foreground size-3" />{' '}
+                        <span className="flex items-center gap-1 text-caption text-muted-foreground">
+                          <EyeOff className="size-3 text-muted-foreground" />{' '}
                           Price hidden
                         </span>
                       )}

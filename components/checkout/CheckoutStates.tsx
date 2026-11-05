@@ -2,9 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { CheckCircle2, Clock, Loader2, RefreshCw, WifiOff } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { Clock, Loader2, RefreshCw, WifiOff } from 'lucide-react';
+import { useState } from 'react';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card } from '@/components/ui/card';
+import { SuccessMark } from '@/components/ui/icon-badge';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatCountdown, formatMinor } from '@/lib/format';
@@ -16,37 +19,7 @@ import type { DateRange } from '@/types/dates.types';
 import { DatePicker } from '../DatePicker';
 import { EASE_OUT } from '../motion/variants';
 import { Button, ButtonLink } from '../ui/button';
-
-type Tone = 'info' | 'warn' | 'danger';
-const tones: Record<Tone, string> = {
-  info: 'border-ink/40 bg-card',
-  warn: 'border-primary bg-primary/15',
-  danger: 'border-destructive bg-destructive/5',
-};
-
-export function Banner({
-  tone,
-  title,
-  children,
-  actions,
-  role = 'status',
-}: {
-  tone: Tone;
-  title: string;
-  children?: ReactNode;
-  actions?: ReactNode;
-  role?: 'status' | 'alert';
-}) {
-  return (
-    <div role={role} className={`rounded-card border-2 p-5 ${tones[tone]}`}>
-      <p className="font-semibold">{title}</p>
-      {children && (
-        <div className="text-small text-ink/85 mt-1">{children}</div>
-      )}
-      {actions && <div className="mt-4 flex flex-wrap gap-3">{actions}</div>}
-    </div>
-  );
-}
+import { useHoldCountdown } from './useHoldCountdown';
 
 export function PriceUpdatedPanel({
   previousMinor,
@@ -61,28 +34,26 @@ export function PriceUpdatedPanel({
 }) {
   const up = currentMinor > previousMinor;
   return (
-    <Banner
-      tone="warn"
-      title={SUCCESS_MESSAGES.PRICE_UPDATED}
-      actions={
-        <>
-          <Button onClick={onAccept}>Accept and continue</Button>
-          <ButtonLink href={changeHref} variant="secondary">
-            Change my stay
-          </ButtonLink>
-        </>
-      }
-    >
-      <p>
-        The total for your stay has {up ? 'gone up' : 'come down'} since you
-        last looked: it was{' '}
-        <span className="font-semibold line-through">
-          {formatMinor(previousMinor)}
-        </span>{' '}
-        and is now{' '}
-        <span className="font-semibold">{formatMinor(currentMinor)}</span>.
-      </p>
-    </Banner>
+    <Alert role="status" variant="warning" size="banner">
+      <AlertTitle>{SUCCESS_MESSAGES.PRICE_UPDATED}</AlertTitle>
+      <AlertDescription>
+        <p>
+          The total for your stay has {up ? 'gone up' : 'come down'} since you
+          last looked: it was{' '}
+          <span className="font-semibold line-through">
+            {formatMinor(previousMinor)}
+          </span>{' '}
+          and is now{' '}
+          <span className="font-semibold">{formatMinor(currentMinor)}</span>.
+        </p>
+      </AlertDescription>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Button onClick={onAccept}>Accept and continue</Button>
+        <ButtonLink href={changeHref} variant="secondary">
+          Change my stay
+        </ButtonLink>
+      </div>
+    </Alert>
   );
 }
 
@@ -96,11 +67,16 @@ export function NetworkErrorBanner({
   busy: boolean;
 }) {
   return (
-    <Banner
-      role="alert"
-      tone="danger"
-      title={ERROR_MESSAGES.SOMETHING_WENT_WRONG_TITLE}
-      actions={
+    <Alert role="alert" variant="destructive" size="banner">
+      <AlertTitle>{ERROR_MESSAGES.SOMETHING_WENT_WRONG_TITLE}</AlertTitle>
+      <AlertDescription>
+        <p className="flex items-start gap-2">
+          <WifiOff className="mt-0.5 size-4 shrink-0" aria-hidden />
+          {message} Trying again is safe: it will not create a second
+          reservation or payment.
+        </p>
+      </AlertDescription>
+      <div className="mt-4 flex flex-wrap gap-3">
         <Button
           variant="secondary"
           size="sm"
@@ -110,25 +86,22 @@ export function NetworkErrorBanner({
         >
           Try again
         </Button>
-      }
-    >
-      <p className="flex items-start gap-2">
-        <WifiOff className="mt-0.5 size-4 shrink-0" aria-hidden />
-        {message} Trying again is safe: it will not create a second reservation
-        or payment.
-      </p>
-    </Banner>
+      </div>
+    </Alert>
   );
 }
 
 export function ExpiringBanner() {
   return (
-    <Banner tone="warn" title="Your hold ends in 2 minutes">
-      <p>
-        Finish your payment soon to keep this room. If the time runs out you can
-        start again and we will re-check availability.
-      </p>
-    </Banner>
+    <Alert role="status" variant="warning" size="banner">
+      <AlertTitle>Your hold ends in 2 minutes</AlertTitle>
+      <AlertDescription>
+        <p>
+          Finish your payment soon to keep this room. If the time runs out you
+          can start again and we will re-check availability.
+        </p>
+      </AlertDescription>
+    </Alert>
   );
 }
 
@@ -149,31 +122,85 @@ export function PendingHoldBanner({
   onChange: () => void;
 }) {
   return (
-    <Banner
-      tone="info"
-      title="You already have a room held for these dates"
-      actions={
-        <>
-          <Button onClick={onContinue}>Continue this booking</Button>
-          <Button variant="secondary" onClick={onChange}>
-            Change something
-          </Button>
-        </>
-      }
-    >
-      <p>
-        Booking <span className="font-semibold">{reference}</span> is still open
-        and nothing has been charged yet.{' '}
-        {remainingMs !== null && (
-          <>
-            <span className="tabular-nums">{formatCountdown(remainingMs)}</span>{' '}
-            left.{' '}
-          </>
-        )}
-        Continue to finish the payment, or change your details and we will
-        release that hold and start again.
+    <Alert role="status" variant="neutral" size="banner">
+      <AlertTitle>You already have a room held for these dates</AlertTitle>
+      <AlertDescription>
+        <p>
+          Booking <span className="font-semibold">{reference}</span> is still
+          open and nothing has been charged yet.{' '}
+          {remainingMs !== null && (
+            <>
+              <span className="tabular-nums">
+                {formatCountdown(remainingMs)}
+              </span>{' '}
+              left.{' '}
+            </>
+          )}
+          Continue to finish the payment, or change your details and we will
+          release that hold and start again.
+        </p>
+      </AlertDescription>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Button onClick={onContinue}>Continue this booking</Button>
+        <Button variant="secondary" onClick={onChange}>
+          Change something
+        </Button>
+      </div>
+    </Alert>
+  );
+}
+
+/**
+ * A payment attempt failed while the room may still be held. Say how long the
+ * guest has to try again, and say plainly when that time is gone — the two
+ * states need different actions and the page cannot know which one is true at
+ * render time.
+ */
+export function HoldRemainingNotice({
+  expiresAtMs,
+  serverNowMs,
+}: {
+  expiresAtMs: number;
+  serverNowMs: number;
+}) {
+  const hold = useHoldCountdown(expiresAtMs, 0, serverNowMs);
+  if (hold.remainingMs === null) return null;
+  return (
+    <>
+      <p role="status" aria-live="polite" className="sr-only">
+        {hold.announcement}
       </p>
-    </Banner>
+      <Alert
+        role="status"
+        variant={
+          hold.expired ? 'destructive' : hold.expiring ? 'warning' : 'neutral'
+        }
+        size="panel"
+      >
+        <AlertTitle>
+          {hold.expired
+            ? 'This room has been released'
+            : 'We are still holding this room'}
+        </AlertTitle>
+        <AlertDescription>
+          <p>
+            {hold.expired
+              ? 'The hold ran out, so the room may be taken. Search your dates again and we will check availability before you pay anything.'
+              : 'Nothing was charged. '}
+            {!hold.expired && (
+              <>
+                You have{' '}
+                <span className="font-semibold tabular-nums">
+                  {formatCountdown(hold.remainingMs)}
+                </span>{' '}
+                left before we release it. Try the payment again, or choose bank
+                transfer on the next step.
+              </>
+            )}
+          </p>
+        </AlertDescription>
+      </Alert>
+    </>
   );
 }
 
@@ -185,21 +212,20 @@ export function ExpiredPanel({
   busy: boolean;
 }) {
   return (
-    <Banner
-      role="alert"
-      tone="danger"
-      title={ERROR_MESSAGES.HOLD_EXPIRED_TITLE}
-      actions={
+    <Alert role="alert" variant="destructive" size="banner">
+      <AlertTitle>{ERROR_MESSAGES.HOLD_EXPIRED_TITLE}</AlertTitle>
+      <AlertDescription>
+        <p>
+          We have released the room. Start again and we will check availability
+          for the same dates.
+        </p>
+      </AlertDescription>
+      <div className="mt-4 flex flex-wrap gap-3">
         <Button loading={busy} onClick={onRestart}>
           Start again
         </Button>
-      }
-    >
-      <p>
-        We have released the room. Start again and we will check availability
-        for the same dates.
-      </p>
-    </Banner>
+      </div>
+    </Alert>
   );
 }
 
@@ -231,16 +257,16 @@ export function UnavailableState({
       aria-labelledby="unavailable-title"
       className="mx-auto max-w-3xl space-y-6"
     >
-      <Banner
-        role="alert"
-        tone="danger"
-        title="This room is no longer available for your dates"
-      >
-        <p>
-          The {room.name} has been booked for{' '}
-          {formatRange(stay.checkIn, stay.checkOut)}. Nothing has been charged.
-        </p>
-      </Banner>
+      <Alert role="alert" variant="destructive" size="banner">
+        <AlertTitle>This room is no longer available for your dates</AlertTitle>
+        <AlertDescription>
+          <p>
+            The {room.name} has been booked for{' '}
+            {formatRange(stay.checkIn, stay.checkOut)}. Nothing has been
+            charged.
+          </p>
+        </AlertDescription>
+      </Alert>
       <h1 id="unavailable-title" className="font-display text-h2">
         Choose other dates
       </h1>
@@ -250,9 +276,9 @@ export function UnavailableState({
             <li key={s.checkIn}>
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 onClick={() => router.push(hrefFor(s))}
-                className="border-line bg-card hover:bg-primary hover:text-primary-foreground h-auto min-h-14 w-full flex-col items-start justify-center p-4 text-left font-normal transition-colors"
+                className="h-auto min-h-14 w-full flex-col items-start justify-center border-line bg-card p-4 text-left font-normal transition-colors hover:bg-primary hover:text-primary-foreground"
               >
                 <span className="font-semibold">
                   {formatRange(s.checkIn, s.checkOut)}
@@ -284,7 +310,7 @@ export function UnavailableState({
               exit={reduced ? undefined : { opacity: 0, height: 0 }}
               transition={{ duration: reduced ? 0 : 0.3, ease: EASE_OUT }}
               style={{ overflow: 'hidden' }}
-              className="rounded-card border-line bg-card mt-4 max-w-sm border p-4"
+              className="mt-4 max-w-sm rounded-card border border-line bg-card p-4"
             >
               <DatePicker
                 value={range}
@@ -325,9 +351,9 @@ export function ConfirmingScreen({
   const site = useSite();
   const reduced = useReducedMotion();
   return (
-    <section
-      aria-labelledby="confirming-title"
-      className="rounded-card border-line bg-card shadow-raised border p-8 text-center"
+    <Card
+      render={<section aria-labelledby="confirming-title" />}
+      className="gap-5 p-8 text-center text-body"
     >
       <AnimatePresence mode="wait" initial={false}>
         {!timedOut ? (
@@ -340,13 +366,13 @@ export function ConfirmingScreen({
             transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
           >
             <Loader2
-              className="text-brand-ink mx-auto size-10 animate-spin motion-reduce:animate-none"
+              className="mx-auto size-10 animate-spin text-brand-ink motion-reduce:animate-none"
               aria-hidden
             />
             <h1 id="confirming-title" className="font-display text-h2">
               Confirming your payment
             </h1>
-            <p role="status" className="text-ink/85 mx-auto max-w-md">
+            <p role="status" className="mx-auto max-w-md text-ink/85">
               Please keep this page open. We are waiting for your payment
               provider to confirm. This usually takes a few seconds.
             </p>
@@ -360,11 +386,11 @@ export function ConfirmingScreen({
             exit={reduced ? undefined : { opacity: 0 }}
             transition={{ duration: reduced ? 0 : 0.2, ease: EASE_OUT }}
           >
-            <Clock className="text-brand-ink mx-auto size-10" aria-hidden />
+            <Clock className="mx-auto size-10 text-brand-ink" aria-hidden />
             <h1 id="confirming-title" className="font-display text-h2">
               We are still waiting for confirmation
             </h1>
-            <p role="status" className="text-ink/85 mx-auto max-w-md">
+            <p role="status" className="mx-auto max-w-md text-ink/85">
               Your payment may still be going through. You do not need to pay
               again. We will email you as soon as it is confirmed. If you do not
               hear from us soon, contact the hotel on{' '}
@@ -398,7 +424,7 @@ export function ConfirmingScreen({
           </motion.div>
         )}
       </AnimatePresence>
-    </section>
+    </Card>
   );
 }
 
@@ -416,34 +442,31 @@ export function FailedPanel({
   busy: boolean;
 }) {
   return (
-    <Banner
-      role="alert"
-      tone="danger"
-      title={
-        reason === 'cancelled'
-          ? 'You cancelled the payment'
-          : "The payment didn't go through"
-      }
-      actions={
-        <>
-          <Button loading={busy} onClick={onRetry}>
-            Try again
-          </Button>
-          <Button variant="secondary" onClick={onSwitch}>
-            Use a different method
-          </Button>
-        </>
-      }
-    >
-      <p>
+    <Alert role="alert" variant="destructive" size="banner">
+      <AlertTitle>
         {reason === 'cancelled'
-          ? 'The payment was stopped before it finished.'
-          : 'The payment was not completed.'}{' '}
-        {holdActive
-          ? 'Your room is still held for you while the timer runs.'
-          : ''}
-      </p>
-    </Banner>
+          ? 'You cancelled the payment'
+          : "The payment didn't go through"}
+      </AlertTitle>
+      <AlertDescription>
+        <p>
+          {reason === 'cancelled'
+            ? 'The payment was stopped before it finished.'
+            : 'The payment was not completed.'}{' '}
+          {holdActive
+            ? 'Your room is still held for you while the timer runs.'
+            : ''}
+        </p>
+      </AlertDescription>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Button loading={busy} onClick={onRetry}>
+          Try again
+        </Button>
+        <Button variant="secondary" onClick={onSwitch}>
+          Use a different method
+        </Button>
+      </div>
+    </Alert>
   );
 }
 
@@ -457,15 +480,15 @@ export function TransferSubmittedScreen({
   confirmationHref,
 }: DoneProps) {
   return (
-    <section
-      aria-labelledby="transfer-title"
-      className="rounded-card border-line bg-card shadow-raised space-y-5 border p-8"
+    <Card
+      render={<section aria-labelledby="transfer-title" />}
+      className="gap-5 p-8 text-body"
     >
-      <CheckCircle2 className="text-brand-ink size-10" aria-hidden />
+      <SuccessMark />
       <h1 id="transfer-title" className="font-display text-h2">
         Reservation received, awaiting verification
       </h1>
-      <p className="text-ink/85 max-w-xl">
+      <p className="max-w-xl text-ink/85">
         We have your transfer receipt. Your reservation is confirmed once the
         hotel verifies the transfer, and we will email you. Your booking
         reference is <span className="font-semibold">{reference}</span>.
@@ -473,7 +496,7 @@ export function TransferSubmittedScreen({
       <ButtonLink href={confirmationHref} size="lg">
         View your booking
       </ButtonLink>
-    </section>
+    </Card>
   );
 }
 
@@ -483,15 +506,15 @@ export function RequestReceivedScreen({
   reason,
 }: DoneProps & { reason: 'pay_at_hotel' | 'manual' }) {
   return (
-    <section
-      aria-labelledby="request-title"
-      className="rounded-card border-line bg-card shadow-raised space-y-5 border p-8"
+    <Card
+      render={<section aria-labelledby="request-title" />}
+      className="gap-5 p-8 text-body"
     >
-      <CheckCircle2 className="text-brand-ink size-10" aria-hidden />
+      <SuccessMark />
       <h1 id="request-title" className="font-display text-h2">
         Request received
       </h1>
-      <p className="text-ink/85 max-w-xl">
+      <p className="max-w-xl text-ink/85">
         {reason === 'pay_at_hotel'
           ? 'We have reserved your room. You pay at the hotel when you arrive. The hotel will email you to confirm.'
           : 'The hotel reviews every booking and will email you once it is approved.'}{' '}
@@ -501,6 +524,6 @@ export function RequestReceivedScreen({
       <ButtonLink href={confirmationHref} size="lg">
         View your booking
       </ButtonLink>
-    </section>
+    </Card>
   );
 }

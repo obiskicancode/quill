@@ -1,21 +1,38 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
+import { cn } from '@/lib/utils';
+
+const base =
+  'font-semibold underline underline-offset-4 transition-[text-decoration-color]';
+
+const TONE = {
+  brand: cn(base, 'decoration-brand decoration-2 hover:decoration-current'),
+  quiet: cn(base, 'decoration-line hover:decoration-ink'),
+} as const;
+
+type TextLinkTone = keyof typeof TONE;
+
+export const textLinkRecipe = TONE.brand;
+
+export const textLinkClasses = cn(textLinkRecipe, '-mx-1 px-1 py-3');
+
 interface TextLinkProps {
   href: string;
   children: ReactNode;
   external?: boolean;
+  tone?: TextLinkTone;
   className?: string;
 }
 
-/** Underlined text link with a 44px tap height. Inherits colour so it works on light and dark sections. */
 export function TextLink({
   href,
   children,
   external = false,
+  tone = 'brand',
   className = '',
 }: TextLinkProps) {
-  const classes = `inline-flex min-h-11 items-center font-semibold underline decoration-brand decoration-2 underline-offset-[0.375rem] transition-[text-decoration-color] hover:decoration-current ${className}`;
+  const classes = cn(TONE[tone], '-mx-1 px-1 py-3', className);
   if (external || !href.startsWith('/')) {
     return (
       <a

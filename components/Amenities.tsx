@@ -1,9 +1,9 @@
+import { TextLink } from '@/components/ui/text-link';
 import type { Amenity } from '@/types/site.types';
 
 import { AmenityItem } from './AmenityItem';
 import { StaggerGroup } from './motion/StaggerGroup';
 import { SectionHeading } from './ui/SectionHeading';
-import { TextLink } from './ui/TextLink';
 
 export function Amenities({ amenities }: { amenities: Amenity[] }) {
   const items = amenities.slice(0, 8);
@@ -11,7 +11,7 @@ export function Amenities({ amenities }: { amenities: Amenity[] }) {
   return (
     <section
       aria-labelledby="amenities-heading"
-      className="on-dark section-y bg-ink text-paper"
+      className="on-dark bg-ink section-y text-paper"
     >
       <div className="container-page">
         <SectionHeading

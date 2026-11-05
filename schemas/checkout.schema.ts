@@ -69,11 +69,10 @@ export const guestFields = z.object({
     .max(100, ERROR_MESSAGES.NAME_TOO_LONG)
     .refine((v) => v.includes(' '), ERROR_MESSAGES.FIRST_LAST_NAME_REQUIRED),
   email: z
-    .string()
+    .email(ERROR_MESSAGES.EMAIL_INVALID)
     .trim()
     .toLowerCase()
-    .min(1, ERROR_MESSAGES.EMAIL_REQUIRED)
-    .email(ERROR_MESSAGES.EMAIL_INVALID),
+    .min(1, ERROR_MESSAGES.EMAIL_REQUIRED),
   country: z.enum(countryCodes, { message: ERROR_MESSAGES.COUNTRY_REQUIRED }),
   phone: z.string().trim().min(1, ERROR_MESSAGES.PHONE_REQUIRED),
   arrivalTime: z.enum(arrivalValues, {
@@ -141,6 +140,19 @@ export const reservationRequestSchema = quoteRequestSchema.extend({
 });
 export type ReservationRequestInput = z.input<typeof reservationRequestSchema>;
 export type ReservationRequest = z.output<typeof reservationRequestSchema>;
+
+/** Updates a live hold from checkout: guest details, extras and the extra bed. */
+export const holdUpdateSchema = z.object({
+  guest: guestSchema,
+  extraBed: z.boolean(),
+  extras: z.array(extraSelectionSchema).max(20),
+  /** The total the guest agreed to after editing. */
+  expectedTotalMinor: z.number().int().positive(),
+  /** Honeypot: real guests never see or fill this. */
+  website: z.string().max(200).optional(),
+});
+export type HoldUpdateInput = z.input<typeof holdUpdateSchema>;
+export type HoldUpdateRequest = z.output<typeof holdUpdateSchema>;
 
 export const paymentInitSchema = z.object({
   reference: z.string().min(6).max(30),

@@ -15,6 +15,7 @@ import {
   roomTypes,
 } from '@/db/schema';
 import { addDays, fromISO } from '@/lib/dates';
+import { formatMinor } from '@/lib/format';
 import type {
   ActivityEvent,
   AttentionItem,
@@ -745,7 +746,7 @@ export async function getDashboardActivity(
     events.push({
       id: `payment-${p.id}`,
       type: 'payment_received',
-      label: `Payment received for ${p.reference} (₦${(p.amountMinor / 100).toLocaleString()})`,
+      label: `Payment received for ${p.reference} (${formatMinor(p.amountMinor)})`,
       relativeTime: formatRelativeTime(p.createdAt, now),
       timestamp: p.createdAt.toISOString(),
       href: `/admin/payments?ref=${p.reference}`,

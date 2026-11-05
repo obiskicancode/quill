@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useRecordReservationPayment } from '@/hooks/services/admin/use-reservations';
-import { formatNaira } from '@/lib/format';
+import { formatMinor, formatNaira } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
 import { recordPaymentSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
@@ -145,10 +145,10 @@ export function RecordPaymentModal({
         className="space-y-4"
       >
         {/* Outstanding Balance Banner */}
-        <div className="bg-muted rounded-control border-line text-small flex items-center justify-between border p-3.5">
+        <div className="flex items-center justify-between rounded-control border border-line bg-muted p-3.5 text-small">
           <span className="text-muted-foreground">Balance Due:</span>
-          <span className="text-ink font-bold">
-            {formatNaira(reservation.balanceMinor / 100)}
+          <span className="font-bold text-ink">
+            {formatMinor(reservation.balanceMinor)}
           </span>
         </div>
 
@@ -298,10 +298,10 @@ export function RecordPaymentModal({
           )}
         </Field>
 
-        <div className="border-line flex items-center justify-end gap-3 border-t pt-3">
+        <div className="flex items-center justify-end gap-3 border-t border-line pt-3">
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={onClose}
             disabled={busy}

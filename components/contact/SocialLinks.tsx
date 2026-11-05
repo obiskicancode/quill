@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 
 import { StaggerGroup, StaggerItem, TextReveal } from '@/components/motion';
+import { Chip } from '@/components/ui/chip';
 import { getSocialLinks } from '@/lib/content/data';
 import type { SocialLink } from '@/types/content.types';
 
@@ -43,16 +44,11 @@ export async function SocialLinks() {
             const Icon = icons[l.platform] ?? Globe;
             return (
               <StaggerItem key={l.id} as="li" scale>
-                <a
-                  href={l.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="border-ink/50 bg-card hover:bg-ink hover:text-paper inline-flex min-h-11 items-center gap-2 rounded-full border px-4 font-semibold transition-colors"
-                >
+                <Chip href={l.url} target="_blank" rel="noopener noreferrer">
                   <Icon className="size-5" aria-hidden />
                   {l.label}
                   <span className="sr-only"> (opens in a new tab)</span>
-                </a>
+                </Chip>
               </StaggerItem>
             );
           })}

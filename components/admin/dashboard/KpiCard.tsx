@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { ArrowUpRight, HelpCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { FOCUS_RING } from '@/components/admin/clickableRow';
 import { StaggerItem } from '@/components/motion/StaggerItem';
+import { Progress } from '@/components/ui/progress';
 
 interface KpiCardProps {
   label: string;
@@ -32,7 +34,7 @@ export function KpiCard({
       <Link
         href={href}
         aria-label={ariaLabel}
-        className="group rounded-card border-line bg-card shadow-raised hover:border-ink/30 relative flex h-full min-h-34 flex-col justify-between border p-4 transition-all duration-150 hover:-translate-y-0.5 sm:p-5"
+        className="group relative flex h-full min-h-34 flex-col justify-between rounded-card border border-line bg-card p-4 shadow-raised transition-all duration-150 hover:-translate-y-0.5 hover:border-ink/30 sm:p-5"
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-1.5">
@@ -41,7 +43,7 @@ export function KpiCard({
                 {icon}
               </span>
             )}
-            <span className="text-small text-muted-foreground font-medium">
+            <span className="text-small font-medium text-muted-foreground">
               {label}
             </span>
             {tooltip && (
@@ -50,33 +52,30 @@ export function KpiCard({
                 role="tooltip"
                 title={tooltip}
                 aria-label={tooltip}
-                className="text-muted-foreground hover:text-ink inline-flex cursor-help focus:outline-none"
+                className={`inline-flex cursor-help text-muted-foreground hover:text-ink ${FOCUS_RING}`}
               >
                 <HelpCircle className="size-3.5" aria-hidden="true" />
               </span>
             )}
           </div>
-          <span className="rounded-control bg-paper text-muted-foreground group-hover:bg-primary group-hover:text-ink grid size-7 shrink-0 place-items-center transition-colors">
+          <span className="grid size-7 shrink-0 place-items-center rounded-control bg-paper text-muted-foreground transition-colors group-hover:bg-primary group-hover:text-ink">
             <ArrowUpRight className="size-4" aria-hidden="true" />
           </span>
         </div>
 
         <div className="mt-2">
-          <div className="font-display text-h2 text-ink font-semibold tracking-tight">
+          <div className="font-display text-h2 font-semibold tracking-tight text-ink">
             {value}
           </div>
           {typeof progressPercent === 'number' && (
-            <div className="bg-paper border-line mt-2 h-1.5 w-full overflow-hidden rounded-full border">
-              <div
-                className="bg-primary h-full transition-all duration-300"
-                style={{
-                  width: `${Math.min(100, Math.max(0, progressPercent))}%`,
-                }}
-              />
-            </div>
+            <Progress
+              aria-label={label}
+              value={Math.min(100, Math.max(0, progressPercent))}
+              className="mt-2"
+            />
           )}
           {subtitle && (
-            <p className="text-caption text-muted-foreground mt-1">
+            <p className="mt-1 text-caption text-muted-foreground">
               {subtitle}
             </p>
           )}

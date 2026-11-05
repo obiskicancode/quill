@@ -1,4 +1,3 @@
-import { cn } from 'cn';
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -7,6 +6,7 @@ import {
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
   return (
@@ -55,7 +55,7 @@ function PaginationLink({
   if (href) {
     return (
       <Button
-        variant={isActive ? 'outline' : 'ghost'}
+        variant={isActive ? 'secondary' : 'ghost'}
         size={size}
         className={cn(className)}
         nativeButton={false}
@@ -75,7 +75,7 @@ function PaginationLink({
 
   return (
     <Button
-      variant={isActive ? 'outline' : 'ghost'}
+      variant={isActive ? 'secondary' : 'ghost'}
       size={size}
       className={cn(className)}
       disabled={disabled}

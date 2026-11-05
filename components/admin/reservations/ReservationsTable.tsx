@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { clickableRowProps } from '@/components/admin/clickableRow';
 import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,7 +28,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useWebStorage } from '@/hooks/use-web-storage';
-import { formatNaira } from '@/lib/format';
+import { formatMinor } from '@/lib/format';
 import type {
   ReservationListItem,
   ReservationSortField,
@@ -127,15 +128,15 @@ export function ReservationsTable({
     if (sort !== field) {
       return (
         <ArrowUpDown
-          className="text-muted-foreground/60 size-3"
+          className="size-3 text-muted-foreground/60"
           aria-hidden="true"
         />
       );
     }
     return order === 'asc' ? (
-      <ArrowUp className="text-ink size-3" aria-hidden="true" />
+      <ArrowUp className="size-3 text-ink" aria-hidden="true" />
     ) : (
-      <ArrowDown className="text-ink size-3" aria-hidden="true" />
+      <ArrowDown className="size-3 text-ink" aria-hidden="true" />
     );
   };
 
@@ -147,10 +148,10 @@ export function ReservationsTable({
   };
 
   return (
-    <div className="rounded-card border-line bg-card shadow-raised relative border">
+    <div className="relative rounded-card border border-line bg-card shadow-raised">
       {/* Table Toolbar Header */}
-      <div className="border-line flex items-center justify-between border-b px-4 py-3">
-        <span className="text-caption text-muted-foreground font-semibold tracking-wider uppercase">
+      <div className="flex items-center justify-between border-b border-line px-4 py-3">
+        <span className="text-caption font-semibold tracking-wider text-muted-foreground uppercase">
           Reservations inventory ({rows.length} records)
         </span>
 
@@ -158,14 +159,14 @@ export function ReservationsTable({
         <Popover>
           <PopoverTrigger
             aria-label="Customize visible columns"
-            className="rounded-control border-line bg-paper text-caption text-muted-foreground hover:text-ink focus-visible:ring-ring inline-flex min-h-8 items-center gap-1.5 border px-2.5 font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            className="inline-flex min-h-8 items-center gap-1.5 rounded-control border border-line bg-paper px-2.5 text-caption font-semibold text-muted-foreground transition-colors hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             <Columns className="size-3.5" aria-hidden="true" />
             <span>Columns</span>
           </PopoverTrigger>
 
           <PopoverContent align="end" className="w-52 p-2">
-            <p className="text-caption text-muted-foreground px-2 py-1 font-bold uppercase">
+            <p className="px-2 py-1 text-caption font-bold text-muted-foreground uppercase">
               Toggle Columns
             </p>
             <div className="space-y-1">
@@ -181,7 +182,7 @@ export function ReservationsTable({
                   <span>{col.label}</span>
                   {visibleColumns[col.id] && (
                     <Check
-                      className="text-primary size-3.5"
+                      className="size-3.5 text-primary"
                       aria-hidden="true"
                     />
                   )}
@@ -195,12 +196,12 @@ export function ReservationsTable({
       {/* Main Table Scroll Container */}
       <Table>
         <caption className="sr-only">List of hotel reservations</caption>
-        <TableHeader className="border-line bg-paper/90 text-caption text-muted-foreground sticky top-0 z-10 border-b font-semibold tracking-wider uppercase backdrop-blur">
+        <TableHeader className="sticky top-0 z-10 border-b border-line bg-paper/90 text-caption font-semibold tracking-wider text-muted-foreground uppercase backdrop-blur">
           <TableRow className="border-line hover:bg-transparent">
             {/* Reference (Sticky Left on Scroll) */}
             <TableHead
               scope="col"
-              className="bg-paper text-muted-foreground sticky left-0 z-20 py-3.5 pr-3 pl-4 shadow-[0.0625rem_0_0_0_rgb(var(--color-line))]"
+              className="sticky left-0 z-20 bg-paper py-3.5 pr-3 pl-4 text-muted-foreground shadow-[0.0625rem_0_0_0_var(--color-line)]"
             >
               Reference
             </TableHead>
@@ -325,24 +326,18 @@ export function ReservationsTable({
           </TableRow>
         </TableHeader>
 
-        <TableBody className="divide-line divide-y">
+        <TableBody className="divide-y divide-line">
           {rows.map((row) => (
             <TableRow
               key={row.id}
-              tabIndex={0}
-              role="button"
-              aria-label={`Open reservation ${row.reference} for ${row.guestName}`}
-              onClick={() => router.push(`/admin/reservations/${row.id}`)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  router.push(`/admin/reservations/${row.id}`);
-                }
-              }}
-              className="group hover:bg-paper/70 focus:bg-paper/70 border-line cursor-pointer transition-colors focus:outline-none"
+              {...clickableRowProps(
+                `Open reservation ${row.reference} for ${row.guestName}`,
+                () => router.push(`/admin/reservations/${row.id}`),
+                'group border-line transition-colors hover:bg-paper/70 focus:bg-paper/70',
+              )}
             >
               {/* Reference Column (Sticky Left) */}
-              <TableCell className="bg-card text-ink group-hover:bg-paper/70 group-focus:bg-paper/70 sticky left-0 z-10 py-3 pr-3 pl-4 font-semibold shadow-[0.0625rem_0_0_0_rgb(var(--color-line))]">
+              <TableCell className="sticky left-0 z-10 bg-card py-3 pr-3 pl-4 font-semibold text-ink shadow-[0.0625rem_0_0_0_var(--color-line)] group-hover:bg-paper/70 group-focus:bg-paper/70">
                 <div className="flex items-center gap-1.5">
                   <span className="underline-offset-4 group-hover:underline">
                     {row.reference}
@@ -353,11 +348,11 @@ export function ReservationsTable({
                     size="icon-xs"
                     onClick={(e) => handleCopy(e, row.reference)}
                     aria-label={`Copy reference ${row.reference}`}
-                    className="text-muted-foreground hover:bg-line/40 hover:text-ink p-1"
+                    className="p-1 text-muted-foreground hover:bg-line/40 hover:text-ink"
                   >
                     {copiedRef === row.reference ? (
                       <Check
-                        className="text-success size-3"
+                        className="size-3 text-success"
                         aria-hidden="true"
                       />
                     ) : (
@@ -370,11 +365,11 @@ export function ReservationsTable({
               {visibleColumns.guest && (
                 <TableCell className="px-3 py-3">
                   <div className="min-w-0">
-                    <p className="text-ink truncate font-medium">
+                    <p className="truncate font-medium text-ink">
                       {row.guestName}
                     </p>
                     {row.guestPhone && (
-                      <p className="text-caption text-muted-foreground truncate">
+                      <p className="truncate text-caption text-muted-foreground">
                         {row.guestPhone}
                       </p>
                     )}
@@ -383,30 +378,30 @@ export function ReservationsTable({
               )}
 
               {visibleColumns.room && (
-                <TableCell className="text-muted-foreground px-3 py-3">
+                <TableCell className="px-3 py-3 text-muted-foreground">
                   <span>{row.roomTypeName}</span>
-                  <span className="text-ink ml-1 font-semibold">
+                  <span className="ml-1 font-semibold text-ink">
                     #{row.roomNumber}
                   </span>
                 </TableCell>
               )}
 
               {visibleColumns.checkIn && (
-                <TableCell className="text-ink px-3 py-3 font-medium">
+                <TableCell className="px-3 py-3 font-medium text-ink">
                   {row.checkIn}
                 </TableCell>
               )}
 
               {visibleColumns.checkOut && (
-                <TableCell className="text-muted-foreground px-3 py-3">
+                <TableCell className="px-3 py-3 text-muted-foreground">
                   {row.checkOut}
                 </TableCell>
               )}
 
               {visibleColumns.stay && (
-                <TableCell className="text-muted-foreground px-3 py-3">
+                <TableCell className="px-3 py-3 text-muted-foreground">
                   <span>{row.nights}n</span>
-                  <span className="text-caption ml-1">
+                  <span className="ml-1 text-caption">
                     ({row.adults + row.children}g)
                   </span>
                 </TableCell>
@@ -425,8 +420,8 @@ export function ReservationsTable({
               )}
 
               {visibleColumns.total && (
-                <TableCell className="text-ink px-3 py-3 font-semibold">
-                  {formatNaira(row.totalMinor / 100)}
+                <TableCell className="px-3 py-3 font-semibold text-ink">
+                  {formatMinor(row.totalMinor)}
                 </TableCell>
               )}
 
@@ -435,23 +430,23 @@ export function ReservationsTable({
                   <span
                     className={
                       row.balanceMinor > 0
-                        ? 'text-destructive font-bold'
+                        ? 'font-bold text-destructive'
                         : 'text-muted-foreground'
                     }
                   >
-                    {formatNaira(row.balanceMinor / 100)}
+                    {formatMinor(row.balanceMinor)}
                   </span>
                 </TableCell>
               )}
 
               {visibleColumns.source && (
-                <TableCell className="text-caption text-muted-foreground px-3 py-3 font-medium uppercase">
+                <TableCell className="px-3 py-3 text-caption font-medium text-muted-foreground uppercase">
                   {row.bookingSource}
                 </TableCell>
               )}
 
               {visibleColumns.bookedOn && (
-                <TableCell className="text-caption text-muted-foreground py-3 pr-4 pl-3">
+                <TableCell className="py-3 pr-4 pl-3 text-caption text-muted-foreground">
                   {row.createdAt.slice(0, 10)}
                 </TableCell>
               )}

@@ -1,4 +1,7 @@
-import type { ReservationRequestInput } from '@/schemas/checkout.schema';
+import type {
+  HoldUpdateInput,
+  ReservationRequestInput,
+} from '@/schemas/checkout.schema';
 import type {
   CheckoutQuoteResponse,
   PaymentInitRequest,
@@ -25,6 +28,13 @@ class CheckoutService extends BaseService {
   createReservation(body: ReservationRequestInput) {
     return this.httpPost<ReservationRequestInput, ReservationResponse>(
       '/reservations',
+      body,
+    );
+  }
+
+  updateHold(reference: string, body: HoldUpdateInput) {
+    return this.httpPatch<HoldUpdateInput, ReservationResponse>(
+      `/reservations/${enc(reference)}`,
       body,
     );
   }

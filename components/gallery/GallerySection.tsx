@@ -72,14 +72,14 @@ export async function GallerySection({
           }}
         />
         <Reveal>
-          <div className="rounded-card bg-card shadow-raised mt-16 flex flex-col items-start justify-between gap-6 p-8 md:flex-row md:items-center">
+          <div className="mt-16 flex flex-col items-start justify-between gap-6 rounded-card bg-card p-8 shadow-raised md:flex-row md:items-center">
             <div className="max-w-xl">
-              <p className="font-display text-h3">Like what you see?</p>
-              <p className="text-ink/85 mt-2">
+              <h3 className="font-display text-h3">Like what you see?</h3>
+              <p className="mt-2 text-ink/85">
                 Look at the rooms in detail, then book direct.
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-col flex-wrap gap-3 sm:flex-row">
               <ButtonLink href="/rooms" size="lg">
                 See rooms and book
               </ButtonLink>
