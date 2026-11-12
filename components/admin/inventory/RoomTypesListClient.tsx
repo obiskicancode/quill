@@ -3,16 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowDown,
-  ArrowUp,
-  Eye,
-  EyeOff,
-  Hotel,
-  Plus,
-  RotateCcw,
-  ShieldAlert,
-} from 'lucide-react';
+import { Eye, EyeOff, Hotel, Plus, RotateCcw, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -20,6 +11,8 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
+import { ReorderButtons } from '@/components/admin/ReorderButtons';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -203,17 +196,19 @@ export function RoomTypesListClient({
       {loading && roomTypes.length === 0 ? (
         <AdminLoading label="Loading room types..." />
       ) : roomTypes.length === 0 ? (
-        <AdminEmpty title="Add your first room type">
-          Create room categories, bed layouts, and nightly rates for guest
-          reservations.
-          <div className="mt-4">
+        <AdminEmpty
+          title="Add your first room type"
+          action={
             <Link href="/admin/rooms/new">
               <Button size="sm">Create Room Type</Button>
             </Link>
-          </div>
+          }
+        >
+          Create room categories, bed layouts, and nightly rates for guest
+          reservations.
         </AdminEmpty>
       ) : (
-        <div className="overflow-hidden rounded-card border border-line bg-card">
+        <div className="overflow-x-auto rounded-card border border-line bg-card">
           <Table className="w-full text-left text-small">
             <TableHeader className="border-b border-line bg-paper text-muted-foreground">
               <TableRow className="hover:bg-transparent">
@@ -245,26 +240,13 @@ export function RoomTypesListClient({
                   {/* Order controls */}
                   <TableCell className="py-3 pr-2 pl-4">
                     <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => handleMove(idx, 'up')}
-                        disabled={idx === 0 || reordering}
-                        aria-label={`Move ${rt.name} up`}
-                      >
-                        <ArrowUp className="size-3.5" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => handleMove(idx, 'down')}
-                        disabled={idx === roomTypes.length - 1 || reordering}
-                        aria-label={`Move ${rt.name} down`}
-                      >
-                        <ArrowDown className="size-3.5" />
-                      </Button>
+                      <ReorderButtons
+                        label={rt.name}
+                        index={idx}
+                        count={roomTypes.length}
+                        busy={reordering}
+                        onMove={(direction) => handleMove(idx, direction)}
+                      />
                       <span className="w-5 text-center text-caption text-muted-foreground">
                         {idx + 1}
                       </span>
@@ -331,19 +313,13 @@ export function RoomTypesListClient({
 
                   {/* Public Status */}
                   <TableCell className="px-4 py-3">
-                    <div className="flex flex-col gap-1">
-                      <span
-                        className={`inline-flex w-fit items-center gap-1 text-caption font-medium ${
-                          rt.isActive ? 'text-success' : 'text-muted-foreground'
-                        }`}
+                    <div className="flex flex-col items-start gap-1">
+                      <AdminStatusBadge
+                        tone={rt.isActive ? 'success' : 'neutral'}
+                        dot
                       >
-                        <span
-                          className={`size-1.5 rounded-full ${
-                            rt.isActive ? 'bg-success' : 'bg-muted'
-                          }`}
-                        />
                         {rt.isActive ? 'Active' : 'Draft / Inactive'}
-                      </span>
+                      </AdminStatusBadge>
                       {rt.showPrice ? (
                         <span className="flex items-center gap-1 text-caption text-muted-foreground">
                           <Eye className="size-3 text-brand" /> Price visible

@@ -4,9 +4,13 @@ import Link from 'next/link';
 import { ArrowUpRight, HelpCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { FOCUS_RING } from '@/components/admin/clickableRow';
 import { StaggerItem } from '@/components/motion/StaggerItem';
 import { Progress } from '@/components/ui/progress';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface KpiCardProps {
   label: string;
@@ -47,15 +51,21 @@ export function KpiCard({
               {label}
             </span>
             {tooltip && (
-              <span
-                tabIndex={0}
-                role="tooltip"
-                title={tooltip}
-                aria-label={tooltip}
-                className={`inline-flex cursor-help text-muted-foreground hover:text-ink ${FOCUS_RING}`}
-              >
-                <HelpCircle className="size-3.5" aria-hidden="true" />
-              </span>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <span className="inline-flex cursor-help items-center text-muted-foreground hover:text-ink" />
+                  }
+                >
+                  <HelpCircle className="size-3.5" aria-hidden="true" />
+                </TooltipTrigger>
+                <TooltipContent
+                  side="bottom"
+                  className="max-w-56 font-sans text-caption text-wrap"
+                >
+                  {tooltip}
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
           <span className="grid size-7 shrink-0 place-items-center rounded-control bg-paper text-muted-foreground transition-colors group-hover:bg-primary group-hover:text-ink">

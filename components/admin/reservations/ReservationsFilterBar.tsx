@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { FilterSheetShell } from '@/components/admin/FilterSheetShell';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -30,15 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Sheet,
-  SheetBody,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import type {
   BookingSource,
   PaymentState,
@@ -98,6 +90,8 @@ interface ReservationsFilterBarProps {
     newFilters: Record<string, string | string[] | undefined>,
   ) => void;
   rows?: ReservationListItem[];
+  /** How many bookings the current view matched; shown in the mobile sheet. */
+  resultCount?: number;
 }
 
 export function ReservationsFilterBar({
@@ -105,6 +99,7 @@ export function ReservationsFilterBar({
   options,
   onFilterChange,
   rows = [],
+  resultCount,
 }: ReservationsFilterBarProps) {
   const router = useRouter();
 
@@ -187,7 +182,7 @@ export function ReservationsFilterBar({
   return (
     <div className="space-y-3">
       {/* Primary Search & Quick Action Bar */}
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+      <div className="flex flex-col flex-wrap gap-2.5 sm:flex-row sm:items-center">
         {/* Search Box */}
         <div className="relative min-w-0 flex-1">
           <Search
@@ -710,232 +705,282 @@ export function ReservationsFilterBar({
         </div>
       )}
 
-      <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
-        <SheetContent
-          side="bottom"
-          className="h-[85vh] rounded-t-card sm:hidden"
-        >
-          <SheetHeader>
-            <SheetTitle>Filter Reservations</SheetTitle>
-            <SheetDescription className="sr-only">
-              Filter the reservations list by status, room type, and payment
-              state.
-            </SheetDescription>
-          </SheetHeader>
-
-          <SheetBody className="space-y-4">
-            {/* Status */}
-            <div>
-              <p className="mb-2 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
-                Status
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {STATUS_OPTIONS.map((s) => {
-                  const checked = (currentFilters.status ?? []).includes(s.id);
-                  return (
-                    <Button
-                      key={s.id}
-                      variant={checked ? 'secondary' : 'secondary'}
-                      size="sm"
-                      className="w-full justify-between"
-                      onClick={() => handleStatusToggle(s.id)}
-                    >
-                      <span>{s.label}</span>
-                      {checked && (
-                        <Check className="size-3.5" aria-hidden="true" />
-                      )}
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Date Filter (Mobile) */}
-            <div>
-              <Label
-                htmlFor="mobDateField"
-                className="mb-1.5 block text-caption font-semibold text-muted-foreground uppercase"
-              >
-                Date Filter
-              </Label>
-              <div className="space-y-2">
-                <Select
-                  items={[
-                    { value: 'check_in', label: 'Check-in date' },
-                    { value: 'check_out', label: 'Check-out date' },
-                    { value: 'created_at', label: 'Booked on date' },
-                  ]}
-                  value={currentFilters.dateField ?? 'check_in'}
-                  onValueChange={(val) => {
-                    if (val) onFilterChange({ dateField: val });
-                  }}
+      <FilterSheetShell
+        open={mobileSheetOpen}
+        onOpenChange={setMobileSheetOpen}
+        hiddenBelow="sm:hidden"
+        title="Filter reservations"
+        description="Narrow the register by status, dates, inventory, payment state or booking source."
+        resultNoun="reservation"
+        resultCount={resultCount}
+        onClearAll={handleClearAll}
+      >
+        {/* Status */}
+        <div>
+          <p className="mb-2 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
+            Status
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {STATUS_OPTIONS.map((s) => {
+              const checked = (currentFilters.status ?? []).includes(s.id);
+              return (
+                <Button
+                  key={s.id}
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  aria-pressed={checked}
+                  className="w-full justify-between"
+                  onClick={() => handleStatusToggle(s.id)}
                 >
-                  <SelectTrigger id="mobDateField" className="h-11 w-full">
-                    <SelectValue placeholder="Date field" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="check_in">Check-in date</SelectItem>
-                    <SelectItem value="check_out">Check-out date</SelectItem>
-                    <SelectItem value="created_at">Booked on date</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Popover>
-                  <PopoverTrigger
-                    render={
-                      <Button
-                        variant="secondary"
-                        className="w-full justify-start gap-2.5 text-left font-normal"
-                      />
-                    }
-                  >
-                    <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate">
-                      {currentFilters.from
-                        ? currentFilters.to
-                          ? `${format(parseISO(currentFilters.from), 'LLL dd, y')} - ${format(parseISO(currentFilters.to), 'LLL dd, y')}`
-                          : `From ${format(parseISO(currentFilters.from), 'LLL dd, y')}`
-                        : 'Select dates'}
+                  <span>{s.label}</span>
+                  {checked && <Check className="size-3.5" aria-hidden="true" />}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Date Filter */}
+        <div>
+          <Label
+            htmlFor="mobDateField"
+            className="mb-1.5 block text-caption font-semibold tracking-wider text-muted-foreground uppercase"
+          >
+            Date Filter
+          </Label>
+          <div className="space-y-2">
+            <Select
+              items={[
+                { value: 'check_in', label: 'Check-in date' },
+                { value: 'check_out', label: 'Check-out date' },
+                { value: 'created_at', label: 'Booked on date' },
+              ]}
+              value={currentFilters.dateField ?? 'check_in'}
+              onValueChange={(val) => {
+                if (val) onFilterChange({ dateField: val });
+              }}
+            >
+              <SelectTrigger id="mobDateField" className="h-11 w-full">
+                <SelectValue placeholder="Date field" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="check_in">Check-in date</SelectItem>
+                <SelectItem value="check_out">Check-out date</SelectItem>
+                <SelectItem value="created_at">Booked on date</SelectItem>
+              </SelectContent>
+            </Select>
+            <Popover>
+              <PopoverTrigger
+                render={
+                  <Button
+                    variant="secondary"
+                    className="w-full justify-start gap-2.5 text-left font-normal"
+                  />
+                }
+              >
+                <CalendarDays
+                  className="size-4 shrink-0 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <span className="truncate">
+                  {currentFilters.from
+                    ? currentFilters.to
+                      ? `${format(parseISO(currentFilters.from), 'LLL dd, y')} - ${format(parseISO(currentFilters.to), 'LLL dd, y')}`
+                      : `From ${format(parseISO(currentFilters.from), 'LLL dd, y')}`
+                    : 'Select dates'}
+                </span>
+              </PopoverTrigger>
+              <PopoverContent align="center" className="w-auto p-0">
+                <Calendar
+                  mode="range"
+                  selected={{
+                    from: currentFilters.from
+                      ? parseISO(currentFilters.from)
+                      : undefined,
+                    to: currentFilters.to
+                      ? parseISO(currentFilters.to)
+                      : undefined,
+                  }}
+                  onSelect={(range) => {
+                    onFilterChange({
+                      from: range?.from
+                        ? format(range.from, 'yyyy-MM-dd')
+                        : undefined,
+                      to: range?.to
+                        ? format(range.to, 'yyyy-MM-dd')
+                        : undefined,
+                    });
+                  }}
+                  numberOfMonths={1}
+                />
+                {(currentFilters.from || currentFilters.to) && (
+                  <div className="flex items-center justify-between border-t border-line p-2">
+                    <span className="text-caption text-muted-foreground">
+                      Date range
                     </span>
-                  </PopoverTrigger>
-                  <PopoverContent align="center" className="w-auto p-0">
-                    <Calendar
-                      mode="range"
-                      selected={{
-                        from: currentFilters.from
-                          ? parseISO(currentFilters.from)
-                          : undefined,
-                        to: currentFilters.to
-                          ? parseISO(currentFilters.to)
-                          : undefined,
-                      }}
-                      onSelect={(range) => {
-                        onFilterChange({
-                          from: range?.from
-                            ? format(range.from, 'yyyy-MM-dd')
-                            : undefined,
-                          to: range?.to
-                            ? format(range.to, 'yyyy-MM-dd')
-                            : undefined,
-                        });
-                      }}
-                      numberOfMonths={1}
-                    />
-                    {(currentFilters.from || currentFilters.to) && (
-                      <div className="flex items-center justify-between border-t border-line p-2">
-                        <span className="text-caption text-muted-foreground">
-                          Date range
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          onClick={() =>
-                            onFilterChange({ from: undefined, to: undefined })
-                          }
-                        >
-                          Clear
-                        </Button>
-                      </div>
-                    )}
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={() =>
+                        onFilterChange({ from: undefined, to: undefined })
+                      }
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
 
-            {/* Room Type */}
-            <div>
-              <Label
-                htmlFor="mobRoomType"
-                className="mb-1.5 block text-caption font-semibold text-muted-foreground uppercase"
-              >
-                Room Type
-              </Label>
-              <Select
-                items={[
-                  { value: 'all', label: 'All room types' },
-                  ...options.roomTypes.map((rt) => ({
-                    value: rt.id,
-                    label: rt.name,
+        {/* Room Inventory */}
+        <div>
+          <p className="mb-1.5 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
+            Room Inventory
+          </p>
+          <div className="space-y-2">
+            <Select
+              items={[
+                { value: 'all', label: 'All room types' },
+                ...options.roomTypes.map((rt) => ({
+                  value: rt.id,
+                  label: rt.name,
+                })),
+              ]}
+              value={currentFilters.roomTypeId ?? 'all'}
+              onValueChange={(val) =>
+                onFilterChange({
+                  roomTypeId: val === 'all' || !val ? undefined : val,
+                })
+              }
+            >
+              <SelectTrigger id="mobRoomType" className="h-11 w-full">
+                <SelectValue placeholder="All room types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All room types</SelectItem>
+                {options.roomTypes.map((rt) => (
+                  <SelectItem key={rt.id} value={rt.id}>
+                    {rt.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              items={[
+                { value: 'all', label: 'All room numbers' },
+                ...options.rooms
+                  .filter(
+                    (r) =>
+                      !currentFilters.roomTypeId ||
+                      r.roomTypeId === currentFilters.roomTypeId,
+                  )
+                  .map((rm) => ({
+                    value: rm.id,
+                    label: `Room #${rm.roomNumber}`,
                   })),
-                ]}
-                value={currentFilters.roomTypeId ?? 'all'}
-                onValueChange={(val) =>
-                  onFilterChange({
-                    roomTypeId: val === 'all' || !val ? undefined : val,
-                  })
-                }
+              ]}
+              value={currentFilters.roomId ?? 'all'}
+              onValueChange={(val) =>
+                onFilterChange({
+                  roomId: val === 'all' || !val ? undefined : val,
+                })
+              }
+            >
+              <SelectTrigger
+                aria-label="Room number"
+                className="h-11 w-full text-caption"
               >
-                <SelectTrigger id="mobRoomType" className="h-11 w-full">
-                  <SelectValue placeholder="All room types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All room types</SelectItem>
-                  {options.roomTypes.map((rt) => (
-                    <SelectItem key={rt.id} value={rt.id}>
-                      {rt.name}
+                <SelectValue placeholder="All room numbers" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All room numbers</SelectItem>
+                {options.rooms
+                  .filter(
+                    (r) =>
+                      !currentFilters.roomTypeId ||
+                      r.roomTypeId === currentFilters.roomTypeId,
+                  )
+                  .map((rm) => (
+                    <SelectItem key={rm.id} value={rm.id}>
+                      Room #{rm.roomNumber}
                     </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
-            {/* Payment State */}
-            <div>
-              <Label
-                htmlFor="mobPaymentState"
-                className="mb-1.5 block text-caption font-semibold text-muted-foreground uppercase"
-              >
-                Payment State
-              </Label>
-              <Select
-                items={[
-                  { value: 'all', label: 'All payment states' },
-                  ...PAYMENT_OPTIONS.map((p) => ({
-                    value: p.id,
-                    label: p.label,
-                  })),
-                ]}
-                value={currentFilters.paymentState ?? 'all'}
-                onValueChange={(val) =>
-                  onFilterChange({
-                    paymentState: val === 'all' || !val ? undefined : val,
-                  })
-                }
-              >
-                <SelectTrigger id="mobPaymentState" className="h-11 w-full">
-                  <SelectValue placeholder="All payment states" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All payment states</SelectItem>
-                  {PAYMENT_OPTIONS.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </SheetBody>
+        {/* Payment & Source */}
+        <div>
+          <p className="mb-1.5 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
+            Payment & Source
+          </p>
+          <div className="space-y-2">
+            <Select
+              items={[
+                { value: 'all', label: 'All payment states' },
+                ...PAYMENT_OPTIONS.map((p) => ({
+                  value: p.id,
+                  label: p.label,
+                })),
+              ]}
+              value={currentFilters.paymentState ?? 'all'}
+              onValueChange={(val) =>
+                onFilterChange({
+                  paymentState: val === 'all' || !val ? undefined : val,
+                })
+              }
+            >
+              <SelectTrigger id="mobPaymentState" className="h-11 w-full">
+                <SelectValue placeholder="All payment states" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All payment states</SelectItem>
+                {PAYMENT_OPTIONS.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <SheetFooter className="flex-row items-center border-t border-line">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleClearAll}
-              className="flex-1"
+            <Select
+              items={[
+                { value: 'all', label: 'All booking sources' },
+                ...SOURCE_OPTIONS.map((src) => ({
+                  value: src.id,
+                  label: src.label,
+                })),
+              ]}
+              value={currentFilters.source ?? 'all'}
+              onValueChange={(val) =>
+                onFilterChange({
+                  source: val === 'all' || !val ? undefined : val,
+                })
+              }
             >
-              Clear all
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setMobileSheetOpen(false)}
-              className="flex-1"
-            >
-              Apply filters
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+              <SelectTrigger
+                aria-label="Booking source"
+                className="h-11 w-full text-caption"
+              >
+                <SelectValue placeholder="All booking sources" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All booking sources</SelectItem>
+                {SOURCE_OPTIONS.map((src) => (
+                  <SelectItem key={src.id} value={src.id}>
+                    {src.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </FilterSheetShell>
     </div>
   );
 }

@@ -36,7 +36,6 @@ import {
 } from '@/hooks/services/admin/use-payments';
 import type {
   ManualRefundPayoutInput,
-  PaymentDetailResponse,
   PaymentListItem,
   PaymentsQueryParams,
 } from '@/types/payments.types';
@@ -117,6 +116,13 @@ const FILTER_KEYS = [
   'pageSize',
 ] as const;
 
+/** A hand-shared amount bound is only honoured when it is a real number. */
+function parseAmount(raw: string | null): number | undefined {
+  if (raw === null || raw.trim() === '') return undefined;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : undefined;
+}
+
 function parseFilters(params: URLSearchParams): PaymentsQueryParams {
   return {
     status: (params.get('status') ?? 'all') as PaymentsQueryParams['status'],
@@ -131,33 +137,12 @@ function parseFilters(params: URLSearchParams): PaymentsQueryParams {
     q: params.get('q') ?? undefined,
     from: params.get('from') ?? undefined,
     to: params.get('to') ?? undefined,
+    minAmount: parseAmount(params.get('minAmount')),
+    maxAmount: parseAmount(params.get('maxAmount')),
     sort: (params.get('sort') ?? 'created_at') as PaymentsQueryParams['sort'],
     order: (params.get('order') ?? 'desc') as PaymentsQueryParams['order'],
     page: Math.max(1, Number(params.get('page')) || 1),
     pageSize: Math.min(100, Math.max(5, Number(params.get('pageSize')) || 25)),
-  };
-}
-
-function buildFallbackDetail(
-  paymentItem: PaymentListItem,
-): PaymentDetailResponse {
-  return {
-    ...paymentItem,
-    reservation: {
-      id: paymentItem.reservationId,
-      reference: paymentItem.reservationRef,
-      guestName: paymentItem.guestName,
-      guestEmail: paymentItem.guestEmail,
-      roomTypeName: 'Standard Room',
-      checkIn: '',
-      checkOut: '',
-      nights: 1,
-      status: 'confirmed',
-      totalMinor: paymentItem.amountMinor,
-      amountPaidMinor: paymentItem.amountMinor,
-      amountRefundedMinor: 0,
-    },
-    webhooks: [],
   };
 }
 
@@ -195,8 +180,22 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
     router.replace(query ? `${pathname}?${query}` : pathname);
   };
 
-  // Ephemeral UI state that does not belong in the URL.
-  const [selectedPaymentIds, setSelectedPaymentIds] = useState<string[]>([]);
+  // A ticked row belongs to the page that listed it, so the selection is
+  // keyed by the URL that produced those rows instead of being left behind by
+  // a filter or page change — otherwise a bulk reconcile acts on stale ids.
+  const viewKey = searchParams.toString();
+  const [paymentSelection, setPaymentSelection] = useState<{
+    key: string;
+    ids: string[];
+  }>({ key: '', ids: [] });
+  const selectedPaymentIds =
+    paymentSelection.key === viewKey ? paymentSelection.ids : [];
+
+  const updatePaymentSelection = (next: (prev: string[]) => string[]) =>
+    setPaymentSelection((prev) => ({
+      key: viewKey,
+      ids: next(prev.key === viewKey ? prev.ids : []),
+    }));
 
   const [detailSelection, setDetailSelection] =
     useState<PaymentListItem | null>(null);
@@ -235,21 +234,24 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
   const totalPayments = paymentsQuery.data?.total ?? 0;
   const manualRefunds = refundsQuery.data ?? [];
   const webhooks = webhooksQuery.data?.items ?? [];
-  const loading =
-    summaryQuery.isPending ||
-    paymentsQuery.isPending ||
-    refundsQuery.isPending ||
-    webhooksQuery.isPending;
+  // Per-tab loading gates so switching tabs does not skeleton panels unrelated
+  // to the pending query. The summary cards are always visible, so they still
+  // wait on `summaryQuery`.
+  const summaryLoading = summaryQuery.isPending;
+  const paymentsLoading = paymentsQuery.isPending;
+  const refundsLoading = refundsQuery.isPending;
+  const webhooksLoading = webhooksQuery.isPending;
   const error = paymentsQuery.error
     ? paymentsQuery.error instanceof Error
       ? paymentsQuery.error.message
       : ERROR_MESSAGES.FAILED_TO_LOAD_PAYMENTS
     : null;
-  const detailPayment =
-    detailQuery.data ??
-    (detailSelection && detailQuery.isError
-      ? buildFallbackDetail(detailSelection)
-      : null);
+  const detailPayment = detailQuery.data ?? null;
+  const detailError = detailQuery.isError
+    ? detailQuery.error instanceof Error
+      ? detailQuery.error.message
+      : ERROR_MESSAGES.FAILED_TO_LOAD_PAYMENTS
+    : null;
 
   // Quiet 60s background refresh
   useEffect(() => {
@@ -280,13 +282,13 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
 
   // Handlers
   const handleToggleSelect = (id: string) => {
-    setSelectedPaymentIds((prev) =>
+    updatePaymentSelection((prev) =>
       prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
     );
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedPaymentIds(checked ? payments.map((p) => p.id) : []);
+    updatePaymentSelection(() => (checked ? payments.map((p) => p.id) : []));
   };
 
   const handleOpenDetail = (paymentItem: PaymentListItem) => {
@@ -304,7 +306,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
         mode: 'reconcile',
         paymentIds: [],
       });
-      setSelectedPaymentIds([]);
+      updatePaymentSelection(() => []);
       setDetailSelection(null);
       toast.add({
         title: SUCCESS_MESSAGES.PAYMENTS_RECONCILED,
@@ -378,7 +380,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
       {/* Summary Cards */}
       <PaymentsSummaryCards
         summary={summary}
-        loading={loading}
+        loading={summaryLoading}
         selectedRange={rangePreset}
         onRangeShortcut={(preset) =>
           updateParams({ range: preset === 'this_month' ? undefined : preset })
@@ -386,7 +388,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
       />
 
       {/* Visual Volume Breakdown */}
-      <PaymentsBreakdown breakdown={breakdown} loading={loading} />
+      <PaymentsBreakdown breakdown={breakdown} loading={summaryLoading} />
 
       {/* Tabs Navigation */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-2">
@@ -490,9 +492,10 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
               const query = params.toString();
               router.replace(query ? `${pathname}?${query}` : pathname);
             }}
+            resultCount={totalPayments}
           />
 
-          {loading ? (
+          {paymentsLoading ? (
             <AdminLoading label="Loading payments register..." />
           ) : error ? (
             <AdminError
@@ -570,7 +573,7 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
       {activeTab === 'refunds' && (
         <ManualRefundsTab
           refunds={manualRefunds}
-          loading={loading}
+          loading={refundsLoading}
           onMarkPaidOut={handleMarkRefundPaidOut}
           onRecheckProvider={handleRecheckProviderRefund}
         />
@@ -580,16 +583,19 @@ export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
       {activeTab === 'webhooks' && (
         <WebhooksTab
           events={webhooks}
-          loading={loading}
+          loading={webhooksLoading}
           onReprocess={handleReprocessWebhook}
           isOwner={isOwner}
         />
       )}
 
       {/* Detail Drawer */}
-      {detailPayment && (
+      {detailSelection && (
         <PaymentDetailDrawer
+          isOpen
           payment={detailPayment}
+          error={detailError}
+          onRetry={() => void detailQuery.refetch()}
           isOwner={isOwner}
           onClose={() => setDetailSelection(null)}
           onReconcile={(id) => {

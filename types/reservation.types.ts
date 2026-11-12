@@ -76,6 +76,7 @@ export interface ReservationListItem {
   balanceMinor: number;
   bookingSource: BookingSource;
   createdAt: string;
+  updatedAt: string;
   arrivalTime: string | null;
 }
 

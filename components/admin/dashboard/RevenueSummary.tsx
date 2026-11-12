@@ -7,6 +7,7 @@ import { AdminError, AdminLoading } from '@/components/admin/AdminStates';
 import { Reveal } from '@/components/motion/Reveal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatMinor } from '@/lib/format';
 import type { RevenueData, RevenueRange } from '@/types/dashboard.types';
 
@@ -19,7 +20,7 @@ interface RevenueSummaryProps {
   onRetry: () => void;
 }
 
-const ranges: { id: RevenueRange; label: string }[] = [
+export const REVENUE_RANGES: { id: RevenueRange; label: string }[] = [
   { id: 'today', label: 'Today' },
   { id: '7d', label: '7 days' },
   { id: 'this_month', label: 'This month' },
@@ -79,36 +80,27 @@ export function RevenueSummary({
         }
       >
         {/* Range Selector Controls */}
-        <div className="mb-6 flex flex-wrap items-center gap-2 border-b border-line pb-4">
-          <span className="mr-2 text-caption font-semibold tracking-wider text-muted-foreground uppercase">
-            Period:
-          </span>
-          <div
-            role="tablist"
+        <Tabs
+          value={selectedRange}
+          onValueChange={(val) => val && onRangeChange(val as RevenueRange)}
+          className="mb-6 gap-0"
+        >
+          <TabsList
+            variant="line"
             aria-label="Revenue time periods"
-            className="inline-flex rounded-control border border-line bg-paper p-0.5"
+            className="h-auto w-full justify-start gap-3 border-b border-line p-0"
           >
-            {ranges.map((r) => {
-              const active = selectedRange === r.id;
-              return (
-                <Button
-                  key={r.id}
-                  type="button"
-                  role="tab"
-                  variant={active ? 'secondary' : 'ghost'}
-                  size="xs"
-                  aria-selected={active}
-                  onClick={() => onRangeChange(r.id)}
-                  className={`h-7 px-2.5 text-caption font-semibold ${
-                    active ? 'shadow-xs' : 'text-muted-foreground'
-                  }`}
-                >
-                  {r.label}
-                </Button>
-              );
-            })}
-          </div>
-        </div>
+            {REVENUE_RANGES.map((r) => (
+              <TabsTrigger
+                key={r.id}
+                value={r.id}
+                className="px-1 pb-2.5 font-semibold"
+              >
+                {r.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
 
         {isLoading ? (
           <AdminLoading label="Loading revenue data…" />
@@ -124,7 +116,7 @@ export function RevenueSummary({
         ) : data ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* 1. Payments Received */}
-            <div className="rounded-control border border-line bg-paper/50 p-4">
+            <div className="rounded-control border border-line bg-paper p-4">
               <span className="text-small font-medium text-muted-foreground">
                 Payments received
               </span>
@@ -137,7 +129,7 @@ export function RevenueSummary({
             </div>
 
             {/* 2. New Bookings */}
-            <div className="rounded-control border border-line bg-paper/50 p-4">
+            <div className="rounded-control border border-line bg-paper p-4">
               <span className="text-small font-medium text-muted-foreground">
                 New bookings
               </span>
@@ -150,7 +142,7 @@ export function RevenueSummary({
             </div>
 
             {/* 3. Average Nightly Rate */}
-            <div className="rounded-control border border-line bg-paper/50 p-4">
+            <div className="rounded-control border border-line bg-paper p-4">
               <span className="text-small font-medium text-muted-foreground">
                 Average nightly rate
               </span>
@@ -163,7 +155,7 @@ export function RevenueSummary({
             </div>
 
             {/* 4. Cancellations */}
-            <div className="rounded-control border border-line bg-paper/50 p-4">
+            <div className="rounded-control border border-line bg-paper p-4">
               <span className="text-small font-medium text-muted-foreground">
                 Cancellations
               </span>

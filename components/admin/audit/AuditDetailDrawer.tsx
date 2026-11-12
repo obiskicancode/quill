@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
 
+import { AdminError, AdminLoading } from '@/components/admin/AdminStates';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetBody,
@@ -15,19 +17,63 @@ import { formatHotelDateTime } from '@/lib/format';
 import type { AuditDetailResponse } from '@/types/audit.types';
 
 export function AuditDetailDrawer({
+  isOpen = true,
   audit,
+  error = null,
+  onRetry,
   onClose,
   isOwner = false,
 }: {
+  isOpen?: boolean;
   audit: AuditDetailResponse | null;
+  error?: string | null;
+  onRetry?: () => void;
   onClose: () => void;
   isOwner?: boolean;
 }) {
-  if (!audit) return null;
+  if (!isOpen) return null;
+
+  if (!audit) {
+    return (
+      <Sheet
+        open
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+      >
+        <SheetContent side="right" size="xl">
+          <SheetHeader>
+            <SheetTitle>Audit Log Entry</SheetTitle>
+            <SheetDescription className="sr-only">
+              {error
+                ? 'Audit detail could not be loaded.'
+                : 'Loading audit detail.'}
+            </SheetDescription>
+          </SheetHeader>
+          <SheetBody>
+            {error ? (
+              <AdminError
+                message={error}
+                action={
+                  onRetry ? (
+                    <Button variant="secondary" size="sm" onClick={onRetry}>
+                      Retry
+                    </Button>
+                  ) : undefined
+                }
+              />
+            ) : (
+              <AdminLoading label="Loading audit detail..." />
+            )}
+          </SheetBody>
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
   return (
     <Sheet
-      open={Boolean(audit)}
+      open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}

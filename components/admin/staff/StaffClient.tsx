@@ -8,6 +8,12 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
+import {
+  AdminStatusBadge,
+  staffStatusTone,
+  statusLabel,
+} from '@/components/admin/AdminStatusBadge';
+import { clickableRowProps } from '@/components/admin/clickableRow';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,15 +36,10 @@ import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useStaffDetail, useStaffList } from '@/hooks/services/admin/use-staff';
 import { formatHotelDate, formatHotelDateTime } from '@/lib/format';
-import type {
-  StaffDetailResponse,
-  StaffListItem,
-  StaffQueryParams,
-} from '@/types/staff.types';
+import type { StaffListItem, StaffQueryParams } from '@/types/staff.types';
 
 import { InviteStaffDialog } from './InviteStaffDialog';
 import { StaffDetailSheet } from './StaffDetailSheet';
-import { StaffStatusBadge } from './StaffStatusBadge';
 import { StepUpDialog } from './StepUpDialog';
 
 const ROLE_FILTER_OPTIONS = [
@@ -56,16 +57,6 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'locked', label: 'Locked' },
 ];
 
-function buildFallbackDetail(staff: StaffListItem): StaffDetailResponse {
-  return {
-    ...staff,
-    invitedByName: null,
-    deactivatedByName: null,
-    activeSessions: [],
-    recentAudits: [],
-  };
-}
-
 export function StaffClient() {
   const [filters, setFilters] = useState<StaffQueryParams>({
     role: 'all',
@@ -74,8 +65,6 @@ export function StaffClient() {
   });
 
   const [selectedStaffId, setSelectedStaffId] = useState<string | null>(null);
-  const [selectedStaffFallback, setSelectedStaffFallback] =
-    useState<StaffListItem | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
 
   // Step-up authentication coordinator
@@ -99,14 +88,14 @@ export function StaffClient() {
       ? staffQuery.error.message
       : ERROR_MESSAGES.FAILED_TO_LOAD_STAFF_MEMBERS
     : null;
-  const selectedStaff =
-    detailQuery.data ??
-    (selectedStaffFallback && detailQuery.isError
-      ? buildFallbackDetail(selectedStaffFallback)
-      : null);
+  const selectedStaff = detailQuery.data ?? null;
+  const detailError = detailQuery.isError
+    ? detailQuery.error instanceof Error
+      ? detailQuery.error.message
+      : ERROR_MESSAGES.FAILED_TO_LOAD_STAFF_MEMBERS
+    : null;
 
   const handleRowClick = (staffItem: StaffListItem) => {
-    setSelectedStaffFallback(staffItem);
     setSelectedStaffId(staffItem.id);
   };
 
@@ -214,7 +203,7 @@ export function StaffClient() {
           Adjust your filters or invite your first team member.
         </AdminEmpty>
       ) : (
-        <div className="overflow-hidden rounded-card border border-line bg-card">
+        <div className="overflow-x-auto rounded-card border border-line bg-card">
           <Table className="w-full text-left text-small">
             <caption className="sr-only">Staff directory</caption>
             <TableHeader className="border-b border-line bg-paper text-caption font-semibold text-muted-foreground uppercase">
@@ -243,8 +232,11 @@ export function StaffClient() {
               {staffList.map((staff) => (
                 <TableRow
                   key={staff.id}
-                  onClick={() => handleRowClick(staff)}
-                  className="cursor-pointer transition-colors hover:bg-paper/70"
+                  {...clickableRowProps(
+                    `Open staff detail for ${staff.fullName}`,
+                    () => handleRowClick(staff),
+                    'transition-colors hover:bg-paper/70 focus:bg-paper/70',
+                  )}
                 >
                   <TableCell className="px-4 py-3">
                     <div className="font-semibold text-ink">
@@ -258,7 +250,9 @@ export function StaffClient() {
                     <Badge variant="info">{staff.role}</Badge>
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    <StaffStatusBadge status={staff.status} />
+                    <AdminStatusBadge tone={staffStatusTone(staff.status)}>
+                      {statusLabel(staff.status)}
+                    </AdminStatusBadge>
                   </TableCell>
                   <TableCell className="px-4 py-3">
                     {staff.mfaEnabled ? (
@@ -287,12 +281,14 @@ export function StaffClient() {
       )}
 
       {/* Staff Detail Sheet */}
-      {selectedStaff && (
+      {selectedStaffId && (
         <StaffDetailSheet
+          isOpen
           staff={selectedStaff}
+          error={detailError}
+          onRetry={() => void detailQuery.refetch()}
           onClose={() => {
             setSelectedStaffId(null);
-            setSelectedStaffFallback(null);
           }}
           onReload={async () => {
             await Promise.all([staffQuery.refetch(), detailQuery.refetch()]);

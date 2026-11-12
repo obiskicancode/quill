@@ -8,10 +8,14 @@ import { useRef, useState } from 'react';
 import { AdminEmpty, AdminError } from '@/components/admin/AdminStates';
 import { StaleBanner } from '@/components/admin/dashboard/StaleBanner';
 import { PageHeader } from '@/components/admin/PageHeader';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
+import { useMarkReservationNoShow } from '@/hooks/services/admin/use-reservations';
 import { useReservationsList } from '@/hooks/services/admin/use-reservations-data';
+import { reservationsListQuerySchema } from '@/schemas/reservation.schema';
 import type { AdminRole, Permission } from '@/types/auth.types';
 import type {
   ReservationSortField,
@@ -35,13 +39,34 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
   const searchParams = useSearchParams();
 
   const canExportCsv = permissions.includes('payments.view');
+  const canMarkNoShow = permissions.includes('reservations.no_show');
+
+  const ask = useConfirm();
+  const markNoShow = useMarkReservationNoShow();
 
   const [isExporting, setIsExporting] = useState(false);
 
+  // Bulk selection belongs to the rows of one query. Keying it by the query
+  // string means a filter or page change invalidates it on its own.
+  const [selection, setSelection] = useState<{ key: string; ids: string[] }>({
+    key: '',
+    ids: [],
+  });
+
   const isInteractingRef = useRef(false);
 
-  // Parse filters from URL
-  const currentParamsString = searchParams.toString();
+  // Parse filters from URL, dropping any `filter` value not in the enum so the
+  // API never sees a bad quick-filter. We remember the raw value to warn.
+  const rawFilterParam = searchParams.get('filter');
+  const parsedFilter = reservationsListQuerySchema.shape.filter.safeParse(
+    rawFilterParam ?? undefined,
+  );
+  const invalidFilterRaw =
+    rawFilterParam && !parsedFilter.success ? rawFilterParam : null;
+
+  const sanitizedParams = new URLSearchParams(searchParams.toString());
+  if (invalidFilterRaw) sanitizedParams.delete('filter');
+  const currentParamsString = sanitizedParams.toString();
 
   const {
     data: reservationsData,
@@ -62,6 +87,15 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
       : ERROR_MESSAGES.FAILED_TO_LOAD_RESERVATIONS_UI
     : null;
   const isStale = isError && Boolean(data);
+
+  const selectedIds =
+    selection.key === currentParamsString ? selection.ids : [];
+
+  const updateSelection = (next: (prev: string[]) => string[]) =>
+    setSelection((prev) => ({
+      key: currentParamsString,
+      ids: next(prev.key === currentParamsString ? prev.ids : []),
+    }));
 
   // Update URL Search Params helper
   const updateUrlParams = (
@@ -99,6 +133,100 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
 
   const handlePageSizeChange = (newSize: number) => {
     updateUrlParams({ pageSize: String(newSize), page: '1' });
+  };
+
+  // A no-show only applies to confirmed bookings; the server still rejects a
+  // row whose arrival date has not arrived yet.
+  const noShowTargets = (data?.rows ?? []).filter(
+    (row) => selectedIds.includes(row.id) && row.status === 'confirmed',
+  );
+
+  const handleToggleSelect = (id: string) => {
+    updateSelection((prev) =>
+      prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id],
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    const rows = data?.rows ?? [];
+    updateSelection(() => (checked ? rows.map((row) => row.id) : []));
+  };
+
+  const handleBulkNoShow = async () => {
+    const skipped = selectedIds.length - noShowTargets.length;
+    // The dialog can be retried after a partial failure, so progress is
+    // tracked outside `run` and each attempt only touches unseen rows.
+    const doneIds = new Set<string>();
+
+    const confirmed = await ask({
+      title: `Mark ${noShowTargets.length} ${noShowTargets.length === 1 ? 'reservation' : 'reservations'} as no-show?`,
+      tone: 'danger',
+      confirmLabel: 'Mark as no-show',
+      description: (
+        <>
+          <p>
+            Each booking is closed as a no-show and dropped from arrivals. No
+            refunds are processed by this bulk action — open a reservation to
+            refund a guest.
+          </p>
+          {skipped > 0 && (
+            <p className="mt-2">
+              {skipped} {skipped === 1 ? 'booking is' : 'bookings are'} in the
+              selection but not confirmed, so they will be left alone.
+            </p>
+          )}
+        </>
+      ),
+      run: async () => {
+        const failures: string[] = [];
+        for (const row of noShowTargets) {
+          if (doneIds.has(row.id)) continue;
+          try {
+            await markNoShow.mutateAsync({
+              id: row.id,
+              body: {
+                refundAmountMinor: 0,
+                version: row.updatedAt,
+                idempotencyKey: crypto.randomUUID(),
+              },
+            });
+            doneIds.add(row.id);
+          } catch (cause) {
+            failures.push(
+              `${row.reference}: ${
+                cause instanceof Error
+                  ? cause.message
+                  : ERROR_MESSAGES.FAILED_TO_MARK_NO_SHOW_UI
+              }`,
+            );
+          }
+        }
+
+        if (failures.length > 0) {
+          const failedIds = new Set(
+            noShowTargets
+              .filter((row) => !doneIds.has(row.id))
+              .map((row) => row.id),
+          );
+          updateSelection((prev) => prev.filter((id) => failedIds.has(id)));
+          throw new Error(
+            `${doneIds.size} of ${noShowTargets.length} marked. Still waiting: ${failures.join(
+              ' · ',
+            )}`,
+          );
+        }
+      },
+    });
+
+    if (confirmed) {
+      updateSelection(() => []);
+      toast.add({
+        title: `${noShowTargets.length} ${
+          noShowTargets.length === 1 ? 'reservation' : 'reservations'
+        } marked as no-show.`,
+        type: 'success',
+      });
+    }
   };
 
   const handleExportCsv = async () => {
@@ -141,7 +269,7 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
     roomId: searchParams.get('roomId') ?? undefined,
     source: searchParams.get('source') ?? undefined,
     paymentState: searchParams.get('paymentState') ?? undefined,
-    filter: searchParams.get('filter') ?? undefined,
+    filter: parsedFilter.success ? parsedFilter.data : undefined,
   };
 
   const hasFilterActive = Boolean(
@@ -207,13 +335,61 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
       {/* Stale Data Warning Banner */}
       {isStale && <StaleBanner onRefresh={() => void refetch()} />}
 
+      {/* Unknown Quick-Filter Notice */}
+      {invalidFilterRaw && (
+        <Alert variant="warning" size="panel" role="status">
+          <AlertTitle>Unknown quick filter ignored</AlertTitle>
+          <AlertDescription>
+            The URL asked for <code>{invalidFilterRaw}</code>, which is not a
+            supported quick filter, so results are shown without it. Pick one
+            from the filter bar instead.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* 2. Filter Bar */}
       <ReservationsFilterBar
         currentFilters={appliedFilters}
         options={data?.options ?? { roomTypes: [], rooms: [] }}
         onFilterChange={(newFilters) => updateUrlParams(newFilters)}
         rows={data?.rows}
+        resultCount={data?.total}
       />
+
+      {/* Bulk actions for the rows ticked on this page */}
+      {canMarkNoShow && selectedIds.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-card border border-line bg-card px-4 py-3 shadow-raised">
+          <p className="text-small font-semibold text-ink" aria-live="polite">
+            {selectedIds.length} selected
+          </p>
+          {noShowTargets.length > 0 ? (
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              loading={markNoShow.isPending}
+              disabled={markNoShow.isPending}
+              onClick={() => void handleBulkNoShow()}
+            >
+              Mark {noShowTargets.length} as no-show
+            </Button>
+          ) : (
+            <p className="text-caption text-muted-foreground">
+              None of the selected bookings are confirmed, so there is nothing
+              to mark as a no-show.
+            </p>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => updateSelection(() => [])}
+            className="ml-auto"
+          >
+            Clear selection
+          </Button>
+        </div>
+      )}
 
       {/* 3. Main Content: Loading, Error, Empty, or Table */}
       {isLoading && !data ? (
@@ -272,11 +448,20 @@ export function ReservationsClient({ permissions }: ReservationsClientProps) {
               sort={searchParams.get('sort') ?? 'check_in'}
               order={searchParams.get('order') ?? 'asc'}
               onSortChange={handleSortChange}
+              selectedIds={selectedIds}
+              onToggleSelect={handleToggleSelect}
+              onSelectAll={handleSelectAll}
+              canSelect={canMarkNoShow}
             />
           </div>
 
           {/* Mobile Card List View */}
-          <ReservationsMobileList rows={data.rows} />
+          <ReservationsMobileList
+            rows={data.rows}
+            selectedIds={selectedIds}
+            onToggleSelect={handleToggleSelect}
+            canSelect={canMarkNoShow}
+          />
 
           {/* Pagination Controls */}
           <ReservationsPagination

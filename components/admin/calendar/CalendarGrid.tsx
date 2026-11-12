@@ -21,6 +21,7 @@ import {
 } from '@/lib/dates';
 import type {
   CalendarBlockBar,
+  CalendarReservationBar,
   CalendarResponse,
   CalendarRoom,
 } from '@/types/calendar.types';
@@ -37,6 +38,254 @@ interface CalendarGridProps {
     startDate: string,
     endDate: string,
   ) => void;
+}
+
+const CELL_WIDTH_PX = 96;
+const TURNOVER_GAP_PX = 4;
+const ROW_MIN_HEIGHT_PX = 56;
+const ROW_PADDING_Y_PX = 8;
+/** A room with no overlapping bars keeps the full-height strip. */
+const SINGLE_LANE_HEIGHT_PX = 40;
+/** Overlapping bars trade height for legibility so none is hidden. */
+const STACKED_LANE_HEIGHT_PX = 20;
+const LANE_GAP_PX = 4;
+
+type BarGeometry = {
+  start: number;
+  end: number;
+  spanNights: number;
+  leftPx: number;
+  widthPx: number;
+};
+
+type BarSource =
+  | { kind: 'reservation'; item: CalendarReservationBar }
+  | { kind: 'block'; item: CalendarBlockBar };
+
+type PlacedBar = BarGeometry & BarSource & { lane: number };
+
+type RowLayout = ReturnType<typeof rowLayout>;
+
+function visibleGeometry(
+  startDate: string,
+  endDate: string,
+  dates: string[],
+): BarGeometry {
+  const startIndex = dates.indexOf(startDate);
+  const endIndex = dates.indexOf(endDate);
+  const start = Math.max(0, startIndex);
+  const end = endIndex >= 0 ? endIndex : dates.length;
+  const spanNights = Math.max(1, end - start);
+
+  return {
+    start,
+    end,
+    spanNights,
+    leftPx: start * CELL_WIDTH_PX,
+    widthPx: spanNights * CELL_WIDTH_PX - TURNOVER_GAP_PX,
+  };
+}
+
+/**
+ * Reservations and blocks live on the same row, so bars whose nights overlap
+ * are first-fitted into separate horizontal lanes rather than stacked on the
+ * same offset where the later one would cover the earlier one.
+ */
+function placeRoomBars(
+  data: CalendarResponse,
+  room: CalendarRoom,
+  dates: string[],
+): { bars: PlacedBar[]; laneCount: number } {
+  const windowEnd = addDays(dates[dates.length - 1], 1);
+  const measured: Array<BarGeometry & BarSource> = [];
+
+  for (const res of data.reservations) {
+    if (res.roomId !== room.id || res.isStaleHold) continue;
+    if (res.checkOut <= dates[0] || res.checkIn >= windowEnd) continue;
+    measured.push({
+      kind: 'reservation',
+      item: res,
+      ...visibleGeometry(res.checkIn, res.checkOut, dates),
+    });
+  }
+
+  for (const block of data.blocks) {
+    if (block.roomId !== room.id) continue;
+    if (block.endDate <= dates[0] || block.startDate >= windowEnd) continue;
+    measured.push({
+      kind: 'block',
+      item: block,
+      ...visibleGeometry(block.startDate, block.endDate, dates),
+    });
+  }
+
+  measured.sort((a, b) => a.start - b.start || b.end - a.end);
+
+  const bars: PlacedBar[] = [];
+  const laneEnds: number[] = [];
+  for (const bar of measured) {
+    let lane = laneEnds.findIndex((laneEnd) => laneEnd <= bar.start);
+    if (lane === -1) lane = laneEnds.length;
+    laneEnds[lane] = bar.end;
+    bars.push({ ...bar, lane });
+  }
+
+  return { bars, laneCount: Math.max(1, laneEnds.length) };
+}
+
+function rowLayout(laneCount: number) {
+  const barHeight =
+    laneCount <= 1 ? SINGLE_LANE_HEIGHT_PX : STACKED_LANE_HEIGHT_PX;
+  const rowHeight = Math.max(
+    ROW_MIN_HEIGHT_PX,
+    ROW_PADDING_Y_PX * 2 +
+      laneCount * barHeight +
+      Math.max(0, laneCount - 1) * LANE_GAP_PX,
+  );
+
+  return {
+    barHeight,
+    rowHeight,
+    laneTop: (lane: number) =>
+      ROW_PADDING_Y_PX + lane * (barHeight + LANE_GAP_PX),
+  };
+}
+
+function ReservationBarCell({
+  bar,
+  layout,
+  room,
+}: {
+  bar: PlacedBar & { kind: 'reservation' };
+  layout: RowLayout;
+  room: CalendarRoom;
+}) {
+  const res = bar.item;
+
+  // Visual style cues by status
+  let barBg = 'bg-success text-success-foreground';
+  if (res.status === 'pending') {
+    barBg = 'bg-primary text-primary-foreground border border-primary/40';
+  } else if (res.status === 'checked_in') {
+    barBg = 'bg-ink text-paper';
+  } else if (res.status === 'checked_out') {
+    barBg = 'bg-muted-foreground/60 text-white opacity-80';
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Link
+            href={`/admin/reservations/${res.id}`}
+            aria-label={`${res.guestName} (${res.reference}), ${formatShort(res.checkIn)} to ${formatShort(res.checkOut)}, Status: ${res.status}`}
+            style={{
+              left: `${bar.leftPx + 2}px`,
+              top: `${layout.laneTop(bar.lane)}px`,
+              width: `${bar.widthPx}px`,
+              height: `${layout.barHeight}px`,
+            }}
+            className={`absolute z-10 flex items-center justify-between overflow-hidden rounded-control px-2 shadow-xs transition-transform hover:scale-[1.01] focus-visible:z-20 ${barBg}`}
+          />
+        }
+      >
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
+          <span className="block min-w-0 truncate text-caption font-semibold">
+            {res.guestName}
+          </span>
+          {bar.spanNights >= 2 && (
+            <span className="shrink-0 font-mono text-micro opacity-80">
+              ({res.reference})
+            </span>
+          )}
+        </div>
+
+        {/* Hold expiration warning for pending */}
+        {res.status === 'pending' && (
+          <span className="ml-1 flex shrink-0 items-center gap-0.5 font-mono text-micro font-bold">
+            <Clock className="size-3 shrink-0" />
+            {bar.spanNights >= 2 && <span>Held</span>}
+          </span>
+        )}
+      </TooltipTrigger>
+      <TooltipContent side="top" className="font-sans text-caption">
+        <p className="font-semibold text-paper">
+          {res.guestName}{' '}
+          <span className="font-mono text-white/70">({res.reference})</span>
+        </p>
+        <p className="text-micro text-white/80">
+          Room #{room.roomNumber} • {formatShort(res.checkIn)} →{' '}
+          {formatShort(res.checkOut)} ({bar.spanNights}n)
+        </p>
+        <p className="mt-0.5 text-micro text-brand-ink capitalize">
+          Status: {res.status.replace('_', ' ')}
+        </p>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function BlockBarCell({
+  bar,
+  layout,
+  onEdit,
+  room,
+}: {
+  bar: PlacedBar & { kind: 'block' };
+  layout: RowLayout;
+  onEdit: (block: CalendarBlockBar) => void;
+  room: CalendarRoom;
+}) {
+  const block = bar.item;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            type="button"
+            variant="destructive"
+            size="xs"
+            onClick={() => onEdit(block)}
+            aria-label={`Blocked room ${room.roomNumber}: ${block.reason.replace('_', ' ')}, ${formatShort(block.startDate)} to ${formatShort(block.endDate)}`}
+            style={{
+              left: `${bar.leftPx + 2}px`,
+              top: `${layout.laneTop(bar.lane)}px`,
+              width: `${bar.widthPx}px`,
+              height: `${layout.barHeight}px`,
+            }}
+            className="absolute z-10 h-auto w-auto justify-between overflow-hidden border-destructive/40 bg-destructive/15 px-2 text-destructive hover:scale-[1.01] hover:bg-destructive/25 focus-visible:z-20"
+          />
+        }
+      >
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
+          <ShieldAlert className="size-3.5 shrink-0" />
+          <span className="block min-w-0 truncate text-caption font-semibold uppercase">
+            {block.reason.replace('_', ' ')}
+          </span>
+          {bar.spanNights >= 2 && block.notes && (
+            <span className="block min-w-0 truncate text-micro text-destructive/80">
+              • {block.notes}
+            </span>
+          )}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="font-sans text-caption">
+        <p className="font-semibold text-paper uppercase">
+          Blocked: {block.reason.replace('_', ' ')}
+        </p>
+        <p className="text-micro text-white/80">
+          Room #{room.roomNumber} • {formatShort(block.startDate)} →{' '}
+          {formatShort(block.endDate)}
+        </p>
+        {block.notes && (
+          <p className="mt-0.5 text-micro text-white/70 italic">
+            {block.notes}
+          </p>
+        )}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 export function CalendarGrid({
@@ -305,11 +554,18 @@ export function CalendarGrid({
                         const isOutOfService =
                           room.status === 'maintenance' ||
                           room.status === 'inactive';
+                        const { bars, laneCount } = placeRoomBars(
+                          data,
+                          room,
+                          dates,
+                        );
+                        const layout = rowLayout(laneCount);
 
                         return (
                           <div
                             key={room.id}
-                            className="relative flex h-14 items-center transition-colors hover:bg-muted/20"
+                            className="relative flex items-center transition-colors hover:bg-muted/20"
+                            style={{ height: `${layout.rowHeight}px` }}
                           >
                             {/* Sticky Room Column */}
                             <div className="sticky left-0 z-20 flex h-full w-52 shrink-0 items-center justify-between border-r border-line bg-paper px-3 shadow-xs">
@@ -371,203 +627,25 @@ export function CalendarGrid({
                                 );
                               })}
 
-                              {/* Render Reservation Bars on this room */}
-                              {data.reservations
-                                .filter(
-                                  (r) => r.roomId === room.id && !r.isStaleHold,
-                                )
-                                .map((res) => {
-                                  // Calculate position in grid
-                                  const startIndex = dates.indexOf(res.checkIn);
-                                  const endIndex = dates.indexOf(res.checkOut);
-
-                                  // If reservation is completely outside visible range, skip
-                                  if (
-                                    res.checkOut <= dates[0] ||
-                                    res.checkIn >=
-                                      addDays(dates[dates.length - 1], 1)
-                                  ) {
-                                    return null;
-                                  }
-
-                                  const visibleStart = Math.max(
-                                    0,
-                                    startIndex >= 0 ? startIndex : 0,
-                                  );
-                                  const visibleEnd =
-                                    endIndex >= 0
-                                      ? endIndex
-                                      : startIndex >= 0
-                                        ? dates.length
-                                        : dates.length;
-
-                                  const spanNights = Math.max(
-                                    1,
-                                    visibleEnd - visibleStart,
-                                  );
-                                  const leftPx = visibleStart * 96; // 96px = 24rem width per date
-                                  const widthPx = spanNights * 96 - 4; // 4px margin for turnover gap!
-
-                                  // Visual style cues by status
-                                  let barBg =
-                                    'bg-success text-success-foreground';
-                                  if (res.status === 'pending') {
-                                    barBg =
-                                      'bg-primary text-primary-foreground border border-primary/40';
-                                  } else if (res.status === 'checked_in') {
-                                    barBg = 'bg-ink text-paper';
-                                  } else if (res.status === 'checked_out') {
-                                    barBg =
-                                      'bg-muted-foreground/60 text-white opacity-80';
-                                  }
-
-                                  return (
-                                    <Tooltip key={res.id}>
-                                      <TooltipTrigger
-                                        render={
-                                          <Link
-                                            href={`/admin/reservations/${res.id}`}
-                                            aria-label={`${res.guestName} (${res.reference}), ${formatShort(res.checkIn)} to ${formatShort(res.checkOut)}, Status: ${res.status}`}
-                                            style={{
-                                              left: `${leftPx + 2}px`,
-                                              width: `${widthPx}px`,
-                                            }}
-                                            className={`absolute top-2 z-10 flex h-10 items-center justify-between rounded-control px-2 shadow-xs transition-transform hover:scale-[1.01] focus:outline-hidden ${barBg}`}
-                                          />
-                                        }
-                                      >
-                                        <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
-                                          <span className="block min-w-0 truncate text-caption font-semibold">
-                                            {res.guestName}
-                                          </span>
-                                          {spanNights >= 2 && (
-                                            <span className="shrink-0 font-mono text-micro opacity-80">
-                                              ({res.reference})
-                                            </span>
-                                          )}
-                                        </div>
-
-                                        {/* Hold expiration warning for pending */}
-                                        {res.status === 'pending' && (
-                                          <span className="ml-1 flex shrink-0 items-center gap-0.5 font-mono text-micro font-bold">
-                                            <Clock className="size-3 shrink-0" />
-                                            {spanNights >= 2 && (
-                                              <span>Held</span>
-                                            )}
-                                          </span>
-                                        )}
-                                      </TooltipTrigger>
-                                      <TooltipContent
-                                        side="top"
-                                        className="font-sans text-caption"
-                                      >
-                                        <p className="font-semibold text-paper">
-                                          {res.guestName}{' '}
-                                          <span className="font-mono text-white/70">
-                                            ({res.reference})
-                                          </span>
-                                        </p>
-                                        <p className="text-micro text-white/80">
-                                          Room #{room.roomNumber} •{' '}
-                                          {formatShort(res.checkIn)} →{' '}
-                                          {formatShort(res.checkOut)} (
-                                          {spanNights}n)
-                                        </p>
-                                        <p className="mt-0.5 text-micro text-brand-ink capitalize">
-                                          Status: {res.status.replace('_', ' ')}
-                                        </p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  );
-                                })}
-
-                              {/* Render Block Bars on this room */}
-                              {data.blocks
-                                .filter((b) => b.roomId === room.id)
-                                .map((block) => {
-                                  const startIndex = dates.indexOf(
-                                    block.startDate,
-                                  );
-                                  const endIndex = dates.indexOf(block.endDate);
-
-                                  if (
-                                    block.endDate <= dates[0] ||
-                                    block.startDate >=
-                                      addDays(dates[dates.length - 1], 1)
-                                  ) {
-                                    return null;
-                                  }
-
-                                  const visibleStart = Math.max(
-                                    0,
-                                    startIndex >= 0 ? startIndex : 0,
-                                  );
-                                  const visibleEnd =
-                                    endIndex >= 0
-                                      ? endIndex
-                                      : startIndex >= 0
-                                        ? dates.length
-                                        : dates.length;
-
-                                  const spanNights = Math.max(
-                                    1,
-                                    visibleEnd - visibleStart,
-                                  );
-                                  const leftPx = visibleStart * 96;
-                                  const widthPx = spanNights * 96 - 4;
-
-                                  return (
-                                    <Tooltip key={block.id}>
-                                      <TooltipTrigger
-                                        render={
-                                          <Button
-                                            type="button"
-                                            variant="destructive"
-                                            size="xs"
-                                            onClick={() => onEditBlock(block)}
-                                            aria-label={`Blocked room ${room.roomNumber}: ${block.reason.replace('_', ' ')}, ${formatShort(block.startDate)} to ${formatShort(block.endDate)}`}
-                                            style={{
-                                              left: `${leftPx + 2}px`,
-                                              width: `${widthPx}px`,
-                                            }}
-                                            className="absolute top-2 z-10 h-10 w-auto justify-between border-destructive/40 bg-destructive/15 px-2 text-destructive hover:bg-destructive/25"
-                                          />
-                                        }
-                                      >
-                                        <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
-                                          <ShieldAlert className="size-3.5 shrink-0" />
-                                          <span className="block min-w-0 truncate text-caption font-semibold uppercase">
-                                            {block.reason.replace('_', ' ')}
-                                          </span>
-                                          {spanNights >= 2 && block.notes && (
-                                            <span className="block min-w-0 truncate text-micro text-destructive/80">
-                                              • {block.notes}
-                                            </span>
-                                          )}
-                                        </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent
-                                        side="top"
-                                        className="font-sans text-caption"
-                                      >
-                                        <p className="font-semibold text-paper uppercase">
-                                          Blocked:{' '}
-                                          {block.reason.replace('_', ' ')}
-                                        </p>
-                                        <p className="text-micro text-white/80">
-                                          Room #{room.roomNumber} •{' '}
-                                          {formatShort(block.startDate)} →{' '}
-                                          {formatShort(block.endDate)}
-                                        </p>
-                                        {block.notes && (
-                                          <p className="mt-0.5 text-micro text-white/70 italic">
-                                            {block.notes}
-                                          </p>
-                                        )}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  );
-                                })}
+                              {/* Reservation and block bars, one lane per overlap */}
+                              {bars.map((bar) =>
+                                bar.kind === 'reservation' ? (
+                                  <ReservationBarCell
+                                    key={bar.item.id}
+                                    bar={bar}
+                                    layout={layout}
+                                    room={room}
+                                  />
+                                ) : (
+                                  <BlockBarCell
+                                    key={bar.item.id}
+                                    bar={bar}
+                                    layout={layout}
+                                    onEdit={onEditBlock}
+                                    room={room}
+                                  />
+                                ),
+                              )}
                             </div>
                           </div>
                         );
@@ -656,34 +734,43 @@ export function CalendarGrid({
           <div className="flex flex-wrap items-center gap-3">
             <span className="font-semibold text-ink">Legend:</span>
             <div className="flex items-center gap-1.5">
-              <span className="size-3 rounded-xs bg-success" />
+              <span className="size-3 rounded-xs bg-success" aria-hidden />
               <span>Confirmed</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="size-3 rounded-xs bg-ink" />
+              <span className="size-3 rounded-xs bg-ink" aria-hidden />
               <span>Checked In</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="size-3 rounded-xs bg-primary" />
+              <span className="size-3 rounded-xs bg-primary" aria-hidden />
               <span>Pending Hold</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="size-3 rounded-xs bg-muted-foreground/60" />
+              <span
+                className="size-3 rounded-xs bg-muted-foreground/60"
+                aria-hidden
+              />
               <span>Checked Out</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="size-3 rounded-xs border border-destructive/50 bg-destructive/20" />
+              <span
+                className="size-3 rounded-xs border border-destructive/50 bg-destructive/20"
+                aria-hidden
+              />
               <span>Room Block</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="bg-stripes-muted size-3 rounded-xs border border-line" />
+              <span
+                className="bg-stripes-muted size-3 rounded-xs border border-line"
+                aria-hidden
+              />
               <span>Out of Service</span>
             </div>
           </div>
 
           <div className="font-mono text-micro text-muted-foreground">
-            Turnover: Adjacent bars separated by turnover divider • Check-out
-            day is free for check-in
+            Turnover: adjacent bars separated by turnover divider • Check-out
+            day is free for check-in • Overlapping bars stack in lanes
           </div>
         </div>
       </div>

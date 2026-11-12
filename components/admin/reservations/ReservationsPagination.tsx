@@ -41,7 +41,7 @@ export function ReservationsPagination({
   return (
     <div
       aria-label="Pagination Navigation"
-      className="flex flex-col gap-3 rounded-card border border-line bg-card p-3.5 shadow-raised sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-col flex-wrap gap-3 rounded-card border border-line bg-card p-3.5 shadow-raised sm:flex-row sm:items-center sm:justify-between"
     >
       <div className="flex items-center gap-3 text-small text-muted-foreground">
         <span>

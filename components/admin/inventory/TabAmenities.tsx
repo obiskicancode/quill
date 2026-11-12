@@ -128,7 +128,7 @@ export function TabAmenities({
         </Alert>
       )}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col flex-wrap gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-h3 font-semibold text-foreground">
             Room Amenities Checklist
@@ -147,7 +147,7 @@ export function TabAmenities({
       </div>
 
       {/* Search and Quick Filters */}
-      <div className="flex flex-col gap-3 rounded-card border border-line bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col flex-wrap gap-3 rounded-card border border-line bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input

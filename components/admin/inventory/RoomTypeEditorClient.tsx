@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -135,7 +136,7 @@ export function RoomTypeEditorClient({
   return (
     <div className="space-y-6">
       {/* Top Header & Breadcrumb */}
-      <div className="flex flex-col gap-3 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col flex-wrap gap-3 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <Link
             href="/admin/rooms"
@@ -148,15 +149,12 @@ export function RoomTypeEditorClient({
               {isExisting ? data?.name : 'New Room Type'}
             </h1>
             {isExisting && (
-              <span
-                className={`rounded-full px-2.5 py-0.5 text-caption font-medium ${
-                  data?.isActive
-                    ? 'bg-success/15 text-success'
-                    : 'bg-muted/20 text-muted-foreground'
-                }`}
+              <AdminStatusBadge
+                tone={data?.isActive ? 'success' : 'neutral'}
+                dot
               >
                 {data?.isActive ? 'Active' : 'Draft / Inactive'}
-              </span>
+              </AdminStatusBadge>
             )}
           </div>
         </div>

@@ -1,5 +1,9 @@
 import { AdminCard } from '@/components/admin/AdminCard';
-import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
+import {
+  AdminStatusBadge,
+  reservationTone,
+  statusLabel,
+} from '@/components/admin/AdminStatusBadge';
 import { formatHotelDateTime } from '@/lib/format';
 import type { ReservationStatusHistoryItem } from '@/types/reservation.types';
 
@@ -24,7 +28,9 @@ export function TimelineCard({
                 <span className="absolute top-1 -left-6 size-2.5 rounded-full border-2 border-card bg-ink ring-2 ring-line" />
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <StatusBadge status={item.toStatus} />
+                  <AdminStatusBadge tone={reservationTone(item.toStatus)}>
+                    {statusLabel(item.toStatus)}
+                  </AdminStatusBadge>
                   <span className="text-caption font-semibold text-ink">
                     by {item.actorName}
                     {item.actorRole && ` (${item.actorRole})`}

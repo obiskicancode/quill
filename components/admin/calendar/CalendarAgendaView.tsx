@@ -10,11 +10,14 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
+import {
+  AdminStatusBadge,
+  reservationTone,
+  statusLabel,
+} from '@/components/admin/AdminStatusBadge';
 import { Button } from '@/components/ui/button';
 import { formatLong, formatShort } from '@/lib/dates';
 import type { CalendarResponse } from '@/types/calendar.types';
-import type { AdminReservationStatus } from '@/types/reservation.types';
 
 interface CalendarAgendaViewProps {
   data: CalendarResponse;
@@ -184,9 +187,11 @@ export function CalendarAgendaView({
                                 ({res.reference})
                               </span>
                             </div>
-                            <StatusBadge
-                              status={res.status as AdminReservationStatus}
-                            />
+                            <AdminStatusBadge
+                              tone={reservationTone(res.status)}
+                            >
+                              {statusLabel(res.status)}
+                            </AdminStatusBadge>
                           </Link>
                         );
                       })}
@@ -227,9 +232,11 @@ export function CalendarAgendaView({
                                 ({res.reference})
                               </span>
                             </div>
-                            <StatusBadge
-                              status={res.status as AdminReservationStatus}
-                            />
+                            <AdminStatusBadge
+                              tone={reservationTone(res.status)}
+                            >
+                              {statusLabel(res.status)}
+                            </AdminStatusBadge>
                           </Link>
                         );
                       })}

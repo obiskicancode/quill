@@ -5,6 +5,11 @@ import { ArrowRight, LogOut } from 'lucide-react';
 
 import { AdminCard } from '@/components/admin/AdminCard';
 import { AdminEmpty } from '@/components/admin/AdminStates';
+import {
+  AdminStatusBadge,
+  reservationTone,
+  statusLabel,
+} from '@/components/admin/AdminStatusBadge';
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm';
 import {
@@ -18,8 +23,6 @@ import {
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatMinor } from '@/lib/format';
 import type { DashboardReservationRow } from '@/types/dashboard.types';
-
-import { StatusBadge } from './StatusBadge';
 
 interface DeparturesTableProps {
   rows: DashboardReservationRow[];
@@ -155,7 +158,9 @@ export function DeparturesTable({
                       </span>
                     </TableCell>
                     <TableCell className="px-3 py-3">
-                      <StatusBadge status={row.status} />
+                      <AdminStatusBadge tone={reservationTone(row.status)}>
+                        {statusLabel(row.status)}
+                      </AdminStatusBadge>
                     </TableCell>
                     <TableCell className="py-3 pl-3 text-right">
                       {canManage && row.status === 'checked_in' ? (
@@ -198,7 +203,9 @@ export function DeparturesTable({
                     >
                       {row.reference}
                     </Link>
-                    <StatusBadge status={row.status} />
+                    <AdminStatusBadge tone={reservationTone(row.status)}>
+                      {statusLabel(row.status)}
+                    </AdminStatusBadge>
                   </div>
 
                   <p className="mt-1 font-medium text-ink">{row.guestName}</p>

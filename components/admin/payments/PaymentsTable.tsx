@@ -4,8 +4,12 @@ import Link from 'next/link';
 import { Check, Copy, ExternalLink, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 
+import {
+  AdminStatusBadge,
+  paymentRecordTone,
+  statusLabel,
+} from '@/components/admin/AdminStatusBadge';
 import { clickableRowProps } from '@/components/admin/clickableRow';
-import { PaymentStatusBadge } from '@/components/admin/payments/PaymentStatusBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -155,10 +159,12 @@ export function PaymentsTable({
                     </div>
                   </TableCell>
                   <TableCell className="px-3 py-3">
-                    <PaymentStatusBadge
-                      status={payment.status}
+                    <AdminStatusBadge
+                      tone={paymentRecordTone(payment.status)}
                       className="text-micro"
-                    />
+                    >
+                      {statusLabel(payment.status)}
+                    </AdminStatusBadge>
                   </TableCell>
                   <TableCell
                     className={`px-3 py-3 text-right font-mono font-medium ${isRefund ? 'text-destructive' : 'text-ink'}`}
@@ -245,7 +251,9 @@ export function PaymentsTable({
                     {payment.reservationRef}
                   </span>
                 </div>
-                <PaymentStatusBadge status={payment.status} />
+                <AdminStatusBadge tone={paymentRecordTone(payment.status)}>
+                  {statusLabel(payment.status)}
+                </AdminStatusBadge>
               </div>
 
               <div className="mt-2 flex items-baseline justify-between">

@@ -11,9 +11,15 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import {
+  AdminStatusBadge,
+  paymentStateTone,
+  reservationTone,
+  statusLabel,
+} from '@/components/admin/AdminStatusBadge';
 import { clickableRowProps } from '@/components/admin/clickableRow';
-import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Popover,
   PopoverContent,
@@ -29,13 +35,12 @@ import {
 } from '@/components/ui/table';
 import { useWebStorage } from '@/hooks/use-web-storage';
 import { formatMinor } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import type {
   ReservationListItem,
   ReservationSortField,
   SortOrder,
 } from '@/types/reservation.types';
-
-import { PaymentBadge } from './PaymentBadge';
 
 const ALL_COLUMNS = [
   { id: 'guest', label: 'Guest' },
@@ -58,6 +63,11 @@ interface ReservationsTableProps {
   sort: string;
   order: string;
   onSortChange: (field: ReservationSortField, order: SortOrder) => void;
+  selectedIds: string[];
+  onToggleSelect: (id: string) => void;
+  onSelectAll: (checked: boolean) => void;
+  /** Selection only makes sense when the role has a bulk action to run. */
+  canSelect: boolean;
 }
 
 const DEFAULT_COLUMNS: Record<ColumnKey, boolean> = {
@@ -87,8 +97,17 @@ export function ReservationsTable({
   sort,
   order,
   onSortChange,
+  selectedIds,
+  onToggleSelect,
+  onSelectAll,
+  canSelect,
 }: ReservationsTableProps) {
   const router = useRouter();
+
+  const isAllSelected =
+    canSelect &&
+    rows.length > 0 &&
+    rows.every((row) => selectedIds.includes(row.id));
 
   // Column visibility state persisted in localStorage
   const [visibleColumns, setVisibleColumns] = useWebStorage<
@@ -203,7 +222,16 @@ export function ReservationsTable({
               scope="col"
               className="sticky left-0 z-20 bg-paper py-3.5 pr-3 pl-4 text-muted-foreground shadow-[0.0625rem_0_0_0_var(--color-line)]"
             >
-              Reference
+              <div className="flex items-center gap-2">
+                {canSelect && (
+                  <Checkbox
+                    aria-label="Select all reservations on this page"
+                    checked={isAllSelected}
+                    onCheckedChange={(checked) => onSelectAll(checked === true)}
+                  />
+                )}
+                <span>Reference</span>
+              </div>
             </TableHead>
 
             {visibleColumns.guest && (
@@ -327,131 +355,154 @@ export function ReservationsTable({
         </TableHeader>
 
         <TableBody className="divide-y divide-line">
-          {rows.map((row) => (
-            <TableRow
-              key={row.id}
-              {...clickableRowProps(
-                `Open reservation ${row.reference} for ${row.guestName}`,
-                () => router.push(`/admin/reservations/${row.id}`),
-                'group border-line transition-colors hover:bg-paper/70 focus:bg-paper/70',
-              )}
-            >
-              {/* Reference Column (Sticky Left) */}
-              <TableCell className="sticky left-0 z-10 bg-card py-3 pr-3 pl-4 font-semibold text-ink shadow-[0.0625rem_0_0_0_var(--color-line)] group-hover:bg-paper/70 group-focus:bg-paper/70">
-                <div className="flex items-center gap-1.5">
-                  <span className="underline-offset-4 group-hover:underline">
-                    {row.reference}
-                  </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={(e) => handleCopy(e, row.reference)}
-                    aria-label={`Copy reference ${row.reference}`}
-                    className="p-1 text-muted-foreground hover:bg-line/40 hover:text-ink"
-                  >
-                    {copiedRef === row.reference ? (
-                      <Check
-                        className="size-3 text-success"
-                        aria-hidden="true"
+          {rows.map((row) => {
+            const isSelected = canSelect && selectedIds.includes(row.id);
+            return (
+              <TableRow
+                key={row.id}
+                {...clickableRowProps(
+                  `Open reservation ${row.reference} for ${row.guestName}`,
+                  () => router.push(`/admin/reservations/${row.id}`),
+                  cn(
+                    'group border-line transition-colors hover:bg-paper/70 focus:bg-paper/70',
+                    isSelected && 'bg-primary/5',
+                  ),
+                )}
+              >
+                {/* Reference Column (Sticky Left) */}
+                <TableCell
+                  className={cn(
+                    'sticky left-0 z-10 bg-card py-3 pr-3 pl-4 font-semibold text-ink shadow-[0.0625rem_0_0_0_var(--color-line)] group-hover:bg-paper/70 group-focus:bg-paper/70',
+                    isSelected && 'bg-primary/5',
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    {canSelect && (
+                      <Checkbox
+                        aria-label={`Select reservation ${row.reference}`}
+                        checked={isSelected}
+                        onCheckedChange={() => onToggleSelect(row.id)}
+                        onClick={(e) => e.stopPropagation()}
                       />
-                    ) : (
-                      <Copy className="size-3" aria-hidden="true" />
                     )}
-                  </Button>
-                </div>
-              </TableCell>
-
-              {visibleColumns.guest && (
-                <TableCell className="px-3 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-ink">
-                      {row.guestName}
-                    </p>
-                    {row.guestPhone && (
-                      <p className="truncate text-caption text-muted-foreground">
-                        {row.guestPhone}
-                      </p>
-                    )}
+                    <span className="underline-offset-4 group-hover:underline">
+                      {row.reference}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={(e) => handleCopy(e, row.reference)}
+                      aria-label={`Copy reference ${row.reference}`}
+                      className="p-1 text-muted-foreground hover:bg-line/40 hover:text-ink"
+                    >
+                      {copiedRef === row.reference ? (
+                        <Check
+                          className="size-3 text-success"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <Copy className="size-3" aria-hidden="true" />
+                      )}
+                    </Button>
                   </div>
                 </TableCell>
-              )}
 
-              {visibleColumns.room && (
-                <TableCell className="px-3 py-3 text-muted-foreground">
-                  <span>{row.roomTypeName}</span>
-                  <span className="ml-1 font-semibold text-ink">
-                    #{row.roomNumber}
-                  </span>
-                </TableCell>
-              )}
+                {visibleColumns.guest && (
+                  <TableCell className="px-3 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-ink">
+                        {row.guestName}
+                      </p>
+                      {row.guestPhone && (
+                        <p className="truncate text-caption text-muted-foreground">
+                          {row.guestPhone}
+                        </p>
+                      )}
+                    </div>
+                  </TableCell>
+                )}
 
-              {visibleColumns.checkIn && (
-                <TableCell className="px-3 py-3 font-medium text-ink">
-                  {row.checkIn}
-                </TableCell>
-              )}
+                {visibleColumns.room && (
+                  <TableCell className="px-3 py-3 text-muted-foreground">
+                    <span>{row.roomTypeName}</span>
+                    <span className="ml-1 font-semibold text-ink">
+                      #{row.roomNumber}
+                    </span>
+                  </TableCell>
+                )}
 
-              {visibleColumns.checkOut && (
-                <TableCell className="px-3 py-3 text-muted-foreground">
-                  {row.checkOut}
-                </TableCell>
-              )}
+                {visibleColumns.checkIn && (
+                  <TableCell className="px-3 py-3 font-medium text-ink">
+                    {row.checkIn}
+                  </TableCell>
+                )}
 
-              {visibleColumns.stay && (
-                <TableCell className="px-3 py-3 text-muted-foreground">
-                  <span>{row.nights}n</span>
-                  <span className="ml-1 text-caption">
-                    ({row.adults + row.children}g)
-                  </span>
-                </TableCell>
-              )}
+                {visibleColumns.checkOut && (
+                  <TableCell className="px-3 py-3 text-muted-foreground">
+                    {row.checkOut}
+                  </TableCell>
+                )}
 
-              {visibleColumns.status && (
-                <TableCell className="px-3 py-3">
-                  <StatusBadge status={row.status} />
-                </TableCell>
-              )}
+                {visibleColumns.stay && (
+                  <TableCell className="px-3 py-3 text-muted-foreground">
+                    <span>{row.nights}n</span>
+                    <span className="ml-1 text-caption">
+                      ({row.adults + row.children}g)
+                    </span>
+                  </TableCell>
+                )}
 
-              {visibleColumns.payment && (
-                <TableCell className="px-3 py-3">
-                  <PaymentBadge state={row.paymentState} />
-                </TableCell>
-              )}
+                {visibleColumns.status && (
+                  <TableCell className="px-3 py-3">
+                    <AdminStatusBadge tone={reservationTone(row.status)}>
+                      {statusLabel(row.status)}
+                    </AdminStatusBadge>
+                  </TableCell>
+                )}
 
-              {visibleColumns.total && (
-                <TableCell className="px-3 py-3 font-semibold text-ink">
-                  {formatMinor(row.totalMinor)}
-                </TableCell>
-              )}
+                {visibleColumns.payment && (
+                  <TableCell className="px-3 py-3">
+                    <AdminStatusBadge tone={paymentStateTone(row.paymentState)}>
+                      {statusLabel(row.paymentState)}
+                    </AdminStatusBadge>
+                  </TableCell>
+                )}
 
-              {visibleColumns.balance && (
-                <TableCell className="px-3 py-3">
-                  <span
-                    className={
-                      row.balanceMinor > 0
-                        ? 'font-bold text-destructive'
-                        : 'text-muted-foreground'
-                    }
-                  >
-                    {formatMinor(row.balanceMinor)}
-                  </span>
-                </TableCell>
-              )}
+                {visibleColumns.total && (
+                  <TableCell className="px-3 py-3 font-semibold text-ink">
+                    {formatMinor(row.totalMinor)}
+                  </TableCell>
+                )}
 
-              {visibleColumns.source && (
-                <TableCell className="px-3 py-3 text-caption font-medium text-muted-foreground uppercase">
-                  {row.bookingSource}
-                </TableCell>
-              )}
+                {visibleColumns.balance && (
+                  <TableCell className="px-3 py-3">
+                    <span
+                      className={
+                        row.balanceMinor > 0
+                          ? 'font-bold text-destructive'
+                          : 'text-muted-foreground'
+                      }
+                    >
+                      {formatMinor(row.balanceMinor)}
+                    </span>
+                  </TableCell>
+                )}
 
-              {visibleColumns.bookedOn && (
-                <TableCell className="py-3 pr-4 pl-3 text-caption text-muted-foreground">
-                  {row.createdAt.slice(0, 10)}
-                </TableCell>
-              )}
-            </TableRow>
-          ))}
+                {visibleColumns.source && (
+                  <TableCell className="px-3 py-3 text-caption font-medium text-muted-foreground uppercase">
+                    {row.bookingSource}
+                  </TableCell>
+                )}
+
+                {visibleColumns.bookedOn && (
+                  <TableCell className="py-3 pr-4 pl-3 text-caption text-muted-foreground">
+                    {row.createdAt.slice(0, 10)}
+                  </TableCell>
+                )}
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>

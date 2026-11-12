@@ -35,7 +35,6 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
@@ -43,7 +42,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useAdminLogout } from '@/hooks/services/admin/use-auth';
-import { useNewEnquiryCount } from '@/hooks/services/admin/use-enquiries';
 import { ADMIN_NAV, ROLE_LABELS } from '@/lib/auth/permissions';
 import type { AdminIdentity, AdminRole, Permission } from '@/types/auth.types';
 
@@ -62,6 +60,14 @@ const icons = {
   '/admin/staff': Users,
   '/admin/audit': History,
 };
+
+// Sections wired to the "next build phase" stub in app/admin/(shell)/[section].
+// Hidden from the sidebar so staff are not sent to a page with no live records.
+const UNBUILT_ADMIN_SECTIONS = new Set([
+  '/admin/enquiries',
+  '/admin/content',
+  '/admin/settings',
+]);
 
 interface AdminSidebarProps {
   user: AdminIdentity;
@@ -82,15 +88,15 @@ function AdminSidebar({
 }: AdminSidebarProps) {
   const pathname = usePathname();
   const { isMobile, setOpenMobile } = useSidebar();
-  const enquiryCount = useNewEnquiryCount(!mfaPending);
-  const newEnquiriesCount = enquiryCount.data ?? 0;
 
   const groups = mfaPending
     ? []
     : ADMIN_NAV.map((group) => ({
         ...group,
-        items: group.items.filter((item) =>
-          permissions.includes(item.permission),
+        items: group.items.filter(
+          (item) =>
+            permissions.includes(item.permission) &&
+            !UNBUILT_ADMIN_SECTIONS.has(item.href),
         ),
       })).filter((group) => group.items.length > 0);
 
@@ -191,12 +197,6 @@ function AdminSidebar({
                             {item.label}
                           </span>
                         </SidebarMenuButton>
-                        {item.href === '/admin/enquiries' &&
-                          newEnquiriesCount > 0 && (
-                            <SidebarMenuBadge className="rounded-full bg-primary px-1.5 py-0.5 text-micro font-bold text-primary-foreground">
-                              {newEnquiriesCount}
-                            </SidebarMenuBadge>
-                          )}
                       </SidebarMenuItem>
                     );
                   })}
@@ -296,12 +296,7 @@ export function AdminShell({
       <SidebarInset className="min-w-0 bg-paper">
         <header className="sticky top-0 z-(--z-sticky) flex h-(--header-h) items-center gap-3 border-b border-line bg-card/95 px-4 backdrop-blur md:px-6">
           <SidebarTrigger />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-small font-semibold">{user.email}</p>
-            <p className="text-caption text-muted-foreground">
-              {ROLE_LABELS[role]}
-            </p>
-          </div>
+          <div className="flex-1" />
           <Button
             variant="ghost"
             size="sm"

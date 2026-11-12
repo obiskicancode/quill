@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import type { z } from 'zod';
 
-import { StatusDotBadge } from '@/components/admin/StatusDotBadge';
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm';
@@ -230,7 +230,7 @@ export function TabRooms({
       )}
 
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col flex-wrap gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-h3 font-semibold text-foreground">
             Room Units (Inventory)
@@ -284,7 +284,7 @@ export function TabRooms({
                     {u.floor || '—'}
                   </TableCell>
                   <TableCell className="px-4 py-3">
-                    <StatusDotBadge
+                    <AdminStatusBadge
                       tone={
                         u.status === 'active'
                           ? 'success'
@@ -292,13 +292,14 @@ export function TabRooms({
                             ? 'brand'
                             : 'neutral'
                       }
+                      dot
                     >
                       {u.status === 'active'
                         ? 'Active'
                         : u.status === 'maintenance'
                           ? 'Maintenance'
                           : 'Inactive'}
-                    </StatusDotBadge>
+                    </AdminStatusBadge>
                   </TableCell>
                   <TableCell className="px-4 py-3">
                     {u.nextReservation ? (

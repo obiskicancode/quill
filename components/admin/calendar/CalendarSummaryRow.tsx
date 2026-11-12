@@ -1,5 +1,7 @@
 'use client';
 
+import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import type { CalendarNightStat } from '@/types/calendar.types';
 
@@ -36,7 +38,7 @@ export function CalendarSummaryRow({
               size="xs"
               onClick={() => onSelectDate(stat.date)}
               title={`${stat.date}: ${stat.occupancyPercent}% occupancy (${stat.occupiedRooms} of ${stat.sellableRooms} sellable). ${stat.arrivalsCount} arrivals, ${stat.departuresCount} departures. Click for details.`}
-              aria-label={`Occupancy for ${stat.date}: ${stat.occupancyPercent} percent`}
+              aria-label={`Occupancy for ${stat.date}: ${stat.occupancyPercent} percent, ${stat.occupiedRooms} of ${stat.sellableRooms} sellable, ${stat.arrivalsCount} arrivals, ${stat.departuresCount} departures`}
               className={`h-auto w-24 shrink-0 flex-col rounded-none border-r border-line/60 p-1 font-mono ${
                 isToday ? 'bg-primary/10' : ''
               }`}
@@ -60,23 +62,19 @@ export function CalendarSummaryRow({
               </div>
 
               {/* Arrivals and Departures */}
-              <div className="mt-0.5 flex items-center gap-1.5 text-micro">
+              <div className="mt-0.5 flex items-center gap-2 text-micro">
                 {stat.arrivalsCount > 0 ? (
-                  <span
-                    className="text-success"
-                    title={`${stat.arrivalsCount} arrivals`}
-                  >
-                    ↓{stat.arrivalsCount}
+                  <span className="inline-flex items-center gap-0.5 font-semibold text-success">
+                    <ArrowDownToLine className="size-3" aria-hidden />
+                    {stat.arrivalsCount}
                   </span>
                 ) : (
                   <span className="text-muted-foreground/50">-</span>
                 )}
                 {stat.departuresCount > 0 ? (
-                  <span
-                    className="text-departures"
-                    title={`${stat.departuresCount} departures`}
-                  >
-                    ↑{stat.departuresCount}
+                  <span className="inline-flex items-center gap-0.5 font-semibold text-departures">
+                    <ArrowUpFromLine className="size-3" aria-hidden />
+                    {stat.departuresCount}
                   </span>
                 ) : (
                   <span className="text-muted-foreground/50">-</span>

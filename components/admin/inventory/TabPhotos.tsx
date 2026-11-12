@@ -4,10 +4,7 @@ import Image from 'next/image';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   AlertCircle,
-  ArrowDown,
-  ArrowUp,
   Image as ImageIcon,
-  Loader2,
   Star,
   Trash2,
   UploadCloud,
@@ -16,12 +13,13 @@ import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
 
+import { ReorderButtons } from '@/components/admin/ReorderButtons';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm';
 import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
+import { Spinner } from '@/components/ui/spinner';
 import { toast } from '@/components/ui/toast';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
@@ -59,7 +57,6 @@ export function TabPhotos({
   const [photos, setPhotos] = useState<AdminRoomImage[]>(initialPhotos);
   const [syncedPhotos, setSyncedPhotos] = useState(initialPhotos);
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Editing alt text inline
@@ -121,7 +118,6 @@ export function TabPhotos({
     if (!input.file) return;
 
     setUploading(true);
-    setUploadProgress(20);
     setErrorMessage(null);
 
     try {
@@ -131,9 +127,7 @@ export function TabPhotos({
       formData.append('caption', input.caption.trim());
       formData.append('isCover', photos.length === 0 ? 'true' : 'false');
 
-      setUploadProgress(60);
       await uploadImage.mutateAsync(formData);
-      setUploadProgress(100);
 
       toast.add({ title: SUCCESS_MESSAGES.PHOTO_UPLOADED, type: 'success' });
       uploadForm.reset({ file: null, altText: '', caption: '' });
@@ -146,7 +140,6 @@ export function TabPhotos({
       );
     } finally {
       setUploading(false);
-      setUploadProgress(null);
     }
   }
 
@@ -332,20 +325,15 @@ export function TabPhotos({
                 </Field>
               </div>
 
-              {uploadProgress !== null && (
-                <div className="mt-3">
-                  <Progress
-                    value={uploadProgress}
-                    aria-label="Upload progress"
-                    aria-describedby="upload-progress-status"
-                  />
-                  <p
-                    id="upload-progress-status"
-                    className="mt-1 text-caption text-muted-foreground"
-                  >
-                    Uploading and processing...
-                  </p>
-                </div>
+              {uploading && (
+                <p
+                  role="status"
+                  className="mt-3 flex items-center gap-2 text-caption text-muted-foreground"
+                >
+                  <Spinner className="size-4 shrink-0" aria-hidden />
+                  Uploading {pendingFile?.name ?? 'photo'} and saving it to the
+                  gallery.
+                </p>
               )}
 
               <div className="mt-4 flex items-center justify-end gap-2">
@@ -360,15 +348,8 @@ export function TabPhotos({
                 >
                   Cancel
                 </Button>
-                <Button type="submit" size="sm" disabled={uploading}>
-                  {uploading ? (
-                    <>
-                      <Loader2 className="mr-1.5 size-4 animate-spin" />{' '}
-                      Uploading...
-                    </>
-                  ) : (
-                    'Upload Photo'
-                  )}
+                <Button type="submit" size="sm" loading={uploading}>
+                  Upload Photo
                 </Button>
               </div>
             </form>
@@ -496,28 +477,13 @@ export function TabPhotos({
                   )}
 
                   <div className="mt-3 flex items-center justify-between border-t border-line pt-2">
-                    <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => handleMove(idx, 'up')}
-                        disabled={idx === 0}
-                        aria-label="Move earlier"
-                      >
-                        <ArrowUp className="size-3.5" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => handleMove(idx, 'down')}
-                        disabled={idx === photos.length - 1}
-                        aria-label="Move later"
-                      >
-                        <ArrowDown className="size-3.5" />
-                      </Button>
-                    </div>
+                    <ReorderButtons
+                      label={`photo ${idx + 1}`}
+                      index={idx}
+                      count={photos.length}
+                      words={['earlier', 'later']}
+                      onMove={(direction) => handleMove(idx, direction)}
+                    />
 
                     <div className="flex items-center gap-1">
                       {!p.isCover && (

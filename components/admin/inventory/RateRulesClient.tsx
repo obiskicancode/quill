@@ -8,7 +8,7 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
-import { StatusDotBadge } from '@/components/admin/StatusDotBadge';
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm';
@@ -81,6 +81,18 @@ export function RateRulesClient({
     await rulesQuery.refetch();
   }
 
+  const filtersActive = selectedRoomTypeId !== 'all' || statusFilter !== 'all';
+
+  function clearFilters() {
+    setSelectedRoomTypeId('all');
+    setStatusFilter('all');
+  }
+
+  function openCreate() {
+    setEditingRule(null);
+    setDialogOpen(true);
+  }
+
   const filteredRules = rules.filter((r) => {
     if (selectedRoomTypeId !== 'all') {
       if (r.roomTypeId !== selectedRoomTypeId && r.roomTypeId !== null) {
@@ -135,7 +147,7 @@ export function RateRulesClient({
   return (
     <div className="space-y-6">
       {/* Filters & Action Bar */}
-      <div className="flex flex-col gap-3 rounded-card border border-line bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col flex-wrap gap-3 rounded-card border border-line bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
             <Filter className="size-4 text-muted-foreground" />
@@ -195,14 +207,7 @@ export function RateRulesClient({
           </Button>
         </div>
 
-        <Button
-          size="sm"
-          onClick={() => {
-            setEditingRule(null);
-            setDialogOpen(true);
-          }}
-          className="gap-1.5"
-        >
+        <Button size="sm" onClick={openCreate} className="gap-1.5">
           <Plus className="size-4" /> New Rate Rule
         </Button>
       </div>
@@ -221,9 +226,27 @@ export function RateRulesClient({
       {loading && rules.length === 0 ? (
         <AdminLoading label="Loading rate rules..." />
       ) : filteredRules.length === 0 ? (
-        <AdminEmpty title="No rate rules found">
-          Create rules to adjust pricing dynamically for peak holiday seasons,
-          weekend uplifts, or extended stay discounts.
+        <AdminEmpty
+          title={
+            filtersActive
+              ? 'No rate rules match these filters'
+              : 'No rate rules yet'
+          }
+          action={
+            filtersActive ? (
+              <Button size="sm" variant="secondary" onClick={clearFilters}>
+                Clear filters
+              </Button>
+            ) : (
+              <Button size="sm" onClick={openCreate}>
+                New rate rule
+              </Button>
+            )
+          }
+        >
+          {filtersActive
+            ? 'Every rule is hidden by the current room type or status filter.'
+            : 'Create rules to adjust pricing dynamically for peak holiday seasons, weekend uplifts, or extended stay discounts.'}
         </AdminEmpty>
       ) : (
         <div className="overflow-x-auto rounded-card border border-line bg-card">
@@ -290,9 +313,12 @@ export function RateRulesClient({
                   </TableCell>
 
                   <TableCell className="px-4 py-3">
-                    <StatusDotBadge tone={r.isActive ? 'success' : 'neutral'}>
+                    <AdminStatusBadge
+                      tone={r.isActive ? 'success' : 'neutral'}
+                      dot
+                    >
                       {r.isActive ? 'Active' : 'Inactive'}
-                    </StatusDotBadge>
+                    </AdminStatusBadge>
                   </TableCell>
 
                   <TableCell className="py-3 pr-4 pl-3 text-right">

@@ -24,6 +24,7 @@ import { buildSnapshot } from '@/lib/booking/snapshot';
 import {
   applyStayChange,
   loadStoredReservation,
+  replaceReservationExtras,
   saveStoredReservation,
 } from '@/lib/booking/store';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
@@ -272,6 +273,7 @@ export async function getReservationsAdminList(
       balanceMinor: reservations.balanceMinor,
       bookingSource: reservations.bookingSource,
       createdAt: reservations.createdAt,
+      updatedAt: reservations.updatedAt,
       arrivalTime: reservations.arrivalTime,
     })
     .from(reservations)
@@ -323,6 +325,7 @@ export async function getReservationsAdminList(
       balanceMinor,
       bookingSource: r.bookingSource,
       createdAt: r.createdAt.toISOString(),
+      updatedAt: r.updatedAt.toISOString(),
       arrivalTime: r.arrivalTime,
     };
   });
@@ -1391,6 +1394,7 @@ export async function verifyBankTransfer(
             typeof applyStayChange
           >[1]['policy'],
         });
+        await replaceReservationExtras(stored.id, changeBreakdown.extras, tx);
         stored.pendingChange = null;
 
         await tx
@@ -2387,15 +2391,7 @@ export async function adminCreateReservation(
     }
 
     // 6. Insert Extras
-    for (const extra of quote.breakdown.extras) {
-      await tx.insert(reservationExtras).values({
-        reservationId,
-        name: extra.name,
-        quantity: extra.quantity,
-        unitPriceMinor: extra.totalMinor / Math.max(1, extra.quantity),
-        totalMinor: extra.totalMinor,
-      });
-    }
+    await replaceReservationExtras(reservationId, quote.breakdown.extras, tx);
 
     // 7. Insert Payment if recorded
     if (input.paymentChoice.mode === 'record_payment') {

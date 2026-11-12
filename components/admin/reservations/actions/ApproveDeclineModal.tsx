@@ -9,11 +9,14 @@ import type { z } from 'zod';
 import { ServiceError } from '@/app/api/services/base.service';
 import { Button } from '@/components/ui/button';
 import { Field, inputClass } from '@/components/ui/form-field';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useApproveDeclineReservation } from '@/hooks/services/admin/use-reservations';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import { cn } from '@/lib/utils';
 import { approveDeclineSchema } from '@/schemas/reservation.schema';
 import type { ReservationDetail } from '@/types/reservation.types';
 
@@ -36,6 +39,25 @@ const approveDeclineFormSchema = approveDeclineSchema
 
 type ApproveDeclineFormInput = z.input<typeof approveDeclineFormSchema>;
 type ApproveDeclineFormOutput = z.output<typeof approveDeclineFormSchema>;
+
+const DECISION_LABEL_ID = 'approve-decline-decision';
+
+const DECISIONS = [
+  {
+    value: 'approve',
+    label: 'Approve booking',
+    icon: Check,
+    cardClass: 'border-success bg-success/10 ring-1 ring-success',
+    itemClass: 'data-checked:border-success data-checked:bg-success',
+  },
+  {
+    value: 'decline',
+    label: 'Decline request',
+    icon: X,
+    cardClass: 'border-destructive bg-destructive/10 ring-1 ring-destructive',
+    itemClass: 'data-checked:border-destructive data-checked:bg-destructive',
+  },
+] as const;
 
 interface ApproveDeclineModalProps {
   open: boolean;
@@ -128,32 +150,49 @@ export function ApproveDeclineModal({
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4"
       >
-        {/* Action Toggle */}
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            type="button"
-            variant={action === 'approve' ? 'primary' : 'secondary'}
-            onClick={() => {
-              setValue('action', 'approve');
-              clearErrors('reason');
+        {/* Decision */}
+        <div className="space-y-2">
+          <p id={DECISION_LABEL_ID} className="font-semibold">
+            Decision
+          </p>
+          <RadioGroup
+            value={action}
+            onValueChange={(val) => {
+              const next = val === 'decline' ? 'decline' : 'approve';
+              setValue('action', next);
+              if (next === 'approve') clearErrors('reason');
             }}
-            className={
-              action === 'approve'
-                ? 'bg-success text-success-foreground hover:bg-success/90'
-                : ''
-            }
+            aria-labelledby={DECISION_LABEL_ID}
+            disabled={busy}
+            className="gap-2 sm:grid-cols-2"
           >
-            <Check className="size-4" aria-hidden="true" />
-            <span>Approve Booking</span>
-          </Button>
-          <Button
-            type="button"
-            variant={action === 'decline' ? 'destructive' : 'secondary'}
-            onClick={() => setValue('action', 'decline')}
-          >
-            <X className="size-4" aria-hidden="true" />
-            <span>Decline Request</span>
-          </Button>
+            {DECISIONS.map((decision) => {
+              const selected = action === decision.value;
+              const Icon = decision.icon;
+              return (
+                <Label
+                  key={decision.value}
+                  htmlFor={`${DECISION_LABEL_ID}-${decision.value}`}
+                  className={cn(
+                    'flex min-h-11 cursor-pointer items-center gap-2.5 rounded-control border px-3 py-2 font-semibold transition-colors',
+                    selected
+                      ? decision.cardClass
+                      : 'border-line bg-card hover:bg-paper',
+                    busy && 'cursor-not-allowed opacity-60',
+                  )}
+                >
+                  <RadioGroupItem
+                    value={decision.value}
+                    id={`${DECISION_LABEL_ID}-${decision.value}`}
+                    disabled={busy}
+                    className={decision.itemClass}
+                  />
+                  <Icon className="size-4" aria-hidden="true" />
+                  <span>{decision.label}</span>
+                </Label>
+              );
+            })}
+          </RadioGroup>
         </div>
 
         {/* Stay Summary */}

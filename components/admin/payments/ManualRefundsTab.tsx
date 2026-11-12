@@ -73,12 +73,8 @@ const ManualRefundPayoutFormSchema = ManualRefundPayoutInputSchema.omit({
 type PayoutInput = z.input<typeof ManualRefundPayoutFormSchema>;
 type PayoutOutput = z.output<typeof ManualRefundPayoutFormSchema>;
 
-function generatePayoutReference(): string {
-  return `REF-TRF-${Date.now().toString().slice(-6)}`;
-}
-
 function generatePayoutIdempotencyKey(id: string): string {
-  return `payout-${id}-${Date.now()}`;
+  return `payout-${id}-${crypto.randomUUID()}`;
 }
 
 function getTodayDateString(): string {
@@ -99,6 +95,7 @@ export function ManualRefundsTab({
   const [selectedRefund, setSelectedRefund] = useState<ManualRefundItem | null>(
     null,
   );
+  const [payoutKey, setPayoutKey] = useState<string | null>(null);
   const [recheckingId, setRecheckingId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -125,10 +122,13 @@ export function ManualRefundsTab({
 
   const handleOpenPayout = (refund: ManualRefundItem) => {
     setSelectedRefund(refund);
+    // One key per opened payout: a retry after a lost response must re-send the
+    // same key, or the server cannot deduplicate the second attempt.
+    setPayoutKey(generatePayoutIdempotencyKey(refund.id));
     reset({
       amountNaira: String(refund.refundDueMinor / 100),
       method: refund.method === 'cash' ? 'cash' : 'bank_transfer',
-      reference: generatePayoutReference(),
+      reference: '',
       paidDate: getTodayDateString(),
       doNotEmailGuest: false,
       note: `Manual refund paid out for ${refund.guestName}`,
@@ -152,13 +152,15 @@ export function ManualRefundsTab({
     try {
       await onMarkPaidOut(selectedRefund.id, {
         ...input,
-        idempotencyKey: generatePayoutIdempotencyKey(selectedRefund.id),
+        idempotencyKey:
+          payoutKey ?? generatePayoutIdempotencyKey(selectedRefund.id),
       });
       toast.add({
         title: SUCCESS_MESSAGES.REFUND_PAYOUT_MARKED_PAID,
         type: 'success',
       });
       setSelectedRefund(null);
+      setPayoutKey(null);
     } catch (err: unknown) {
       if (err instanceof ServiceError) {
         const fieldErrors = err.body?.fieldErrors;
@@ -315,7 +317,10 @@ export function ManualRefundsTab({
         <Dialog
           open
           onOpenChange={(nextOpen) => {
-            if (!nextOpen && !isSubmitting) setSelectedRefund(null);
+            if (!nextOpen && !isSubmitting) {
+              setSelectedRefund(null);
+              setPayoutKey(null);
+            }
           }}
         >
           <DialogContent size="lg">
@@ -421,6 +426,7 @@ export function ManualRefundsTab({
                   <Field
                     id="payout-reference"
                     label="Payout Reference / Narration"
+                    hint="Copy the narration or reference the bank actually issued for this payout."
                     error={errors.reference?.message}
                   >
                     {(a11y) => (
@@ -429,6 +435,7 @@ export function ManualRefundsTab({
                         {...register('reference')}
                         type="text"
                         required
+                        placeholder="e.g. GTB narration 0921554411"
                         className={`${inputClass(errors.reference?.message)} border-line bg-paper`}
                       />
                     )}
@@ -504,7 +511,10 @@ export function ManualRefundsTab({
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => setSelectedRefund(null)}
+                  onClick={() => {
+                    setSelectedRefund(null);
+                    setPayoutKey(null);
+                  }}
                   disabled={isSubmitting}
                 >
                   Cancel

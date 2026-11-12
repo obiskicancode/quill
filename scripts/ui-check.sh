@@ -181,6 +181,13 @@ check 'removed <Banner> primitive (use Alert variant + size)' '<Banner[\s/>]'
 check 'removed <StaySelector> (use <StayPicker variant="rail">)' \
   '<StaySelector[\s/>]'
 
+# Five badge families each picked their own colour for the same word - a
+# pending booking was `info` here and `brand` there - and two more components
+# hand-rolled the dot. AdminStatusBadge owns the tone vocabulary, the dot and
+# the label spelling, so a status means the same colour wherever it is read.
+check 'removed badge families (use AdminStatusBadge)' \
+  '<(StatusBadge|PaymentBadge|PaymentStatusBadge|StaffStatusBadge|StatusDotBadge)[\s/>]'
+
 # The underline colour belongs to TextLink. The two header nav links are the
 # exception: they are <Link>s that keep the header's own 0.625rem underline
 # offset, which TextLink does not express.
@@ -201,10 +208,9 @@ check 'note-panel recipe outside Alert' 'rounded-control bg-paper p-4' \
 # The `sm` breakpoint is 390px and two nowrap buttons side by side want about
 # 400px, so switching a column to a row without letting it wrap puts the page
 # into horizontal scroll on a small phone. Allowed: the two dialog footers,
-# whose short labels sit inside their own max-width, and the admin tree, which
-# takes this rule when its own pass lands.
+# whose short labels sit inside their own max-width.
 check 'sm:flex-row without flex-wrap' '^(?!.*flex-wrap).*sm:flex-row' \
-  'components/admin/|components/ui/dialog\.tsx|components/ui/alert-dialog\.tsx'
+  'components/ui/dialog\.tsx|components/ui/alert-dialog\.tsx'
 
 python3 - <<'PY'
 import glob, sys

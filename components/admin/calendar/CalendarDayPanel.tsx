@@ -10,7 +10,11 @@ import {
   Users,
 } from 'lucide-react';
 
-import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
+import {
+  AdminStatusBadge,
+  reservationTone,
+  statusLabel,
+} from '@/components/admin/AdminStatusBadge';
 import { Alert } from '@/components/ui/alert';
 import {
   Sheet,
@@ -23,7 +27,6 @@ import {
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useCalendarDay } from '@/hooks/services/admin/use-calendar';
 import { formatLong, formatShort } from '@/lib/dates';
-import type { AdminReservationStatus } from '@/types/reservation.types';
 
 interface CalendarDayPanelProps {
   date: string | null;
@@ -153,9 +156,9 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                             {arr.reference} • Out on {formatShort(arr.checkOut)}
                           </p>
                         </div>
-                        <StatusBadge
-                          status={arr.status as AdminReservationStatus}
-                        />
+                        <AdminStatusBadge tone={reservationTone(arr.status)}>
+                          {statusLabel(arr.status)}
+                        </AdminStatusBadge>
                       </Link>
                     ))}
                   </div>
@@ -198,9 +201,9 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                             {formatShort(dep.checkIn)}
                           </p>
                         </div>
-                        <StatusBadge
-                          status={dep.status as AdminReservationStatus}
-                        />
+                        <AdminStatusBadge tone={reservationTone(dep.status)}>
+                          {statusLabel(dep.status)}
+                        </AdminStatusBadge>
                       </Link>
                     ))}
                   </div>
@@ -243,9 +246,9 @@ export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
                             {formatShort(stay.checkOut)}
                           </p>
                         </div>
-                        <StatusBadge
-                          status={stay.status as AdminReservationStatus}
-                        />
+                        <AdminStatusBadge tone={reservationTone(stay.status)}>
+                          {statusLabel(stay.status)}
+                        </AdminStatusBadge>
                       </Link>
                     ))}
                   </div>

@@ -1,7 +1,7 @@
 'use client';
 
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Plus } from 'lucide-react';
-import { useState } from 'react';
 
 import { AdminError } from '@/components/admin/AdminStates';
 import { PageHeader } from '@/components/admin/PageHeader';
@@ -23,12 +23,12 @@ import { ArrivalsTable } from './ArrivalsTable';
 import { DashboardSkeleton } from './DashboardSkeleton';
 import { DeparturesTable } from './DeparturesTable';
 import { KpiRow } from './KpiRow';
-import { NeedsAttention } from './NeedsAttention';
 import { NoRoomsState } from './NoRoomsState';
 import { OccupancyStrip } from './OccupancyStrip';
 import { RecentActivity } from './RecentActivity';
-import { RevenueSummary } from './RevenueSummary';
+import { REVENUE_RANGES, RevenueSummary } from './RevenueSummary';
 import { StaleBanner } from './StaleBanner';
+import { WorkQueue } from './WorkQueue';
 
 interface DashboardClientProps {
   role: AdminRole;
@@ -42,10 +42,27 @@ export function DashboardClient({
   timezone,
   formattedToday,
 }: DashboardClientProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const canManageReservations = permissions.includes('reservations.manage');
   const canViewRevenue = permissions.includes('revenue.view');
 
-  const [revenueRange, setRevenueRange] = useState<RevenueRange>('7d');
+  const rangeParam = searchParams.get('range');
+  const revenueRange: RevenueRange =
+    rangeParam && REVENUE_RANGES.some((r) => r.id === rangeParam)
+      ? (rangeParam as RevenueRange)
+      : '7d';
+
+  const selectRevenueRange = (range: RevenueRange) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (range === '7d') params.delete('range');
+    else params.set('range', range);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
+
   const checkInReservation = useCheckInReservation();
   const checkOutReservation = useCheckOutReservation();
 
@@ -184,11 +201,14 @@ export function DashboardClient({
             <NoRoomsState />
           ) : (
             <>
-              {/* 2. KPI row (4 cards) */}
-              <KpiRow kpi={summary.kpi} />
+              {/* 2. Today's work queue, with a deep link per item */}
+              <WorkQueue
+                attention={summary.attention}
+                arrivals={summary.arrivals}
+              />
 
-              {/* 3. Needs attention panel */}
-              <NeedsAttention items={summary.attention} />
+              {/* 3. KPI row */}
+              <KpiRow kpi={summary.kpi} />
 
               {/* 4. Today's arrivals and departures */}
               <div className="grid gap-6 lg:grid-cols-2">
@@ -234,7 +254,7 @@ export function DashboardClient({
                   selectedRange={revenueRange}
                   isLoading={revenueLoading}
                   error={revenueError}
-                  onRangeChange={(range) => setRevenueRange(range)}
+                  onRangeChange={selectRevenueRange}
                   onRetry={refreshRevenue}
                 />
               )}

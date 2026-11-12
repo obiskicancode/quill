@@ -3,6 +3,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 export function DashboardSkeleton() {
   return (
     <div className="space-y-6" aria-label="Loading dashboard" role="status">
+      {/* Work Queue Skeleton */}
+      <div className="rounded-card border border-line bg-card">
+        <div className="flex items-center justify-between border-b border-line px-4 py-3">
+          <Skeleton className="h-5 w-28 rounded-sm" />
+          <Skeleton className="h-3 w-24 rounded-sm" />
+        </div>
+        <div className="grid gap-2 p-3 sm:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-14 w-full rounded-control" />
+          ))}
+        </div>
+      </div>
+
       {/* KPI Cards Skeleton */}
       <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
@@ -20,15 +33,6 @@ export function DashboardSkeleton() {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Attention Skeleton */}
-      <div className="rounded-card border border-line bg-card p-5 shadow-raised">
-        <Skeleton className="h-5 w-36 rounded-sm" />
-        <div className="mt-4 space-y-3">
-          <Skeleton className="h-10 w-full rounded-control" />
-          <Skeleton className="h-10 w-full rounded-control" />
-        </div>
       </div>
 
       {/* Two Tables Skeleton */}

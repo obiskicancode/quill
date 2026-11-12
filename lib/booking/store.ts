@@ -222,8 +222,13 @@ export async function loadStoredReservation(
       .where(eq(roomTypes.id, row.roomTypeId))
       .limit(1),
     executor
-      .select()
+      .select({
+        name: reservationExtras.name,
+        quantity: reservationExtras.quantity,
+        slug: extras.slug,
+      })
       .from(reservationExtras)
+      .leftJoin(extras, eq(extras.id, reservationExtras.extraId))
       .where(eq(reservationExtras.reservationId, row.id)),
     executor
       .select()
@@ -256,6 +261,19 @@ export async function loadStoredReservation(
         .limit(1)
     : [];
   const proof = proofRows[0] ?? null;
+  const unresolvedNames = [
+    ...new Set(
+      extraRows.filter((extra) => !extra.slug).map((extra) => extra.name),
+    ),
+  ];
+  const extraSlugByName = new Map<string, string>();
+  if (unresolvedNames.length > 0) {
+    const resolved = await executor
+      .select({ name: extras.name, slug: extras.slug })
+      .from(extras)
+      .where(inArray(extras.name, unresolvedNames));
+    for (const extra of resolved) extraSlugByName.set(extra.name, extra.slug);
+  }
   const snapshot = (row.snapshot ?? null) as
     (ReservationSnapshot & { cancellation?: StoredCancellation }) | null;
   if (!snapshot) return null;
@@ -309,7 +327,7 @@ export async function loadStoredReservation(
       extraBed: Boolean((snapshot.breakdown as CheckoutBreakdown).extraBed),
     },
     extras: extraRows.map((e) => ({
-      id: e.extraId ?? e.name,
+      id: e.slug ?? extraSlugByName.get(e.name) ?? e.name,
       quantity: e.quantity,
     })),
     totals: {
@@ -648,6 +666,36 @@ async function writeReservationExtras(
   );
 }
 
+/**
+ * Replaces every stored extra line for a reservation from the priced breakdown.
+ * The catalog lookup keeps `extra_id` populated, so inventory references and
+ * slug-based re-quotes keep working.
+ */
+export async function replaceReservationExtras(
+  reservationId: string,
+  lines: CheckoutQuoteOk['breakdown']['extras'],
+  executor: QueryExecutor = db,
+): Promise<void> {
+  await inTransaction(executor, async (tx) => {
+    await tx
+      .delete(reservationExtras)
+      .where(eq(reservationExtras.reservationId, reservationId));
+    await writeReservationExtras(tx, reservationId, lines);
+  });
+}
+
+/** Commits a stay change and its new extra lines as one unit. */
+export async function saveStayChange(
+  r: StoredReservation,
+  lines: CheckoutQuoteOk['breakdown']['extras'],
+  executor: QueryExecutor = db,
+): Promise<void> {
+  await inTransaction(executor, async (tx) => {
+    await writeStoredReservation(r, tx);
+    await replaceReservationExtras(r.id, lines, tx);
+  });
+}
+
 function normalizeSelections(selections: ExtraSelection[]): ExtraSelection[] {
   return selections
     .filter((selection) => selection.quantity > 0)
@@ -771,10 +819,7 @@ export async function updateReservationHold(input: {
       balanceAtHotelMinor: input.quote.payment.balanceAtHotelMinor,
     };
 
-    await tx
-      .delete(reservationExtras)
-      .where(eq(reservationExtras.reservationId, r.id));
-    await writeReservationExtras(tx, r.id, input.quote.breakdown.extras);
+    await replaceReservationExtras(r.id, input.quote.breakdown.extras, tx);
 
     if (amountChanged) {
       await tx
@@ -1344,6 +1389,7 @@ export async function completeOnlinePayment(input: {
         paidDeltaMinor: payment.amountMinor,
         policy: change.policy,
       });
+      await replaceReservationExtras(r.id, change.breakdown.extras, tx);
       r.pendingChange = null;
       await tx
         .delete(reservationNights)
@@ -1641,32 +1687,7 @@ export async function insertReservation(
       );
 
     if (input.quote.breakdown.extras.length > 0) {
-      const extraRows = await tx
-        .select()
-        .from(extras)
-        .where(
-          inArray(
-            extras.slug,
-            input.quote.breakdown.extras.map((e) => e.id),
-          ),
-        );
-      const bySlug = new Map(extraRows.map((e) => [e.slug, e]));
-      await tx.insert(reservationExtras).values(
-        input.quote.breakdown.extras.map((line) => {
-          const extra = bySlug.get(line.id);
-          return {
-            reservationId: id,
-            extraId: extra?.id ?? null,
-            name: line.name,
-            quantity: line.quantity,
-            unitPriceMinor:
-              extra?.priceMinor ??
-              Math.round(line.totalMinor / Math.max(1, line.quantity)),
-            totalMinor: line.totalMinor,
-            pricingUnit: extra?.pricingUnit ?? 'per_stay',
-          };
-        }),
-      );
+      await replaceReservationExtras(id, input.quote.breakdown.extras, tx);
     }
 
     await tx.insert(reservationStatusHistory).values({

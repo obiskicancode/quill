@@ -2,22 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import {
-  AlertCircle,
-  AlertTriangle,
-  ArrowLeft,
-  Edit2,
-  Loader2,
-  Plus,
-  RefreshCw,
-  ShieldAlert,
-  Trash2,
-} from 'lucide-react';
+import { ArrowLeft, Edit2, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
-import { Alert } from '@/components/ui/alert';
+import {
+  AdminEmpty,
+  AdminError,
+  AdminLoading,
+} from '@/components/admin/AdminStates';
+import { PageHeader } from '@/components/admin/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useConfirm } from '@/components/ui/confirm';
 import {
   Pagination,
   PaginationContent,
@@ -145,9 +141,10 @@ export function BlocksListClient({
   );
 
   // Modal & Action states
+  const ask = useConfirm();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [blockToEdit, setBlockToEdit] = useState<CalendarBlockBar | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const blocksQuery = useBlocksList({
     page,
@@ -166,31 +163,32 @@ export function BlocksListClient({
       ? blocksQuery.error.message
       : ERROR_MESSAGES.FAILED_TO_LOAD_ROOM_BLOCKS
     : null;
-  const deleting = deleteBlock.isPending;
-
   const fetchBlocks = () => {
     void blocksQuery.refetch();
   };
 
-  // Delete Action
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteBlock.mutateAsync(id);
-      toast.add({
-        title: SUCCESS_MESSAGES.ROOM_BLOCK_REMOVED,
-        type: 'success',
-      });
-      setDeletingId(null);
-    } catch (err) {
-      toast.add({
-        title:
-          err instanceof Error
-            ? err.message
-            : ERROR_MESSAGES.FAILED_TO_DELETE_BLOCK,
-        type: 'error',
-        priority: 'high',
-      });
-    }
+  const handleDelete = (block: RoomBlockListItem) => {
+    void ask({
+      title: 'Remove this room block?',
+      confirmLabel: 'Remove block',
+      tone: 'danger',
+      description: (
+        <>
+          Room #{block.roomNumber} ({block.roomTypeName}) is held from{' '}
+          {formatShort(block.startDate)} to {formatShort(block.endDate)}. Those
+          dates become bookable again as soon as the block is removed.
+        </>
+      ),
+      run: async () => {
+        // A rejection carries its own message into the dialog, which stays
+        // open so the operator can retry or back out.
+        await deleteBlock.mutateAsync(block.id);
+        toast.add({
+          title: SUCCESS_MESSAGES.ROOM_BLOCK_REMOVED,
+          type: 'success',
+        });
+      },
+    });
   };
 
   const handleEdit = (item: RoomBlockListItem) => {
@@ -215,37 +213,30 @@ export function BlocksListClient({
   return (
     <div className="space-y-5">
       {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/admin/calendar"
-              className="inline-flex items-center gap-1 text-caption text-muted-foreground hover:text-ink focus:outline-hidden"
-            >
-              <ArrowLeft className="size-3.5" />
-              <span>Back to Calendar</span>
-            </Link>
-          </div>
-          <h1 className="mt-1 font-serif text-h2 font-semibold text-ink">
-            Room Blocks
-          </h1>
-          <p className="text-small text-muted-foreground">
-            Manage administrative room blocks and maintenance holds
-          </p>
-        </div>
+      <Link
+        href="/admin/calendar"
+        className="inline-flex min-h-11 items-center gap-1 text-caption text-muted-foreground hover:text-ink"
+      >
+        <ArrowLeft className="size-3.5" aria-hidden />
+        <span>Back to calendar</span>
+      </Link>
 
-        <Button
-          type="button"
-          onClick={() => {
-            setBlockToEdit(null);
-            setModalOpen(true);
-          }}
-          className="flex items-center gap-1.5"
-        >
-          <Plus className="size-4" />
-          <span>New Room Block</span>
-        </Button>
-      </div>
+      <PageHeader
+        title="Room blocks"
+        description="Manage administrative room blocks and maintenance holds."
+        actions={
+          <Button
+            type="button"
+            onClick={() => {
+              setBlockToEdit(null);
+              setModalOpen(true);
+            }}
+            icon={<Plus className="size-4" aria-hidden />}
+          >
+            New room block
+          </Button>
+        }
+      />
 
       {/* Filter Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-paper p-3 shadow-xs">
@@ -259,6 +250,7 @@ export function BlocksListClient({
                 variant={status === s ? 'secondary' : 'ghost'}
                 size="xs"
                 onClick={() => updateQuery({ status: s })}
+                aria-pressed={status === s}
                 className={`capitalize ${
                   status === s
                     ? 'font-semibold shadow-xs'
@@ -383,175 +375,130 @@ export function BlocksListClient({
           size="sm"
           onClick={fetchBlocks}
           className="px-2"
-          title="Refresh list"
+          aria-label="Refresh room block list"
         >
           <RefreshCw className="size-4" />
         </Button>
       </div>
 
-      {/* Delete Confirmation Alert */}
-      {deletingId && (
-        <Alert
-          variant="destructive"
-          size="panel"
-          className="grid-cols-[1fr_auto] items-center gap-3"
-        >
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="size-4 shrink-0" />
-            <span>
-              Are you sure you want to remove this block? Dates will become
-              available again immediately.
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="danger"
-              disabled={deleting}
-              onClick={() => handleDelete(deletingId)}
-            >
-              {deleting ? 'Removing...' : 'Confirm'}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={deleting}
-              onClick={() => setDeletingId(null)}
-            >
-              Cancel
-            </Button>
-          </div>
-        </Alert>
-      )}
-
       {/* Blocks Table */}
       {loading ? (
-        <div className="flex h-64 items-center justify-center rounded-card border border-line bg-paper">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
-        </div>
+        <AdminLoading label="Loading room blocks..." />
       ) : error ? (
-        <div className="flex h-64 flex-col items-center justify-center rounded-card border border-destructive/30 bg-paper p-6 text-center">
-          <AlertCircle className="size-8 text-destructive" />
-          <p className="mt-2 text-small text-destructive">{error}</p>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={fetchBlocks}
-            className="mt-3"
-          >
-            Retry
-          </Button>
-        </div>
+        <AdminError
+          message={error}
+          action={
+            <Button type="button" variant="secondary" onClick={fetchBlocks}>
+              Retry
+            </Button>
+          }
+        />
       ) : !data || data.blocks.length === 0 ? (
-        <div className="flex h-64 flex-col items-center justify-center rounded-card border border-line bg-paper p-6 text-center">
-          <ShieldAlert className="size-8 text-muted-foreground" />
-          <h3 className="mt-2 text-small font-semibold text-ink">
-            No Room Blocks Found
-          </h3>
-          <p className="mt-1 text-caption text-muted-foreground">
-            {roomTypeId || roomId || reason || status !== 'all'
-              ? 'No room blocks match the selected filter criteria.'
-              : 'No administrative room blocks currently exist on this property.'}
-          </p>
-        </div>
+        <AdminEmpty title="No room blocks found">
+          {roomTypeId || roomId || reason || status !== 'all'
+            ? 'No room blocks match the selected filters. Clear them to see the full list.'
+            : 'No administrative room blocks exist on this property yet.'}
+        </AdminEmpty>
       ) : (
-        <div className="overflow-hidden rounded-card border border-line bg-paper shadow-xs">
-          <Table className="w-full border-collapse text-left text-small">
-            <TableHeader>
-              <TableRow className="border-b border-line bg-muted/60 text-caption font-semibold tracking-wider text-muted-foreground uppercase hover:bg-transparent">
-                <TableHead className="px-4 py-2.5 text-muted-foreground">
-                  Room
-                </TableHead>
-                <TableHead className="px-4 py-2.5 text-muted-foreground">
-                  Dates & Nights
-                </TableHead>
-                <TableHead className="px-4 py-2.5 text-muted-foreground">
-                  Reason
-                </TableHead>
-                <TableHead className="px-4 py-2.5 text-muted-foreground">
-                  Notes
-                </TableHead>
-                <TableHead className="px-4 py-2.5 text-muted-foreground">
-                  Created By
-                </TableHead>
-                <TableHead className="px-4 py-2.5 text-right text-muted-foreground">
-                  Actions
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-line/60">
-              {data.blocks.map((b) => (
-                <TableRow
-                  key={b.id}
-                  className="transition-colors hover:bg-muted/30"
-                >
-                  <TableCell className="px-4 py-3 font-medium text-ink">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-mono font-semibold">
-                        #{b.roomNumber}
-                      </span>
-                      <span className="text-caption text-muted-foreground">
-                        ({b.roomTypeName})
-                      </span>
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="px-4 py-3 font-mono text-caption text-ink">
-                    <div>
-                      {formatShort(b.startDate)} → {formatShort(b.endDate)}
-                    </div>
-                    <div className="text-caption text-muted-foreground">
-                      {b.nights} night(s)
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="px-4 py-3">
-                    <Badge
-                      variant="destructive"
-                      className="rounded-control border border-destructive/40 bg-destructive/10 px-2 py-0.5 font-mono text-caption font-semibold text-destructive uppercase"
-                    >
-                      {b.reason.replace('_', ' ')}
-                    </Badge>
-                  </TableCell>
-
-                  <TableCell className="max-w-xs truncate px-4 py-3 text-caption text-muted-foreground">
-                    {b.notes || '—'}
-                  </TableCell>
-
-                  <TableCell className="px-4 py-3 text-caption text-muted-foreground">
-                    <div>{b.createdByName || 'Staff'}</div>
-                    <div className="font-mono text-caption">
-                      {formatShort(b.createdAt.slice(0, 10))}
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => handleEdit(b)}
-                        title="Edit block"
-                      >
-                        <Edit2 className="size-3.5" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => setDeletingId(b.id)}
-                        title="Remove block"
-                        className="text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
+        <div className="rounded-card border border-line bg-paper shadow-xs">
+          <div className="overflow-x-auto">
+            <Table className="w-full border-collapse text-left text-small">
+              <TableHeader>
+                <TableRow className="border-b border-line bg-muted/60 text-caption font-semibold tracking-wider text-muted-foreground uppercase hover:bg-transparent">
+                  <TableHead className="px-4 py-2.5 text-muted-foreground">
+                    Room
+                  </TableHead>
+                  <TableHead className="px-4 py-2.5 text-muted-foreground">
+                    Dates & Nights
+                  </TableHead>
+                  <TableHead className="px-4 py-2.5 text-muted-foreground">
+                    Reason
+                  </TableHead>
+                  <TableHead className="px-4 py-2.5 text-muted-foreground">
+                    Notes
+                  </TableHead>
+                  <TableHead className="px-4 py-2.5 text-muted-foreground">
+                    Created By
+                  </TableHead>
+                  <TableHead className="px-4 py-2.5 text-right text-muted-foreground">
+                    Actions
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody className="divide-y divide-line/60">
+                {data.blocks.map((b) => (
+                  <TableRow
+                    key={b.id}
+                    className="transition-colors hover:bg-muted/30"
+                  >
+                    <TableCell className="px-4 py-3 font-medium text-ink">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-semibold">
+                          #{b.roomNumber}
+                        </span>
+                        <span className="text-caption text-muted-foreground">
+                          ({b.roomTypeName})
+                        </span>
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 font-mono text-caption text-ink">
+                      <div>
+                        {formatShort(b.startDate)} → {formatShort(b.endDate)}
+                      </div>
+                      <div className="text-caption text-muted-foreground">
+                        {b.nights} night(s)
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3">
+                      <Badge
+                        variant="destructive"
+                        className="rounded-control border border-destructive/40 bg-destructive/10 px-2 py-0.5 font-mono text-caption font-semibold text-destructive uppercase"
+                      >
+                        {b.reason.replace('_', ' ')}
+                      </Badge>
+                    </TableCell>
+
+                    <TableCell className="max-w-xs truncate px-4 py-3 text-caption text-muted-foreground">
+                      {b.notes || '—'}
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 text-caption text-muted-foreground">
+                      <div>{b.createdByName || 'Staff'}</div>
+                      <div className="font-mono text-caption">
+                        {formatShort(b.createdAt.slice(0, 10))}
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => handleEdit(b)}
+                          aria-label={`Edit the block on room #${b.roomNumber}`}
+                        >
+                          <Edit2 className="size-3.5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          onClick={() => handleDelete(b)}
+                          aria-label={`Remove the block on room #${b.roomNumber} from ${formatShort(b.startDate)} to ${formatShort(b.endDate)}`}
+                          className="text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
           {/* Pagination Footer */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line bg-muted/30 px-4 py-3 text-caption text-muted-foreground">

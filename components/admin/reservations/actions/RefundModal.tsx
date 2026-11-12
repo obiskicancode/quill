@@ -79,9 +79,6 @@ export function RefundModal({
   onRefresh,
 }: RefundModalProps) {
   const maxNaira = payment.amountMinor / 100;
-  const [defaultReference] = useState(
-    () => `REF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-  );
   const defaultMethod =
     payment.provider === 'cash'
       ? 'manual_cash'
@@ -95,7 +92,7 @@ export function RefundModal({
       amountNaira: maxNaira.toString(),
       method: defaultMethod,
       reason: '',
-      reference: defaultReference,
+      reference: '',
       notes: '',
     },
     mode: 'onBlur',
@@ -278,6 +275,8 @@ export function RefundModal({
         <Field
           id="refund-reference"
           label="Internal Note / Reference"
+          optional
+          hint="The bank payout reference or till receipt, if one exists."
           error={errors.reference?.message}
         >
           {(a) => (

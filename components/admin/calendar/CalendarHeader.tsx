@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  CalendarX2,
   ChevronLeft,
   ChevronRight,
   Filter,
@@ -19,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { addDays, formatMonthYear } from '@/lib/dates';
 
 interface CalendarHeaderProps {
@@ -91,7 +93,7 @@ export function CalendarHeader({
             variant="secondary"
             size="sm"
             onClick={onOpenBlockModal}
-            icon={<Plus className="size-4" />}
+            icon={<CalendarX2 className="size-4" />}
           >
             Block dates
           </Button>
@@ -204,28 +206,23 @@ export function CalendarHeader({
           </div>
 
           {/* Grid vs Agenda Toggle */}
-          <div className="flex h-8 items-center rounded-control border border-line bg-paper p-0.5 shadow-xs">
-            <Button
-              type="button"
-              variant={view === 'grid' ? 'primary' : 'ghost'}
-              size="icon-sm"
-              onClick={() => onViewChange('grid')}
-              title="Grid View"
-              aria-label="Switch to grid view"
-            >
-              <LayoutGrid className="size-4" />
-            </Button>
-            <Button
-              type="button"
-              variant={view === 'agenda' ? 'primary' : 'ghost'}
-              size="icon-sm"
-              onClick={() => onViewChange('agenda')}
-              title="Agenda View"
-              aria-label="Switch to agenda view"
-            >
-              <List className="size-4" />
-            </Button>
-          </div>
+          <Tabs
+            value={view}
+            onValueChange={(val) =>
+              onViewChange(val === 'agenda' ? 'agenda' : 'grid')
+            }
+          >
+            <TabsList aria-label="Calendar view" className="h-9">
+              <TabsTrigger value="grid" className="gap-1.5 px-3">
+                <LayoutGrid className="size-4" />
+                Grid
+              </TabsTrigger>
+              <TabsTrigger value="agenda" className="gap-1.5 px-3">
+                <List className="size-4" />
+                Agenda
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </div>
     </div>

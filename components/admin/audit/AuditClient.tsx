@@ -118,17 +118,11 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
     setSelectedItem(item);
   };
 
-  const selectedAudit: AuditDetailResponse | null = selectedItem
-    ? (detailQuery.data ??
-      (detailQuery.isError
-        ? {
-            ...selectedItem,
-            isEntityAvailable: true,
-            reason: selectedItem.summary,
-            diffs: [],
-            userAgent: null,
-          }
-        : null))
+  const selectedAudit: AuditDetailResponse | null = detailQuery.data ?? null;
+  const selectedAuditError = detailQuery.isError
+    ? detailQuery.error instanceof Error
+      ? detailQuery.error.message
+      : ERROR_MESSAGES.FAILED_TO_LOAD_AUDIT_LOGS
     : null;
 
   const handleExportCsv = () => {
@@ -293,9 +287,12 @@ export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
       )}
 
       {/* Detail Drawer */}
-      {selectedAudit && (
+      {selectedItem && (
         <AuditDetailDrawer
+          isOpen
           audit={selectedAudit}
+          error={selectedAuditError}
+          onRetry={() => void detailQuery.refetch()}
           isOwner={isOwner}
           onClose={() => setSelectedItem(null)}
         />

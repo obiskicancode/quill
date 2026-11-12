@@ -102,7 +102,7 @@ export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
     <div className="space-y-8">
       {/* 90-Day Resolved Price Calendar */}
       <section className="rounded-card border border-line bg-card p-6 shadow-raised">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col flex-wrap gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-h3 font-semibold text-foreground">
               90-Day Nightly Rate Calendar

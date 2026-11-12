@@ -5,7 +5,11 @@ import { useState } from 'react';
 
 import { AdminCard } from '@/components/admin/AdminCard';
 import { AdminEmpty } from '@/components/admin/AdminStates';
-import { PaymentStatusBadge } from '@/components/admin/payments/PaymentStatusBadge';
+import {
+  AdminStatusBadge,
+  paymentRecordTone,
+  statusLabel,
+} from '@/components/admin/AdminStatusBadge';
 import { Button } from '@/components/ui/button';
 import { formatHotelDate, formatMinor } from '@/lib/format';
 import type { ReservationPaymentItem } from '@/types/reservation.types';
@@ -67,10 +71,9 @@ export function PaymentsPanel({
                     </div>
                   </div>
 
-                  <PaymentStatusBadge
-                    status={p.status}
-                    className="capitalize"
-                  />
+                  <AdminStatusBadge tone={paymentRecordTone(p.status)}>
+                    {statusLabel(p.status)}
+                  </AdminStatusBadge>
                 </div>
 
                 <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-caption text-muted-foreground">

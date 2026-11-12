@@ -28,7 +28,7 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
-import { StatusDotBadge } from '@/components/admin/StatusDotBadge';
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/components/ui/confirm';
@@ -90,6 +90,11 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
   const [editingAmenity, setEditingAmenity] = useState<AdminAmenity | null>(
     null,
   );
+
+  function openCreate() {
+    setEditingAmenity(null);
+    setDialogOpen(true);
+  }
 
   async function refresh() {
     await amenitiesQuery.refetch();
@@ -172,15 +177,8 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
           >
             <RotateCcw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
-          <Button
-            size="sm"
-            onClick={() => {
-              setEditingAmenity(null);
-              setDialogOpen(true);
-            }}
-            className="gap-1.5"
-          >
-            <Plus className="size-4" /> New Amenity
+          <Button size="sm" onClick={openCreate} className="gap-1.5">
+            <Plus className="size-4" aria-hidden /> New Amenity
           </Button>
         </div>
       </div>
@@ -188,12 +186,19 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
       {loading && amenities.length === 0 ? (
         <AdminLoading label="Loading amenities..." />
       ) : amenities.length === 0 ? (
-        <AdminEmpty title="No amenities in catalogue">
+        <AdminEmpty
+          title="No amenities in catalogue"
+          action={
+            <Button size="sm" onClick={openCreate} className="gap-1.5">
+              <Plus className="size-4" aria-hidden /> New Amenity
+            </Button>
+          }
+        >
           Create room amenities like Wi-Fi, air conditioning, bathtubs, and
           balconies.
         </AdminEmpty>
       ) : (
-        <div className="overflow-hidden rounded-card border border-line bg-card">
+        <div className="overflow-x-auto rounded-card border border-line bg-card">
           <Table className="w-full text-left text-small">
             <TableHeader className="border-b border-line bg-paper text-muted-foreground">
               <TableRow className="hover:bg-transparent">
@@ -255,11 +260,12 @@ export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
                   </TableCell>
 
                   <TableCell className="px-4 py-3">
-                    <StatusDotBadge
+                    <AdminStatusBadge
                       tone={item.isActive ? 'success' : 'neutral'}
+                      dot
                     >
                       {item.isActive ? 'Active' : 'Inactive'}
-                    </StatusDotBadge>
+                    </AdminStatusBadge>
                   </TableCell>
 
                   <TableCell className="py-3 pr-4 pl-3 text-right">

@@ -109,7 +109,7 @@ export function SessionsPanel() {
               {sessions.map((session) => (
                 <li
                   key={session.id}
-                  className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center"
+                  className="flex flex-col flex-wrap gap-3 px-3 py-3 sm:flex-row sm:items-center"
                 >
                   <span className="grid size-10 shrink-0 place-items-center rounded-control bg-paper">
                     <MonitorSmartphone className="size-5" aria-hidden />

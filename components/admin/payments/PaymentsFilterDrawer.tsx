@@ -3,7 +3,7 @@
 import { Filter, Search, SlidersHorizontal, X } from 'lucide-react';
 import { useState } from 'react';
 
-import { Alert } from '@/components/ui/alert';
+import { FilterSheetShell } from '@/components/admin/FilterSheetShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,15 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Sheet,
-  SheetBody,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import type { PaymentsQueryParams } from '@/types/payments.types';
 
 const STATUS_OPTIONS = [
@@ -31,6 +22,14 @@ const STATUS_OPTIONS = [
   { value: 'pending', label: 'Pending' },
   { value: 'failed', label: 'Failed' },
   { value: 'refunded', label: 'Refunded' },
+];
+
+const TYPE_OPTIONS = [
+  { value: 'all', label: 'All types' },
+  { value: 'deposit', label: 'Deposit' },
+  { value: 'balance', label: 'Balance' },
+  { value: 'full', label: 'Full payment' },
+  { value: 'refund', label: 'Refund' },
 ];
 
 const METHOD_OPTIONS = [
@@ -56,33 +55,94 @@ const RECONCILED_OPTIONS = [
   { value: 'no', label: 'Unreconciled' },
 ];
 
+/** Chips say "Refunded", not "refunded". */
+function optionLabel(
+  options: { value: string; label: string }[],
+  value: string | undefined,
+) {
+  return options.find((opt) => opt.value === value)?.label ?? value;
+}
+
+/** A labelled full-width select for the mobile filter sheet. */
+function FilterField({
+  id,
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id} className="text-caption">
+        {label}
+      </Label>
+      <Select
+        items={options}
+        value={value}
+        onValueChange={(val) => {
+          if (val) onChange(val);
+        }}
+      >
+        <SelectTrigger id={id} className="w-full">
+          <SelectValue placeholder={label} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 export function PaymentsFilterDrawer({
   filters,
   onChange,
   onReset,
+  resultCount,
 }: {
   filters: PaymentsQueryParams;
   onChange: (patch: Partial<PaymentsQueryParams>) => void;
   onReset: () => void;
+  /** How many transactions the current view matched; shown in the sheet. */
+  resultCount?: number;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const activeChips: { key: keyof PaymentsQueryParams; label: string }[] = [];
   if (filters.status !== 'all')
-    activeChips.push({ key: 'status', label: `Status: ${filters.status}` });
+    activeChips.push({
+      key: 'status',
+      label: `Status: ${optionLabel(STATUS_OPTIONS, filters.status)}`,
+    });
   if (filters.type !== 'all')
-    activeChips.push({ key: 'type', label: `Type: ${filters.type}` });
+    activeChips.push({
+      key: 'type',
+      label: `Type: ${optionLabel(TYPE_OPTIONS, filters.type)}`,
+    });
   if (filters.provider !== 'all')
     activeChips.push({
       key: 'provider',
-      label: `Provider: ${filters.provider}`,
+      label: `Provider: ${optionLabel(PROVIDER_OPTIONS, filters.provider)}`,
     });
   if (filters.method !== 'all')
-    activeChips.push({ key: 'method', label: `Method: ${filters.method}` });
+    activeChips.push({
+      key: 'method',
+      label: `Method: ${optionLabel(METHOD_OPTIONS, filters.method)}`,
+    });
   if (filters.reconciled !== 'all')
     activeChips.push({
       key: 'reconciled',
-      label: `Reconciled: ${filters.reconciled}`,
+      label: `Reconciliation: ${optionLabel(RECONCILED_OPTIONS, filters.reconciled)}`,
     });
   if (filters.q)
     activeChips.push({ key: 'q', label: `Search: "${filters.q}"` });
@@ -125,7 +185,7 @@ export function PaymentsFilterDrawer({
         </Button>
 
         {/* Desktop inline dropdowns */}
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden flex-wrap items-center gap-2 lg:flex">
           <Select
             items={STATUS_OPTIONS}
             value={filters.status}
@@ -146,6 +206,33 @@ export function PaymentsFilterDrawer({
             </SelectTrigger>
             <SelectContent>
               {STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            items={TYPE_OPTIONS}
+            value={filters.type}
+            onValueChange={(val) => {
+              if (val) {
+                onChange({
+                  type: val as PaymentsQueryParams['type'],
+                  page: 1,
+                });
+              }
+            }}
+          >
+            <SelectTrigger
+              aria-label="Filter by payment type"
+              className="w-31.25"
+            >
+              <SelectValue placeholder="All types" />
+            </SelectTrigger>
+            <SelectContent>
+              {TYPE_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
                 </SelectItem>
@@ -288,162 +375,68 @@ export function PaymentsFilterDrawer({
         </div>
       )}
 
-      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent
-          side="bottom"
-          className="max-h-[85vh] rounded-t-card lg:hidden"
-        >
-          <SheetHeader>
-            <SheetTitle>Payment Filters</SheetTitle>
-            <SheetDescription>
-              Narrow the payment ledger by status, provider, method, or
-              reconciliation state.
-            </SheetDescription>
-          </SheetHeader>
-
-          <SheetBody className="space-y-4">
-            {activeChips.length > 0 && (
-              <Alert variant="neutral" size="sm">
-                {activeChips.length} active filter
-                {activeChips.length === 1 ? '' : 's'} applied.
-              </Alert>
-            )}
-
-            <div className="space-y-1.5">
-              <Label htmlFor="payments-status" className="text-caption">
-                Status
-              </Label>
-              <Select
-                items={STATUS_OPTIONS}
-                value={filters.status}
-                onValueChange={(val) => {
-                  if (val) {
-                    onChange({
-                      status: val as PaymentsQueryParams['status'],
-                    });
-                  }
-                }}
-              >
-                <SelectTrigger id="payments-status" className="w-full">
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="payments-provider" className="text-caption">
-                Provider
-              </Label>
-              <Select
-                items={PROVIDER_OPTIONS}
-                value={filters.provider}
-                onValueChange={(val) => {
-                  if (val) {
-                    onChange({
-                      provider: val as PaymentsQueryParams['provider'],
-                    });
-                  }
-                }}
-              >
-                <SelectTrigger id="payments-provider" className="w-full">
-                  <SelectValue placeholder="All providers" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROVIDER_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="payments-method" className="text-caption">
-                Payment Method
-              </Label>
-              <Select
-                items={METHOD_OPTIONS}
-                value={filters.method}
-                onValueChange={(val) => {
-                  if (val) {
-                    onChange({
-                      method: val as PaymentsQueryParams['method'],
-                    });
-                  }
-                }}
-              >
-                <SelectTrigger id="payments-method" className="w-full">
-                  <SelectValue placeholder="All methods" />
-                </SelectTrigger>
-                <SelectContent>
-                  {METHOD_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="payments-reconciled" className="text-caption">
-                Reconciliation State
-              </Label>
-              <Select
-                items={RECONCILED_OPTIONS}
-                value={filters.reconciled}
-                onValueChange={(val) => {
-                  if (val) {
-                    onChange({
-                      reconciled: val as PaymentsQueryParams['reconciled'],
-                    });
-                  }
-                }}
-              >
-                <SelectTrigger id="payments-reconciled" className="w-full">
-                  <SelectValue placeholder="All reconciliation" />
-                </SelectTrigger>
-                <SelectContent>
-                  {RECONCILED_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </SheetBody>
-
-          <SheetFooter className="flex-row items-center border-t border-line">
-            <Button
-              type="button"
-              variant="secondary"
-              className="flex-1"
-              onClick={() => {
-                onReset();
-                setMobileOpen(false);
-              }}
-            >
-              Reset
-            </Button>
-            <Button
-              type="button"
-              className="flex-1"
-              onClick={() => setMobileOpen(false)}
-            >
-              Apply Filters
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      <FilterSheetShell
+        open={mobileOpen}
+        onOpenChange={setMobileOpen}
+        hiddenBelow="lg:hidden"
+        title="Payment filters"
+        description="Narrow the payment ledger by status, type, provider, method or reconciliation state."
+        resultNoun="payment"
+        resultCount={resultCount}
+        onClearAll={onReset}
+      >
+        <FilterField
+          id="sheet-payments-status"
+          label="Status"
+          options={STATUS_OPTIONS}
+          value={filters.status}
+          onChange={(val) =>
+            onChange({ status: val as PaymentsQueryParams['status'], page: 1 })
+          }
+        />
+        <FilterField
+          id="sheet-payments-type"
+          label="Type"
+          options={TYPE_OPTIONS}
+          value={filters.type}
+          onChange={(val) =>
+            onChange({ type: val as PaymentsQueryParams['type'], page: 1 })
+          }
+        />
+        <FilterField
+          id="sheet-payments-provider"
+          label="Provider"
+          options={PROVIDER_OPTIONS}
+          value={filters.provider}
+          onChange={(val) =>
+            onChange({
+              provider: val as PaymentsQueryParams['provider'],
+              page: 1,
+            })
+          }
+        />
+        <FilterField
+          id="sheet-payments-method"
+          label="Payment method"
+          options={METHOD_OPTIONS}
+          value={filters.method}
+          onChange={(val) =>
+            onChange({ method: val as PaymentsQueryParams['method'], page: 1 })
+          }
+        />
+        <FilterField
+          id="sheet-payments-reconciled"
+          label="Reconciliation state"
+          options={RECONCILED_OPTIONS}
+          value={filters.reconciled}
+          onChange={(val) =>
+            onChange({
+              reconciled: val as PaymentsQueryParams['reconciled'],
+              page: 1,
+            })
+          }
+        />
+      </FilterSheetShell>
     </div>
   );
 }

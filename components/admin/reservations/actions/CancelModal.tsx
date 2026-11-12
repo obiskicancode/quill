@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertTriangle, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -96,6 +96,7 @@ export function CancelModal({
     register,
     setError: setFieldError,
     setValue,
+    getValues,
   } = form;
   const [overrideRefund, acknowledged] = useWatch({
     control,
@@ -103,6 +104,7 @@ export function CancelModal({
   });
   const busy = isSubmitting || cancelReservation.isPending;
   const [error, setError] = useState<string | null>(null);
+  const lastSeededRefund = useRef<string | null>(null);
   const preview = previewQuery.data ?? null;
   const previewError = previewQuery.error
     ? previewQuery.error instanceof Error
@@ -111,10 +113,19 @@ export function CancelModal({
     : null;
 
   useEffect(() => {
-    if (preview) {
-      setValue('refundNaira', (preview.calculatedRefundMinor / 100).toString());
+    if (!preview) return;
+    const nextRefund = (preview.calculatedRefundMinor / 100).toString();
+    // A background refetch must not silently replace a refund the operator
+    // typed by hand, so only re-seed while the field still holds our last value.
+    if (
+      lastSeededRefund.current !== null &&
+      getValues('refundNaira') !== lastSeededRefund.current
+    ) {
+      return;
     }
-  }, [preview, setValue]);
+    lastSeededRefund.current = nextRefund;
+    setValue('refundNaira', nextRefund);
+  }, [preview, setValue, getValues]);
 
   const onSubmit = async (input: CancelFormOutput) => {
     setError(null);

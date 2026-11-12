@@ -2,15 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  AlertCircle,
-  ArrowDown,
-  ArrowUp,
-  Edit2,
-  Plus,
-  RotateCcw,
-  Trash2,
-} from 'lucide-react';
+import { AlertCircle, Edit2, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import type { z } from 'zod';
@@ -20,7 +12,8 @@ import {
   AdminError,
   AdminLoading,
 } from '@/components/admin/AdminStates';
-import { StatusDotBadge } from '@/components/admin/StatusDotBadge';
+import { AdminStatusBadge } from '@/components/admin/AdminStatusBadge';
+import { ReorderButtons } from '@/components/admin/ReorderButtons';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -311,12 +304,19 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
       {loading && extras.length === 0 ? (
         <AdminLoading label="Loading extras..." />
       ) : extras.length === 0 ? (
-        <AdminEmpty title="No extras found">
+        <AdminEmpty
+          title="No extras found"
+          action={
+            <Button size="sm" onClick={openCreateDialog} className="gap-1.5">
+              <Plus className="size-4" aria-hidden /> New Extra
+            </Button>
+          }
+        >
           Add paid add-ons such as airport transfers, champagne on arrival,
           breakfast, or spa packages.
         </AdminEmpty>
       ) : (
-        <div className="overflow-hidden rounded-card border border-line bg-card">
+        <div className="overflow-x-auto rounded-card border border-line bg-card">
           <Table className="w-full text-left text-small">
             <TableHeader className="border-b border-line bg-paper text-muted-foreground">
               <TableRow className="hover:bg-transparent">
@@ -346,28 +346,12 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
                   className="transition-colors hover:bg-paper/40"
                 >
                   <TableCell className="py-3 pr-2 pl-4">
-                    <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => handleMove(idx, 'up')}
-                        disabled={idx === 0}
-                        aria-label="Move up"
-                      >
-                        <ArrowUp className="size-3.5" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        onClick={() => handleMove(idx, 'down')}
-                        disabled={idx === extras.length - 1}
-                        aria-label="Move down"
-                      >
-                        <ArrowDown className="size-3.5" />
-                      </Button>
-                    </div>
+                    <ReorderButtons
+                      label={item.name}
+                      index={idx}
+                      count={extras.length}
+                      onMove={(direction) => handleMove(idx, direction)}
+                    />
                   </TableCell>
 
                   <TableCell className="px-4 py-3">
@@ -402,11 +386,12 @@ export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
                   </TableCell>
 
                   <TableCell className="px-4 py-3">
-                    <StatusDotBadge
+                    <AdminStatusBadge
                       tone={item.isActive ? 'success' : 'neutral'}
+                      dot
                     >
                       {item.isActive ? 'Active' : 'Inactive'}
-                    </StatusDotBadge>
+                    </AdminStatusBadge>
                   </TableCell>
 
                   <TableCell className="py-3 pr-4 pl-3 text-right">

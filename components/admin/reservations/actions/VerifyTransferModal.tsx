@@ -9,18 +9,22 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Field, inputClass } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { useVerifyReservationTransfer } from '@/hooks/services/admin/use-reservations';
 import { formatMinor } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import { cn } from '@/lib/utils';
 import { verifyTransferSchema } from '@/schemas/reservation.schema';
 import type {
   ReservationDetail,
   ReservationPaymentItem,
 } from '@/types/reservation.types';
 
+import { ProofLightbox } from '../detail/ProofLightbox';
 import { ActionModal } from './ActionModal';
 
 const verifyTransferFormSchema = verifyTransferSchema
@@ -52,6 +56,27 @@ const verifyTransferFormSchema = verifyTransferSchema
 
 type VerifyTransferFormInput = z.input<typeof verifyTransferFormSchema>;
 type VerifyTransferFormOutput = z.output<typeof verifyTransferFormSchema>;
+
+const DECISION_LABEL_ID = 'transfer-verification-decision';
+
+const DECISIONS = [
+  {
+    value: 'verify',
+    label: 'Funds received',
+    text: 'The transfer matches the receipt and is in the hotel account.',
+    icon: CheckCircle2,
+    cardClass: 'border-success bg-success/10 ring-1 ring-success',
+    itemClass: 'data-checked:border-success data-checked:bg-success',
+  },
+  {
+    value: 'reject',
+    label: 'Reject the proof',
+    text: 'No matching funds, or the receipt is unusable. The guest is emailed your reason.',
+    icon: XCircle,
+    cardClass: 'border-destructive bg-destructive/10 ring-1 ring-destructive',
+    itemClass: 'data-checked:border-destructive data-checked:bg-destructive',
+  },
+] as const;
 
 interface VerifyTransferModalProps {
   open: boolean;
@@ -95,6 +120,7 @@ export function VerifyTransferModal({
   const mode = useWatch({ control, name: 'action' });
   const busy = isSubmitting || verifyTransfer.isPending;
   const [error, setError] = useState<string | null>(null);
+  const [proofOpen, setProofOpen] = useState(false);
 
   const onSubmit = async (input: VerifyTransferFormOutput) => {
     setError(null);
@@ -142,10 +168,15 @@ export function VerifyTransferModal({
     }
   };
 
+  const handleRequestClose = () => {
+    setProofOpen(false);
+    onClose();
+  };
+
   return (
     <ActionModal
       open={open}
-      onClose={onClose}
+      onClose={handleRequestClose}
       title="Verify Bank Transfer Proof"
       description={`Inspect transfer receipt and confirm receipt of funds for ${reservation.reference}.`}
       error={error}
@@ -160,28 +191,27 @@ export function VerifyTransferModal({
         {/* Receipt and Details Row */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* Left: Receipt Preview */}
-          <div className="flex flex-col items-center justify-center rounded-control border border-line bg-muted p-4 text-center">
+          <div className="flex flex-col justify-center gap-2 rounded-control border border-line bg-muted p-4">
+            <span className="text-caption font-semibold text-muted-foreground uppercase">
+              Transfer receipt
+            </span>
             {payment.proofKey ? (
-              <div className="space-y-2">
-                <FileImage
-                  className="mx-auto size-12 text-brand"
-                  aria-hidden="true"
-                />
-                <p className="text-small font-semibold text-ink">
-                  Transfer Receipt Attached
-                </p>
-                <a
-                  href={`/api/admin/reservations/${reservation.id}/proof`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center text-caption font-semibold text-brand-ink hover:underline"
-                >
-                  Open receipt in new tab &rarr;
-                </a>
-              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setProofOpen(true)}
+                aria-label="View uploaded receipt"
+                className="group flex h-32 w-full cursor-pointer items-center justify-center border-line bg-paper px-4 text-ink hover:bg-paper hover:opacity-90"
+              >
+                <span className="flex items-center gap-1.5 text-caption text-muted-foreground group-hover:text-ink">
+                  <FileImage className="size-4" aria-hidden="true" />
+                  <span>Click to view the uploaded receipt</span>
+                </span>
+              </Button>
             ) : (
               <p className="text-small text-muted-foreground">
-                No image receipt uploaded for this transaction.
+                No receipt image was uploaded with this transfer. Check it
+                against your bank statement before marking the funds received.
               </p>
             )}
           </div>
@@ -213,29 +243,54 @@ export function VerifyTransferModal({
           </div>
         </div>
 
-        {/* Action Toggle */}
-        <div className="grid grid-cols-2 gap-2 border-t border-line pt-3">
-          <Button
-            type="button"
-            variant={mode === 'verify' ? 'primary' : 'secondary'}
-            onClick={() => setValue('action', 'verify')}
-            className={
-              mode === 'verify'
-                ? 'bg-success text-success-foreground hover:bg-success/90'
-                : ''
+        {/* Decision */}
+        <div className="space-y-2 border-t border-line pt-3">
+          <p id={DECISION_LABEL_ID} className="font-semibold">
+            What happened when you checked the bank account?
+          </p>
+          <RadioGroup
+            value={mode}
+            onValueChange={(val) =>
+              setValue('action', val === 'reject' ? 'reject' : 'verify')
             }
+            aria-labelledby={DECISION_LABEL_ID}
+            disabled={busy}
+            className="gap-2 sm:grid-cols-2"
           >
-            <CheckCircle2 className="size-4" aria-hidden="true" />
-            <span>Mark as Received</span>
-          </Button>
-          <Button
-            type="button"
-            variant={mode === 'reject' ? 'destructive' : 'secondary'}
-            onClick={() => setValue('action', 'reject')}
-          >
-            <XCircle className="size-4" aria-hidden="true" />
-            <span>Reject Proof</span>
-          </Button>
+            {DECISIONS.map((decision) => {
+              const selected = mode === decision.value;
+              const Icon = decision.icon;
+              return (
+                <Label
+                  key={decision.value}
+                  htmlFor={`${DECISION_LABEL_ID}-${decision.value}`}
+                  className={cn(
+                    'flex min-h-14 cursor-pointer items-start gap-3 rounded-control border p-3 font-normal transition-colors',
+                    selected
+                      ? decision.cardClass
+                      : 'border-line bg-card hover:bg-paper',
+                    busy && 'cursor-not-allowed opacity-60',
+                  )}
+                >
+                  <RadioGroupItem
+                    value={decision.value}
+                    id={`${DECISION_LABEL_ID}-${decision.value}`}
+                    disabled={busy}
+                    className={cn('mt-1', decision.itemClass)}
+                  />
+                  <span>
+                    <span className="flex items-center gap-1.5 font-semibold">
+                      <Icon className="size-4" aria-hidden="true" />
+                      <span>{decision.label}</span>
+                    </span>
+                    <span className="block text-caption text-muted-foreground">
+                      {decision.text}
+                    </span>
+                  </span>
+                </Label>
+              );
+            })}
+          </RadioGroup>
         </div>
 
         {mode === 'verify' ? (
@@ -298,7 +353,7 @@ export function VerifyTransferModal({
             type="button"
             variant="secondary"
             size="sm"
-            onClick={onClose}
+            onClick={handleRequestClose}
             disabled={busy}
           >
             Cancel
@@ -313,6 +368,17 @@ export function VerifyTransferModal({
           </Button>
         </div>
       </form>
+
+      {payment.proofKey && (
+        <ProofLightbox
+          open={proofOpen}
+          reservationId={reservation.id}
+          paymentId={payment.id}
+          proofKey={payment.proofKey}
+          proofMimeType={payment.proofMimeType}
+          onClose={() => setProofOpen(false)}
+        />
+      )}
     </ActionModal>
   );
 }

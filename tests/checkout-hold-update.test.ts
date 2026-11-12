@@ -199,6 +199,45 @@ describe('checkout hold update', () => {
     assert.equal(parsed.success, false);
   });
 
+  it('restores stored extras as catalog slugs', async () => {
+    const executor = queuedExecutor([
+      [rawReservation()],
+      [{ id: 'type-1', slug: 'deluxe-double' }],
+      [{ name: 'Breakfast', quantity: 2, slug: 'breakfast' }],
+      [],
+      [],
+      [],
+      [],
+    ]);
+
+    const stored = await store.loadStoredReservation(
+      'DEL-123',
+      executor as unknown as QueryExecutor,
+    );
+
+    assert.deepEqual(stored?.extras, [{ id: 'breakfast', quantity: 2 }]);
+  });
+
+  it('restores legacy extras whose extra_id is missing by matching the name', async () => {
+    const executor = queuedExecutor([
+      [rawReservation()],
+      [{ id: 'type-1', slug: 'deluxe-double' }],
+      [{ name: 'Breakfast', quantity: 2, slug: null }],
+      [],
+      [],
+      [],
+      [],
+      [{ name: 'Breakfast', slug: 'breakfast' }],
+    ]);
+
+    const stored = await store.loadStoredReservation(
+      'DEL-123',
+      executor as unknown as QueryExecutor,
+    );
+
+    assert.deepEqual(stored?.extras, [{ id: 'breakfast', quantity: 2 }]);
+  });
+
   it('updates details, extras and totals, and supersedes the old payment amount', async () => {
     const executor = queuedExecutor([
       [{ id: 'res-1' }],
@@ -245,9 +284,9 @@ describe('checkout hold update', () => {
   it('does not write when nothing changed', async () => {
     const currentExtras = [
       {
-        extraId: 'breakfast',
         name: 'Breakfast',
         quantity: 2,
+        slug: 'breakfast',
       },
     ];
     const executor = queuedExecutor([

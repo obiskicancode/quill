@@ -25,6 +25,7 @@ import {
   newId,
   notify,
   saveQuote,
+  saveStayChange,
   saveStoredReservation,
   type StoredReservation,
 } from '../booking/store';
@@ -398,7 +399,7 @@ export async function commitChange(
     );
   }
   notify(r, 'dates_changed', SUCCESS_MESSAGES.UPDATED_BOOKING_EMAILED);
-  await saveStoredReservation(r);
+  await saveStayChange(r, stored.breakdown.extras);
   await deleteStoredQuote(quoteId);
   return { status: 'completed' };
 }

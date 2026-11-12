@@ -73,9 +73,6 @@ export function RecordPaymentModal({
   onRefresh,
 }: RecordPaymentModalProps) {
   const maxNaira = reservation.balanceMinor / 100;
-  const [defaultReference] = useState(
-    () => `PAY-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-  );
   const recordPayment = useRecordReservationPayment();
   const form = useForm<
     RecordPaymentFormInput,
@@ -87,7 +84,7 @@ export function RecordPaymentModal({
       amountNaira: maxNaira.toString(),
       type: 'balance',
       method: 'cash',
-      reference: defaultReference,
+      reference: '',
       note: '',
     },
     mode: 'onBlur',
@@ -267,6 +264,7 @@ export function RecordPaymentModal({
           <Field
             id="payment-reference"
             label="Payment Reference *"
+            hint="The bank transfer narration, POS slip number or cash receipt number the money arrived under."
             error={errors.reference?.message}
           >
             {(a) => (
@@ -275,6 +273,7 @@ export function RecordPaymentModal({
                 {...register('reference')}
                 type="text"
                 disabled={busy}
+                placeholder="e.g. GTB narration 0921554411"
                 className={`${inputClass(errors.reference?.message)} font-mono`}
               />
             )}

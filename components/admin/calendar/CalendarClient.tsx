@@ -5,9 +5,11 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AlertCircle, BedDouble, Loader2, RefreshCw } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { useCalendarRange } from '@/hooks/services/admin/use-calendar';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { AdminRole } from '@/types/auth.types';
 import type {
   CalendarBlockBar,
@@ -29,6 +31,7 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isMobile = useIsMobile();
 
   // URL state
   const fromParam = searchParams.get('from');
@@ -58,7 +61,13 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
   const roomTypeId = initialData.roomTypes.some((rt) => rt.id === roomTypeParam)
     ? (roomTypeParam ?? undefined)
     : undefined;
-  const view: 'grid' | 'agenda' = viewParam === 'agenda' ? 'agenda' : 'grid';
+  // An absent `view` means "not chosen yet", which resolves by viewport: the
+  // grid is horizontally scrolling chrome a phone cannot drive, so the agenda
+  // view is the small-screen default.
+  const requestedView =
+    viewParam === 'grid' || viewParam === 'agenda' ? viewParam : null;
+  const view: 'grid' | 'agenda' =
+    requestedView ?? (isMobile ? 'agenda' : 'grid');
   const selectedDay =
     dayParam && /^\d{4}-\d{2}-\d{2}$/.test(dayParam) ? dayParam : null;
 
@@ -68,21 +77,21 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
       from?: string;
       days?: number;
       roomTypeId?: string;
-      view?: 'grid' | 'agenda';
+      view?: 'grid' | 'agenda' | null;
       day?: string | null;
     }) => {
       const nextFrom = patch.from ?? from;
       const nextDays = patch.days ?? days;
       const nextRoomTypeId =
         'roomTypeId' in patch ? patch.roomTypeId : roomTypeId;
-      const nextView = patch.view ?? view;
+      const nextView = 'view' in patch ? patch.view : requestedView;
       const nextDay = 'day' in patch ? patch.day : selectedDay;
 
       const q = new URLSearchParams();
       if (nextFrom !== initialData.today) q.set('from', nextFrom);
       if (nextDays !== 14) q.set('days', String(nextDays));
       if (nextRoomTypeId) q.set('roomTypeId', nextRoomTypeId);
-      if (nextView !== 'grid') q.set('view', nextView);
+      if (nextView) q.set('view', nextView);
       if (nextDay) q.set('day', nextDay);
 
       const str = q.toString();
@@ -95,10 +104,10 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
       from,
       initialData.today,
       pathname,
+      requestedView,
       roomTypeId,
       router,
       selectedDay,
-      view,
     ],
   );
 
@@ -112,6 +121,7 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
   const [refreshing, setRefreshing] = useState(false);
 
   const data = calendarQuery.data ?? initialData;
+  const staleHoldCount = data.reservations.filter((r) => r.isStaleHold).length;
   const loading =
     refreshing || (calendarQuery.isPending && !calendarQuery.data);
   const error = calendarQuery.error
@@ -185,6 +195,22 @@ export function CalendarClient({ initialData, role }: CalendarClientProps) {
         onViewChange={handleViewChange}
         onOpenBlockModal={handleOpenNewBlock}
       />
+
+      {/* Expired holds are dropped from the grid, so say so where they vanished */}
+      {!error && staleHoldCount > 0 && (
+        <Alert variant="warning" role="status">
+          <AlertTitle>
+            {staleHoldCount} expired hold
+            {staleHoldCount === 1 ? '' : 's'} hidden from this view
+          </AlertTitle>
+          <AlertDescription>
+            Pending reservations past their hold deadline are not drawn on the
+            grid and are not counted as occupancy, but their records are still
+            open in the reservations register. Reconcile them there before
+            treating these nights as free.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Main Content States */}
       {loading ? (

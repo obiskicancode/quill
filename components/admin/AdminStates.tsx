@@ -19,9 +19,11 @@ export function AdminLoading({ label = 'Loading' }: { label?: string }) {
 
 export function AdminEmpty({
   title,
+  action,
   children,
 }: {
   title: string;
+  action?: ReactNode;
   children?: ReactNode;
 }) {
   return (
@@ -35,6 +37,7 @@ export function AdminEmpty({
           {children}
         </p>
       )}
+      {action && <div className="mt-4 flex justify-center">{action}</div>}
     </Card>
   );
 }

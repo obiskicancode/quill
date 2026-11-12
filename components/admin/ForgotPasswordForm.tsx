@@ -23,7 +23,12 @@ import {
 
 type ForgotPasswordOutput = z.output<typeof forgotPasswordSchema>;
 
-export function ForgotPasswordForm() {
+export function ForgotPasswordForm({
+  resetLinkInServerLog = false,
+}: {
+  /** True when this deployment logs reset links instead of emailing them. */
+  resetLinkInServerLog?: boolean;
+}) {
   const forgotPassword = useAdminForgotPassword();
   const form = useForm<ForgotPasswordInput, unknown, ForgotPasswordOutput>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -70,10 +75,12 @@ export function ForgotPasswordForm() {
           <StatusBanner tone="success">
             {SUCCESS_MESSAGES.ADMIN_RESET_SENT_EXPIRY}
           </StatusBanner>
-          <p className="text-small text-muted-foreground">
-            Reset email delivery is not connected in this environment. Ask the
-            owner or manager to check the server log for the link.
-          </p>
+          {resetLinkInServerLog && (
+            <p className="text-small text-muted-foreground">
+              This deployment has no email provider connected, so the link was
+              written to the server log instead of being sent.
+            </p>
+          )}
           <TextLink href="/admin/login" tone="quiet" className="text-small">
             Back to sign in
           </TextLink>

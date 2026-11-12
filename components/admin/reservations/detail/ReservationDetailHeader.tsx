@@ -4,30 +4,36 @@ import {
   Ban,
   CalendarDays,
   Check,
+  ChevronDown,
   Copy,
   CreditCard,
   Edit3,
   Home,
   Mail,
-  MoreVertical,
   UserX,
 } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 
-import { StatusBadge } from '@/components/admin/dashboard/StatusBadge';
+import {
+  AdminStatusBadge,
+  paymentStateTone,
+  reservationTone,
+  statusLabel,
+} from '@/components/admin/AdminStatusBadge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatHotelDateTime } from '@/lib/format';
+import type { ActionGate } from '@/types/base.types';
 import type { ReservationDetail } from '@/types/reservation.types';
-
-import { PaymentBadge } from '../PaymentBadge';
 
 interface ReservationDetailHeaderProps {
   reservation: ReservationDetail;
@@ -42,6 +48,38 @@ interface ReservationDetailHeaderProps {
       | 'resend',
   ) => void;
 }
+
+type ActionKey =
+  | 'edit'
+  | 'change_dates'
+  | 'reassign_room'
+  | 'record_payment'
+  | 'cancel'
+  | 'no_show'
+  | 'resend';
+
+type ActionGroup = 'Stay' | 'Payments' | 'Guest' | 'Danger';
+
+interface ActionDescriptor {
+  group: ActionGroup;
+  gate: ActionGate;
+  icon: ReactNode;
+  key: ActionKey;
+  label: string;
+}
+
+const GROUP_ORDER: ActionGroup[] = ['Stay', 'Payments', 'Guest', 'Danger'];
+
+/**
+ * Only one action leads. The rest sit behind the menu so the operator reads one
+ * next step instead of six equally weighted buttons.
+ */
+const PRIMARY_PRIORITY: ActionKey[] = [
+  'record_payment',
+  'change_dates',
+  'reassign_room',
+  'edit',
+];
 
 export function ReservationDetailHeader({
   reservation,
@@ -59,8 +97,72 @@ export function ReservationDetailHeader({
 
   const acts = reservation.allowedActions;
 
+  const actions: ActionDescriptor[] = [
+    {
+      key: 'change_dates',
+      group: 'Stay',
+      label: 'Change dates',
+      gate: acts.change_dates,
+      icon: <CalendarDays aria-hidden="true" />,
+    },
+    {
+      key: 'reassign_room',
+      group: 'Stay',
+      label: 'Reassign room',
+      gate: acts.reassign_room,
+      icon: <Home aria-hidden="true" />,
+    },
+    {
+      key: 'edit',
+      group: 'Stay',
+      label: 'Edit details',
+      gate: acts.edit_details,
+      icon: <Edit3 aria-hidden="true" />,
+    },
+    {
+      key: 'record_payment',
+      group: 'Payments',
+      label: 'Record payment',
+      gate: acts.record_payment,
+      icon: <CreditCard aria-hidden="true" />,
+    },
+    {
+      key: 'no_show',
+      group: 'Guest',
+      label: 'Mark as no-show',
+      gate: acts.no_show,
+      icon: <UserX aria-hidden="true" />,
+    },
+    {
+      key: 'resend',
+      group: 'Guest',
+      label: 'Resend confirmation',
+      gate: acts.resend_confirmation,
+      icon: <Mail aria-hidden="true" />,
+    },
+    {
+      key: 'cancel',
+      group: 'Danger',
+      label: 'Cancel reservation',
+      gate: acts.cancel,
+      icon: <Ban aria-hidden="true" />,
+    },
+  ];
+
+  const primary =
+    PRIMARY_PRIORITY.map((key) => actions.find((a) => a.key === key)).find(
+      (action) => action?.gate.allowed,
+    ) ?? null;
+
+  const groups = GROUP_ORDER.map((group) => ({
+    group,
+    items: actions.filter(
+      (action) => action.group === group && action.key !== primary?.key,
+    ),
+  })).filter((entry) => entry.items.length > 0);
+
   return (
-    <div className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
       {/* Reference, Badges and Source */}
       <div>
         <div className="flex flex-wrap items-center gap-2.5">
@@ -88,8 +190,12 @@ export function ReservationDetailHeader({
             )}
           </Button>
 
-          <StatusBadge status={reservation.status} />
-          <PaymentBadge state={reservation.paymentState} />
+          <AdminStatusBadge tone={reservationTone(reservation.status)}>
+            {statusLabel(reservation.status)}
+          </AdminStatusBadge>
+          <AdminStatusBadge tone={paymentStateTone(reservation.paymentState)}>
+            {statusLabel(reservation.paymentState)}
+          </AdminStatusBadge>
         </div>
 
         <p className="mt-1 text-small text-muted-foreground">
@@ -101,107 +207,56 @@ export function ReservationDetailHeader({
         </p>
       </div>
 
-      {/* Action Buttons Area */}
+      {/* Contextual primary plus everything else behind one labelled menu */}
       <div className="flex flex-wrap items-center gap-2">
-        {/* Edit Details */}
-        <div title={acts.edit_details.reason} className="inline-block">
+        {primary && (
           <Button
-            variant="secondary"
+            type="button"
             size="sm"
-            disabled={!acts.edit_details.allowed}
-            onClick={() => onAction('edit')}
-            icon={<Edit3 className="size-3.5" aria-hidden="true" />}
+            onClick={() => onAction(primary.key)}
+            icon={primary.icon}
           >
-            Edit
+            {primary.label}
           </Button>
-        </div>
-
-        {/* Change Dates */}
-        <div title={acts.change_dates.reason} className="inline-block">
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={!acts.change_dates.allowed}
-            onClick={() => onAction('change_dates')}
-            icon={<CalendarDays className="size-3.5" aria-hidden="true" />}
-          >
-            Change dates
-          </Button>
-        </div>
-
-        {/* Reassign Room */}
-        <div title={acts.reassign_room.reason} className="inline-block">
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={!acts.reassign_room.allowed}
-            onClick={() => onAction('reassign_room')}
-            icon={<Home className="size-3.5" aria-hidden="true" />}
-          >
-            Reassign room
-          </Button>
-        </div>
-
-        {/* Record Payment */}
-        <div title={acts.record_payment.reason} className="inline-block">
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={!acts.record_payment.allowed}
-            onClick={() => onAction('record_payment')}
-            icon={<CreditCard className="size-3.5" aria-hidden="true" />}
-          >
-            Record payment
-          </Button>
-        </div>
-
-        {/* Cancel */}
-        <div title={acts.cancel.reason} className="inline-block">
-          <Button
-            variant="danger"
-            size="sm"
-            disabled={!acts.cancel.allowed}
-            onClick={() => onAction('cancel')}
-            icon={<Ban className="size-3.5" aria-hidden="true" />}
-          >
-            Cancel
-          </Button>
-        </div>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <Button
-                variant="secondary"
-                size="sm"
-                aria-label="More actions"
-                icon={<MoreVertical className="size-3.5" aria-hidden="true" />}
-              >
-                <span className="sr-only">More</span>
+              <Button type="button" variant="secondary" size="sm">
+                All actions
+                <ChevronDown className="size-3.5" aria-hidden="true" />
               </Button>
             }
           />
 
-          <DropdownMenuContent className="w-52">
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                disabled={!acts.no_show.allowed}
-                title={acts.no_show.reason}
-                onClick={() => onAction('no_show')}
-              >
-                <UserX className="text-muted-foreground" aria-hidden="true" />
-                Mark as No-Show
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                disabled={!acts.resend_confirmation.allowed}
-                title={acts.resend_confirmation.reason}
-                onClick={() => onAction('resend')}
-              >
-                <Mail className="text-muted-foreground" aria-hidden="true" />
-                Resend Confirmation
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
+          <DropdownMenuContent className="w-72">
+            {groups.map(({ group, items }, index) => (
+              <Fragment key={group}>
+                {index > 0 && <DropdownMenuSeparator />}
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>{group}</DropdownMenuLabel>
+                  {items.map((action) => (
+                    <DropdownMenuItem
+                      key={action.key}
+                      variant={group === 'Danger' ? 'destructive' : undefined}
+                      disabled={!action.gate.allowed}
+                      onClick={() => onAction(action.key)}
+                    >
+                      {action.icon}
+                      <span className="flex min-w-0 flex-col">
+                        <span>{action.label}</span>
+                        {!action.gate.allowed && action.gate.reason && (
+                          <span className="text-caption font-normal text-muted-foreground">
+                            {action.gate.reason}
+                          </span>
+                        )}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
+              </Fragment>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

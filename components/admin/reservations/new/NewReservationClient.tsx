@@ -29,6 +29,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -51,6 +52,7 @@ import { useFormDraft } from '@/hooks/use-form-draft';
 import { addDays, nightsBetween } from '@/lib/dates';
 import { formatMinor, formatNaira } from '@/lib/format';
 import { applyServerFieldErrors } from '@/lib/forms/server-errors';
+import { cn } from '@/lib/utils';
 import {
   createReservationSchema,
   type CreateReservationInput,
@@ -124,6 +126,32 @@ const NEW_RESERVATION_DRAFT_EXCLUDE = [
   'termsAccepted',
 ] as const satisfies readonly (keyof NewReservationFormInput)[];
 
+const PAYMENT_MODE_OPTIONS = [
+  {
+    value: 'hold',
+    title: 'Hold room with payment link',
+    text: 'Status pending. Generates payment link with staff hold duration.',
+    icon: CalendarDays,
+    managersOnly: false,
+  },
+  {
+    value: 'record_payment',
+    title: 'Record payment now',
+    text: 'Status confirmed. Record immediate cash, transfer, or POS payment.',
+    icon: CreditCard,
+    managersOnly: true,
+  },
+  {
+    value: 'pay_at_hotel',
+    title: 'Confirm without payment',
+    text: 'Pay at hotel. Confirmed with balance due shown at arrival.',
+    icon: DollarSign,
+    managersOnly: false,
+  },
+] as const;
+
+const HOLD_HOUR_OPTIONS = [2, 6, 12, 24, 48, 72] as const;
+
 export function NewReservationClient({
   roomTypes,
   extrasCatalog,
@@ -155,9 +183,6 @@ export function NewReservationClient({
     : 0;
   const prefillSpecialRequests =
     searchParams.get('message') || searchParams.get('notes') || '';
-  const [paymentReference] = useState(
-    () => `PAY-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-  );
 
   const form = useForm<
     NewReservationFormInput,
@@ -196,7 +221,7 @@ export function NewReservationClient({
       holdHours: 24,
       paidAmountNaira: '',
       paymentMethod: 'cash',
-      paymentReference,
+      paymentReference: '',
       paymentNote: '',
       termsAccepted: false,
     },
@@ -245,11 +270,18 @@ export function NewReservationClient({
   );
   const loadingRooms = availableRoomsQuery.isFetching;
 
+  // Only drop an allocation that the new dates/category no longer offers; a
+  // refetch must not wipe the calendar's `?roomId=` prefill or a manual pick.
   useEffect(() => {
-    if (availableRoomsQuery.data) {
-      setValue('roomId', undefined);
+    if (!availableRoomsQuery.data) return;
+    const current = getValues('roomId');
+    if (current && !availableRoomsQuery.data.some((r) => r.id === current)) {
+      setValue('roomId', undefined, {
+        shouldDirty: true,
+        shouldValidate: isSubmitted,
+      });
     }
-  }, [availableRoomsQuery.data, setValue]);
+  }, [availableRoomsQuery.data, getValues, setValue, isSubmitted]);
 
   const quoteCandidate = useMemo<ReservationQuoteInput | null>(() => {
     if (!selectedRoomTypeId || !checkIn || !checkOut || checkOut <= checkIn) {
@@ -443,6 +475,21 @@ export function NewReservationClient({
 
   const nights = nightsBetween(checkIn, checkOut);
 
+  const priceBlockedReason =
+    quote === null
+      ? quoting
+        ? 'Calculating the live price for this stay…'
+        : 'Choose dates and a room category to price the stay.'
+      : quote.status !== 'ok'
+        ? 'This room category is not bookable for the selected dates, so there is nothing to create yet.'
+        : null;
+  const submitBlockedReason = busy
+    ? null
+    : (priceBlockedReason ??
+      (!termsAccepted
+        ? 'Tick the confirmation that the guest agreed to the booking terms.'
+        : null));
+
   return (
     <div className="space-y-6">
       {enquiryId && (
@@ -500,7 +547,7 @@ export function NewReservationClient({
           <div className="space-y-6 lg:col-span-2">
             {/* 1. Stay & Room Picker */}
             <AdminCard
-              title="1. Stay and Room Selection"
+              title="Stay and Room Selection"
               description="Dates, guests, room category, and room allocation."
             >
               <div className="space-y-4">
@@ -612,42 +659,59 @@ export function NewReservationClient({
                 </div>
 
                 {/* Room Type Selector */}
-                <div>
-                  <Label className="block text-small font-semibold text-ink">
+                <div className="space-y-1.5">
+                  <p
+                    id="new-room-category-label"
+                    className="text-small font-semibold text-ink"
+                  >
                     Room Category <span className="text-destructive">*</span>
-                  </Label>
-                  <div className="mt-1 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                  </p>
+                  <RadioGroup
+                    value={selectedRoomTypeId}
+                    onValueChange={(val) =>
+                      val &&
+                      setValue('roomTypeId', val as string, {
+                        shouldDirty: true,
+                        shouldValidate: isSubmitted,
+                      })
+                    }
+                    aria-labelledby="new-room-category-label"
+                    className="grid-cols-1 gap-2.5 sm:grid-cols-2"
+                  >
                     {roomTypes.map((rt) => {
                       const selected = selectedRoomTypeId === rt.id;
                       return (
-                        <Button
+                        <Label
                           key={rt.id}
-                          type="button"
-                          variant={selected ? 'primary' : 'secondary'}
-                          onClick={() =>
-                            setValue('roomTypeId', rt.id, {
-                              shouldDirty: true,
-                              shouldValidate: isSubmitted,
-                            })
-                          }
-                          className="h-auto w-full items-start justify-between p-3.5 text-left font-normal"
+                          htmlFor={`new-room-category-${rt.id}`}
+                          className={cn(
+                            'flex min-h-14 cursor-pointer items-start gap-3 rounded-control border p-3.5 font-normal transition-colors',
+                            selected
+                              ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                              : 'border-line bg-card hover:bg-paper',
+                          )}
                         >
-                          <div>
-                            <p className="text-small font-semibold">
+                          <RadioGroupItem
+                            value={rt.id}
+                            id={`new-room-category-${rt.id}`}
+                            className="mt-1"
+                          />
+                          <span className="flex-1">
+                            <span className="block text-small font-semibold">
                               {rt.name}
-                            </p>
-                            <p className="text-caption opacity-80">
+                            </span>
+                            <span className="block text-caption text-muted-foreground">
                               Max {rt.maxAdults} adults, {rt.maxChildren}{' '}
                               children
-                            </p>
-                          </div>
-                          <span className="text-small font-bold">
+                            </span>
+                          </span>
+                          <span className="text-small font-bold text-ink">
                             {formatMinor(rt.basePriceMinor)}/nt
                           </span>
-                        </Button>
+                        </Label>
                       );
                     })}
-                  </div>
+                  </RadioGroup>
                 </div>
 
                 {/* Specific Room Picker */}
@@ -739,7 +803,7 @@ export function NewReservationClient({
 
             {/* 2. Guest Information */}
             <AdminCard
-              title="2. Guest Information"
+              title="Guest Information"
               description="Primary contact and arrival details."
             >
               <div className="space-y-4">
@@ -947,7 +1011,7 @@ export function NewReservationClient({
             {/* 3. Add-on Extras */}
             {extrasCatalog.length > 0 && (
               <AdminCard
-                title="3. Add-on Extras"
+                title="Add-on Extras"
                 description="Optional amenities and hotel services."
               >
                 <div className="divide-y divide-line">
@@ -1007,7 +1071,7 @@ export function NewReservationClient({
             {/* 4. Staff Discount (Manager/Owner only) */}
             {isManagerOrOwner && (
               <AdminCard
-                title="4. Staff Discount (Manager / Owner)"
+                title="Staff Discount (Manager / Owner)"
                 description="Apply special courtesy or partner discount."
               >
                 <div className="space-y-4">
@@ -1137,120 +1201,113 @@ export function NewReservationClient({
 
             {/* 5. Payment and Status Mode */}
             <AdminCard
-              title="5. Payment & Booking Mode"
+              title="Payment & Booking Mode"
               description="Choose initial reservation status and payment handling."
             >
               <div className="space-y-4">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  {/* Hold */}
-                  <Button
-                    type="button"
-                    variant={paymentMode === 'hold' ? 'primary' : 'secondary'}
-                    onClick={() =>
-                      setValue('paymentMode', 'hold', {
-                        shouldDirty: true,
-                        shouldValidate: isSubmitted,
-                      })
-                    }
-                    className="h-auto flex-col items-start p-4 text-left font-normal"
+                <div className="space-y-1.5">
+                  <p
+                    id="new-payment-mode-label"
+                    className="text-small font-semibold text-ink"
                   >
-                    <CalendarDays
-                      className="size-5 text-brand-ink"
-                      aria-hidden="true"
-                    />
-                    <p className="mt-2 text-small font-semibold">
-                      Hold room with payment link
-                    </p>
-                    <p className="text-caption text-wrap opacity-80">
-                      Status pending. Generates payment link with staff hold
-                      duration.
-                    </p>
-                  </Button>
-
-                  {/* Record Payment Now */}
-                  {isManagerOrOwner && (
-                    <Button
-                      type="button"
-                      variant={
-                        paymentMode === 'record_payment'
-                          ? 'primary'
-                          : 'secondary'
-                      }
-                      onClick={() =>
-                        setValue('paymentMode', 'record_payment', {
-                          shouldDirty: true,
-                          shouldValidate: isSubmitted,
-                        })
-                      }
-                      className="h-auto flex-col items-start p-4 text-left font-normal"
-                    >
-                      <CreditCard
-                        className="size-5 text-brand-ink"
-                        aria-hidden="true"
-                      />
-                      <p className="mt-2 text-small font-semibold">
-                        Record payment now
-                      </p>
-                      <p className="text-caption text-wrap opacity-80">
-                        Status confirmed. Record immediate cash, transfer, or
-                        POS payment.
-                      </p>
-                    </Button>
-                  )}
-
-                  {/* Pay at Hotel */}
-                  <Button
-                    type="button"
-                    variant={
-                      paymentMode === 'pay_at_hotel' ? 'primary' : 'secondary'
+                    Booking status and payment{' '}
+                    <span className="text-destructive">*</span>
+                  </p>
+                  <RadioGroup
+                    value={paymentMode}
+                    onValueChange={(val) =>
+                      val &&
+                      setValue(
+                        'paymentMode',
+                        val as NewReservationFormOutput['paymentMode'],
+                        { shouldDirty: true, shouldValidate: isSubmitted },
+                      )
                     }
-                    onClick={() =>
-                      setValue('paymentMode', 'pay_at_hotel', {
-                        shouldDirty: true,
-                        shouldValidate: isSubmitted,
-                      })
-                    }
-                    className="h-auto flex-col items-start p-4 text-left font-normal"
+                    aria-labelledby="new-payment-mode-label"
+                    className="grid-cols-1 gap-3 sm:grid-cols-3"
                   >
-                    <DollarSign
-                      className="size-5 text-brand-ink"
-                      aria-hidden="true"
-                    />
-                    <p className="mt-2 text-small font-semibold">
-                      Confirm without payment
-                    </p>
-                    <p className="text-caption text-wrap opacity-80">
-                      Pay at hotel. Confirmed with balance due shown at arrival.
-                    </p>
-                  </Button>
+                    {PAYMENT_MODE_OPTIONS.filter(
+                      (option) => !option.managersOnly || isManagerOrOwner,
+                    ).map((option) => {
+                      const selected = paymentMode === option.value;
+                      const Icon = option.icon;
+                      return (
+                        <Label
+                          key={option.value}
+                          htmlFor={`new-payment-mode-${option.value}`}
+                          className={cn(
+                            'flex min-h-14 cursor-pointer items-start gap-2.5 rounded-control border p-4 font-normal transition-colors',
+                            selected
+                              ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                              : 'border-line bg-card hover:bg-paper',
+                          )}
+                        >
+                          <RadioGroupItem
+                            value={option.value}
+                            id={`new-payment-mode-${option.value}`}
+                            className="mt-1"
+                          />
+                          <span className="flex-1">
+                            <span className="flex items-center gap-1.5 text-small font-semibold">
+                              <Icon
+                                className="size-4 text-brand-ink"
+                                aria-hidden="true"
+                              />
+                              <span>{option.title}</span>
+                            </span>
+                            <span className="mt-1 block text-caption text-wrap text-muted-foreground">
+                              {option.text}
+                            </span>
+                          </span>
+                        </Label>
+                      );
+                    })}
+                  </RadioGroup>
                 </div>
 
                 {/* Hold parameters */}
                 {paymentMode === 'hold' && (
                   <div className="space-y-2 rounded-control border border-line bg-muted p-4 text-small">
-                    <Label className="block font-semibold text-ink">
+                    <p
+                      id="new-hold-hours-label"
+                      className="font-semibold text-ink"
+                    >
                       Hold Duration (Hours)
-                    </Label>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {[2, 6, 12, 24, 48, 72].map((hours) => (
-                        <Button
-                          key={hours}
-                          type="button"
-                          variant={
-                            holdHours === hours ? 'primary' : 'secondary'
-                          }
-                          size="xs"
-                          onClick={() =>
-                            setValue('holdHours', hours, {
-                              shouldDirty: true,
-                              shouldValidate: isSubmitted,
-                            })
-                          }
-                        >
-                          {hours} hours
-                        </Button>
-                      ))}
-                    </div>
+                    </p>
+                    <RadioGroup
+                      value={String(holdHours)}
+                      onValueChange={(val) =>
+                        val &&
+                        setValue('holdHours', Number(val), {
+                          shouldDirty: true,
+                          shouldValidate: isSubmitted,
+                        })
+                      }
+                      aria-labelledby="new-hold-hours-label"
+                      className="flex flex-row flex-wrap gap-2"
+                    >
+                      {HOLD_HOUR_OPTIONS.map((hours) => {
+                        const selected = holdHours === hours;
+                        return (
+                          <Label
+                            key={hours}
+                            htmlFor={`new-hold-hours-${hours}`}
+                            className={cn(
+                              'flex min-h-9 cursor-pointer items-center gap-2 rounded-control border px-3 text-caption font-semibold transition-colors',
+                              selected
+                                ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                : 'border-line bg-card hover:bg-paper',
+                            )}
+                          >
+                            <RadioGroupItem
+                              value={String(hours)}
+                              id={`new-hold-hours-${hours}`}
+                            />
+                            <span>{hours} hours</span>
+                          </Label>
+                        );
+                      })}
+                    </RadioGroup>
                   </div>
                 )}
 
@@ -1270,12 +1327,23 @@ export function NewReservationClient({
                           type="number"
                           step="any"
                           required
-                          disabled
+                          readOnly
                           {...register('paidAmountNaira')}
-                          className={inputClass(
-                            errors.paidAmountNaira?.message,
+                          aria-describedby="immediate-amount-help"
+                          className={cn(
+                            inputClass(errors.paidAmountNaira?.message),
+                            'cursor-default bg-paper',
                           )}
                         />
+                        <p
+                          id="immediate-amount-help"
+                          className="text-caption text-muted-foreground"
+                        >
+                          Set by the live quote in the booking summary: this
+                          records the stay as fully paid. To log a deposit
+                          instead, create the reservation and record a partial
+                          payment on it.
+                        </p>
                       </div>
 
                       <div className="space-y-1.5">
@@ -1341,12 +1409,16 @@ export function NewReservationClient({
                           Reference
                         </Label>
                         <Input
-                          disabled
                           id="immediate-reference"
                           type="text"
+                          placeholder="Bank narration, POS slip or cash receipt number"
                           {...register('paymentReference')}
                           className={`${inputClass(errors.paymentReference?.message)} font-mono`}
                         />
+                        <p className="text-caption text-muted-foreground">
+                          What the money arrived under. Leave empty when the
+                          guest has not paid yet.
+                        </p>
                       </div>
                     </div>
 
@@ -1499,7 +1571,7 @@ export function NewReservationClient({
               {/* Submit Button */}
               <Button
                 type="submit"
-                disabled={busy || quote?.status !== 'ok' || !termsAccepted}
+                disabled={busy || submitBlockedReason !== null}
                 className="w-full"
               >
                 {busy ? (
@@ -1514,6 +1586,11 @@ export function NewReservationClient({
                   'Create reservation'
                 )}
               </Button>
+              {submitBlockedReason && (
+                <p role="status" className="text-caption text-wrap text-ink">
+                  {submitBlockedReason}
+                </p>
+              )}
             </div>
           </div>
         </div>

@@ -18,7 +18,12 @@ import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { ServiceError } from '@/app/api/services/base.service';
-import { StaffStatusBadge } from '@/components/admin/staff/StaffStatusBadge';
+import { AdminError, AdminLoading } from '@/components/admin/AdminStates';
+import {
+  AdminStatusBadge,
+  staffStatusTone,
+  statusLabel,
+} from '@/components/admin/AdminStatusBadge';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Field, inputClass } from '@/components/ui/form-field';
@@ -73,12 +78,18 @@ type ProfileInput = z.input<typeof StaffProfileFormSchema>;
 type ProfileOutput = z.output<typeof StaffProfileFormSchema>;
 
 export function StaffDetailSheet({
+  isOpen = true,
   staff,
+  error = null,
+  onRetry,
   onClose,
   onReload,
   onRequestStepUp,
 }: {
+  isOpen?: boolean;
   staff: StaffDetailResponse | null;
+  error?: string | null;
+  onRetry?: () => void;
   onClose: () => void;
   onReload: () => Promise<void>;
   onRequestStepUp: (onVerified: () => void) => void;
@@ -127,7 +138,45 @@ export function StaffDetailSheet({
     });
   }, [staff, reset]);
 
-  if (!staff) return null;
+  if (!isOpen) return null;
+
+  if (!staff) {
+    return (
+      <Sheet
+        open
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+      >
+        <SheetContent side="right" size="2xl">
+          <SheetHeader>
+            <SheetTitle>Staff Detail</SheetTitle>
+            <SheetDescription className="sr-only">
+              {error
+                ? 'Staff detail could not be loaded.'
+                : 'Loading staff detail.'}
+            </SheetDescription>
+          </SheetHeader>
+          <SheetBody>
+            {error ? (
+              <AdminError
+                message={error}
+                action={
+                  onRetry ? (
+                    <Button variant="secondary" size="sm" onClick={onRetry}>
+                      Retry
+                    </Button>
+                  ) : undefined
+                }
+              />
+            ) : (
+              <AdminLoading label="Loading staff detail..." />
+            )}
+          </SheetBody>
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
   const busy = isSubmitting || updateStaff.isPending;
 
@@ -250,7 +299,9 @@ export function StaffDetailSheet({
           <div>
             <div className="flex items-center gap-2">
               <SheetTitle>{staff.fullName}</SheetTitle>
-              <StaffStatusBadge status={staff.status} />
+              <AdminStatusBadge tone={staffStatusTone(staff.status)}>
+                {statusLabel(staff.status)}
+              </AdminStatusBadge>
             </div>
             <SheetDescription className="text-caption">
               {staff.email}

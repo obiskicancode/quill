@@ -40,10 +40,6 @@ export function shiftMonth(iso: ISODate, n: number): ISODate {
   return `${first.slice(0, 7)}-${pad(Math.min(day, daysInMonth(first)))}`;
 }
 
-/** Monday = 0 ... Sunday = 6 */
-// export const mondayIndex = (iso: ISODate): number =>
-//   (fromISO(iso).getDay() + 6) % 7;
-
 export const sundayIndex = (iso: ISODate): number => fromISO(iso).getDay();
 
 export const nightsBetween = (a: ISODate, b: ISODate): number =>
