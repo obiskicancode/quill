@@ -39,6 +39,7 @@ interface ReassignRoomModalProps {
   onRefresh: () => void;
 }
 
+/** Moves a reservation to another available room. */
 export function ReassignRoomModal({
   open,
   onClose,

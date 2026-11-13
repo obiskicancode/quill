@@ -72,6 +72,7 @@ interface ChangeDatesModalProps {
   onRefresh: () => void;
 }
 
+/** Admin date change with availability check, re-quote and room reassignment. */
 export function ChangeDatesModal({
   open,
   onClose,

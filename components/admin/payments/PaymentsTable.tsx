@@ -24,6 +24,7 @@ import {
 import { formatHotelDate, formatMinorExact } from '@/lib/format';
 import type { PaymentListItem } from '@/types/payments.types';
 
+/** Responsive payments table with selection and row detail actions. */
 export function PaymentsTable({
   items,
   selectedIds,

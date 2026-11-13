@@ -15,6 +15,7 @@ import {
 import { formatWeekdayDay } from '@/lib/dates';
 import type { OccupancyDay } from '@/types/dashboard.types';
 
+/** Compact multi-day occupancy and availability bars. */
 export function OccupancyStrip({ days }: { days: OccupancyDay[] }) {
   const getBarColor = (percent: number) => {
     if (percent >= 85) return 'bg-destructive text-destructive-foreground';

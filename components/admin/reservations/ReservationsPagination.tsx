@@ -25,6 +25,7 @@ interface ReservationsPaginationProps {
   onPageSizeChange: (newSize: number) => void;
 }
 
+/** Page navigation and result count for the reservations list. */
 export function ReservationsPagination({
   page,
   pageSize,

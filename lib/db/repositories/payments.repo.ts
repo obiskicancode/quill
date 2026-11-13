@@ -40,6 +40,13 @@ import type {
   WebhookEventsQueryParams,
 } from '@/types/payments.types';
 
+/**
+ * Admin payments data access: summaries, breakdowns, listing and detail views,
+ * reconciliation, manual refund payouts, and webhook event handling. Money
+ * values are integer minor units; state-changing flows validate provider
+ * status and payment state before updating.
+ */
+
 function resolveMethod(
   channel: string | null,
   provider: string,
@@ -69,6 +76,11 @@ function resolveRefundMethod(
   return 'card';
 }
 
+/**
+ * Summarizes payments in a date range and compares them with the immediately
+ * preceding range of equal length, falling back to one day for the delta
+ * window when the range is empty.
+ */
 export async function getPaymentsSummary(
   from: string,
   to: string,
@@ -137,6 +149,10 @@ export async function getPaymentsSummary(
   });
 }
 
+/**
+ * Aggregates paid, non-refund payments by method, provider, and day for the
+ * given range (defaults to the last 30 days), plus a 7-day daily strip.
+ */
 export async function getPaymentsBreakdown(
   from?: string,
   to?: string,
@@ -257,6 +273,7 @@ export async function getPaymentsBreakdown(
   return { byMethod, byProvider, dailyStrip };
 }
 
+/** Lists filtered payments for the admin table with pagination. */
 export async function listPayments(params: PaymentsQueryParams): Promise<{
   items: PaymentListItem[];
   total: number;
@@ -387,6 +404,10 @@ export async function listPayments(params: PaymentsQueryParams): Promise<{
   };
 }
 
+/**
+ * Loads a payment with its reservation, refunds and webhook events. Raw
+ * provider payloads are exposed only to owners.
+ */
 export async function getPaymentDetail(
   id: string,
   isOwner = false,
@@ -477,6 +498,7 @@ export async function getPaymentDetail(
   };
 }
 
+/** Marks a batch of eligible payments as reconciled in one transaction. */
 export async function reconcilePaymentsBulk(params: {
   paymentIds: string[];
   staffUserId: string;
@@ -533,6 +555,7 @@ export async function reconcilePaymentsBulk(params: {
   };
 }
 
+/** Re-queries the provider for a payment's current status and applies changes. */
 export async function recheckPayment(paymentId: string): Promise<{
   ok: boolean;
   error?: string;
@@ -631,6 +654,7 @@ export async function recheckPayment(paymentId: string): Promise<{
   };
 }
 
+/** Reverts a reconciliation; owner-only and audit-logged. */
 export async function unreconcilePayment(params: {
   paymentId: string;
   actorId: string;
@@ -686,6 +710,7 @@ export async function unreconcilePayment(params: {
   return { ok: true };
 }
 
+/** Lists refunds that are settled manually rather than through the provider. */
 export async function listManualRefunds(): Promise<ManualRefundItem[]> {
   const rows = await db
     .select({
@@ -714,6 +739,10 @@ export async function listManualRefunds(): Promise<ManualRefundItem[]> {
   }));
 }
 
+/**
+ * Records a manual refund payout, updates the refund ledger and notifies the
+ * guest. Idempotent when the refund was already paid out.
+ */
 export async function markManualRefundPaidOut(params: {
   paymentId: string;
   input: ManualRefundPayoutInput;
@@ -845,6 +874,7 @@ export async function markManualRefundPaidOut(params: {
   return { ok: true };
 }
 
+/** Lists provider webhook events with their processing state. */
 export async function listWebhookEvents(
   params: WebhookEventsQueryParams,
 ): Promise<{ items: WebhookEventItem[]; total: number }> {
@@ -889,6 +919,7 @@ export async function listWebhookEvents(
   return { items, total: items.length };
 }
 
+/** Re-applies a stored webhook event, logging the retry. */
 export async function reprocessWebhookEvent(
   id: string,
   actorId: string,

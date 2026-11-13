@@ -77,6 +77,10 @@ const StaffProfileFormSchema = StaffUpdateInputSchema.omit({ version: true });
 type ProfileInput = z.input<typeof StaffProfileFormSchema>;
 type ProfileOutput = z.output<typeof StaffProfileFormSchema>;
 
+/**
+ * Staff detail and security actions: profile edits, role changes, activation,
+ * lockout unlock, MFA reset, session revocation and password-reset email.
+ */
 export function StaffDetailSheet({
   isOpen = true,
   staff,

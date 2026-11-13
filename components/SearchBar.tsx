@@ -8,10 +8,7 @@ import { todayISO } from '@/lib/dates';
 import { buildSearchHref, initialSearch, validateSearch } from '@/lib/rooms';
 import type { SearchState } from '@/types/site.types';
 
-/**
- * The landing page's availability search: the hero variant of the stay picker,
- * plus the pending search and the jump to the rooms list it drives.
- */
+/** Compact availability search for the header, syncing dates and guests to the URL. */
 export function SearchBar() {
   const router = useRouter();
   const [search, setSearch] = useState<SearchState>(initialSearch);

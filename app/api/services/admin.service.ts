@@ -440,8 +440,6 @@ class AdminService extends BaseService {
     );
   }
 
-  // ==================== CALENDAR & ROOM BLOCKS ====================
-
   getCalendar(params: { from?: string; days?: number; roomTypeId?: string }) {
     const q = new URLSearchParams({
       ...(params.from ? { from: params.from } : {}),
@@ -496,7 +494,6 @@ class AdminService extends BaseService {
     return this.httpGet<RoomBlocksListResponse>(`/blocks?${q}`);
   }
 
-  // Room Types
   listRoomTypes() {
     return this.httpGet<AdminRoomTypeListItem[]>('/room-types');
   }
@@ -576,7 +573,6 @@ class AdminService extends BaseService {
     });
   }
 
-  // Room Units
   createRoom(body: RoomUnitInput & { roomTypeId: string }) {
     return this.httpPost<RoomUnitInput & { roomTypeId: string }, AdminRoomUnit>(
       '/rooms',
@@ -603,7 +599,6 @@ class AdminService extends BaseService {
     );
   }
 
-  // Rate Rules
   listRateRules(roomTypeId?: string) {
     const q = roomTypeId ? `?roomTypeId=${encodeURIComponent(roomTypeId)}` : '';
     return this.httpGet<AdminRateRule[]>(`/rate-rules${q}`);
@@ -656,7 +651,6 @@ class AdminService extends BaseService {
     );
   }
 
-  // Extras
   listExtras() {
     return this.httpGet<AdminExtra[]>('/extras');
   }
@@ -685,7 +679,6 @@ class AdminService extends BaseService {
     >('/extras/reorder', { items });
   }
 
-  // Amenities
   listAmenities() {
     return this.httpGet<AdminAmenity[]>('/amenities');
   }
@@ -714,7 +707,6 @@ class AdminService extends BaseService {
     >('/amenities/reorder', { items });
   }
 
-  // Payments & Reconciliation
   listPayments(params: Record<string, string | number | undefined> = {}) {
     const q = new URLSearchParams();
     for (const [key, val] of Object.entries(params)) {
@@ -799,7 +791,6 @@ class AdminService extends BaseService {
     >(`/webhook-events/${encodeURIComponent(id)}/reprocess`, {});
   }
 
-  // Staff Accounts (Owner only)
   listStaff(params: Record<string, string | undefined> = {}) {
     const q = new URLSearchParams();
     for (const [key, val] of Object.entries(params)) {
@@ -886,7 +877,6 @@ class AdminService extends BaseService {
     );
   }
 
-  // Audit Log
   listAuditLogs(params: Record<string, string | number | undefined> = {}) {
     const q = new URLSearchParams();
     for (const [key, val] of Object.entries(params)) {

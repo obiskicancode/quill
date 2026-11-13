@@ -25,6 +25,7 @@ interface PaymentsPanelProps {
   onRefund?: (payment: ReservationPaymentItem) => void;
 }
 
+/** Reservation payment ledger, proofs and refunds. */
 export function PaymentsPanel({
   payments,
   reservationId,

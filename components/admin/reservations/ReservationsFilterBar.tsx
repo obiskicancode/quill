@@ -94,6 +94,7 @@ interface ReservationsFilterBarProps {
   resultCount?: number;
 }
 
+/** Reservation filters with search, status/payment/source chips and saved views. */
 export function ReservationsFilterBar({
   currentFilters,
   options,

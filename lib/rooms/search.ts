@@ -1,10 +1,17 @@
+/**
+ * Public room-search state: limits, defaults, validation and shareable links.
+ */
+
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { ISODate } from '@/types/dates.types';
 import type { SearchState } from '@/types/site.types';
 
+/** Maximum adults accepted by the room search. */
 export const MAX_ADULTS = 10;
+/** Maximum children accepted by the room search. */
 export const MAX_CHILDREN = 6;
 
+/** Default search state before the guest chooses dates or guests. */
 export const initialSearch: SearchState = {
   checkIn: null,
   checkOut: null,
@@ -21,6 +28,7 @@ export function validateSearch(s: SearchState, today: ISODate): string | null {
   return null;
 }
 
+/** Builds a room-search URL from the current search state. */
 export function buildSearchHref(base: string, s: SearchState): string {
   const params = new URLSearchParams({
     checkIn: s.checkIn ?? '',
@@ -31,6 +39,7 @@ export function buildSearchHref(base: string, s: SearchState): string {
   return `${base}?${params.toString()}`;
 }
 
+/** Human-readable guest summary, e.g. "2 adults, 1 child". */
 export function guestSummary(
   s: Pick<SearchState, 'adults' | 'children'>,
 ): string {

@@ -152,6 +152,10 @@ const PAYMENT_MODE_OPTIONS = [
 
 const HOLD_HOUR_OPTIONS = [2, 6, 12, 24, 48, 72] as const;
 
+/**
+ * Manual booking flow for staff: guest details, stay/room selection, live quote,
+ * payment mode and confirmation, with a persisted draft and idempotent submit.
+ */
 export function NewReservationClient({
   roomTypes,
   extrasCatalog,

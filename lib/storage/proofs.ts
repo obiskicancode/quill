@@ -1,3 +1,8 @@
+/**
+ * Transfer-proof storage. Proofs are private objects keyed by reservation
+ * reference; the active provider is cached until the configured id changes.
+ */
+
 import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 
@@ -21,6 +26,7 @@ function getProofStorage(): StorageProviderAdapter {
   return cached.provider;
 }
 
+/** True when proof storage is configured and can accept uploads. */
 export function proofStorageConfigured(): boolean {
   try {
     return getProofStorage().isConfigured();

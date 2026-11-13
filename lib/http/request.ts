@@ -1,3 +1,8 @@
+/**
+ * Request metadata helpers shared by API routes and services. Values are
+ * defensive: untrusted proxy headers are validated, and user agents are
+ * truncated before they reach audit or notification rows.
+ */
 import { isIP } from 'node:net';
 
 import { ERROR_CODES } from '@/constants/error-codes';
@@ -30,6 +35,7 @@ export function cookieValue(request: Request, name: string): string | null {
   return null;
 }
 
+/** Standard 429 response with a `Retry-After` header and no-store caching. */
 export function tooManyRequests(retryAfterSeconds = 60) {
   return apiFail(
     429,

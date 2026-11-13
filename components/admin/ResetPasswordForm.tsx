@@ -23,6 +23,7 @@ import {
 
 type ResetPasswordOutput = z.output<typeof resetPasswordSchema>;
 
+/** Password reset form for a one-time token, with invalid-token handling. */
 export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
   const resetPassword = useAdminResetPassword();

@@ -27,6 +27,10 @@ interface CalendarClientProps {
   role: AdminRole;
 }
 
+/**
+ * Admin calendar coordinator: date window, filters, grid/agenda switch, day
+ * panel and block modal, with query invalidation after mutations.
+ */
 export function CalendarClient({ initialData, role }: CalendarClientProps) {
   const router = useRouter();
   const pathname = usePathname();

@@ -24,6 +24,7 @@ interface ReservationsMobileListProps {
   canSelect: boolean;
 }
 
+/** Mobile card list for reservations with the same actions as the table. */
 export function ReservationsMobileList({
   rows,
   selectedIds,

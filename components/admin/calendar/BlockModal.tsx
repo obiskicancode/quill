@@ -134,6 +134,10 @@ function createBlockFormSchema(today: string, isManagerOrOwner: boolean) {
   });
 }
 
+/**
+ * Creates or edits a room block: validates the date range, checks conflicts,
+ * supports bulk room selection and records a backdate reason when needed.
+ */
 export function BlockModal({
   isOpen,
   onClose,

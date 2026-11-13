@@ -3,6 +3,7 @@ import { AdminEmpty } from '@/components/admin/AdminStates';
 import { formatHotelDateTime } from '@/lib/format';
 import type { ReservationAuditEntry } from '@/types/reservation.types';
 
+/** Reservation audit entries with actor, action and change details. */
 export function AuditLogCard({
   auditLogs,
 }: {

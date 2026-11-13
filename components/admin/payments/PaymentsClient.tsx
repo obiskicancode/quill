@@ -146,6 +146,10 @@ function parseFilters(params: URLSearchParams): PaymentsQueryParams {
   };
 }
 
+/**
+ * Payments page coordinator: summary cards, filters, list/detail drawer,
+ * reconciliation, manual refunds and owner-only webhook tools.
+ */
 export function PaymentsClient({ isOwner = false }: { isOwner?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();

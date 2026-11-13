@@ -1,13 +1,19 @@
+/**
+ * Guest-side booking analytics. Events are pushed to `dataLayer` only; no
+ * personal data leaves the browser.
+ */
 import { getWebStorage } from '@/hooks/use-web-storage';
 
-/**
- * Fires the purchase event once per booking, even across reloads (guarded in sessionStorage).
- * It sends no personal data: only an opaque transaction id, the amount and the currency.
- */
+/** Minimal shape of the global analytics data layer. */
 interface DataLayerWindow {
   dataLayer?: Record<string, unknown>[];
 }
 
+/**
+ * Fires the purchase event once per booking, even across reloads (guarded in
+ * sessionStorage). It sends only an opaque transaction id, the amount and the
+ * currency.
+ */
 export function trackBookingConfirmedOnce(
   reference: string,
   valueMinor: number,

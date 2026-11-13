@@ -1,3 +1,9 @@
+/**
+ * Data access for hotel settings, bank accounts, and social links. Settings
+ * live in a singleton row (id 1); bank account and social link reads can
+ * include inactive rows.
+ */
+
 import { eq } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -11,6 +17,7 @@ import type {
   SocialLink,
 } from '@/db/types';
 
+/** Returns the singleton hotel settings row, or null if not yet created. */
 export async function getHotelSettings(): Promise<HotelSettings | null> {
   const [row] = await db
     .select()
@@ -20,6 +27,10 @@ export async function getHotelSettings(): Promise<HotelSettings | null> {
   return row ?? null;
 }
 
+/**
+ * Creates or updates the singleton hotel settings row (id 1), always
+ * refreshing `updatedAt`.
+ */
 export async function upsertHotelSettings(
   data: Partial<NewHotelSettings>,
 ): Promise<HotelSettings> {
@@ -34,6 +45,7 @@ export async function upsertHotelSettings(
   return row;
 }
 
+/** Lists bank accounts, active-only by default. */
 export async function listBankAccounts(
   activeOnly = true,
 ): Promise<BankAccount[]> {
@@ -47,6 +59,7 @@ export async function listBankAccounts(
   return db.select().from(bankAccounts);
 }
 
+/** Loads a bank account by id, including inactive rows. */
 export async function getBankAccountById(
   id: string,
 ): Promise<BankAccount | null> {
@@ -58,6 +71,7 @@ export async function getBankAccountById(
   return row ?? null;
 }
 
+/** Creates a bank account and returns the inserted row. */
 export async function createBankAccount(
   data: NewBankAccount,
 ): Promise<BankAccount> {
@@ -65,6 +79,7 @@ export async function createBankAccount(
   return row;
 }
 
+/** Updates a bank account, refreshing `updatedAt`; null when it is missing. */
 export async function updateBankAccount(
   id: string,
   data: Partial<NewBankAccount>,
@@ -77,6 +92,7 @@ export async function updateBankAccount(
   return row ?? null;
 }
 
+/** Deletes a bank account and returns the removed row, or null. */
 export async function deleteBankAccount(
   id: string,
 ): Promise<BankAccount | null> {
@@ -87,6 +103,7 @@ export async function deleteBankAccount(
   return row ?? null;
 }
 
+/** Lists social links, active-only by default. */
 export async function listSocialLinks(
   activeOnly = true,
 ): Promise<SocialLink[]> {
@@ -96,6 +113,7 @@ export async function listSocialLinks(
   return db.select().from(socialLinks);
 }
 
+/** Loads a social link by id, including inactive rows. */
 export async function getSocialLinkById(
   id: string,
 ): Promise<SocialLink | null> {
@@ -107,6 +125,7 @@ export async function getSocialLinkById(
   return row ?? null;
 }
 
+/** Creates a social link and returns the inserted row. */
 export async function createSocialLink(
   data: NewSocialLink,
 ): Promise<SocialLink> {
@@ -114,6 +133,7 @@ export async function createSocialLink(
   return row;
 }
 
+/** Updates a social link, refreshing `updatedAt`; null when it is missing. */
 export async function updateSocialLink(
   id: string,
   data: Partial<NewSocialLink>,
@@ -126,6 +146,7 @@ export async function updateSocialLink(
   return row ?? null;
 }
 
+/** Deletes a social link and returns the removed row, or null. */
 export async function deleteSocialLink(id: string): Promise<SocialLink | null> {
   const [row] = await db
     .delete(socialLinks)

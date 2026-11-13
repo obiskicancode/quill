@@ -1,3 +1,7 @@
+/**
+ * Resolves the checkout configuration from hotel, payment and inventory
+ * settings. A missing hotel row is a configuration error, not an empty default.
+ */
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type {
   CheckoutOverrides,
@@ -15,6 +19,10 @@ import { listExtras } from '../db/repositories/extras.repo';
 import { getActivePaymentProviderId } from '../payments';
 import { getPricingSettings } from '../rooms/detail';
 
+/**
+ * Loads the active payment methods, deposit rules, bank details, extras and
+ * cancellation policy used to price and render checkout.
+ */
 export async function getCheckoutSettings(
   hotelOverride?: HotelPricingSettings,
 ): Promise<CheckoutSettings> {

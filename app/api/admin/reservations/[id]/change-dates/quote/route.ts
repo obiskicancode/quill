@@ -49,7 +49,6 @@ export async function POST(
   const { checkIn, checkOut, extraBed } = parsed.data;
 
   try {
-    // 1. Check if current room is available
     const conflictRes = await db.execute(sql`
       SELECT 1 FROM reservations x
       WHERE x.room_id = ${res.res.roomId}
@@ -69,7 +68,6 @@ export async function POST(
     const currentRoomAvailable =
       conflictRes.rows.length === 0 && conflictBlock.rows.length === 0;
 
-    // 2. Fetch alternative available rooms if needed
     const candidateRooms = await listAvailableRoomsForStay(
       res.res.roomTypeId,
       checkIn,
@@ -77,7 +75,6 @@ export async function POST(
       id,
     );
 
-    // 3. Compute Quote
     const quote = await buildCheckoutQuote({
       room: res.roomSlug,
       checkIn,

@@ -1,3 +1,9 @@
+/**
+ * Reservation financial recomputation and refund-payment creation. These run
+ * inside the caller's transaction so ledger rows and reservation totals move
+ * together.
+ */
+
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 
@@ -7,6 +13,7 @@ import { createReference } from '@/lib/db/reference';
 
 import { balanceFromLedger, ledgerFromPayments } from './ledger';
 
+/** A database handle or transaction that can read and write ledger rows. */
 export type LedgerExecutor = Pick<
   typeof db,
   'select' | 'insert' | 'update' | 'delete'
@@ -15,6 +22,7 @@ export type LedgerExecutor = Pick<
 export { balanceFromLedger, ledgerFromPayments } from './ledger';
 export type { LedgerEntry } from './ledger';
 
+/** Derived financial totals for a reservation. */
 export interface ReservationLedger {
   paidMinor: number;
   refundedMinor: number;
@@ -22,6 +30,10 @@ export interface ReservationLedger {
   balanceMinor: number;
 }
 
+/**
+ * Recalculates paid, refunded, pending-refund and balance totals from payment
+ * rows and persists them on the reservation.
+ */
 export async function recomputeReservationFinancials(
   executor: LedgerExecutor,
   reservationId: string,
@@ -67,6 +79,10 @@ export async function recomputeReservationFinancials(
   };
 }
 
+/**
+ * Creates the refund payment and matching refund record, linking them to the
+ * original payment when a reference or id is supplied.
+ */
 export async function insertRefundPayment(
   executor: LedgerExecutor,
   input: {

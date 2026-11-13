@@ -1,11 +1,18 @@
+/**
+ * Role-based access control for the admin app. Permissions are additive per
+ * role; the owner gets every permission, the manager gets all but staff and
+ * payment-settings management, and reception is limited to front-desk work.
+ */
 import type { AdminRole, Permission } from '@/types/auth.types';
 
+/** Every role that can sign in to the admin app. */
 export const ADMIN_ROLES = [
   'owner',
   'manager',
   'reception',
 ] as const satisfies readonly AdminRole[];
 
+/** The complete permission catalogue used by guards, navigation and tests. */
 export const PERMISSIONS = [
   'dashboard.view',
   'revenue.view',
@@ -69,18 +76,24 @@ const receptionPermissions = [
   'enquiries.anonymise',
 ] as const satisfies readonly Permission[];
 
+/** Effective permissions for each role. */
 export const ROLE_PERMISSIONS: Record<AdminRole, readonly Permission[]> = {
   owner: ownerPermissions,
   manager: managerPermissions,
   reception: receptionPermissions,
 };
 
+/** Human-readable role names for staff screens. */
 export const ROLE_LABELS: Record<AdminRole, string> = {
   owner: 'Owner',
   manager: 'Manager',
   reception: 'Reception',
 };
 
+/**
+ * Whether a role grants a permission. An omitted permission means the caller
+ * only needs a valid session.
+ */
 export function can(
   role: AdminRole,
   permission: Permission | undefined,
@@ -89,17 +102,20 @@ export function can(
   return ROLE_PERMISSIONS[role].includes(permission);
 }
 
+/** One admin navigation link and the permission that reveals it. */
 export interface AdminNavItem {
   href: string;
   label: string;
   permission: Permission;
 }
 
+/** A titled group of admin navigation links. */
 export interface AdminNavGroup {
   label: string;
   items: readonly AdminNavItem[];
 }
 
+/** The admin sidebar structure, filtered by permission at render time. */
 export const ADMIN_NAV: readonly AdminNavGroup[] = [
   {
     label: 'Overview',
@@ -184,12 +200,14 @@ export const ADMIN_NAV: readonly AdminNavGroup[] = [
   },
 ];
 
+/** Metadata for an admin section page, including its required permission. */
 export interface AdminSection {
   title: string;
   description: string;
   permission: Permission;
 }
 
+/** Section metadata keyed by the admin route segment. */
 export const ADMIN_SECTIONS: Record<string, AdminSection> = {
   reservations: {
     title: 'Reservations',

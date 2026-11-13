@@ -1,3 +1,8 @@
+/**
+ * CSRF protection for admin and guest manage sessions. Admin tokens are
+ * HMAC-signed and double-submitted through a cookie plus header; manage tokens
+ * are bound to the reservation reference and expiry.
+ */
 import { assertBookingSecret, assertCsrfSecret } from '@/config';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';

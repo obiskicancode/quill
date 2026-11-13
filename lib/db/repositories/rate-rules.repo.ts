@@ -1,9 +1,13 @@
+/**
+ * Persistence and date-range lookup for room-type rate rules.
+ */
 import { and, eq, sql } from 'drizzle-orm';
 
 import { db } from '@/db';
 import { rateRules } from '@/db/schema';
 import type { NewRateRule, RateRule } from '@/db/types';
 
+/** Lists rate rules, optionally filtered by room type. */
 export async function listRateRules(roomTypeId?: string): Promise<RateRule[]> {
   if (roomTypeId) {
     return db
@@ -14,6 +18,7 @@ export async function listRateRules(roomTypeId?: string): Promise<RateRule[]> {
   return db.select().from(rateRules);
 }
 
+/** Lists active rate rules, optionally filtered by room type. */
 export async function listActiveRateRules(
   roomTypeId?: string,
 ): Promise<RateRule[]> {
@@ -27,6 +32,10 @@ export async function listActiveRateRules(
     .where(and(...conditions));
 }
 
+/**
+ * Finds active rules for a room type covering `date`, using an inclusive date
+ * range.
+ */
 export async function findApplicableRateRules(
   roomTypeId: string,
   date: string,
@@ -44,6 +53,7 @@ export async function findApplicableRateRules(
     );
 }
 
+/** Finds a rate rule by id, or `null` when absent. */
 export async function getRateRuleById(id: string): Promise<RateRule | null> {
   const [row] = await db
     .select()
@@ -53,11 +63,16 @@ export async function getRateRuleById(id: string): Promise<RateRule | null> {
   return row ?? null;
 }
 
+/** Inserts a rate rule and returns the created row. */
 export async function createRateRule(data: NewRateRule): Promise<RateRule> {
   const [row] = await db.insert(rateRules).values(data).returning();
   return row;
 }
 
+/**
+ * Partially updates a rate rule, stamping `updatedAt`; returns `null` when no
+ * row matched.
+ */
 export async function updateRateRule(
   id: string,
   data: Partial<NewRateRule>,
@@ -70,6 +85,7 @@ export async function updateRateRule(
   return row ?? null;
 }
 
+/** Deletes a rate rule and returns the removed row, or `null` when absent. */
 export async function deleteRateRule(id: string): Promise<RateRule | null> {
   const [row] = await db
     .delete(rateRules)

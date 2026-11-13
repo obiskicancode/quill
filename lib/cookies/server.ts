@@ -1,3 +1,7 @@
+/**
+ * Response cookie helpers. Every setter uses the shared safe defaults from
+ * `constants`, and clearing a cookie writes an empty value with `maxAge: 0`.
+ */
 import type { NextResponse } from 'next/server';
 
 import {
@@ -12,6 +16,7 @@ import {
   CSRF_TTL_SECONDS,
 } from './constants';
 
+/** Sets the short-lived admin access-token cookie. */
 export function setAdminAccessCookie(
   response: NextResponse,
   token: string,
@@ -24,6 +29,7 @@ export function setAdminAccessCookie(
   );
 }
 
+/** Sets the admin refresh-token cookie. */
 export function setRefreshCookie(
   response: NextResponse,
   token: string,
@@ -36,6 +42,7 @@ export function setRefreshCookie(
   );
 }
 
+/** Sets the short-lived MFA challenge cookie. */
 export function setChallengeCookie(
   response: NextResponse,
   token: string,
@@ -48,6 +55,7 @@ export function setChallengeCookie(
   );
 }
 
+/** Clears the MFA challenge cookie. */
 export function clearChallengeCookie(response: NextResponse): void {
   response.cookies.set(
     ADMIN_CHALLENGE_COOKIE_NAME,
@@ -56,6 +64,7 @@ export function clearChallengeCookie(response: NextResponse): void {
   );
 }
 
+/** Clears the access, refresh and challenge cookies. */
 export function clearAuthCookies(response: NextResponse): void {
   for (const name of [ADMIN_ACCESS_COOKIE_NAME, ADMIN_REFRESH_COOKIE_NAME]) {
     response.cookies.set(name, '', buildCookieOptions({ maxAge: 0 }));
@@ -63,6 +72,10 @@ export function clearAuthCookies(response: NextResponse): void {
   clearChallengeCookie(response);
 }
 
+/**
+ * Sets the admin CSRF cookie. It is intentionally readable by client scripts
+ * so the axios interceptor can echo it in the `x-csrf-token` header.
+ */
 export function setCsrfCookie(
   response: NextResponse,
   token: string,
@@ -78,7 +91,7 @@ export function setCsrfCookie(
   );
 }
 
-/** Parse a named cookie value from a Request or raw cookie string */
+/** Parses a named cookie from a `Request` or a raw cookie header. */
 export function getCookieValue(
   request: Request | string,
   name: string,

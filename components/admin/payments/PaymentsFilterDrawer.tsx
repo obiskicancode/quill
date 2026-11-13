@@ -104,6 +104,7 @@ function FilterField({
   );
 }
 
+/** Mobile filter drawer for payment status, type, method and provider. */
 export function PaymentsFilterDrawer({
   filters,
   onChange,

@@ -65,6 +65,7 @@ interface RecordPaymentModalProps {
   onRefresh: () => void;
 }
 
+/** Records a cash or manual payment against a reservation. */
 export function RecordPaymentModal({
   open,
   onClose,

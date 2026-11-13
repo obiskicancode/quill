@@ -91,6 +91,7 @@ function defaultValues(rule: AdminRateRule | null): RateRuleFormInput {
   };
 }
 
+/** Create/edit dialog for a seasonal rate rule with overlap validation. */
 export function RateRuleDialog({
   open,
   rule,

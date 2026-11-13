@@ -3,6 +3,7 @@ import { Bed, Calendar, Clock, Users } from 'lucide-react';
 import { AdminCard } from '@/components/admin/AdminCard';
 import type { ReservationDetail } from '@/types/reservation.types';
 
+/** Stay dates, room assignment and guest counts. */
 export function StayInfoCard({
   reservation,
 }: {

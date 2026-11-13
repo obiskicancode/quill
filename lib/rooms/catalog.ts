@@ -1,3 +1,8 @@
+/**
+ * Room catalogue rules shared by the listing, detail and pricing pages: display
+ * labels, filter matching, sorting, price bands and the nightly/weekend rate.
+ * Prices here are naira; the checkout quote works in minor units.
+ */
 import type {
   BedType,
   FilterAmenity,
@@ -8,6 +13,7 @@ import type {
 } from '@/types/rooms.types';
 import type { AmenityKey, Room } from '@/types/site.types';
 
+/** Guest-facing labels for every room amenity key. */
 export const roomAmenityLabels: Record<RoomAmenityKey, string> = {
   wifi: 'Wi-Fi',
   parking: 'Free parking',
@@ -26,6 +32,7 @@ export const roomAmenityLabels: Record<RoomAmenityKey, string> = {
   kitchenette: 'Kitchenette',
   balcony: 'Balcony',
 };
+/** Guest-facing labels for each bed type. */
 export const bedTypeLabels: Record<BedType, string> = {
   queen: 'Queen bed',
   king: 'King bed',
@@ -33,6 +40,7 @@ export const bedTypeLabels: Record<BedType, string> = {
   double: 'Double beds',
 };
 
+/** Amenities offered as quick filters in the room list. */
 export const filterAmenityOptions: { key: FilterAmenity; label: string }[] = [
   { key: 'ac', label: 'Air conditioning' },
   { key: 'wifi', label: 'Wi-Fi' },
@@ -41,6 +49,7 @@ export const filterAmenityOptions: { key: FilterAmenity; label: string }[] = [
   { key: 'breakfast', label: 'Breakfast included' },
 ];
 
+/** Sort choices shown in the room list, in display order. */
 export const sortOptions: { key: SortKey; label: string }[] = [
   { key: 'recommended', label: 'Recommended' },
   { key: 'price-asc', label: 'Price low to high' },
@@ -48,6 +57,7 @@ export const sortOptions: { key: SortKey; label: string }[] = [
   { key: 'capacity', label: 'Capacity' },
 ];
 
+/** Neutral room filters used when no query values are supplied. */
 export const emptyFilters: RoomFilters = {
   minPrice: null,
   maxPrice: null,
@@ -56,8 +66,10 @@ export const emptyFilters: RoomFilters = {
   amenities: [],
 };
 
+/** Total guest capacity of a room type. */
 export const maxGuests = (room: RoomType) => room.maxAdults + room.maxChildren;
 
+/** Counts the filter groups that currently narrow the room list. */
 export function countActiveFilters(f: RoomFilters): number {
   return (
     (f.minPrice !== null || f.maxPrice !== null ? 1 : 0) +
@@ -82,6 +94,7 @@ export function matchesFilters(room: RoomType, f: RoomFilters): boolean {
 
 const PRICE_BAND_STEP = 5000;
 
+/** A price filter band with inclusive bounds in naira. */
 export type PriceBand = { minPrice: number | null; maxPrice: number | null };
 
 /**
@@ -136,6 +149,7 @@ export function isWeekendNight(iso: string): boolean {
   return day === 5 || day === 6;
 }
 
+/** The public nightly price to display, or null when the room hides its price. */
 export function nightlyPrice(room: RoomType, iso: string): number {
   return isWeekendNight(iso) && room.weekendPriceNgn !== null
     ? room.weekendPriceNgn
@@ -178,6 +192,7 @@ const GROUPS: { title: string; keys: RoomAmenityKey[] }[] = [
   { title: 'Outdoors', keys: ['balcony'] },
 ];
 
+/** Groups amenity keys into the display sections used by room pages. */
 export function groupAmenities(
   keys: RoomAmenityKey[],
 ): { title: string; keys: RoomAmenityKey[] }[] {

@@ -34,6 +34,7 @@ interface EditDetailsModalProps {
   onRefresh: () => void;
 }
 
+/** Edits guest details on a reservation with server-side validation. */
 export function EditDetailsModal({
   open,
   onClose,

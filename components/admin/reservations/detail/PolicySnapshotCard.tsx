@@ -5,6 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { formatHotelDateTime } from '@/lib/format';
 import type { ReservationPolicySnapshot } from '@/types/reservation.types';
 
+/** Cancellation policy snapshot saved with the reservation. */
 export function PolicySnapshotCard({
   policy,
 }: {

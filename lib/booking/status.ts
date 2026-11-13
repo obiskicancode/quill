@@ -1,3 +1,7 @@
+/**
+ * Presentation helpers for guest booking status. The database status is mapped
+ * to the header treatment the confirmation and manage pages share.
+ */
 import type { GuestReservation, HeaderKind } from '@/types/booking.types';
 import type { GuestReservationStatus } from '@/types/checkout.types';
 
@@ -16,6 +20,7 @@ export const TERMINAL_STATUSES: ReadonlySet<GuestReservationStatus> = new Set([
   'no_show',
 ]);
 
+/** Maps a reservation status and payment mode to the header style to render. */
 export function headerKind(
   reservation: Pick<GuestReservation, 'status' | 'mode'>,
 ): HeaderKind {

@@ -21,7 +21,6 @@ const isServer = typeof window === 'undefined';
 const BASE_PATH = '/api';
 const baseURL = isServer ? config.API.BASE_URL + BASE_PATH : BASE_PATH;
 
-// Utility to parse specific CSRF cookies from document context
 function readCsrfToken(cookieName: string = ADMIN_CSRF_COOKIE_NAME): string {
   if (typeof document === 'undefined') return '';
   for (const part of document.cookie.split(';')) {
@@ -35,7 +34,7 @@ export const apiClient = axios.create({
   baseURL,
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
-  withCredentials: true, // Crucial for cookie propagation
+  withCredentials: true,
 });
 
 // Dedicated Single Refresh Client (Prevents interceptor looping)
@@ -44,7 +43,6 @@ const refreshClient = axios.create({
   withCredentials: true,
 });
 
-// Unified Concurrent Request Queue State
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: () => void;
@@ -98,7 +96,6 @@ apiClient.interceptors.response.use(
       throw error;
     }
 
-    // Queue concurrent requests while a single refresh operation is actively running
     if (isRefreshing) {
       return new Promise<void>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
@@ -109,7 +106,6 @@ apiClient.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      // Execute refresh request using secure cookie exchange mechanisms
       await refreshClient.post(
         '/admin/auth/refresh',
         {},

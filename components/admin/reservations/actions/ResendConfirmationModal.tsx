@@ -42,6 +42,7 @@ interface ResendConfirmationModalProps {
   onRefresh: () => void;
 }
 
+/** Re-sends the guest confirmation email after a confirmation step. */
 export function ResendConfirmationModal({
   open,
   onClose,

@@ -13,7 +13,7 @@ import { EASE_OUT } from './motion/variants';
 import { SiteLogo } from './SiteLogo';
 import { Button, ButtonLink } from './ui/button';
 
-/** Fixed header. Transparent over the hero on the home page, solid and compact once scrolled. */
+/** Public site header: navigation, mobile menu and availability search. */
 export function Header() {
   const site = useSite();
   const pathname = usePathname();

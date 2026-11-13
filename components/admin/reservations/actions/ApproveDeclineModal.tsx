@@ -68,6 +68,7 @@ interface ApproveDeclineModalProps {
   onRefresh: () => void;
 }
 
+/** Approves or declines a booking awaiting staff review. */
 export function ApproveDeclineModal({
   open,
   onClose,

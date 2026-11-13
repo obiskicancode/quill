@@ -92,6 +92,7 @@ const deserializeColumns = (raw: string): Record<ColumnKey, boolean> => {
   return { ...DEFAULT_COLUMNS, ...stored };
 };
 
+/** Configurable reservations table with column visibility and row actions. */
 export function ReservationsTable({
   rows,
   sort,

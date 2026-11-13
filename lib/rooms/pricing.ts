@@ -1,3 +1,9 @@
+/**
+ * Stay pricing and validation shared by the room page and checkout quote.
+ * Rates are integer minor units; weekend and seasonal uplifts are applied per
+ * night before taxes, fees and extras.
+ */
+
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { addDays, formatShort, hotelClock, nightsBetween } from '@/lib/dates';
@@ -50,12 +56,14 @@ function nightRate(
   };
 }
 
+/** True when the party exceeds the room's base occupancy and an extra bed exists. */
 export const needsExtraBed = (
   room: RoomDetail,
   adults: number,
   children: number,
 ) => room.extraBed.available && adults + children > baseGuests(room);
 
+/** Prices every night of a stay, applying weekend and seasonal rates. */
 export function priceStay(
   room: RoomDetail,
   hotel: HotelPricingSettings,
@@ -111,6 +119,7 @@ export function priceStay(
   };
 }
 
+/** Checks dates, guest counts and stay limits, returning every violation. */
 export function validateStay(
   room: RoomDetail,
   hotel: HotelPricingSettings,
@@ -211,6 +220,10 @@ export function validateStay(
   return out;
 }
 
+/**
+ * Builds the public stay quote: validates the request, checks availability and
+ * returns the priced breakdown or the reasons it cannot be booked.
+ */
 export async function getQuoteResponse(
   room: RoomDetail,
   input: StayInput & { checkIn: ISODate; checkOut: ISODate },

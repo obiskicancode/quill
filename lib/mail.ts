@@ -1,14 +1,21 @@
+/**
+ * Transactional email helpers. Each function queues a notification row rather
+ * than sending inline, so delivery is retried by the notification worker and a
+ * logging failure never blocks the caller's request.
+ */
 import { config } from '@/config';
 import type { StaffUser } from '@/db/types';
 import { createNotificationLog } from '@/lib/db/repositories/notifications.repo';
 import { formatMinorExact } from '@/lib/format';
 
+/** Inputs for an admin password-reset email. */
 interface PasswordResetEmail {
   staff: StaffUser;
   token: string;
   expiresAt: Date;
 }
 
+/** Queues a password-reset email for an admin account. */
 export async function sendAdminPasswordResetEmail({
   staff,
   token,
@@ -40,6 +47,7 @@ export async function sendAdminPasswordResetEmail({
   }
 }
 
+/** Inputs for a staff invitation email. */
 export interface StaffInvitationEmail {
   staff: Pick<StaffUser, 'id' | 'email' | 'firstName' | 'role'>;
   token: string;
@@ -48,6 +56,7 @@ export interface StaffInvitationEmail {
   invitedByEmail?: string;
 }
 
+/** Queues an invitation email with the password and 2FA setup link. */
 export async function sendStaffInvitationEmail({
   staff,
   token,
@@ -82,6 +91,7 @@ export async function sendStaffInvitationEmail({
   }
 }
 
+/** Inputs for the owner-only alert raised by sensitive staff actions. */
 export interface SecurityAlertEmail {
   toOwnerEmails: string[];
   action: string;
@@ -90,6 +100,7 @@ export interface SecurityAlertEmail {
   ipAddress?: string | null;
 }
 
+/** Queues a security alert to every owner for a sensitive staff action. */
 export async function sendSecurityAlertEmail({
   toOwnerEmails,
   action,
@@ -127,6 +138,7 @@ export async function sendSecurityAlertEmail({
   }
 }
 
+/** Inputs for the guest-facing refund confirmation email. */
 export interface RefundIssuedEmail {
   reservationReference: string;
   guestEmail: string;
@@ -137,6 +149,7 @@ export interface RefundIssuedEmail {
   note?: string;
 }
 
+/** Queues a refund confirmation email to the guest. */
 export async function sendRefundIssuedEmail({
   reservationReference,
   guestEmail,

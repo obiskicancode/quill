@@ -13,6 +13,7 @@ import {
 import { sortOptions } from '@/lib/rooms';
 import type { SortKey } from '@/types/rooms.types';
 
+/** Room sort selector backed by the URL query. */
 export function SortMenu({
   value,
   onChange,

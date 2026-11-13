@@ -16,6 +16,7 @@ import {
 import { formatHotelDateTime } from '@/lib/format';
 import type { AuditDetailResponse } from '@/types/audit.types';
 
+/** Audit entry detail with before/after diff and owner-only raw data. */
 export function AuditDetailDrawer({
   isOpen = true,
   audit,

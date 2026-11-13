@@ -81,6 +81,7 @@ function getTodayDateString(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Manual refund queue with payout recording and validation. */
 export function ManualRefundsTab({
   refunds,
   loading = false,

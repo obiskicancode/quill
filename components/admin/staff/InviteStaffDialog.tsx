@@ -43,6 +43,7 @@ const ROLE_OPTIONS = [
 type InviteInput = z.input<typeof StaffInviteInputSchema>;
 type InviteOutput = z.output<typeof StaffInviteInputSchema>;
 
+/** Invites a staff member with role validation and server field errors. */
 export function InviteStaffDialog({
   isOpen,
   onClose,

@@ -1,8 +1,14 @@
+/**
+ * Admin audit helper. Audit writes are best-effort: a logging failure is
+ * reported to the server log but never turns a successful action into an error
+ * for the operator.
+ */
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { AdminRole } from '@/types/auth.types';
 
 import { createAuditLog } from '../db/repositories/audit.repo';
 
+/** Fields recorded for one audited staff action. */
 interface AuditInput {
   actorId?: string | null;
   actorRole?: AdminRole | null;
@@ -15,6 +21,10 @@ interface AuditInput {
   userAgent?: string | null;
 }
 
+/**
+ * Records an audit entry, defaulting the entity to `staff`. Failures are
+ * logged and swallowed so audit availability never blocks the action itself.
+ */
 export async function writeAudit(input: AuditInput): Promise<void> {
   try {
     await createAuditLog({

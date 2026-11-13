@@ -1,8 +1,14 @@
+/**
+ * Read-only room and rate-rule queries used by booking, pricing and search.
+ * Availability checks consider live holds, paid pending bookings and blocks.
+ */
+
 import { and, eq, sql } from 'drizzle-orm';
 
 import { db } from '@/db';
 import { rateRules, rooms, roomTypes } from '@/db/schema';
 
+/** Finds a room type by slug, active or not. */
 export async function findRoomTypeBySlug(slug: string) {
   const [row] = await db
     .select()
@@ -12,6 +18,7 @@ export async function findRoomTypeBySlug(slug: string) {
   return row ?? null;
 }
 
+/** Finds a published room type by slug. */
 export async function findActiveRoomTypeBySlug(slug: string) {
   const [row] = await db
     .select()
@@ -23,6 +30,11 @@ export async function findActiveRoomTypeBySlug(slug: string) {
 
 type QueryExecutor = Pick<typeof db, 'execute'>;
 
+/**
+ * Picks the first active room of a type that has no overlapping live hold,
+ * paid pending booking or block. Locks the row so concurrent checkouts cannot
+ * take the same room.
+ */
 export async function findAvailableRoom(
   roomTypeId: string,
   checkIn: string,
@@ -69,6 +81,7 @@ export async function findAvailableRoom(
   return (result.rows?.[0] as { id: string } | undefined) ?? null;
 }
 
+/** Loads a physical room by id. */
 export async function getRoomById(roomId: string) {
   const [row] = await db
     .select()
@@ -78,6 +91,7 @@ export async function getRoomById(roomId: string) {
   return row ?? null;
 }
 
+/** Lists room types in display order, active-only by default. */
 export async function listRoomTypes(activeOnly = true) {
   const query = db.select().from(roomTypes);
   if (activeOnly) {
@@ -88,6 +102,7 @@ export async function listRoomTypes(activeOnly = true) {
   return query.orderBy(roomTypes.sortOrder);
 }
 
+/** Loads a room type by id. */
 export async function getRoomTypeById(id: string) {
   const [row] = await db
     .select()
@@ -97,6 +112,7 @@ export async function getRoomTypeById(id: string) {
   return row ?? null;
 }
 
+/** Lists active rate rules by priority. */
 export async function listRoomRateRules() {
   return db
     .select()
@@ -105,6 +121,10 @@ export async function listRoomRateRules() {
     .orderBy(rateRules.priority);
 }
 
+/**
+ * Counts total and available rooms per type for a stay, using the same
+ * overlap rules as `findAvailableRoom`.
+ */
 export async function countAvailableRoomsByType(
   roomTypeIds: string[],
   checkIn: string,

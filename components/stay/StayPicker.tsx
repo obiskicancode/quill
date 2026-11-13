@@ -112,6 +112,10 @@ function StayField({
   );
 }
 
+/**
+ * Room-page stay picker: dates, guests and live quote, with URL state and
+ * availability feedback kept in sync with the server.
+ */
 export function StayPicker({
   variant,
   value,

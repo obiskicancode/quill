@@ -20,10 +20,16 @@ export function registerStorageProvider(
   registry.set(id, factory);
 }
 
+/**
+ * Storage-provider registry and selection. Providers register a factory; the
+ * active provider comes from config and is cached by callers where useful.
+ */
+
 export function getActiveStorageProviderId(): string {
   return config.STORAGE.PROVIDER.toLowerCase();
 }
 
+/** Creates the requested provider adapter, throwing when it is not registered. */
 export function createStorageProvider(
   id: string = getActiveStorageProviderId(),
 ): StorageProviderAdapter {
@@ -33,8 +39,7 @@ export function createStorageProvider(
   return factory();
 }
 
-export const getStorageProvider = createStorageProvider;
-
+/** True when the provider exists and reports itself configured. */
 export function isStorageProviderAvailable(
   id: string = getActiveStorageProviderId(),
 ): boolean {

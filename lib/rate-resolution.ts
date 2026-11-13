@@ -1,3 +1,8 @@
+/**
+ * Nightly rate resolution for inventory pricing. Rates are integer minor units
+ * (kobo); percentage adjustments are stored as basis points and fixed or amount
+ * adjustments are applied to the weekend-aware starting rate.
+ */
 import { fromISO } from '@/lib/dates';
 import { formatMinorDigits } from '@/lib/format';
 import type {
@@ -5,6 +10,11 @@ import type {
   RateRuleLike,
 } from '@/types/inventory.types';
 
+/**
+ * Converts a naira amount to integer kobo. Accepts formatted strings with
+ * commas; invalid or negative input becomes `0` so callers never price below
+ * zero by accident.
+ */
 export function nairaToMinor(value: string | number): number {
   if (typeof value === 'number') {
     if (isNaN(value) || value < 0) return 0;
@@ -16,6 +26,7 @@ export function nairaToMinor(value: string | number): number {
   return Math.round(num * 100);
 }
 
+/** Formats integer kobo as naira digits, optionally with two decimals. */
 export function minorToNaira(
   minor: number | null | undefined,
   includeDecimals = false,
@@ -24,21 +35,30 @@ export function minorToNaira(
   return formatMinorDigits(minor, includeDecimals);
 }
 
+/** Converts a percentage to basis points, rounded to an integer. */
 export function percentageToBps(percent: number): number {
   if (isNaN(percent)) return 0;
   return Math.round(percent * 100);
 }
 
+/** Converts basis points back to a percentage. */
 export function bpsToPercentage(bps: number): number {
   if (isNaN(bps)) return 0;
   return bps / 100;
 }
 
+/** Friday and Saturday nights use the weekend rate. */
 export function isWeekendNight(dateStr: string): boolean {
   const day = fromISO(dateStr).getDay();
   return day === 5 || day === 6;
 }
 
+/**
+ * Resolves one night's rate by choosing the highest-priority eligible rule for
+ * the room type and date. Ties favour a room-specific rule, then the largest
+ * absolute adjustment. Returns the winning rule so callers can explain the
+ * price; `stayNights` is used by minimum and maximum-stay rules.
+ */
 export function resolveNightlyRate(params: {
   roomTypeId: string;
   date: string; // YYYY-MM-DD

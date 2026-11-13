@@ -23,6 +23,7 @@ interface TabAmenitiesProps {
   onRefresh: () => Promise<void>;
 }
 
+/** Room-type amenity selection, saved as one atomic replacement. */
 export function TabAmenities({
   roomTypeId,
   assignedAmenityIds,

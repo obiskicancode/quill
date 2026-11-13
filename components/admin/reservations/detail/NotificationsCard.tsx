@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { formatHotelDateTime } from '@/lib/format';
 import type { ReservationNotificationLogItem } from '@/types/reservation.types';
 
+/** Email/notification log for a reservation. */
 export function NotificationsCard({
   notifications,
 }: {

@@ -23,6 +23,10 @@ import type { Session } from '@/types/auth.types';
 
 type DialogState = { type: 'one'; session: Session } | { type: 'all' } | null;
 
+/**
+ * Active-session list with per-session and sign-out-everywhere actions. Each
+ * revoke is confirmed before it runs.
+ */
 export function SessionsPanel() {
   const sessionsQuery = useAdminSessions();
   const revokeSession = useRevokeSession();

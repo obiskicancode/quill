@@ -1,3 +1,8 @@
+/**
+ * Read-only content queries for the public site: hotel settings, social links,
+ * amenities, gallery, testimonials, room relations, and bank accounts.
+ */
+
 import { asc, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -19,6 +24,7 @@ import {
   type RoomRelations,
 } from '../mappers/rooms.mapper';
 
+/** Returns the singleton hotel settings row, or null when it is not seeded. */
 export async function getHotelRow() {
   const [row] = await db
     .select()
@@ -28,6 +34,7 @@ export async function getHotelRow() {
   return row ?? null;
 }
 
+/** Returns active social links in display order. */
 export async function getSocialLinkRows() {
   return db
     .select()
@@ -36,6 +43,7 @@ export async function getSocialLinkRows() {
     .orderBy(asc(socialLinks.sortOrder));
 }
 
+/** Returns active amenities in display order. */
 export async function getAmenityRows(): Promise<Amenity[]> {
   return db
     .select()
@@ -44,10 +52,15 @@ export async function getAmenityRows(): Promise<Amenity[]> {
     .orderBy(asc(amenities.sortOrder));
 }
 
+/**
+ * Returns all gallery images in display order; unlike the other getters this
+ * does not filter on the active flag.
+ */
 export async function getGalleryRows(): Promise<GalleryImage[]> {
   return db.select().from(galleryImages).orderBy(asc(galleryImages.sortOrder));
 }
 
+/** Returns active testimonials in display order. */
 export async function getTestimonialRows(): Promise<Testimonial[]> {
   return db
     .select()
@@ -56,6 +69,10 @@ export async function getTestimonialRows(): Promise<Testimonial[]> {
     .orderBy(asc(testimonials.sortOrder));
 }
 
+/**
+ * Loads amenities, gallery images, testimonials, and room-amenity links, then
+ * groups them by room type id. Rows without a room type id are skipped.
+ */
 export async function getRoomRelations(): Promise<RoomRelations> {
   const [amenityRows, galleryRows, testimonialRows, links] = await Promise.all([
     getAmenityRows(),
@@ -93,6 +110,10 @@ export async function getRoomRelations(): Promise<RoomRelations> {
   };
 }
 
+/**
+ * Returns active room types in display order with both public and detail
+ * mappings sharing one set of room relations.
+ */
 export async function getRoomTypesWithDetails(): Promise<
   {
     row: RoomType;
@@ -115,6 +136,7 @@ export async function getRoomTypesWithDetails(): Promise<
   }));
 }
 
+/** Returns active bank accounts in display order. */
 export async function getBankAccountRows() {
   return db
     .select()

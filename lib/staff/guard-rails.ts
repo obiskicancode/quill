@@ -1,7 +1,13 @@
+/**
+ * Business guard rails for staff administration. These checks are pure so they
+ * can run before a transaction; callers still enforce the same rules inside the
+ * write path.
+ */
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { AdminRole } from '@/types/auth.types';
 
+/** Success, or a stable error code and user-facing message. */
 export interface GuardRailResult {
   ok: boolean;
   code?: string;

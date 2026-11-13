@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { formatMinor } from '@/lib/format';
 import type { PaymentSummaryResponse } from '@/types/payments.types';
 
+/** Collected, refunds, pending transfers and reconciliation summary cards. */
 export function PaymentsSummaryCards({
   summary,
   loading = false,

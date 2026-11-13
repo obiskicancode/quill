@@ -1,8 +1,13 @@
+/**
+ * Pure payment-state helpers shared by the admin reservation views.
+ */
+
 import type {
   AdminReservationStatus,
   PaymentState,
 } from '@/types/reservation.types';
 
+/** Classifies a reservation from its total, paid and refunded amounts. */
 export function computePaymentState(
   totalMinor: number,
   amountPaidMinor: number,
@@ -14,6 +19,7 @@ export function computePaymentState(
   return 'unpaid';
 }
 
+/** Remaining balance due; cancelled reservations always owe zero. */
 export function computeBalanceDue(
   totalMinor: number,
   amountPaidMinor: number,

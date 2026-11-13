@@ -31,6 +31,10 @@ import type {
 import { AuditDetailDrawer } from './AuditDetailDrawer';
 import { AuditTable } from './AuditTable';
 
+/**
+ * Audit log page: filter/preset state in the URL, paginated list, detail drawer
+ * and owner-only CSV export.
+ */
 export function AuditClient({ isOwner = false }: { isOwner?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();

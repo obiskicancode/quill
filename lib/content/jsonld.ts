@@ -6,13 +6,18 @@ import type {
 } from '@/types/content.types';
 import type { SiteConfig } from '@/types/site.types';
 
-/** JSON-LD builders. Placeholder values (anything in [brackets]) and empty fields are left out, so no fake data reaches search engines. */
+/**
+ * JSON-LD builders for search-engine structured data. Placeholder values
+ * (anything in [brackets]) and empty fields are left out, so no fake data
+ * reaches search engines.
+ */
 
 const real = (v: string | null | undefined): v is string =>
   Boolean(v) && !v!.startsWith('[') && !v!.includes('[');
 const abs = (src: string, site: SiteConfig) =>
   new URL(src, site.url).toString();
 
+/** Optional extras callers can fold into the Hotel payload. */
 interface HotelOptions {
   description?: string;
   image?: string;
@@ -20,6 +25,10 @@ interface HotelOptions {
   contact?: boolean;
 }
 
+/**
+ * Builds a schema.org Hotel node, omitting placeholder or empty fields. Passing
+ * `contact` adds a reception contact point and geo coordinates when available.
+ */
 export function hotelJsonLd(
   s: HotelContentSettings,
   site: SiteConfig,
@@ -87,6 +96,10 @@ export function faqJsonLd(all: Faq[]): Record<string, unknown> | null {
   };
 }
 
+/**
+ * Builds an ImageGallery node capped at `max` images, resolving relative media
+ * URLs against the site URL and skipping placeholder captions/descriptions.
+ */
 export function imageGalleryJsonLd(
   name: string,
   images: GalleryImageRecord[],

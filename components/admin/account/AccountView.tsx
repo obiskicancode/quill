@@ -20,6 +20,10 @@ const tabs = [
   { id: 'sessions' as const, label: 'Devices' },
 ];
 
+/**
+ * Account settings tabs. Owners with MFA pending are locked to the two-factor
+ * tab until setup is complete.
+ */
 export function AccountView({
   staff,
   role,

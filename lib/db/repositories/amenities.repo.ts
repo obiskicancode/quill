@@ -1,3 +1,8 @@
+/**
+ * Amenity catalogue persistence: amenity CRUD plus the room-type ↔ amenity
+ * association table used to describe what each room type offers.
+ */
+
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -9,6 +14,10 @@ import type {
   RoomTypeAmenity,
 } from '@/db/types';
 
+/**
+ * List amenities, optionally restricted to active ones (default). Pass
+ * `false` to include inactive records for admin management.
+ */
 export async function listAmenities(activeOnly = true): Promise<Amenity[]> {
   if (activeOnly) {
     return db.select().from(amenities).where(eq(amenities.isActive, true));
@@ -16,6 +25,7 @@ export async function listAmenities(activeOnly = true): Promise<Amenity[]> {
   return db.select().from(amenities);
 }
 
+/** Look up an amenity by its unique key, or `null` if none exists. */
 export async function getAmenityByKey(key: string): Promise<Amenity | null> {
   const [row] = await db
     .select()
@@ -25,6 +35,7 @@ export async function getAmenityByKey(key: string): Promise<Amenity | null> {
   return row ?? null;
 }
 
+/** Look up an amenity by id, or `null` if none exists. */
 export async function getAmenityById(id: string): Promise<Amenity | null> {
   const [row] = await db
     .select()
@@ -34,11 +45,13 @@ export async function getAmenityById(id: string): Promise<Amenity | null> {
   return row ?? null;
 }
 
+/** Insert a new amenity and return the created row. */
 export async function createAmenity(data: NewAmenity): Promise<Amenity> {
   const [row] = await db.insert(amenities).values(data).returning();
   return row;
 }
 
+/** Update an amenity by id, returning `null` when the id does not exist. */
 export async function updateAmenity(
   id: string,
   data: Partial<NewAmenity>,
@@ -51,6 +64,7 @@ export async function updateAmenity(
   return row ?? null;
 }
 
+/** List the amenity associations for a single room type. */
 export async function listAmenitiesForRoomType(
   roomTypeId: string,
 ): Promise<RoomTypeAmenity[]> {
@@ -60,6 +74,7 @@ export async function listAmenitiesForRoomType(
     .where(eq(roomTypeAmenities.roomTypeId, roomTypeId));
 }
 
+/** Associate an amenity with a room type and return the new link row. */
 export async function addAmenityToRoomType(
   data: NewRoomTypeAmenity,
 ): Promise<RoomTypeAmenity> {
@@ -67,6 +82,10 @@ export async function addAmenityToRoomType(
   return row;
 }
 
+/**
+ * Remove the room type ↔ amenity association, returning the deleted row or
+ * `null` if no matching association existed.
+ */
 export async function removeAmenityFromRoomType(
   roomTypeId: string,
   amenityId: string,

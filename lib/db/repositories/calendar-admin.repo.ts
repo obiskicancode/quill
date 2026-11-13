@@ -1,3 +1,9 @@
+/**
+ * Admin calendar reads and room-block writes. Calendar data is grouped by room
+ * type and room, with reservation and block bars clipped to the requested
+ * window; block mutations check overlap and record an audit entry.
+ */
+
 import { and, asc, desc, eq, inArray, lte, ne, sql } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -24,6 +30,7 @@ import type {
   RoomBlocksListResponse,
 } from '@/types/calendar.types';
 
+/** Builds the multi-day calendar view with reservation bars, blocks and stats. */
 export async function getCalendarData(options: {
   from: string;
   days: number;
@@ -308,6 +315,7 @@ export async function getCalendarData(options: {
   };
 }
 
+/** Builds the single-day view: arrivals, departures, in-house guests and free rooms. */
 export async function getCalendarDayData(
   date: string,
 ): Promise<CalendarDayResponse> {
@@ -491,6 +499,10 @@ export async function getCalendarDayData(
   };
 }
 
+/**
+ * Checks whether a proposed block overlaps reservations or existing blocks for
+ * any of the selected rooms.
+ */
 export async function checkBlockConflicts(options: {
   roomIds: string[];
   startDate: string;
@@ -578,6 +590,10 @@ export async function checkBlockConflicts(options: {
   };
 }
 
+/**
+ * Creates blocks for many rooms in one transaction after conflict checks, using
+ * the idempotency key to make retries safe.
+ */
 export async function bulkCreateRoomBlocks(
   data: {
     roomIds: string[];
@@ -656,6 +672,7 @@ export async function bulkCreateRoomBlocks(
   });
 }
 
+/** Updates a block after re-checking conflicts and records the change. */
 export async function updateRoomBlockAdmin(
   id: string,
   data: {
@@ -748,6 +765,7 @@ export async function updateRoomBlockAdmin(
   return { ok: true, block: updated };
 }
 
+/** Deletes a block and records who removed it. */
 export async function deleteRoomBlockAdmin(
   id: string,
   staffUser: {
@@ -789,6 +807,7 @@ export async function deleteRoomBlockAdmin(
   return true;
 }
 
+/** Lists blocks with filters and pagination for the admin blocks table. */
 export async function listBlocksPaginated(params: {
   page: number;
   pageSize: number;

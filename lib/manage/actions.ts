@@ -1,3 +1,8 @@
+/**
+ * Guest-initiated manage mutations: cancel, edit details, quote and commit a
+ * date change. Every path re-checks the server-side rules and the saved policy
+ * before writing, and all money is computed on the server.
+ */
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
@@ -38,11 +43,16 @@ import { validateStay } from '../rooms/pricing';
 import { allowedActions, freeDeadline, previewCancellation } from './rules';
 import { getManageSettings } from './settings';
 
+/** Result of a cancellation attempt. */
 export type CancelOutcome =
   | { status: 'cancelled' }
   | { status: 'not_allowed'; reason: string }
   | { status: 'preview_changed'; preview: CancellationPreview };
 
+/**
+ * Cancels a booking when the guest's expected refund still matches the current
+ * preview. Records the cancellation, refund ledger entry and notification.
+ */
 export async function cancelBooking(
   r: StoredReservation,
   req: CancelRequest,
@@ -117,9 +127,14 @@ export async function cancelBooking(
 }
 
 // ---------------------------------------------------------------- edit details
+/** Result of a guest details edit. */
 export type DetailsOutcome =
   { status: 'saved' } | { status: 'not_allowed'; reason: string };
 
+/**
+ * Validates and saves the editable guest details, then queues the change
+ * notification. Email is intentionally not editable here.
+ */
 export async function saveDetails(
   r: StoredReservation,
   patch: DetailsRequest['details'],
@@ -152,6 +167,10 @@ export async function saveDetails(
 const sameDates = (r: StoredReservation, a: ISODate, b: ISODate) =>
   r.stay.checkIn === a && r.stay.checkOut === b;
 
+/**
+ * Quotes new dates for the same room: validates the stay, re-prices it and
+ * stores a short-lived quote with the price difference and new policy.
+ */
 export async function quoteChange(
   r: StoredReservation,
   req: { checkIn: ISODate; checkOut: ISODate },
@@ -276,12 +295,18 @@ export async function quoteChange(
   };
 }
 
+/** Result of committing a stored date-change quote. */
 export type CommitOutcome =
   | { status: 'completed' }
   | { status: 'payment_required' }
   | { status: 'stale'; quote: ChangeQuoteResponse }
   | { status: 'not_allowed'; reason: string };
 
+/**
+ * Commits a stored date-change quote after re-pricing it, so a stale or
+ * tampered quote can never move the booking. If money is due, the change is
+ * held as pending payment; a credit creates a refund ledger entry.
+ */
 export async function commitChange(
   r: StoredReservation,
   quoteId: string,

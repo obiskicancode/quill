@@ -12,7 +12,6 @@ import { StayFacts } from '../checkout/SummaryCard';
 import { Button } from '../ui/button';
 
 /** The stay as booked: room, dates and times, guests, extras, requests and the guest's contact details (masked until verified). */
-/** Pass `contact` (full details) on the manage page: they stay masked until the guest chooses to show them. */
 export function StayDetailsCard({
   v,
   contact,

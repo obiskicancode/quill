@@ -57,6 +57,10 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'locked', label: 'Locked' },
 ];
 
+/**
+ * Staff directory: role/status filters, invite dialog and a detail sheet for
+ * profile, security and session actions.
+ */
 export function StaffClient() {
   const [filters, setFilters] = useState<StaffQueryParams>({
     role: 'all',

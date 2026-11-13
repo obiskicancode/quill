@@ -41,6 +41,10 @@ import type { AdminRole, MfaSetupResponse } from '@/types/auth.types';
 type ConfirmOutput = z.output<typeof confirm2faSchema>;
 type PasswordOutput = z.output<typeof disable2faSchema>;
 
+/**
+ * MFA setup, verification and disable flow, including recovery codes and the
+ * owner-mandatory setup state.
+ */
 export function TwoFactorPanel({
   enabled,
   role,

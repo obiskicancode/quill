@@ -7,7 +7,6 @@ export const metadata = {
 };
 
 export default async function AdminStaffPage() {
-  // Owner only guard
   await requireAdminPage('staff.manage');
 
   return (

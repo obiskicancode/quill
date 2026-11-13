@@ -1,3 +1,8 @@
+/**
+ * Audit-log and seed-record persistence. Audit writes are append-only; the
+ * seed registry records which fixture rows were inserted.
+ */
+
 import { and, desc, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -10,11 +15,13 @@ import type {
 } from '@/db/types';
 import type { AdminRole } from '@/types/auth.types';
 
+/** Inserts one audit row. */
 export async function createAuditLog(data: NewAuditLog): Promise<AuditLog> {
   const [row] = await db.insert(auditLogs).values(data).returning();
   return row;
 }
 
+/** Records an audit event with optional actor, reason, diff and request metadata. */
 export async function recordAuditLog(data: {
   actorId?: string | null;
   actorRole?: AdminRole | null;
@@ -39,6 +46,7 @@ export async function recordAuditLog(data: {
   });
 }
 
+/** Lists the newest audit rows, up to `limit`. */
 export async function listAuditLogs(limit = 100): Promise<AuditLog[]> {
   return db
     .select()
@@ -47,6 +55,7 @@ export async function listAuditLogs(limit = 100): Promise<AuditLog[]> {
     .limit(limit);
 }
 
+/** Lists the audit history for one entity, newest first. */
 export async function listAuditLogsForEntity(
   entity: string,
   entityId: string,
@@ -58,6 +67,7 @@ export async function listAuditLogsForEntity(
     .orderBy(desc(auditLogs.createdAt));
 }
 
+/** Records a seeded fixture row so re-seeding can detect it. */
 export async function createSeedRecord(
   data: NewSeedRecord,
 ): Promise<SeedRecord> {
@@ -65,6 +75,7 @@ export async function createSeedRecord(
   return row;
 }
 
+/** Finds a seeded fixture record by table name and row id. */
 export async function findSeedRecord(
   tableName: string,
   rowId: string,

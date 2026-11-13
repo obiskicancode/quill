@@ -81,6 +81,7 @@ const PRIMARY_PRIORITY: ActionKey[] = [
   'edit',
 ];
 
+/** Reservation header with status, reference, stay summary and action menu. */
 export function ReservationDetailHeader({
   reservation,
   onAction,

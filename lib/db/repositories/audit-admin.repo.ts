@@ -22,6 +22,10 @@ import type {
 } from '@/types/audit.types';
 import type { AdminRole } from '@/types/auth.types';
 
+/**
+ * Admin audit-log reads and exports. The list hides security-only entities
+ * from non-owners, and CSV export is owner-only and capped.
+ */
 const SECURITY_ENTITIES = [
   'staff_user',
   'staff_session',
@@ -30,6 +34,10 @@ const SECURITY_ENTITIES = [
   'password_reset',
 ];
 
+/**
+ * Lists filtered audit entries for the admin table, excluding security entities
+ * unless the caller is an owner.
+ */
 export async function listAuditRepo(
   params: AuditQueryParams,
   role: AdminRole,
@@ -197,6 +205,7 @@ export async function listAuditRepo(
   }
 }
 
+/** Loads one audit entry and its diff, enforcing the same entity visibility. */
 export async function getAuditDetailRepo(
   id: string,
   role: AdminRole,
@@ -279,6 +288,7 @@ export async function getAuditDetailRepo(
   }
 }
 
+/** Exports the filtered audit log as CSV and records the export itself. */
 export async function exportAuditCsvRepo(
   params: AuditQueryParams,
   actor: StaffUser,

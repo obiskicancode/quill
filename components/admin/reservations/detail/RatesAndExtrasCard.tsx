@@ -2,6 +2,7 @@ import { AdminCard } from '@/components/admin/AdminCard';
 import { formatMinor } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
+/** Nightly rates and selected extras for the reservation. */
 export function RatesAndExtrasCard({
   reservation,
 }: {

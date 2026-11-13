@@ -70,6 +70,10 @@ interface ReservationDetailClientProps {
   permissions: readonly Permission[];
 }
 
+/**
+ * Reservation detail coordinator: loads the record, exposes role-gated actions
+ * and keeps the detail and list queries in sync after mutations.
+ */
 export function ReservationDetailClient({
   initialDetail,
   reservationId,

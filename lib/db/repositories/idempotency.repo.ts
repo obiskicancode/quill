@@ -1,3 +1,8 @@
+/**
+ * Idempotency-key storage for safe request retries. Records hold a stored
+ * response and an expiry; expired rows are treated as absent. `claim*` reserves
+ * a key before work begins and `finish*` stores the result.
+ */
 import { and, eq, isNull, lt } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -7,6 +12,10 @@ import type { IdempotencyKey, NewIdempotencyKey } from '@/db/types';
 /** A `db` handle or the transaction passed by a caller that owns one. */
 type QueryExecutor = Pick<typeof db, 'select' | 'insert' | 'update' | 'delete'>;
 
+/**
+ * Returns a stored response, deleting the record first if it has expired;
+ * resolves to `null` when absent or expired.
+ */
 export async function getIdempotency(
   key: string,
 ): Promise<unknown | IdempotencyKey['response']> {
@@ -23,6 +32,9 @@ export async function getIdempotency(
   return row.response;
 }
 
+/**
+ * Returns the full record through `executor`, deleting it first if expired.
+ */
 export async function getIdempotencyRecord(
   key: string,
   executor: QueryExecutor = db,
@@ -40,6 +52,10 @@ export async function getIdempotencyRecord(
   return row;
 }
 
+/**
+ * Stores a response, first pruning any expired row for the same key. Conflicts
+ * with a live key are ignored so the first stored value wins.
+ */
 export async function setIdempotency(
   key: string,
   response: unknown,
@@ -68,6 +84,12 @@ export async function setIdempotency(
     .onConflictDoNothing();
 }
 
+/**
+ * Atomically tries to insert a claim before work runs. When another request
+ * already holds the key, returns `claimed: false` with its record; a second
+ * insert retries the claim if that record expired between the conflict and the
+ * re-read.
+ */
 export async function claimIdempotency(
   key: string,
   ttlSeconds = 120,
@@ -106,6 +128,9 @@ export async function claimIdempotency(
   return { claimed: Boolean(retried), record: retried ?? null };
 }
 
+/**
+ * Completes a claim by storing its response and resetting the expiry.
+ */
 export async function finishIdempotency(
   key: string,
   response: unknown,
@@ -126,6 +151,9 @@ export async function finishIdempotency(
     .where(eq(idempotencyKeys.key, key));
 }
 
+/**
+ * Deletes an unfinished claim, leaving completed records intact.
+ */
 export async function releaseIdempotency(
   key: string,
   executor: QueryExecutor = db,
@@ -147,6 +175,7 @@ export async function retireIdempotency(
   await executor.delete(idempotencyKeys).where(eq(idempotencyKeys.key, key));
 }
 
+/** Deletes every expired record. */
 export async function cleanupExpired(): Promise<void> {
   await db
     .delete(idempotencyKeys)

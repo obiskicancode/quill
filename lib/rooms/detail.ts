@@ -1,3 +1,7 @@
+/**
+ * Room detail and pricing lookups for the public room pages.
+ */
+
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type {
   HotelPricingSettings,
@@ -17,12 +21,14 @@ import {
 } from '../db/queries/content-data';
 import { listRoomRateRules } from '../db/repositories/rooms.repo';
 
+/** Loads hotel pricing settings, failing if the singleton row is missing. */
 export async function getPricingSettings(): Promise<HotelPricingSettings> {
   const [row, rules] = await Promise.all([getHotelRow(), listRoomRateRules()]);
   if (!row) throw new Error(ERROR_MESSAGES.HOTEL_PRICING_SETTINGS_MISSING);
   return mapRoomHotelSettings(row, rules.map(mapRateRule));
 }
 
+/** Loads a published room's detail by slug, or null when it is missing. */
 export async function getRoomDetail(slug: string): Promise<RoomDetail | null> {
   const [rows, relations] = await Promise.all([
     getRoomTypesWithDetails(),

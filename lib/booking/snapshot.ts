@@ -1,3 +1,7 @@
+/**
+ * Builds the immutable policy, hotel and price snapshot stored on a
+ * reservation, so later settings changes cannot rewrite an existing booking.
+ */
 import type { ReservationSnapshot } from '@/types/booking.types';
 import type {
   CheckoutQuoteResponse,
@@ -14,6 +18,10 @@ import { formatGuestTime } from '../format';
 import { paymentProviderLabel } from '../payments';
 import { getPricingSettings } from '../rooms/detail';
 
+/**
+ * Captures the room, quote, hotel, policy and payment-provider details that the
+ * confirmation, manage and receipt views need after checkout.
+ */
 export async function buildSnapshot(
   room: RoomDetail,
   quote: Extract<CheckoutQuoteResponse, { status: 'ok' }>,

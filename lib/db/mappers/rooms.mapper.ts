@@ -17,6 +17,11 @@ import type {
 } from '@/types/rooms.types';
 import type { AmenityKey, ImageAsset } from '@/types/site.types';
 
+/**
+ * Maps room, amenity, gallery, and rate-rule rows into the public room types.
+ * Falls back to cover images and derived bed types when richer data is absent.
+ */
+
 function bedType(label: string | null): BedType {
   const value = (label ?? '').toLowerCase();
   if (value.includes('twin') || value.includes('single')) return 'twin';
@@ -30,12 +35,17 @@ const toImage = (row: DbGalleryImage): ImageAsset => ({
   alt: row.altText,
 });
 
+/** Room relations keyed by room type id: amenities, images, and testimonials. */
 export interface RoomRelations {
   amenities: Map<string, DbAmenity[]>;
   images: Map<string, DbGalleryImage[]>;
   testimonials: Map<string, DbTestimonial[]>;
 }
 
+/**
+ * Maps a room type with sorted images, a derived bed type, and a cover-image
+ * fallback when no gallery images are linked.
+ */
 export function mapRoomType(row: DbRoomType, rel: RoomRelations): RoomType {
   const images = (rel.images.get(row.id) ?? []).sort(
     (a, b) => a.sortOrder - b.sortOrder,
@@ -76,6 +86,10 @@ export function mapRoomType(row: DbRoomType, rel: RoomRelations): RoomType {
   };
 }
 
+/**
+ * Extends the public room type with admin/booking fields, a gallery, and
+ * testimonials; gallery images are sorted by display order.
+ */
 export function mapRoomDetail(row: DbRoomType, rel: RoomRelations): RoomDetail {
   const room = mapRoomType(row, rel);
   const images = (rel.images.get(row.id) ?? []).sort(
@@ -109,6 +123,10 @@ export function mapRoomDetail(row: DbRoomType, rel: RoomRelations): RoomDetail {
   };
 }
 
+/**
+ * Maps a rate rule; only percentage markups produce an uplift, other
+ * adjustment types map to 0.
+ */
 export function mapRateRule(row: DbRateRule): SeasonalRateRule {
   return {
     label: row.name,
@@ -123,6 +141,10 @@ export function mapRateRule(row: DbRateRule): SeasonalRateRule {
   };
 }
 
+/**
+ * Maps hotel pricing settings, converting basis points to percentages and
+ * passing seasonal rate rules through unchanged.
+ */
 export function mapRoomHotelSettings(
   row: DbHotelSettings,
   rules: SeasonalRateRule[],
@@ -154,4 +176,5 @@ export function mapRoomHotelSettings(
   };
 }
 
+/** Re-exported amenity key type for consumers of the room mapper. */
 export type { AmenityKey };

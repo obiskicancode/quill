@@ -1,3 +1,8 @@
+/**
+ * Builds the guest-facing booking view from the stored reservation and the
+ * caller's access level. Contact details are masked until the guest has proved
+ * their email, and manage data is only added for a live manage session.
+ */
 import { cookies } from 'next/headers';
 
 import { hotelClock, nightsBetween } from '@/lib/dates';
@@ -26,6 +31,7 @@ import {
   type StoredReservation,
 } from './store';
 
+/** Masks the local part and domain host while keeping the TLD readable. */
 export function maskEmail(email: string): string {
   const [local = '', domain = ''] = email.split('@');
   const dot = domain.lastIndexOf('.');
@@ -36,6 +42,7 @@ export function maskEmail(email: string): string {
   return `${star(local)}@${star(host)}${tld}`;
 }
 
+/** Keeps the country code and last four digits of a phone number. */
 export function maskPhone(phone: string): string {
   const digits = phone.replace(/\D/g, '');
   const country = phone.startsWith('+')
@@ -84,6 +91,7 @@ function paymentLabel(r: StoredReservation): PaymentLabel {
   }
 }
 
+/** Options that add manage-session data to the guest view. */
 export interface ViewOptions {
   manage?: { csrf: string; expiresAt: number };
 }
@@ -93,6 +101,10 @@ function formatEmbeddedTimes(text: string): string {
   return text.replace(/\b\d{2}:\d{2}(?::\d{2})?\b/g, (m) => formatGuestTime(m));
 }
 
+/**
+ * Maps a stored reservation to the public booking shape, including masked
+ * contact details, payment labels and optional manage actions.
+ */
 export async function buildGuestReservation(
   r: StoredReservation,
   level: AccessLevel,
@@ -189,6 +201,7 @@ export async function buildGuestReservation(
   };
 }
 
+/** Loads a stored reservation by reference, or `null` when it does not exist. */
 export async function loadReservation(
   reference: string,
 ): Promise<StoredReservation | null> {
@@ -213,6 +226,7 @@ export async function loadPendingReservations(): Promise<StoredReservation[]> {
   return found.sort((a, b) => b.createdAt - a.createdAt);
 }
 
+/** The status payload used by the checkout poller and manage page. */
 export const statusOf = (r: StoredReservation): StatusResponse => toStatus(r);
 
 /**

@@ -20,6 +20,9 @@ import { loginSchema, type LoginInput } from '@/schemas/auth.schema';
 
 type AdminLoginOutput = z.output<typeof loginSchema>;
 
+/**
+ * Staff login form with lockout countdown and MFA/step-up redirect handling.
+ */
 export function LoginForm({
   next,
   expired = false,

@@ -37,6 +37,10 @@ interface DashboardClientProps {
   formattedToday: string;
 }
 
+/**
+ * Operations dashboard: KPI strip, arrivals/departures, occupancy, work queue,
+ * recent activity and stale-data warnings, refreshed from the admin query.
+ */
 export function DashboardClient({
   permissions,
   timezone,

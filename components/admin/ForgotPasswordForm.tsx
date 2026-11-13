@@ -23,6 +23,7 @@ import {
 
 type ForgotPasswordOutput = z.output<typeof forgotPasswordSchema>;
 
+/** Requests a password-reset email and shows a neutral sent state. */
 export function ForgotPasswordForm({
   resetLinkInServerLog = false,
 }: {

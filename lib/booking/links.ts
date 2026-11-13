@@ -1,5 +1,9 @@
+/**
+ * Builds URLs that carry a stay (dates and guests) between public pages.
+ */
 import type { StayInput } from '@/types/stay.types';
 
+/** Serialises the stay into query parameters, omitting empty dates. */
 export function stayParams(stay: StayInput): URLSearchParams {
   const params = new URLSearchParams();
   if (stay.checkIn && stay.checkOut) {

@@ -72,6 +72,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Car,
 };
 
+/** Amenity catalogue with create/edit dialogs, usage counts and reordering. */
 export function AmenitiesClient({ initialAmenities }: AmenitiesClientProps) {
   const confirm = useConfirm();
   const amenitiesQuery = useAmenities(initialAmenities);

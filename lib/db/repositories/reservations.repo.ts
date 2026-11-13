@@ -1,3 +1,11 @@
+/**
+ * Reservation persistence and admin workflows: list/detail projections, action
+ * availability, room assignment, payments and refunds, stay changes,
+ * cancellations, and manual booking creation. Multi-step mutations run in a
+ * transaction and record status history, audit logs, and queued notifications
+ * alongside the reservation update.
+ */
+
 import { and, desc, eq, gte, inArray, lte, ne, or, sql } from 'drizzle-orm';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
@@ -68,6 +76,7 @@ import type {
   ReservationStatusHistoryItem,
 } from '@/types/reservation.types';
 
+/** Returns the room-type, room and status options for the reservations filters. */
 export async function getFilterOptions() {
   const [types, allRooms] = await Promise.all([
     db
@@ -217,6 +226,7 @@ function buildWhereConditions(
   return conditions.length > 0 ? and(...conditions) : undefined;
 }
 
+/** Lists reservations for the admin table with filters and pagination. */
 export async function getReservationsAdminList(
   params: ReservationsListQueryParams,
   today: ISODate,
@@ -339,6 +349,10 @@ export async function getReservationsAdminList(
   };
 }
 
+/**
+ * Derives which admin actions are currently permitted from the reservation
+ * status, payment state and the caller's role.
+ */
 export function computeAllowedActions(
   res: typeof reservations.$inferSelect,
   role: AdminRole,
@@ -525,6 +539,7 @@ export function computeAllowedActions(
   };
 }
 
+/** Loads the full admin detail projection for one reservation. */
 export async function getReservationAdminDetail(
   idOrRef: string,
   today: ISODate,
@@ -885,6 +900,7 @@ export async function getReservationAdminDetail(
   };
 }
 
+/** Finds the previous and next reservation in the current filtered list. */
 export async function getReservationNeighbors(
   currentId: string,
   params: ReservationsListQueryParams,
@@ -925,6 +941,7 @@ export async function getReservationNeighbors(
   };
 }
 
+/** Records that a staff member viewed a payment proof. */
 export async function logProofViewAudit(
   reservationId: string,
   staffUserId: string,
@@ -940,6 +957,7 @@ export async function logProofViewAudit(
   });
 }
 
+/** Records that a staff member exported reservation data. */
 export async function logExportAudit(
   staffUserId: string,
   rowCount: number,
@@ -967,6 +985,7 @@ function verifyVersion(updatedAt: Date, expectedVersion: string) {
   }
 }
 
+/** Lists rooms that are free for a proposed stay, optionally for one type. */
 export async function listAvailableRoomsForStay(
   roomTypeId: string,
   checkIn: string,
@@ -1003,6 +1022,7 @@ export async function listAvailableRoomsForStay(
   );
 }
 
+/** Updates guest details and records the change and notification. */
 export async function updateReservationDetails(
   id: string,
   version: string,
@@ -1079,6 +1099,7 @@ export async function updateReservationDetails(
   return updated;
 }
 
+/** Moves a reservation to another room after checking availability. */
 export async function reassignReservationRoom(
   id: string,
   version: string,
@@ -1174,6 +1195,7 @@ export async function reassignReservationRoom(
   });
 }
 
+/** Records a cash or manual payment and recomputes the reservation ledger. */
 export async function recordAdminPayment(
   id: string,
   version: string,
@@ -1294,6 +1316,10 @@ export async function recordAdminPayment(
   });
 }
 
+/**
+ * Verifies an uploaded transfer proof, marks the payment paid and advances the
+ * reservation in one transaction.
+ */
 export async function verifyBankTransfer(
   id: string,
   paymentId: string,
@@ -1564,6 +1590,7 @@ export async function verifyBankTransfer(
   });
 }
 
+/** Approves or declines a booking that is waiting for staff review. */
 export async function approveOrDeclineBooking(
   id: string,
   version: string,
@@ -1696,6 +1723,10 @@ export async function approveOrDeclineBooking(
   });
 }
 
+/**
+ * Re-prices and applies an admin date change, moving the room if needed and
+ * recording the old/new totals and policy.
+ */
 export async function changeReservationDates(
   id: string,
   version: string,
@@ -1820,6 +1851,7 @@ export async function changeReservationDates(
   });
 }
 
+/** Cancels a reservation, calculates any refund and records the reason. */
 export async function cancelReservationAdmin(
   id: string,
   version: string,
@@ -1954,6 +1986,7 @@ export async function cancelReservationAdmin(
   });
 }
 
+/** Issues an admin refund, creating the refund payment and ledger entry. */
 export async function issueRefundAdmin(
   id: string,
   version: string,
@@ -2074,6 +2107,7 @@ export async function issueRefundAdmin(
   });
 }
 
+/** Marks a reservation as a no-show after the check-in window. */
 export async function markReservationNoShow(
   id: string,
   version: string,
@@ -2156,6 +2190,7 @@ export async function markReservationNoShow(
   });
 }
 
+/** Re-queues the guest confirmation email and records the resend. */
 export async function resendReservationConfirmation(
   id: string,
   templateKey: string,
@@ -2194,6 +2229,10 @@ export async function resendReservationConfirmation(
   return { success: true };
 }
 
+/**
+ * Creates a booking on behalf of a guest, resolving the room and pricing from
+ * the server before writing the reservation and its history.
+ */
 export async function adminCreateReservation(
   input: CreateReservationInput,
   staffId: string,

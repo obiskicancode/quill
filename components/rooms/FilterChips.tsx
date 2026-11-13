@@ -61,6 +61,7 @@ function buildChips(f: RoomFilters): Chip[] {
   return chips;
 }
 
+/** Removable chips summarizing the active room filters. */
 export function FilterChips({
   filters,
   onChange,

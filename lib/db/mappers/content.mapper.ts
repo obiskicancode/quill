@@ -29,6 +29,11 @@ import type {
 } from '@/types/content.types';
 import type { ImageAsset, SiteConfig, Testimonial } from '@/types/site.types';
 
+/**
+ * Maps database content rows into the public content and site types. Mappers
+ * are pure and substitute defaults for nullable columns or legacy snapshots.
+ */
+
 type PageContent = {
   page?: Record<string, unknown>;
   body?: unknown;
@@ -39,6 +44,10 @@ const image = (
   alt: string | null | undefined,
 ): ImageAsset | null => (src ? { src, alt: alt ?? '' } : null);
 
+/**
+ * Builds hotel content settings, normalizing phone labels, address parts, and
+ * analytics defaults. `roomCount` is supplied by the caller.
+ */
 export function mapHotelSettings(
   row: DbHotelSettings,
   social: DbSocialLink[],
@@ -189,6 +198,7 @@ export function mapPublicSite(
   };
 }
 
+/** Maps a social link row, defaulting the label to the platform name. */
 export function mapSocialLink(row: DbSocialLink): SocialLink {
   return {
     id: row.id,
@@ -198,6 +208,10 @@ export function mapSocialLink(row: DbSocialLink): SocialLink {
   };
 }
 
+/**
+ * Maps a site page row, falling back to the embedded `content.page` snapshot
+ * and empty defaults when normalized columns are absent.
+ */
 export function mapSitePage(row: DbSitePage): SitePage {
   const content = (row.content ?? {}) as PageContent;
   const page = (content.page ?? {}) as Record<string, unknown>;
@@ -223,6 +237,9 @@ export function mapSitePage(row: DbSitePage): SitePage {
   };
 }
 
+/**
+ * Maps a policy page, returning null for rows whose template is not `policy`.
+ */
 export function mapPolicyPage(row: DbSitePage): PolicyPage | null {
   if (row.template !== 'policy') return null;
   const content = (row.content ?? {}) as PageContent;
@@ -239,6 +256,10 @@ export function mapPolicyPage(row: DbSitePage): PolicyPage | null {
   };
 }
 
+/**
+ * Maps a facility row; unrecognized pricing and kind values fall back to
+ * `free` and `other`.
+ */
 export function mapFacility(row: DbFacility): Facility {
   return {
     id: row.id,
@@ -260,6 +281,10 @@ export function mapFacility(row: DbFacility): Facility {
   };
 }
 
+/**
+ * Maps a gallery image, falling back to the full image URL for the thumbnail
+ * and to default dimensions when they are missing.
+ */
 export function mapGalleryImage(row: DbGalleryImage): GalleryImageRecord {
   return {
     id: row.id,
@@ -279,6 +304,7 @@ export function mapGalleryImage(row: DbGalleryImage): GalleryImageRecord {
   };
 }
 
+/** Maps a testimonial; a missing rating or photo is omitted. */
 export function mapTestimonial(row: DbTestimonial): Testimonial {
   return {
     id: row.id,
@@ -290,6 +316,7 @@ export function mapTestimonial(row: DbTestimonial): Testimonial {
   };
 }
 
+/** Maps an FAQ row. */
 export function mapFaq(row: DbFaq): Faq {
   return {
     id: row.id,
@@ -299,6 +326,7 @@ export function mapFaq(row: DbFaq): Faq {
   };
 }
 
+/** Maps a team member, defaulting optional text fields to empty strings. */
 export function mapTeamMember(row: DbTeamMember): TeamMember {
   return {
     id: row.id,
@@ -311,6 +339,7 @@ export function mapTeamMember(row: DbTeamMember): TeamMember {
   };
 }
 
+/** Maps a nearby attraction; the `distance` column becomes `distanceNote`. */
 export function mapAttraction(row: DbAttraction): NearbyAttraction {
   return {
     id: row.id,
@@ -321,6 +350,9 @@ export function mapAttraction(row: DbAttraction): NearbyAttraction {
   };
 }
 
+/**
+ * Maps an extra row; the public id is the slug and prices stay in minor units.
+ */
 export function mapExtra(row: DbExtra): ExtraItem {
   return {
     id: row.slug,
@@ -332,6 +364,7 @@ export function mapExtra(row: DbExtra): ExtraItem {
   };
 }
 
+/** Maps a bank account row to its public transfer details. */
 export function mapBankAccount(row: DbBankAccount) {
   return {
     bankName: row.bankName,
@@ -340,6 +373,10 @@ export function mapBankAccount(row: DbBankAccount) {
   };
 }
 
+/**
+ * Returns stored policy settings when present; otherwise derives them from the
+ * legacy hotel_settings columns.
+ */
 export function mapPolicySettings(row: DbHotelSettings): PolicySettings {
   const stored = (row.policySettings ?? null) as PolicySettings | null;
   if (stored) return stored;
@@ -387,4 +424,5 @@ export function mapPolicySettings(row: DbHotelSettings): PolicySettings {
   };
 }
 
+/** Type of the Drizzle schema namespace. */
 export type DbSchema = typeof schema;

@@ -1,3 +1,8 @@
+/**
+ * Focus management for failed form validation. The order here follows the
+ * guest-visible layout, not the schema order, so the first error the guest sees
+ * is the one that receives focus.
+ */
 import type { FieldErrors } from 'react-hook-form';
 
 /** Fields in the order they appear on screen. */

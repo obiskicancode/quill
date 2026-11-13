@@ -41,6 +41,7 @@ function SocialIcon({ platform }: { platform: SocialPlatform }) {
   }
 }
 
+/** Public site footer with contact details, policies and social links. */
 export function Footer({ site }: { site: SiteConfig }) {
   return (
     <footer className="on-dark bg-ink text-paper/80">

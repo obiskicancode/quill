@@ -1,3 +1,9 @@
+/**
+ * The booking persistence layer. It maps the API-shaped `StoredReservation` to
+ * and from the relational tables, owns the transaction boundaries for writes,
+ * and keeps payment, refund, history and notification rows consistent with the
+ * reservation they belong to.
+ */
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 
@@ -64,6 +70,7 @@ async function inTransaction<T>(
   return db.transaction((tx) => work(tx));
 }
 
+/** The full reservation shape used by guest views and manage mutations. */
 export interface StoredReservation {
   id: string;
   roomId: string;
@@ -106,6 +113,7 @@ export interface StoredReservation {
   notifications?: { kind: string; detail: string }[];
 }
 
+/** Generates an opaque id for a new reservation, history entry or quote. */
 export const newId = () => randomUUID();
 
 function dbStatusOf(status: GuestReservationStatus): Reservation['status'] {
@@ -197,6 +205,10 @@ function historyType(status: Reservation['status']): HistoryType {
   }
 }
 
+/**
+ * Loads a reservation and its related rows by reference. Pass an executor when
+ * the caller already owns a transaction.
+ */
 export async function loadStoredReservation(
   reference: string,
   executor: QueryExecutor = db,
@@ -730,6 +742,7 @@ function sameGuest(a: GuestInfo, b: GuestInfo): boolean {
   );
 }
 
+/** Result of trying to edit a live checkout hold. */
 export type HoldUpdateOutcome =
   'not_found' | 'not_allowed' | 'hold_expired' | 'ok';
 
@@ -856,6 +869,7 @@ export async function updateReservationHold(input: {
   });
 }
 
+/** The compact reservation payload returned when a hold is created. */
 export function toReservationResponse(r: StoredReservation) {
   return {
     reference: r.reference,
@@ -874,6 +888,7 @@ export function toReservationResponse(r: StoredReservation) {
   };
 }
 
+/** The status payload used by checkout polling and the manage page. */
 export function toStatus(r: StoredReservation) {
   return {
     reference: r.reference,
@@ -885,6 +900,7 @@ export function toStatus(r: StoredReservation) {
   };
 }
 
+/** Appends a plain-language history entry to the in-memory reservation. */
 export function logEvent(
   r: StoredReservation,
   type: HistoryType,
@@ -895,6 +911,7 @@ export function logEvent(
   r.history.push({ id: newId(), at: Date.now(), type, detail });
 }
 
+/** Queues a guest notification and records it in the timeline. */
 export function notify(
   r: StoredReservation,
   kind: string,
@@ -905,10 +922,15 @@ export function notify(
   logEvent(r, 'email_sent', guestDetail);
 }
 
+/** Identity helper for callers that need to signal a fresh read. */
 export function refresh(r: StoredReservation): StoredReservation {
   return r;
 }
 
+/**
+ * Applies new dates, breakdown, totals and policy to the in-memory reservation
+ * and increments the change counter.
+ */
 export function applyStayChange(
   r: StoredReservation,
   c: {
@@ -942,10 +964,12 @@ export function applyStayChange(
   logEvent(r, 'dates_changed');
 }
 
+/** Generates a unique, human-readable payment reference. */
 export async function nextPaymentReference(prefix = 'PAY'): Promise<string> {
   return `${prefix}-${Date.now().toString(36).toUpperCase()}-${randomUUID().slice(0, 6).toUpperCase()}`;
 }
 
+/** Persists a short-lived date-change quote for a later commit. */
 export async function saveQuote(data: {
   id: string;
   reference: string;
@@ -974,6 +998,7 @@ export async function saveQuote(data: {
   });
 }
 
+/** Loads a stored quote, returning `null` once it has expired. */
 export async function getStoredQuote(id: string) {
   const [row] = await db
     .select()
@@ -984,10 +1009,12 @@ export async function getStoredQuote(id: string) {
   return row;
 }
 
+/** Deletes a committed or abandoned date-change quote. */
 export async function deleteStoredQuote(id: string) {
   await db.delete(quotes).where(eq(quotes.id, id));
 }
 
+/** Finds an active room type and a free room for the requested stay. */
 export async function findRoomForStay(
   roomSlug: string,
   checkIn: string,
@@ -999,6 +1026,7 @@ export async function findRoomForStay(
   return room ? { roomType, room } : null;
 }
 
+/** Loads the raw reservation row for a reference. */
 export async function getReservationRow(reference: string) {
   const [row] = await db
     .select()
@@ -1008,6 +1036,7 @@ export async function getReservationRow(reference: string) {
   return row ?? null;
 }
 
+/** Lists a reservation's payments in creation order. */
 export async function listReservationPayments(reservationId: string) {
   return db
     .select()
@@ -1016,6 +1045,7 @@ export async function listReservationPayments(reservationId: string) {
     .orderBy(payments.createdAt);
 }
 
+/** Deletes a reservation created during a checkout attempt that wrote nothing. */
 export async function deleteEmptyReservation(reference: string) {
   await db.delete(reservations).where(eq(reservations.reference, reference));
 }
@@ -1029,6 +1059,7 @@ export {
   reservations,
 };
 
+/** Inserts a payment row and returns its generated id. */
 export async function insertPayment(
   input: {
     reservationId: string;
@@ -1114,6 +1145,7 @@ async function recordLatePaymentRefund(
   });
 }
 
+/** Finds a pending payment that can be reused for the same amount and provider. */
 export async function findReusablePayment(
   input: {
     reservationId: string;
@@ -1189,6 +1221,11 @@ export async function ensureBankTransferPayment(
   });
 }
 
+/**
+ * Marks a provider payment as paid and advances the reservation in one locked
+ * transaction. Idempotent for an already-paid reference; a mismatched amount is
+ * rejected. Returns `already` when the payment was already complete.
+ */
 export async function completeOnlinePayment(input: {
   provider: PaymentProvider;
   reference: string;
@@ -1445,6 +1482,10 @@ export async function completeOnlinePayment(input: {
   });
 }
 
+/**
+ * Marks a pending provider payment as failed. A non-pending payment is left
+ * untouched, so a late failure cannot undo a successful charge.
+ */
 export async function failOnlinePayment(input: {
   provider: PaymentProvider;
   reference: string;
@@ -1566,6 +1607,11 @@ async function releaseOwnHold(
     );
 }
 
+/**
+ * Creates a reservation, its nights, extras and initial history in one
+ * transaction. A supplied `supersedeReservationId` is expired in the same
+ * transaction so the guest never holds two rooms for the same stay.
+ */
 export async function insertReservation(
   input: {
     reference: string;

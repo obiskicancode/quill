@@ -30,6 +30,7 @@ interface DeparturesTableProps {
   onCheckOut: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
+/** Today's departures with balance and checkout status. */
 export function DeparturesTable({
   rows,
   canManage,

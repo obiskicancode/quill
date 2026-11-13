@@ -1,3 +1,8 @@
+/**
+ * Tailwind class-name merging for the project's design system. The custom type
+ * ramp is registered so `text-small` and friends resolve as font sizes rather
+ * than colours.
+ */
 import { createCn } from 'cn/config';
 
 /**
@@ -31,4 +36,9 @@ const cn = createCn({
   },
 });
 
+/**
+ * Merges conditional Tailwind classes, with later conflicting utilities
+ * winning. Use it for every component class list so the type ramp and custom
+ * class groups stay intact.
+ */
 export { cn };

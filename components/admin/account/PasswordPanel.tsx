@@ -24,6 +24,7 @@ import {
 
 type PasswordOutput = z.output<typeof passwordChangeSchema>;
 
+/** Password change form; revokes other sessions on success. */
 export function PasswordPanel() {
   const changePassword = useChangePassword();
   const form = useForm<PasswordChangeInput, unknown, PasswordOutput>({

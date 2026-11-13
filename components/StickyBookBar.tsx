@@ -8,10 +8,7 @@ import { useSite } from '@/providers/site.provider';
 
 import { ButtonLink } from './ui/button';
 
-/**
- * Mobile-only Book Now bar. Hidden while the availability search is on screen (it would duplicate the main action).
- * On pages with no search bar it simply stays visible. Right padding leaves room for the WhatsApp button.
- */
+/** Mobile sticky booking bar, hidden while checkout chrome is active. */
 export function StickyBookBar() {
   const site = useSite();
   const [visible, setVisible] = useState(false);

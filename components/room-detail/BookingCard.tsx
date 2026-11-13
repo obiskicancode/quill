@@ -54,6 +54,10 @@ interface BookingCardProps {
 
 type Scope = 'rail' | 'sheet';
 
+/**
+ * Room-detail booking card: date/guest selection, live quote, policy summary
+ * and the handoff to checkout.
+ */
 export function BookingCard({
   room,
   initial,

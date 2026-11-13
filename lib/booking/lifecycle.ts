@@ -1,3 +1,8 @@
+/**
+ * Scheduled booking lifecycle jobs. They expire unpaid holds and stale date
+ * changes, repair paid reservations that were left in a non-final status, then
+ * drain refunds and queued notifications.
+ */
 import { and, eq, inArray, lt, ne, sql } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -14,6 +19,11 @@ import { processPendingProviderRefunds } from '@/lib/payments/refund-worker';
 
 import { completeOnlinePayment } from './store';
 
+/**
+ * Expires unpaid online holds whose deadline has passed, leaving paid holds and
+ * pay-at-hotel reservations untouched. Returns the number of reservations
+ * expired.
+ */
 export async function expireStaleHolds(): Promise<number> {
   return db.transaction(async (tx) => {
     const result = await tx.execute(sql`
@@ -51,6 +61,7 @@ export async function expireStaleHolds(): Promise<number> {
   });
 }
 
+/** Expires unpaid date-change requests whose hold has lapsed. */
 export async function expireStaleChanges(): Promise<number> {
   const rows = await db
     .update(reservationChanges)
@@ -72,6 +83,11 @@ export async function expireStaleChanges(): Promise<number> {
   return rows.length;
 }
 
+/**
+ * Re-applies paid provider payments to reservations that are still pending,
+ * expired or cancelled, repairing the common case where a webhook arrived after
+ * the reservation was retired. Returns how many reservations were repaired.
+ */
 export async function reconcilePaidPayments(): Promise<number> {
   const rows = await db
     .select({
@@ -106,6 +122,10 @@ export async function reconcilePaidPayments(): Promise<number> {
   return repaired;
 }
 
+/**
+ * Runs every lifecycle job in order and returns the per-job counts for the cron
+ * response and logs.
+ */
 export async function runLifecycleJobs() {
   const expiredHolds = await expireStaleHolds();
   const expiredChanges = await expireStaleChanges();

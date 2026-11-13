@@ -180,6 +180,7 @@ function renderStay(
     </FieldSet>
   );
 }
+/** Contact form with validation, server errors and success state. */
 export function ContactForm({
   initialTopic,
   initialRoom,

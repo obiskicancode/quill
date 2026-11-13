@@ -14,7 +14,6 @@ export async function GET(request: Request) {
   if (!guard.ok) return guard.response;
   const context = guard.context;
 
-  // Owner only CSV export
   if (context.role !== 'owner') {
     return apiFail(403, ERROR_MESSAGES.OWNERS_ONLY_AUDIT_EXPORT, undefined, {
       noCache: true,

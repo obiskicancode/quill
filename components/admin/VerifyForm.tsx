@@ -27,6 +27,7 @@ import { verify2faSchema, type Verify2faInput } from '@/schemas/auth.schema';
 type Mode = 'totp' | 'recovery';
 type VerifyOutput = z.output<typeof verify2faSchema>;
 
+/** MFA verification form supporting authenticator codes and recovery codes. */
 export function VerifyForm({ next }: { next?: string }) {
   const router = useRouter();
   const verify2fa = useAdminVerify2fa();

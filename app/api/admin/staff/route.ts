@@ -13,7 +13,6 @@ import {
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  // Staff accounts: owner only ('staff.manage')
   const guard = await guardAdminApi(request, { permission: 'staff.manage' });
   if (!guard.ok) return guard.response;
 

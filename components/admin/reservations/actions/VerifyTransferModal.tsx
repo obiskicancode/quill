@@ -87,6 +87,7 @@ interface VerifyTransferModalProps {
   onRefresh: () => void;
 }
 
+/** Verifies or rejects a bank-transfer proof and advances the booking. */
 export function VerifyTransferModal({
   open,
   onClose,

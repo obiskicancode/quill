@@ -37,6 +37,7 @@ const LAYOUTS: Record<number, { grid: string; spans: string[] }> = {
   },
 };
 
+/** Room photo gallery with responsive layouts and a lightbox. */
 export function RoomGallery({
   roomName,
   images,

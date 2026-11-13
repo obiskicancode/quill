@@ -2,6 +2,11 @@ import { Redis } from '@upstash/redis';
 
 import { config } from '@/config';
 
+/**
+ * Fixed-window rate limiting. Uses Upstash Redis when configured and falls
+ * back to an in-process store on missing config or Redis errors.
+ */
+
 type RateLimitResult = { allowed: boolean; remaining: number };
 
 class MemoryStore {
@@ -39,6 +44,7 @@ function getRedis(): Redis | null {
   return null;
 }
 
+/** Counts one hit for `key` and reports whether it is within the window limit. */
 export async function rateLimit(
   key: string,
   limit = 5,

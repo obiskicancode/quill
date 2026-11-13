@@ -1,3 +1,8 @@
+/**
+ * Authentication and idempotency helpers for guest manage mutations. Every
+ * change needs a live manage session, a matching CSRF token and a rate-limit
+ * pass.
+ */
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { checkManageCsrf } from '@/lib/http/csrf';
@@ -8,6 +13,7 @@ import type { ManageApiError } from '@/types/manage.types';
 import { getManageSession } from '../booking/session';
 import { rateLimit } from '../rate-limit';
 
+/** Builds the typed, no-store error envelope used by manage endpoints. */
 export const manageError = (status: number, error: ManageApiError) =>
   apiFail(status, error.message, error, { noCache: true });
 

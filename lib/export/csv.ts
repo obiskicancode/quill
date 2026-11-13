@@ -1,8 +1,10 @@
 /**
- * Safe CSV export utility preventing CSV/formula injection.
- * Any cell beginning with '=', '+', '-', or '@' is prefixed with an apostrophe.
+ * CSV export helpers. Cells are quoted and formula-prefixed so exported admin
+ * data cannot execute in Excel, Google Sheets or LibreOffice.
+ *
+ * Escapes one cell and neutralises formula injection. Cells beginning with
+ * `=`, `+`, `-`, `@`, tab or carriage return are prefixed with an apostrophe.
  */
-
 export function sanitizeCsvCell(value: unknown): string {
   if (value === null || value === undefined) return '';
 
@@ -26,6 +28,11 @@ export function sanitizeCsvCell(value: unknown): string {
   return str;
 }
 
+/**
+ * Builds a CRLF-delimited CSV document from headers and rows. Rows beyond
+ * `maxRows` are dropped and reported through `capped`, so callers can warn the
+ * operator instead of silently truncating an export.
+ */
 export function generateCsvStream(params: {
   headers: string[];
   rows: (string | number | boolean | null | undefined)[][];

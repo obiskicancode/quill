@@ -37,6 +37,7 @@ interface CalendarHeaderProps {
   onOpenBlockModal: () => void;
 }
 
+/** Calendar toolbar: date navigation, view switch, filters and block actions. */
 export function CalendarHeader({
   from,
   days,

@@ -1,3 +1,8 @@
+/**
+ * Room search query parsing and serialization. Invalid or out-of-range values
+ * are ignored so a malformed URL still renders a usable search.
+ */
+
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { formatDayMonth, fromISO, toISO } from '@/lib/dates';
 import type { ISODate } from '@/types/dates.types';
@@ -38,6 +43,7 @@ function list<T extends string>(
     .filter((v): v is T => (allowed as readonly string[]).includes(v));
 }
 
+/** Parses URL params into a validated room query with safe defaults. */
 export function parseRoomQuery(p: ParamsLike): RoomQuery {
   const sort = p.get('sort') as SortKey | null;
   return {
@@ -82,6 +88,7 @@ export function serializeRoomQuery(q: RoomQuery): string {
   return p.toString();
 }
 
+/** True when any room filter is active. */
 export const hasFilters = (q: RoomQuery) =>
   JSON.stringify(q.filters) !== JSON.stringify(emptyFilters);
 
@@ -99,6 +106,7 @@ export function stayProblem(q: RoomQuery, today: ISODate): string | null {
   return null;
 }
 
+/** Combined adult and child guest count for a search. */
 export const totalGuests = (q: Pick<RoomQuery, 'adults' | 'children'>) =>
   q.adults + q.children;
 

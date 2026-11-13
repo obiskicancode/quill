@@ -7,6 +7,7 @@ import {
 import { formatHotelDateTime } from '@/lib/format';
 import type { ReservationStatusHistoryItem } from '@/types/reservation.types';
 
+/** Reservation status and event timeline. */
 export function TimelineCard({
   history,
 }: {

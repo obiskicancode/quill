@@ -71,6 +71,7 @@ interface ExtrasClientProps {
 type ExtraFormInput = z.input<typeof extraFormSchema>;
 type ExtraFormOutput = z.output<typeof extraFormSchema>;
 
+/** Extra catalogue with pricing units, availability, editing and reordering. */
 export function ExtrasClient({ initialExtras }: ExtrasClientProps) {
   const confirm = useConfirm();
   const queryClient = useQueryClient();

@@ -1,3 +1,8 @@
+/**
+ * Payment provider registry and selection. Resolves the configured provider
+ * from built-in adapters or ones registered at runtime, and offers safe lookups
+ * for optional call sites that prefer null/false over a thrown error.
+ */
 import { config } from '@/config';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type { PaymentProvider } from '@/types/checkout.types';
@@ -22,6 +27,7 @@ export function registerPaymentProvider(
   registry.set(id, factory);
 }
 
+/** Resolves the configured provider id, defaulting to Paystack when unset. */
 export function getActivePaymentProviderId(): PaymentProvider {
   const configured = (config.PAYMENT.PROVIDER ?? 'paystack').toLowerCase();
   if (!isPaymentProviderId(configured))
@@ -29,6 +35,7 @@ export function getActivePaymentProviderId(): PaymentProvider {
   return configured;
 }
 
+/** Instantiates a provider adapter; throws if the id is unknown or unregistered. */
 export function createPaymentProvider(
   id: PaymentProvider = getActivePaymentProviderId(),
 ): PaymentProviderAdapter {
@@ -38,6 +45,7 @@ export function createPaymentProvider(
   return factory();
 }
 
+/** Returns an adapter, or null when creation fails. */
 export function tryGetPaymentProvider(
   id: PaymentProvider = getActivePaymentProviderId(),
 ): PaymentProviderAdapter | null {
@@ -48,6 +56,7 @@ export function tryGetPaymentProvider(
   }
 }
 
+/** True only when the provider can be created and has its credentials configured. */
 export function isPaymentProviderAvailable(
   id: PaymentProvider = getActivePaymentProviderId(),
 ): boolean {
@@ -58,6 +67,7 @@ export function isPaymentProviderAvailable(
   }
 }
 
+/** Human-readable provider label, falling back to the capitalized id. */
 export function paymentProviderLabel(id: PaymentProvider): string {
   try {
     return createPaymentProvider(id).label;

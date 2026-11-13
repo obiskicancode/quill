@@ -1,3 +1,8 @@
+/**
+ * Audit payload redaction and diff formatting. Sensitive keys are matched by
+ * name so passwords, tokens, cookies, card data and bank accounts never reach
+ * the audit screen or export.
+ */
 import crypto from 'node:crypto';
 
 import { formatHotelDateTime, formatMinorExact } from '@/lib/format';

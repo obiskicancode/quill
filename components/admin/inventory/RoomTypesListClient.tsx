@@ -41,6 +41,7 @@ interface RoomTypesListClientProps {
   currentRole: 'owner' | 'manager' | 'reception';
 }
 
+/** Room-type list with create, reorder, publish state and editor links. */
 export function RoomTypesListClient({
   initialRoomTypes,
   currentRole,

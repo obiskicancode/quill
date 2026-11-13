@@ -4,6 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { formatMinor } from '@/lib/format';
 import type { PaymentsBreakdownResponse } from '@/types/payments.types';
 
+/** Payment breakdown by method, provider and day. */
 export function PaymentsBreakdown({
   breakdown,
   loading = false,

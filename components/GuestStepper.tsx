@@ -16,6 +16,7 @@ interface GuestStepperProps {
   unit?: { one: string; many: string };
 }
 
+/** Accessible quantity stepper with min/max and disabled states. */
 export function GuestStepper({
   id,
   label,

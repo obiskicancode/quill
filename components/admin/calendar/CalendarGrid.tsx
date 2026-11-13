@@ -288,6 +288,10 @@ function BlockBarCell({
   );
 }
 
+/**
+ * Scrollable room-by-day grid. Reservation and block bars are laid out into
+ * lanes, clipped to the visible window and kept in sync with horizontal scroll.
+ */
 export function CalendarGrid({
   data,
   today,

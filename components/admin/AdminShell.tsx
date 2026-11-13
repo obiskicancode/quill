@@ -242,6 +242,10 @@ function AdminSidebar({
   );
 }
 
+/**
+ * Admin chrome and navigation. It filters nav entries by the signed-in role's
+ * permissions, keeps the mobile sidebar state, and exposes the logout action.
+ */
 export function AdminShell({
   user,
   role,

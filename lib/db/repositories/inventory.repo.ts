@@ -36,10 +36,20 @@ import type {
   RoomUnitInput,
 } from '@/types/inventory.types';
 
+/**
+ * Admin inventory data access: room types, units, gallery images, amenities,
+ * extras, and rate rules. Mutations write audit logs; multi-row reorders and
+ * amenity replacements run inside transactions.
+ */
+
 // ==========================================
 // 1. ROOM TYPES
 // ==========================================
 
+/**
+ * Lists room types with aggregate room and photo counts for the admin table,
+ * ordered by sort order then name.
+ */
 export async function listAdminRoomTypes(): Promise<AdminRoomTypeListItem[]> {
   const rows = await db
     .select({
@@ -78,6 +88,10 @@ export async function listAdminRoomTypes(): Promise<AdminRoomTypeListItem[]> {
   }));
 }
 
+/**
+ * Loads a room type with its photos, amenity IDs, and units, each annotated
+ * with its next reservation and block. Returns null when the type is missing.
+ */
 export async function getAdminRoomTypeById(
   id: string,
 ): Promise<AdminRoomTypeDetail | null> {
@@ -206,6 +220,10 @@ export async function getAdminRoomTypeById(
   };
 }
 
+/**
+ * Creates a room type after checking slug uniqueness, assigning it the next
+ * sort order, and writing an audit log.
+ */
 export async function createAdminRoomType(params: {
   input: RoomTypeInput;
   actorId?: string;
@@ -286,6 +304,7 @@ export async function createAdminRoomType(params: {
   };
 }
 
+/** Updates a room type's editable details and returns the refreshed detail. */
 export async function updateAdminRoomTypeDetails(params: {
   id: string;
   input: RoomTypeInput;
@@ -386,6 +405,7 @@ export async function updateAdminRoomTypeDetails(params: {
   });
 }
 
+/** Deletes a room type after checking that no rooms or bookings depend on it. */
 export async function deleteAdminRoomType(params: {
   id: string;
   actorId?: string;
@@ -423,6 +443,7 @@ export async function deleteAdminRoomType(params: {
   });
 }
 
+/** Applies the supplied display order to room types in one transaction. */
 export async function reorderRoomTypes(
   items: Array<{ id: string; sortOrder: number }>,
   actorId?: string,
@@ -449,6 +470,7 @@ export async function reorderRoomTypes(
 // 2. ROOM PHOTOS & AMENITIES
 // ==========================================
 
+/** Adds a gallery image to a room type and returns the admin image row. */
 export async function addRoomTypeImage(params: {
   roomTypeId: string;
   imageUrl: string;
@@ -536,6 +558,7 @@ export async function addRoomTypeImage(params: {
   };
 }
 
+/** Updates a room image's alt text, caption and publish state. */
 export async function updateImageDetails(
   imageId: string,
   input: ImageUpdate,
@@ -570,6 +593,7 @@ export async function updateImageDetails(
   }
 }
 
+/** Deletes a room image and its stored object. */
 export async function deleteRoomTypeImage(imageId: string): Promise<void> {
   const [img] = await db
     .select()
@@ -610,6 +634,7 @@ export async function deleteRoomTypeImage(imageId: string): Promise<void> {
   }
 }
 
+/** Applies a new display order to a room type's gallery images. */
 export async function reorderRoomTypeImages(
   roomTypeId: string,
   items: Array<{ id: string; sortOrder: number }>,
@@ -629,6 +654,7 @@ export async function reorderRoomTypeImages(
   });
 }
 
+/** Replaces a room type's amenity links atomically. */
 export async function updateRoomTypeAmenities(
   roomTypeId: string,
   amenityIds: string[],
@@ -653,6 +679,10 @@ export async function updateRoomTypeAmenities(
 // 3. ROOM UNITS & IMPACT CHECK
 // ==========================================
 
+/**
+ * Reports whether taking a physical room out of service would affect upcoming
+ * reservations, so the admin can confirm before applying it.
+ */
 export async function checkRoomStatusImpact(
   roomId: string,
 ): Promise<RoomImpactCheckResponse> {
@@ -706,6 +736,7 @@ export async function checkRoomStatusImpact(
   };
 }
 
+/** Creates a physical room under a room type. */
 export async function createAdminRoom(params: {
   roomTypeId: string;
   input: RoomUnitInput;
@@ -761,6 +792,7 @@ export async function createAdminRoom(params: {
   };
 }
 
+/** Updates a physical room's number, status or active flag. */
 export async function updateAdminRoom(params: {
   id: string;
   input: RoomUnitInput;
@@ -838,6 +870,7 @@ export async function updateAdminRoom(params: {
   });
 }
 
+/** Deletes a physical room after checking that it has no reservations. */
 export async function deleteAdminRoom(params: {
   id: string;
   actorId?: string;
@@ -874,6 +907,7 @@ export async function deleteAdminRoom(params: {
 // 4. RATE RULES & PRICING PREVIEW
 // ==========================================
 
+/** Lists rate rules for the admin table. */
 export async function listAdminRateRules(
   roomTypeId?: string,
 ): Promise<AdminRateRule[]> {
@@ -914,6 +948,7 @@ export async function listAdminRateRules(
   }));
 }
 
+/** Creates a rate rule after checking for an overlapping active rule. */
 export async function createAdminRateRule(params: {
   input: RateRuleInput;
   actorId?: string;
@@ -967,6 +1002,7 @@ export async function createAdminRateRule(params: {
   };
 }
 
+/** Updates a rate rule after checking that its date range stays unique. */
 export async function updateAdminRateRule(params: {
   id: string;
   input: RateRuleInput;
@@ -1013,6 +1049,7 @@ export async function updateAdminRateRule(params: {
   });
 }
 
+/** Deletes a rate rule. */
 export async function deleteAdminRateRule(params: {
   id: string;
   actorId?: string;
@@ -1032,6 +1069,7 @@ export async function deleteAdminRateRule(params: {
   });
 }
 
+/** Finds an active rule whose date range overlaps the proposed rule. */
 export async function checkRateRuleOverlap(input: RateRuleInput): Promise<{
   hasOverlap: boolean;
   conflicts: Array<{
@@ -1079,6 +1117,7 @@ export async function checkRateRuleOverlap(input: RateRuleInput): Promise<{
   };
 }
 
+/** Builds per-night pricing for a room type, including rate-rule uplifts. */
 export async function getPricingCalendar(params: {
   roomTypeId: string;
   startDate: string;
@@ -1147,6 +1186,7 @@ export async function getPricingCalendar(params: {
 // 5. EXTRAS
 // ==========================================
 
+/** Lists all extras for the admin table. */
 export async function listAdminExtras(): Promise<AdminExtra[]> {
   const rows = await db
     .select({
@@ -1184,6 +1224,7 @@ export async function listAdminExtras(): Promise<AdminExtra[]> {
   }));
 }
 
+/** Creates an extra and returns the admin row. */
 export async function createAdminExtra(params: {
   input: ExtraInput;
   actorId?: string;
@@ -1239,6 +1280,7 @@ export async function createAdminExtra(params: {
   };
 }
 
+/** Updates an extra's details, price or availability. */
 export async function updateAdminExtra(params: {
   id: string;
   input: ExtraInput;
@@ -1294,6 +1336,7 @@ export async function updateAdminExtra(params: {
   });
 }
 
+/** Deletes an extra that is not referenced by a reservation. */
 export async function deleteAdminExtra(params: {
   id: string;
   actorId?: string;
@@ -1324,6 +1367,7 @@ export async function deleteAdminExtra(params: {
   });
 }
 
+/** Applies a new display order to extras. */
 export async function reorderExtras(
   items: Array<{ id: string; sortOrder: number }>,
 ): Promise<void> {
@@ -1341,6 +1385,7 @@ export async function reorderExtras(
 // 6. AMENITIES
 // ==========================================
 
+/** Lists amenities with the number of room types using each one. */
 export async function listAdminAmenitiesWithUsage(): Promise<AdminAmenity[]> {
   const rows = await db
     .select({
@@ -1365,6 +1410,7 @@ export async function listAdminAmenitiesWithUsage(): Promise<AdminAmenity[]> {
   }));
 }
 
+/** Creates an amenity and returns the admin row. */
 export async function createAdminAmenity(params: {
   input: AmenityInput;
   actorId?: string;
@@ -1417,6 +1463,7 @@ export async function createAdminAmenity(params: {
   };
 }
 
+/** Updates an amenity's label, key or active state. */
 export async function updateAdminAmenity(params: {
   id: string;
   input: AmenityInput;
@@ -1469,6 +1516,7 @@ export async function updateAdminAmenity(params: {
   });
 }
 
+/** Deletes an amenity that is not linked to any room type. */
 export async function deleteAdminAmenity(params: {
   id: string;
   actorId?: string;
@@ -1504,6 +1552,7 @@ export async function deleteAdminAmenity(params: {
   });
 }
 
+/** Applies a new display order to amenities. */
 export async function reorderAmenities(
   items: Array<{ id: string; sortOrder: number }>,
 ): Promise<void> {

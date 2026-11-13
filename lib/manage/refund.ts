@@ -27,6 +27,10 @@ const toMinutes = (hhmm: string) => {
   return h * 60 + m;
 };
 
+/**
+ * Applies the reservation's saved cancellation policy to the amount paid and
+ * returns the refund, retained amount, method and expected timeline.
+ */
 export function calculateRefund(i: RefundInput): RefundResult {
   const paid = Math.max(0, i.paidMinor);
   const none = {

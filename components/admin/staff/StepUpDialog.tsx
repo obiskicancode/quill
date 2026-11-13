@@ -39,6 +39,10 @@ const StepUpFormSchema = z.object({
 type StepUpInput = z.input<typeof StepUpFormSchema>;
 type StepUpOutput = z.output<typeof StepUpFormSchema>;
 
+/**
+ * Step-up verification dialog for sensitive staff actions, accepting a password
+ * or an authenticator code.
+ */
 export function StepUpDialog({
   isOpen,
   title = ERROR_MESSAGES.SECURITY_VERIFICATION_REQUIRED,

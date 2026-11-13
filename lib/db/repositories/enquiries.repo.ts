@@ -1,3 +1,7 @@
+/**
+ * Persistence helpers for enquiries and their threaded replies and internal
+ * notes. List queries return newest first; missing rows resolve to `null`.
+ */
 import { desc, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -11,10 +15,12 @@ import type {
   NewEnquiryReply,
 } from '@/db/types';
 
+/** Lists all enquiries, newest first. */
 export async function listEnquiries(): Promise<Enquiry[]> {
   return db.select().from(enquiries).orderBy(desc(enquiries.createdAt));
 }
 
+/** Finds an enquiry by id, or `null` when absent. */
 export async function getEnquiryById(id: string): Promise<Enquiry | null> {
   const [row] = await db
     .select()
@@ -24,11 +30,16 @@ export async function getEnquiryById(id: string): Promise<Enquiry | null> {
   return row ?? null;
 }
 
+/** Inserts an enquiry and returns the created row. */
 export async function createEnquiry(data: NewEnquiry): Promise<Enquiry> {
   const [row] = await db.insert(enquiries).values(data).returning();
   return row;
 }
 
+/**
+ * Partially updates an enquiry, stamping `updatedAt`; returns `null` when no
+ * row matched.
+ */
 export async function updateEnquiry(
   id: string,
   data: Partial<NewEnquiry>,
@@ -41,6 +52,9 @@ export async function updateEnquiry(
   return row ?? null;
 }
 
+/**
+ * Stamps `readAt` and `updatedAt`; returns `null` when the enquiry is missing.
+ */
 export async function markEnquiryRead(id: string): Promise<Enquiry | null> {
   const [row] = await db
     .update(enquiries)
@@ -50,6 +64,7 @@ export async function markEnquiryRead(id: string): Promise<Enquiry | null> {
   return row ?? null;
 }
 
+/** Lists an enquiry's replies, newest first. */
 export async function listEnquiryReplies(
   enquiryId: string,
 ): Promise<EnquiryReply[]> {
@@ -60,6 +75,7 @@ export async function listEnquiryReplies(
     .orderBy(desc(enquiryReplies.createdAt));
 }
 
+/** Inserts a reply for an enquiry and returns the created row. */
 export async function addEnquiryReply(
   data: NewEnquiryReply,
 ): Promise<EnquiryReply> {
@@ -67,6 +83,7 @@ export async function addEnquiryReply(
   return row;
 }
 
+/** Lists an enquiry's internal notes, newest first. */
 export async function listEnquiryNotes(
   enquiryId: string,
 ): Promise<EnquiryNote[]> {
@@ -77,6 +94,7 @@ export async function listEnquiryNotes(
     .orderBy(desc(enquiryNotes.createdAt));
 }
 
+/** Inserts an internal note for an enquiry and returns the created row. */
 export async function addEnquiryNote(
   data: NewEnquiryNote,
 ): Promise<EnquiryNote> {
@@ -84,6 +102,9 @@ export async function addEnquiryNote(
   return row;
 }
 
+/**
+ * Deletes a note and returns the removed row, or `null` when it did not exist.
+ */
 export async function deleteEnquiryNote(
   id: string,
 ): Promise<EnquiryNote | null> {

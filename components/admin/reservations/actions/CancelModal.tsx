@@ -68,6 +68,7 @@ interface CancelModalProps {
   onRefresh: () => void;
 }
 
+/** Admin cancellation with refund preview, reason and optional note. */
 export function CancelModal({
   open,
   onClose,

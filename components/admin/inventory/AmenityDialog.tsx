@@ -77,6 +77,7 @@ const AVAILABLE_ICONS = [
 type AmenityFormInput = z.input<typeof amenityFormSchema>;
 type AmenityFormOutput = z.output<typeof amenityFormSchema>;
 
+/** Create/edit dialog for an amenity, including its icon and display order. */
 export function AmenityDialog({
   open,
   amenity,

@@ -33,6 +33,7 @@ interface CalendarDayPanelProps {
   onClose: () => void;
 }
 
+/** Day detail panel with arrivals, departures, in-house guests and free rooms. */
 export function CalendarDayPanel({ date, onClose }: CalendarDayPanelProps) {
   const dayQuery = useCalendarDay(date);
   const data = dayQuery.data ?? null;

@@ -44,6 +44,7 @@ interface RoomTypeEditorClientProps {
 
 type TabKey = 'details' | 'photos' | 'amenities' | 'rooms' | 'pricing';
 
+/** Room-type editor shell that coordinates details, rooms, photos and amenities tabs. */
 export function RoomTypeEditorClient({
   initialData,
   currentRole,

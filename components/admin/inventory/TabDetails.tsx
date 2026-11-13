@@ -36,6 +36,7 @@ interface TabDetailsProps {
 type RoomTypeFormInput = z.input<typeof roomTypeDetailsFormSchema>;
 type RoomTypeFormOutput = z.output<typeof roomTypeDetailsFormSchema>;
 
+/** Room-type details form: copy, occupancy, pricing, policies and SEO fields. */
 export function TabDetails({
   initialData,
   onSave,

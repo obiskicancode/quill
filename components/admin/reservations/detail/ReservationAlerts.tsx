@@ -44,6 +44,7 @@ interface AlertItem {
 /** The work that has to happen beats the note that merely explains the state. */
 const MAX_VISIBLE_ALERTS = 3;
 
+/** Operational warnings for a reservation: unpaid balance, pending proof, dates. */
 export function ReservationAlerts({
   alerts,
   cancellationReason,

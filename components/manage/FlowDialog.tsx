@@ -20,6 +20,10 @@ interface FlowDialogProps {
   children: ReactNode;
 }
 
+/**
+ * Shared dialog shell for manage flows. It becomes non-dismissible while a
+ * request is in flight so an action cannot be abandoned half-way.
+ */
 export function FlowDialog({
   open,
   onClose,

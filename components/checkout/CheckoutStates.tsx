@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * Checkout status panels: price changes, network failures, hold expiry,
+ * payment confirmation and the terminal transfer/request states.
+ */
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Clock, Loader2, RefreshCw, WifiOff } from 'lucide-react';
@@ -21,6 +25,7 @@ import { EASE_OUT } from '../motion/variants';
 import { Button, ButtonLink } from '../ui/button';
 import { useHoldCountdown } from './useHoldCountdown';
 
+/** Asks the guest to accept a server-side total change before continuing. */
 export function PriceUpdatedPanel({
   previousMinor,
   currentMinor,
@@ -57,6 +62,7 @@ export function PriceUpdatedPanel({
   );
 }
 
+/** Retry banner that reassures the guest a retry cannot double-book. */
 export function NetworkErrorBanner({
   message,
   onRetry,
@@ -91,6 +97,7 @@ export function NetworkErrorBanner({
   );
 }
 
+/** Warning shown when the room hold is close to expiring. */
 export function ExpiringBanner() {
   return (
     <Alert role="status" variant="warning" size="banner">
@@ -204,6 +211,7 @@ export function HoldRemainingNotice({
   );
 }
 
+/** Terminal panel for an expired hold, with a safe restart action. */
 export function ExpiredPanel({
   onRestart,
   busy,
@@ -339,6 +347,7 @@ export function UnavailableState({
   );
 }
 
+/** Full-screen waiting state while the provider payment is confirmed. */
 export function ConfirmingScreen({
   timedOut,
   onCheckAgain,
@@ -428,6 +437,7 @@ export function ConfirmingScreen({
   );
 }
 
+/** Terminal panel for a failed or cancelled payment attempt. */
 export function FailedPanel({
   reason,
   holdActive,
@@ -475,6 +485,7 @@ interface DoneProps {
   confirmationHref: string;
 }
 
+/** Confirmation that a bank-transfer proof was received and is awaiting review. */
 export function TransferSubmittedScreen({
   reference,
   confirmationHref,
@@ -500,6 +511,7 @@ export function TransferSubmittedScreen({
   );
 }
 
+/** Confirmation for pay-at-hotel or manual-approval requests. */
 export function RequestReceivedScreen({
   reference,
   confirmationHref,

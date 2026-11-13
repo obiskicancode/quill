@@ -1,5 +1,10 @@
+/**
+ * Resolves the manage-booking settings, falling back to safe defaults when the
+ * hotel row has not configured them yet.
+ */
 import type { ManageSettings } from '@/types/manage.types';
 
+/** Loads notice periods, change limits, refund timelines and quote TTLs. */
 export async function getManageSettings(): Promise<ManageSettings> {
   const { getHotelRow } = await import('../db/queries/content-data');
   const row = await getHotelRow();

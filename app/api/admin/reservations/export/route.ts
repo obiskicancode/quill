@@ -23,7 +23,6 @@ function escapeCsvCell(val: unknown): string {
     str = `'${str}`;
   }
 
-  // Quote if contains commas, quotes, or newlines
   if (/[",\n\r]/.test(str)) {
     str = `"${str.replace(/"/g, '""')}"`;
   } else {
@@ -33,7 +32,6 @@ function escapeCsvCell(val: unknown): string {
 }
 
 export async function GET(request: NextRequest) {
-  // Export is strictly for manager and owner
   const guard = await guardAdminApi(request, { permission: 'payments.view' });
   if (!guard.ok) return guard.response;
 
@@ -87,7 +85,6 @@ export async function GET(request: NextRequest) {
       true, // manager/owner can view guest contact
     );
 
-    // Write audit log
     await logExportAudit(guard.context.user.id, rows.length, parsed.data);
 
     const headers = [
@@ -114,7 +111,6 @@ export async function GET(request: NextRequest) {
 
     const lines: string[] = [];
 
-    // If capped, write note at top
     if (total > 10000) {
       lines.push(
         `# Note: Results capped at 10,000 of ${total} total matching reservations.`,

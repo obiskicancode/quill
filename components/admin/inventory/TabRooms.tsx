@@ -64,6 +64,7 @@ interface TabRoomsProps {
 type RoomUnitFormInput = z.input<typeof roomUnitFormSchema>;
 type RoomUnitFormOutput = z.output<typeof roomUnitFormSchema>;
 
+/** Physical-room manager for a room type, including status impact checks. */
 export function TabRooms({
   roomTypeId,
   initialRooms,

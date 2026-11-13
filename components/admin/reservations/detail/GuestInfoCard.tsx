@@ -16,6 +16,7 @@ import { AdminCard } from '@/components/admin/AdminCard';
 import { Button } from '@/components/ui/button';
 import type { ReservationDetail } from '@/types/reservation.types';
 
+/** Guest contact and request details for the reservation detail page. */
 export function GuestInfoCard({
   reservation,
 }: {

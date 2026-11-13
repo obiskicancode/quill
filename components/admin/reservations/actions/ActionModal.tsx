@@ -26,6 +26,7 @@ interface ActionModalProps {
   onRefresh?: () => void;
 }
 
+/** Shared shell for reservation action modals, including busy and error states. */
 export function ActionModal({
   open,
   onClose,

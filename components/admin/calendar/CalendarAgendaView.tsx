@@ -25,6 +25,7 @@ interface CalendarAgendaViewProps {
   onSelectDate: (date: string) => void;
 }
 
+/** Mobile-friendly agenda grouping of arrivals, departures and blocks by day. */
 export function CalendarAgendaView({
   data,
   today,

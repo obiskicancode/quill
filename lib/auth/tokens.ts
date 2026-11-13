@@ -1,23 +1,32 @@
+/**
+ * Signed token helpers. Tokens are base64url JSON bodies with an HMAC signature
+ * and a Unix expiry; they are used for admin access tokens and MFA challenge
+ * tokens, not for long-lived credentials.
+ */
 import { assertAccessSecret, assertRefreshSecret } from '@/config';
 
 import { hmacSign, safeEqual } from './crypto';
 
+/** Common signed-token payload with a Unix expiry in seconds. */
 export interface SignedPayload {
   exp: number;
   [key: string]: unknown;
 }
 
+/** Access-token claims: staff id, session id and role. */
 export interface AccessTokenPayload extends SignedPayload {
   sub: string;
   sid: string;
   role: string;
 }
 
+/** Short-lived token proving the first factor before MFA verification. */
 export interface ChallengePayload extends SignedPayload {
   sub: string;
   purpose: 'mfa';
 }
 
+/** Signs a payload with an expiry `ttlSeconds` from now. */
 export function createSignedToken(
   payload: Record<string, unknown>,
   secret: string,
@@ -32,6 +41,10 @@ export function createSignedToken(
   return `${body}.${hmacSign(body, secret)}`;
 }
 
+/**
+ * Verifies the signature and expiry and returns the payload, or `null` for any
+ * malformed, tampered or expired token.
+ */
 export function readSignedToken(
   token: string | null | undefined,
   secret: string,
@@ -53,6 +66,7 @@ export function readSignedToken(
   }
 }
 
+/** Creates an admin access token using the configured access secret. */
 export function createAccessToken(
   payload: { sub: string; sid: string; role: string },
   ttlSeconds: number,
@@ -60,6 +74,7 @@ export function createAccessToken(
   return createSignedToken(payload, assertAccessSecret(), ttlSeconds);
 }
 
+/** Reads an access token and validates its required claims. */
 export function readAccessToken(
   value: string | null | undefined,
 ): AccessTokenPayload | null {
@@ -80,6 +95,7 @@ export function readAccessToken(
   };
 }
 
+/** Creates a short-lived MFA challenge token for a staff user. */
 export function createChallengeToken(
   staffUserId: string,
   ttlSeconds: number,
@@ -91,6 +107,7 @@ export function createChallengeToken(
   );
 }
 
+/** Reads an MFA challenge token and requires the `mfa` purpose claim. */
 export function readChallengeToken(
   value: string | null | undefined,
 ): ChallengePayload | null {

@@ -45,6 +45,7 @@ import {
 } from '@/lib/format';
 import type { PaymentDetailResponse } from '@/types/payments.types';
 
+/** Payment detail drawer: ledger, refunds, webhook events and owner-only payloads. */
 export function PaymentDetailDrawer({
   isOpen,
   payment,

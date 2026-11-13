@@ -99,6 +99,7 @@ function stepsFor(kind: HeaderKind, v: GuestReservation): Step[] {
   }
 }
 
+/** Status-aware next steps shown after a booking is confirmed or pending. */
 export function NextSteps({
   v,
   kind,

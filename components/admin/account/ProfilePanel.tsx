@@ -26,6 +26,7 @@ import type { Staff } from '@/types/staff.types';
 
 type ProfileOutput = z.output<typeof profileSchema>;
 
+/** Editable staff profile: name and phone, with server field errors applied. */
 export function ProfilePanel({ staff }: { staff: Staff }) {
   const router = useRouter();
   const updateProfile = useUpdateProfile();

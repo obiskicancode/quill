@@ -61,6 +61,9 @@ interface BlocksListClientProps {
   today: string;
 }
 
+/**
+ * Paginated blocks list with status/reason filters and edit/delete actions.
+ */
 export function BlocksListClient({
   initialRooms,
   initialRoomTypes,

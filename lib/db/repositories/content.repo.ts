@@ -1,3 +1,8 @@
+/**
+ * Persistence for editable site content: pages and revisions, facilities,
+ * gallery, testimonials, FAQs, team members and nearby attractions.
+ */
+
 import { desc, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -30,10 +35,12 @@ import type {
   Testimonial,
 } from '@/db/types';
 
+/** Lists site pages newest-first for the admin content table. */
 export async function listSitePages(): Promise<SitePage[]> {
   return db.select().from(sitePages).orderBy(desc(sitePages.createdAt));
 }
 
+/** Loads a site page by slug. */
 export async function getSitePageBySlug(
   slug: string,
 ): Promise<SitePage | null> {
@@ -45,6 +52,7 @@ export async function getSitePageBySlug(
   return row ?? null;
 }
 
+/** Loads a site page by id. */
 export async function getSitePageById(id: string): Promise<SitePage | null> {
   const [row] = await db
     .select()
@@ -54,11 +62,13 @@ export async function getSitePageById(id: string): Promise<SitePage | null> {
   return row ?? null;
 }
 
+/** Creates a site page and returns the inserted row. */
 export async function createSitePage(data: NewSitePage): Promise<SitePage> {
   const [row] = await db.insert(sitePages).values(data).returning();
   return row;
 }
 
+/** Updates a site page, refreshing `updatedAt`; null when it is missing. */
 export async function updateSitePage(
   id: string,
   data: Partial<NewSitePage>,
@@ -71,6 +81,7 @@ export async function updateSitePage(
   return row ?? null;
 }
 
+/** Lists a page's saved revisions, newest first. */
 export async function listSitePageRevisions(
   pageId: string,
 ): Promise<SitePageRevision[]> {
@@ -81,6 +92,7 @@ export async function listSitePageRevisions(
     .orderBy(desc(sitePageRevisions.createdAt));
 }
 
+/** Stores a page revision snapshot. */
 export async function addSitePageRevision(
   data: NewSitePageRevision,
 ): Promise<SitePageRevision> {
@@ -88,6 +100,7 @@ export async function addSitePageRevision(
   return row;
 }
 
+/** Lists facilities, active-only by default. */
 export async function listFacilities(activeOnly = true): Promise<Facility[]> {
   if (activeOnly) {
     return db.select().from(facilities).where(eq(facilities.isActive, true));
@@ -95,11 +108,13 @@ export async function listFacilities(activeOnly = true): Promise<Facility[]> {
   return db.select().from(facilities);
 }
 
+/** Creates a facility and returns the inserted row. */
 export async function createFacility(data: NewFacility): Promise<Facility> {
   const [row] = await db.insert(facilities).values(data).returning();
   return row;
 }
 
+/** Updates a facility, refreshing `updatedAt`; null when it is missing. */
 export async function updateFacility(
   id: string,
   data: Partial<NewFacility>,
@@ -112,6 +127,7 @@ export async function updateFacility(
   return row ?? null;
 }
 
+/** Lists gallery images, active-only by default. */
 export async function listGalleryImages(
   activeOnly = true,
 ): Promise<GalleryImage[]> {
@@ -124,6 +140,7 @@ export async function listGalleryImages(
   return db.select().from(galleryImages);
 }
 
+/** Creates a gallery image and returns the inserted row. */
 export async function createGalleryImage(
   data: NewGalleryImage,
 ): Promise<GalleryImage> {
@@ -131,6 +148,7 @@ export async function createGalleryImage(
   return row;
 }
 
+/** Updates a gallery image, refreshing `updatedAt`; null when missing. */
 export async function updateGalleryImage(
   id: string,
   data: Partial<NewGalleryImage>,
@@ -143,6 +161,7 @@ export async function updateGalleryImage(
   return row ?? null;
 }
 
+/** Lists testimonials, active-only by default. */
 export async function listTestimonials(
   activeOnly = true,
 ): Promise<Testimonial[]> {
@@ -155,6 +174,7 @@ export async function listTestimonials(
   return db.select().from(testimonials);
 }
 
+/** Creates a testimonial and returns the inserted row. */
 export async function createTestimonial(
   data: NewTestimonial,
 ): Promise<Testimonial> {
@@ -162,6 +182,7 @@ export async function createTestimonial(
   return row;
 }
 
+/** Updates a testimonial, refreshing `updatedAt`; null when it is missing. */
 export async function updateTestimonial(
   id: string,
   data: Partial<NewTestimonial>,
@@ -174,6 +195,7 @@ export async function updateTestimonial(
   return row ?? null;
 }
 
+/** Lists FAQs, active-only by default. */
 export async function listFaqs(activeOnly = true): Promise<Faq[]> {
   if (activeOnly) {
     return db.select().from(faqs).where(eq(faqs.isActive, true));
@@ -181,11 +203,13 @@ export async function listFaqs(activeOnly = true): Promise<Faq[]> {
   return db.select().from(faqs);
 }
 
+/** Creates an FAQ and returns the inserted row. */
 export async function createFaq(data: NewFaq): Promise<Faq> {
   const [row] = await db.insert(faqs).values(data).returning();
   return row;
 }
 
+/** Updates an FAQ, refreshing `updatedAt`; null when it is missing. */
 export async function updateFaq(
   id: string,
   data: Partial<NewFaq>,
@@ -198,6 +222,7 @@ export async function updateFaq(
   return row ?? null;
 }
 
+/** Lists team members, active-only by default. */
 export async function listTeamMembers(
   activeOnly = true,
 ): Promise<TeamMember[]> {
@@ -207,6 +232,7 @@ export async function listTeamMembers(
   return db.select().from(teamMembers);
 }
 
+/** Creates a team member and returns the inserted row. */
 export async function createTeamMember(
   data: NewTeamMember,
 ): Promise<TeamMember> {
@@ -214,6 +240,7 @@ export async function createTeamMember(
   return row;
 }
 
+/** Updates a team member, refreshing `updatedAt`; null when it is missing. */
 export async function updateTeamMember(
   id: string,
   data: Partial<NewTeamMember>,
@@ -226,6 +253,7 @@ export async function updateTeamMember(
   return row ?? null;
 }
 
+/** Lists nearby attractions, active-only by default. */
 export async function listNearbyAttractions(
   activeOnly = true,
 ): Promise<NearbyAttraction[]> {
@@ -238,6 +266,7 @@ export async function listNearbyAttractions(
   return db.select().from(nearbyAttractions);
 }
 
+/** Creates a nearby attraction and returns the inserted row. */
 export async function createNearbyAttraction(
   data: NewNearbyAttraction,
 ): Promise<NearbyAttraction> {
@@ -245,6 +274,7 @@ export async function createNearbyAttraction(
   return row;
 }
 
+/** Updates a nearby attraction, refreshing `updatedAt`; null when missing. */
 export async function updateNearbyAttraction(
   id: string,
   data: Partial<NewNearbyAttraction>,

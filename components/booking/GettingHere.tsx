@@ -85,6 +85,7 @@ function LazyMap({ hotel }: { hotel: HotelInfo }) {
   );
 }
 
+/** Directions, map and contact links for reaching the hotel. */
 export function GettingHere({ hotel }: { hotel: HotelInfo }) {
   const directions = hotel.mapQuery
     ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(hotel.mapQuery)}`

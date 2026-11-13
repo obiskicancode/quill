@@ -24,6 +24,7 @@ interface ProofLightboxProps {
   onClose: () => void;
 }
 
+/** Lightbox for viewing a transfer proof with audit logging. */
 export function ProofLightbox({
   open,
   reservationId,

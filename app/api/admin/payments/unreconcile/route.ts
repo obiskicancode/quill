@@ -18,7 +18,6 @@ export async function POST(request: Request) {
   const stepUp = requireStepUp(guard.context);
   if (!stepUp.ok) return stepUp.response;
 
-  // Owner only
   if (context.role !== 'owner') {
     return apiFail(403, ERROR_MESSAGES.OWNERS_ONLY_UNRECONCILE, undefined, {
       noCache: true,

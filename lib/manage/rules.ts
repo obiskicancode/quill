@@ -91,6 +91,10 @@ export function freeDeadline(
   };
 }
 
+/**
+ * The guest's permitted actions and the reason for each blocked one, evaluated
+ * against the saved booking, the hotel clock and the manage settings.
+ */
 export function allowedActions(
   r: StoredReservation,
   clock: Clock,

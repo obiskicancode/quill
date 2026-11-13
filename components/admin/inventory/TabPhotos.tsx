@@ -44,6 +44,7 @@ type PhotoUploadOutput = z.output<typeof photoUploadFormSchema>;
 type PhotoEditInput = z.input<typeof photoEditFormSchema>;
 type PhotoEditOutput = z.output<typeof photoEditFormSchema>;
 
+/** Room photo manager: upload, crop/preview, alt text, publish state and ordering. */
 export function TabPhotos({
   roomTypeId,
   initialPhotos,

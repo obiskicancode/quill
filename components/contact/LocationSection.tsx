@@ -1,4 +1,4 @@
-import { getLandmarks, getLocationInfo } from '@/lib/content/data';
+import { getHotelSettings, getLandmarks } from '@/lib/content/data';
 
 import { MapCard, type MapCardData } from '../MapCard';
 
@@ -7,7 +7,7 @@ const real = (v: string | null | undefined) =>
 
 /** The shared MapCard with the hotel's location data. Loads the map only when it scrolls into view. */
 export async function LocationSection() {
-  const s = await getLocationInfo();
+  const s = await getHotelSettings();
   if (!s) return null;
   const a = s.address;
   const lines = [

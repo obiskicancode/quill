@@ -29,6 +29,7 @@ interface TabPricePreviewProps {
 type PriceQuoteFormInput = z.input<typeof priceQuoteFormSchema>;
 type PriceQuoteFormOutput = z.output<typeof priceQuoteFormSchema>;
 
+/** Calendar preview of nightly rates after weekend and seasonal rules. */
 export function TabPricePreview({ roomTypeId }: TabPricePreviewProps) {
   const today = todayISO();
   const calendarQuery = usePriceCalendar(roomTypeId, today, 90);

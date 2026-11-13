@@ -1,3 +1,8 @@
+/**
+ * Availability lookup for a stay. Combines live room counts with the catalogue
+ * rules (capacity, hidden prices, minimum stay) and, when a room is sold out,
+ * offers nearby dates that have capacity.
+ */
 import { addDays, nightsBetween, todayISO } from '@/lib/dates';
 import type { ISODate } from '@/types/dates.types';
 import type {
@@ -17,6 +22,12 @@ function totalFor(room: RoomType, checkIn: ISODate, nights: number): number {
   return total;
 }
 
+/**
+ * Resolves each room's availability status for the requested stay. Rooms are
+ * checked in order of capacity, published price and minimum stay before live
+ * counts; sold-out rooms get up to three alternative dates. `excludeReservationId`
+ * keeps the guest's own reservation from blocking a modification.
+ */
 export async function fetchAvailability(
   stay: StayParams,
   rooms: RoomType[],

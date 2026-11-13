@@ -1,3 +1,7 @@
+/**
+ * Persistence helpers for notification templates, per-template recipients, and
+ * the delivery log.
+ */
 import { desc, eq } from 'drizzle-orm';
 
 import { db } from '@/db';
@@ -15,6 +19,7 @@ import type {
   NotificationTemplate,
 } from '@/db/types';
 
+/** Lists templates, optionally limited to active ones. */
 export async function listNotificationTemplates(
   activeOnly = false,
 ): Promise<NotificationTemplate[]> {
@@ -27,6 +32,7 @@ export async function listNotificationTemplates(
   return db.select().from(notificationTemplates);
 }
 
+/** Finds a template by its unique key, or `null` when absent. */
 export async function getNotificationTemplateByKey(
   key: string,
 ): Promise<NotificationTemplate | null> {
@@ -38,6 +44,7 @@ export async function getNotificationTemplateByKey(
   return row ?? null;
 }
 
+/** Inserts a template and returns the created row. */
 export async function createNotificationTemplate(
   data: NewNotificationTemplate,
 ): Promise<NotificationTemplate> {
@@ -45,6 +52,10 @@ export async function createNotificationTemplate(
   return row;
 }
 
+/**
+ * Partially updates a template, stamping `updatedAt`; returns `null` when no row
+ * matched.
+ */
 export async function updateNotificationTemplate(
   id: string,
   data: Partial<NewNotificationTemplate>,
@@ -57,6 +68,7 @@ export async function updateNotificationTemplate(
   return row ?? null;
 }
 
+/** Lists recipients, optionally filtered by template key. */
 export async function listNotificationRecipients(
   templateKey?: string,
 ): Promise<NotificationRecipient[]> {
@@ -69,6 +81,7 @@ export async function listNotificationRecipients(
   return db.select().from(notificationRecipients);
 }
 
+/** Inserts a recipient and returns the created row. */
 export async function createNotificationRecipient(
   data: NewNotificationRecipient,
 ): Promise<NotificationRecipient> {
@@ -79,6 +92,10 @@ export async function createNotificationRecipient(
   return row;
 }
 
+/**
+ * Partially updates a recipient, stamping `updatedAt`; returns `null` when no
+ * row matched.
+ */
 export async function updateNotificationRecipient(
   id: string,
   data: Partial<NewNotificationRecipient>,
@@ -91,6 +108,7 @@ export async function updateNotificationRecipient(
   return row ?? null;
 }
 
+/** Inserts a delivery-log entry and returns the created row. */
 export async function createNotificationLog(
   data: NewNotificationLog,
 ): Promise<NotificationLog> {
@@ -98,6 +116,9 @@ export async function createNotificationLog(
   return row;
 }
 
+/**
+ * Lists delivery logs, newest first, optionally filtered by reservation.
+ */
 export async function listNotificationLogs(
   reservationId?: string,
 ): Promise<NotificationLog[]> {
@@ -114,6 +135,10 @@ export async function listNotificationLogs(
     .orderBy(desc(notificationLogs.createdAt));
 }
 
+/**
+ * Partially updates a delivery log; returns `null` when no row matched. Unlike
+ * the other update helpers here, it does not stamp an `updatedAt` value.
+ */
 export async function updateNotificationLog(
   id: string,
   data: Partial<NewNotificationLog>,

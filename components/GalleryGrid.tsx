@@ -37,6 +37,7 @@ const MOSAIC: Record<number, string[]> = {
   ],
 };
 
+/** Masonry-style gallery grid with lazy images and lightbox entry points. */
 export function GalleryGrid({ images }: { images: Tile[] }) {
   const reduced = useReducedMotion();
   const tiles = images.slice(0, 6);

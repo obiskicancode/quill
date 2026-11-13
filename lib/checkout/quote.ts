@@ -78,6 +78,11 @@ function cancellationPolicy(
   };
 }
 
+/**
+ * Prices a checkout request from server-owned settings. It re-checks the room,
+ * availability and stay rules, then applies extras, discount, levy, tax and the
+ * payment plan; the browser never supplies a chargeable total.
+ */
 export async function buildCheckoutQuote(
   req: QuoteRequest,
 ): Promise<CheckoutQuoteResponse> {

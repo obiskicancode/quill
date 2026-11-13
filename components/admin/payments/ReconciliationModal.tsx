@@ -36,6 +36,7 @@ const unreconcileFormSchema = z.object({
 type ReconciliationInput = z.input<typeof unreconcileFormSchema>;
 type ReconciliationOutput = z.output<typeof unreconcileFormSchema>;
 
+/** Bulk payment reconciliation confirmation with an optional note. */
 export function ReconciliationModal({
   isOpen,
   mode,

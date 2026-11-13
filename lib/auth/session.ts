@@ -1,3 +1,8 @@
+/**
+ * Admin session lifecycle. Access tokens are short-lived signed cookies backed
+ * by a database session row; refresh tokens are rotated on every refresh and a
+ * revoked or expired row immediately invalidates the session.
+ */
 import type { NextResponse } from 'next/server';
 
 import type { StaffUser } from '@/db/types';
@@ -25,6 +30,7 @@ import {
 import { clientIp, cookieValue, userAgent } from '@/lib/http/request';
 import type { AdminRole } from '@/types/auth.types';
 
+/** The authenticated admin, their role and the backing session row. */
 export interface AdminContext {
   user: StaffUser;
   role: AdminRole;
@@ -45,10 +51,15 @@ function toContext(
   };
 }
 
+/** Owners must complete MFA setup before using the rest of the admin app. */
 export function isMfaPending(context: AdminContext): boolean {
   return context.user.role === 'owner' && !context.stepUpVerifiedAt;
 }
 
+/**
+ * Creates a new session row and sets the access and refresh cookies on the
+ * response. Owners with MFA enabled start without a step-up timestamp.
+ */
 export async function issueAdminSession(
   response: NextResponse,
   user: StaffUser,
@@ -81,6 +92,11 @@ export async function issueAdminSession(
   setRefreshCookie(response, refreshToken);
 }
 
+/**
+ * Resolves a session from the access cookie, falling back to the refresh
+ * cookie. Returns `null` for revoked, expired, inactive or role-mismatched
+ * sessions.
+ */
 export async function resolveAdminSession(
   request: Request,
 ): Promise<AdminContext | null> {
@@ -115,6 +131,11 @@ export async function resolveAdminSession(
   return toContext(user, session.id, session.stepUpVerifiedAt);
 }
 
+/**
+ * Rotates the refresh token and issues a fresh access token. Reusing a revoked
+ * token revokes every session for that staff member, which limits replay after
+ * a token theft.
+ */
 export async function rotateAdminSession(
   request: Request,
   response: NextResponse,
@@ -170,12 +191,14 @@ export async function rotateAdminSession(
   return toContext(user, nextSession.id, nextSession.stepUpVerifiedAt);
 }
 
+/** Marks the session as recently step-up verified. */
 export async function markAdminSessionVerified(
   sessionId: string,
 ): Promise<void> {
   await markSessionStepUp(sessionId);
 }
 
+/** Revokes the current session and clears its cookies. */
 export async function revokeAdminSession(
   context: AdminContext,
   response: NextResponse,
@@ -184,6 +207,7 @@ export async function revokeAdminSession(
   clearAuthCookies(response);
 }
 
+/** Revokes every session for the current staff member. */
 export async function revokeAllAdminSessions(
   context: AdminContext,
 ): Promise<void> {

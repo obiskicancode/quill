@@ -19,6 +19,7 @@ import {
 } from '@/lib/format';
 import type { AuditListItem } from '@/types/audit.types';
 
+/** Responsive audit table with desktop rows and a mobile card list. */
 export function AuditTable({
   items,
   onRowClick,

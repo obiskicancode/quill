@@ -1,7 +1,12 @@
+/**
+ * Admin password policy and hashing. Passwords are hashed with argon2id; the
+ * dummy verification path keeps login timing similar for unknown accounts.
+ */
 import argon2 from 'argon2';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 
+/** Minimum accepted admin password length. */
 export const PASSWORD_MIN_LENGTH = 10;
 
 const commonPasswords = new Set([
@@ -37,6 +42,10 @@ const commonPasswords = new Set([
   'owner12345',
 ]);
 
+/**
+ * Returns a user-facing error when the password is too short, too long or in
+ * the common-password blocklist, otherwise `null`.
+ */
 export function validatePassword(password: string): string | null {
   if (password.length < PASSWORD_MIN_LENGTH) {
     return ERROR_MESSAGES.ADMIN_PASSWORD_TOO_SHORT;
@@ -52,6 +61,7 @@ export function validatePassword(password: string): string | null {
   return null;
 }
 
+/** Hashes a password with argon2id using the project's cost settings. */
 export async function hashPassword(password: string): Promise<string> {
   return argon2.hash(password, {
     type: argon2.argon2id,
@@ -61,6 +71,7 @@ export async function hashPassword(password: string): Promise<string> {
   });
 }
 
+/** Verifies a password against a stored hash, returning false on any error. */
 export async function verifyPassword(
   hash: string,
   password: string,
@@ -74,6 +85,10 @@ export async function verifyPassword(
 
 let dummyHash: Promise<string> | null = null;
 
+/**
+ * Performs a throwaway verification so a missing account takes a similar amount
+ * of time as a wrong password.
+ */
 export async function verifyDummyPassword(password: string): Promise<void> {
   dummyHash ??= hashPassword('not-a-real-admin-password');
   await verifyPassword(await dummyHash, password);

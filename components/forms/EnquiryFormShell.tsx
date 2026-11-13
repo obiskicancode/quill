@@ -99,6 +99,10 @@ const DRAFT_EXCLUDE = [
   'consent',
 ] as const satisfies readonly (keyof EnquiryFormInput)[];
 
+/**
+ * Shared enquiry form shell: persisted draft, validation, submission and
+ * success handling for contact and group/event enquiries.
+ */
 export function EnquiryFormShell({
   idPrefix,
   sectionId,

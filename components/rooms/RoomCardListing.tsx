@@ -49,6 +49,7 @@ export interface RoomCardListingProps {
   onPickDates: (range: { checkIn: ISODate; checkOut: ISODate }) => void;
 }
 
+/** Room result card with gallery, amenities, availability and price. */
 export function RoomCardListing({
   room,
   index,

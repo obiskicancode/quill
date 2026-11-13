@@ -70,6 +70,7 @@ interface RefundModalProps {
   onRefresh: () => void;
 }
 
+/** Issues an admin refund with method, amount and reason validation. */
 export function RefundModal({
   open,
   onClose,

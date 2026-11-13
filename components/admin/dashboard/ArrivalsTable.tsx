@@ -30,6 +30,7 @@ interface ArrivalsTableProps {
   onCheckIn: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
+/** Today's arrivals with room, guest and payment status. */
 export function ArrivalsTable({
   rows,
   canManage,

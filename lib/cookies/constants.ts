@@ -1,3 +1,8 @@
+/**
+ * Cookie names, lifetimes and safe defaults shared by admin and guest flows.
+ * Booking cookies are prefixed by reference so one browser can hold several
+ * pending stays without collisions.
+ */
 import { config } from '@/config';
 
 /**
@@ -6,10 +11,12 @@ import { config } from '@/config';
  * to find pending reservations to offer back — keep the two in sync.
  */
 export const BOOKING_ACCESS_COOKIE_PREFIX = 'quill_bk_' as const;
+/** Per-booking manage-session cookie prefix; mirrors the access prefix scheme. */
 export const BOOKING_MANAGE_COOKIE_PREFIX = 'quill_mg_' as const;
 
 /**
- * Standard cookie names across Admin and Guest Booking flows.
+ * Standard cookie names across admin and guest booking flows. Functions build
+ * per-booking names from the reference.
  */
 export const COOKIE_NAMES = {
   ADMIN_ACCESS: 'quill_admin_access',
@@ -22,9 +29,7 @@ export const COOKIE_NAMES = {
     `${BOOKING_MANAGE_COOKIE_PREFIX}${reference}`,
 } as const;
 
-/**
- * Standard cookie TTLs in seconds across Admin and Guest Booking flows.
- */
+/** Standard cookie lifetimes in seconds for admin and guest flows. */
 export const COOKIE_TTLS = {
   ADMIN_ACCESS: 15 * 60, // 15 minutes
   ADMIN_REFRESH: 7 * 24 * 60 * 60, // 7 days
@@ -37,6 +42,7 @@ export const COOKIE_TTLS = {
 /** Standard header name for sending CSRF tokens */
 export const CSRF_HEADER_NAME = 'x-csrf-token';
 
+/** Cookie attributes accepted by the response helpers. */
 export interface CookieOptions {
   httpOnly?: boolean;
   secure?: boolean;
@@ -46,7 +52,8 @@ export interface CookieOptions {
 }
 
 /**
- * Standard cookie configuration builder with safe production defaults.
+ * Builds cookie attributes with httpOnly, secure-in-production and lax
+ * same-site defaults, allowing callers to override individual values.
  */
 export function buildCookieOptions(
   overrides: CookieOptions = {},
@@ -61,7 +68,9 @@ export function buildCookieOptions(
 }
 
 /**
- * Creates a cryptographically strong CSRF token using standard Web Crypto API.
+ * Creates a cryptographically strong random CSRF value using the Web Crypto
+ * API. This is the unsigned client cookie value; the admin route helpers also
+ * validate the HMAC token in `lib/http/csrf`.
  */
 export function createCsrfToken(): string {
   return `${crypto.randomUUID().replace(/-/g, '')}${crypto
@@ -69,15 +78,27 @@ export function createCsrfToken(): string {
     .replace(/-/g, '')}`;
 }
 
+/** MFA challenge cookie lifetime. */
 export const CHALLENGE_TTL_SECONDS = COOKIE_TTLS.ADMIN_CHALLENGE;
+/** Admin CSRF cookie lifetime. */
 export const CSRF_TTL_SECONDS = COOKIE_TTLS.ADMIN_CSRF;
+/** Guest booking access cookie lifetime. */
 export const BOOKING_ACCESS_TTL_SECONDS = COOKIE_TTLS.BOOKING_ACCESS;
+/** Guest manage-session cookie lifetime. */
 export const BOOKING_MANAGE_TTL_SECONDS = COOKIE_TTLS.BOOKING_MANAGE;
+/** Admin access-token cookie lifetime. */
 export const ADMIN_ACCESS_TTL_SECONDS = COOKIE_TTLS.ADMIN_ACCESS;
+/** Admin refresh-token cookie lifetime. */
 export const ADMIN_REFRESH_TTL_SECONDS = COOKIE_TTLS.ADMIN_REFRESH;
+/** Cookie name builder for a booking's access token. */
 export const BOOKING_ACCESS_COOKIE_NAME = COOKIE_NAMES.BOOKING_ACCESS;
+/** Cookie name builder for a booking's manage session. */
 export const BOOKING_MANAGE_COOKIE_NAME = COOKIE_NAMES.BOOKING_MANAGE;
+/** Admin access-token cookie name. */
 export const ADMIN_ACCESS_COOKIE_NAME = COOKIE_NAMES.ADMIN_ACCESS;
+/** Admin refresh-token cookie name. */
 export const ADMIN_REFRESH_COOKIE_NAME = COOKIE_NAMES.ADMIN_REFRESH;
+/** Admin MFA challenge cookie name. */
 export const ADMIN_CHALLENGE_COOKIE_NAME = COOKIE_NAMES.ADMIN_CHALLENGE;
+/** Admin CSRF cookie name. */
 export const ADMIN_CSRF_COOKIE_NAME = COOKIE_NAMES.ADMIN_CSRF;

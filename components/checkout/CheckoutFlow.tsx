@@ -102,6 +102,11 @@ interface CheckoutFlowProps {
   initialGuest: GuestInfo | null;
   hotelTimes: { checkIn: string; checkOut: string };
 }
+/**
+ * The guest checkout state machine: details, extras, quote refresh, hold
+ * creation, payment initialization, transfer proof upload and status polling.
+ * Idempotency keys and the server's hold/status responses make retries safe.
+ */
 export function CheckoutFlow({
   room,
   stay,

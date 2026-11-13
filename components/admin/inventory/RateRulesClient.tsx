@@ -48,6 +48,7 @@ interface RateRulesClientProps {
   roomTypes: AdminRoomTypeListItem[];
 }
 
+/** Seasonal rate-rule list with create/edit/delete and pricing preview. */
 export function RateRulesClient({
   initialRules,
   roomTypes,

@@ -84,6 +84,10 @@ export async function handlePaymentWebhook(
   }
 }
 
+/**
+ * Re-applies a stored webhook payload, mapping its status to the shared
+ * payment completion or failure path.
+ */
 export async function applyStoredWebhookEvent(
   provider: PaymentProvider,
   eventType: string,

@@ -17,6 +17,7 @@ interface AvailabilityHintProps {
   stay: StayParams | null;
 }
 
+/** Debounced availability hint for the selected dates and room type. */
 export function AvailabilityHint({
   rooms,
   roomSlug,

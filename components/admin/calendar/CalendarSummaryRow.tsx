@@ -11,6 +11,7 @@ interface CalendarSummaryRowProps {
   onSelectDate: (date: string) => void;
 }
 
+/** Sticky per-day occupancy and availability summary row. */
 export function CalendarSummaryRow({
   stats,
   today,

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { StaggerGroup, StaggerItem } from '@/components/motion';
 import { CopyButton } from '@/components/ui/copy-button';
 import { textLinkRecipe } from '@/components/ui/text-link';
-import { getContactInfo } from '@/lib/content/data';
+import { getHotelSettings } from '@/lib/content/data';
 import { cn } from '@/lib/utils';
 
 import {
@@ -55,7 +55,7 @@ const link = cn(textLinkRecipe, 'inline-flex min-h-11 items-center');
 
 /** Call (every public number), WhatsApp, email and reception hours. Each card has a copy action. Cards with no data are left out. */
 export async function ContactCards() {
-  const s = await getContactInfo();
+  const s = await getHotelSettings();
   const cards: ReactNode[] = [];
 
   for (const p of s.publicPhones) {

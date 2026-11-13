@@ -2,6 +2,7 @@ import { AdminCard } from '@/components/admin/AdminCard';
 import { formatMinor } from '@/lib/format';
 import type { ReservationDetail } from '@/types/reservation.types';
 
+/** Itemized stay price: nights, extras, discount, levy and tax. */
 export function PriceBreakdownCard({
   reservation,
 }: {

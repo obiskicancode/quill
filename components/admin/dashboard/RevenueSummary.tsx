@@ -59,6 +59,7 @@ function ChangeIndicator({
   );
 }
 
+/** Revenue range summary with period comparison and breakdown links. */
 export function RevenueSummary({
   data,
   selectedRange,

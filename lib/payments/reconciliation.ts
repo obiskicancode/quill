@@ -1,9 +1,15 @@
+/**
+ * Payment reconciliation calculations: summary metrics, period deltas and
+ * manual-refund validation. All amounts are integer minor units.
+ */
+
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import type {
   PaymentSummaryDelta,
   PaymentSummaryResponse,
 } from '@/types/payments.types';
 
+/** Minimal payment shape needed to calculate reconciliation metrics. */
 export interface RawPaymentRecord {
   id: string;
   type: 'deposit' | 'balance' | 'full' | 'refund';

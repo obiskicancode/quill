@@ -1,3 +1,8 @@
+/**
+ * Signed guest cookies for a single booking. Access cookies prove the guest has
+ * reached a booking; manage cookies unlock short-lived changes and carry a CSRF
+ * token bound to the reference.
+ */
 import { cookies } from 'next/headers';
 import type { NextResponse } from 'next/server';
 
@@ -21,6 +26,7 @@ export type AccessLevel = 'checkout' | 'verified';
 
 const sign = (data: string) => hmacSign(data, assertBookingSecret());
 
+/** Creates a signed access-cookie value for one booking and access level. */
 export function createAccessValue(
   reference: string,
   level: AccessLevel,
@@ -30,6 +36,7 @@ export function createAccessValue(
   return `${payload}.${sign(`${reference}.${payload}`)}`;
 }
 
+/** Verifies an access-cookie value and returns its level, or `null`. */
 export function readAccessValue(
   reference: string,
   value: string | undefined,
@@ -41,6 +48,10 @@ export function readAccessValue(
   return lvl === 'v' ? 'verified' : 'checkout';
 }
 
+/**
+ * Reads the best access level for a booking from the request cookies. A live
+ * manage session counts as `verified`.
+ */
 export async function getAccess(
   reference: string,
 ): Promise<AccessLevel | null> {
@@ -59,8 +70,7 @@ export async function getAccess(
   );
 }
 
-// Manage-booking session: 30 minutes, httpOnly, signed, bound to one reference. It also carries a CSRF token.
-
+/** Creates a signed manage-session value for one booking. */
 export function createManageValue(
   reference: string,
   ttl = BOOKING_MANAGE_TTL_SECONDS,
@@ -69,12 +79,14 @@ export function createManageValue(
   return `${exp}.${sign(`${reference}.mg.${exp}`)}`;
 }
 
+/** Verified manage-session data: its expiry and the CSRF token derived from it. */
 export interface ManageSession {
   expiresAt: number;
   /** Derived from the cookie and secret, so a cross-site page cannot forge a request. */
   csrf: string;
 }
 
+/** Verifies a manage-session value and returns its expiry and CSRF token. */
 export function readManageValue(
   reference: string,
   value: string | undefined,
@@ -90,6 +102,7 @@ export function readManageValue(
   };
 }
 
+/** Reads the current manage session for a booking from the request cookies. */
 export async function getManageSession(
   reference: string,
 ): Promise<ManageSession | null> {
@@ -100,6 +113,7 @@ export async function getManageSession(
   );
 }
 
+/** Sets the booking access cookie, creating a signed value when given a level. */
 export function setBookingAccessCookie(
   response: NextResponse,
   reference: string,
@@ -117,6 +131,7 @@ export function setBookingAccessCookie(
   );
 }
 
+/** Clears the booking access cookie. */
 export function clearBookingAccessCookie(
   response: NextResponse,
   reference: string,
@@ -128,6 +143,7 @@ export function clearBookingAccessCookie(
   );
 }
 
+/** Sets the manage cookie and returns the value that was written. */
 export function setBookingManageCookie(
   response: NextResponse,
   reference: string,
@@ -143,6 +159,7 @@ export function setBookingManageCookie(
   return actualValue;
 }
 
+/** Clears the booking manage cookie. */
 export function clearBookingManageCookie(
   response: NextResponse,
   reference: string,

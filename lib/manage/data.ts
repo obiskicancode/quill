@@ -1,3 +1,7 @@
+/**
+ * Builds the manage-booking payload: allowed actions, timeline, cancellation
+ * preview and editable contact fields for a verified guest session.
+ */
 import type { Clock } from '@/types/dates.types';
 import type {
   HistoryEntry,
@@ -32,6 +36,7 @@ const timelineLabels: Record<HistoryType, string> = {
   no_show: 'Marked as a no-show',
 };
 
+/** Converts stored history entries into newest-first timeline items. */
 export function timelineFrom(history: HistoryEntry[]): TimelineEntry[] {
   return [...history]
     .sort((a, b) => b.at - a.at)
@@ -43,6 +48,10 @@ export function timelineFrom(history: HistoryEntry[]): TimelineEntry[] {
     }));
 }
 
+/**
+ * Assembles the manage view for a reservation, including the CSRF token and
+ * session expiry from the live manage session.
+ */
 export async function buildManageData(
   r: StoredReservation,
   session: { csrf: string; expiresAt: number },

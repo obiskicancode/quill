@@ -19,6 +19,7 @@ import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { formatHotelTimeWithSeconds } from '@/lib/format';
 import type { WebhookEventItem } from '@/types/payments.types';
 
+/** Webhook event log with processing state and owner-only reprocessing. */
 export function WebhooksTab({
   events,
   loading = false,

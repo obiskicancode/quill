@@ -57,6 +57,13 @@ import {
   mapTestimonial,
 } from '../db/mappers/content.mapper';
 
+/**
+ * Read-side content API for public pages and metadata. React `cache` wraps the
+ * expensive lookups so repeated calls in one request share the same DB reads.
+ * Missing hotel settings throw rather than yielding blank content; optional
+ * collections are filtered and ordered by their mappers below.
+ */
+
 const hotel = cache(async () => (await getHotelRow()) ?? null);
 const social = cache(() => getSocialLinkRows());
 const roomTypes = cache(() => getRoomTypesWithDetails());
@@ -68,6 +75,7 @@ async function requireHotel() {
   return row;
 }
 
+/** Hotel identity/contact settings enriched with social links and room count. */
 export const getHotelSettings = cache(
   async (): Promise<HotelContentSettings> => {
     const row = await requireHotel();
@@ -76,6 +84,7 @@ export const getHotelSettings = cache(
   },
 );
 
+/** Public site config derived from hotel settings, social links and the site URL. */
 export const getPublicSite = cache(async (): Promise<SiteConfig> => {
   const [row, links, rooms] = await Promise.all([
     requireHotel(),
@@ -85,6 +94,11 @@ export const getPublicSite = cache(async (): Promise<SiteConfig> => {
   return mapPublicSite(row, links, rooms.length, config.SITE.URL);
 });
 
+/**
+ * Consent banner settings. Analytics is enabled only when a provider other than
+ * `none` has a measurement ID configured. Retention and the privacy link are
+ * fixed policy values rather than DB-driven.
+ */
 export const getConsentSettings = cache(async (): Promise<ConsentSettings> => {
   const row = await requireHotel();
   const analytics = (row.analytics ?? {}) as AnalyticsSettings;
@@ -95,6 +109,7 @@ export const getConsentSettings = cache(async (): Promise<ConsentSettings> => {
   };
 });
 
+/** Loads a published page by slug; throws when the page is absent or unpublished. */
 export async function getSitePage(slug: SitePage['slug']): Promise<SitePage> {
   const pages = await listSitePages();
   const row = pages.find((p) => p.slug === slug && p.status === 'published');
@@ -102,16 +117,20 @@ export async function getSitePage(slug: SitePage['slug']): Promise<SitePage> {
   return mapSitePage(row);
 }
 
+/** Published about page. */
 export const getAboutPage = async () => getSitePage('about');
 
+/** First four value cards from the about page. */
 export const getValueCards = async () =>
   (await getSitePage('about')).content.valueCards.slice(0, 4);
 
+/** Compact year/room stats used by highlight sections. */
 export const getHighlights = async () => {
   const s = await getHotelSettings();
   return { year: s.yearEstablished, rooms: s.roomCount };
 };
 
+/** Published team members only, sorted by explicit display order. */
 export const getTeam = async (): Promise<TeamMember[]> => {
   const rows = await listTeamMembers();
   return rows
@@ -120,11 +139,13 @@ export const getTeam = async (): Promise<TeamMember[]> => {
     .sort((a, b) => a.sortOrder - b.sortOrder);
 };
 
+/** Nearby attractions sorted by explicit display order. */
 export const getAttractions = async (): Promise<NearbyAttraction[]> => {
   const rows = await listNearbyAttractions();
   return rows.map(mapAttraction).sort((a, b) => a.sortOrder - b.sortOrder);
 };
 
+/** Featured testimonials only, ordered alphabetically by guest name. */
 export const getPublishedTestimonials = async (): Promise<Testimonial[]> => {
   const rows = await getTestimonialRows();
   return rows
@@ -133,11 +154,16 @@ export const getPublishedTestimonials = async (): Promise<Testimonial[]> => {
     .sort((a, b) => (a.guestName > b.guestName ? 1 : -1));
 };
 
+/** All facilities sorted by explicit display order. */
 export const getFacilities = async (): Promise<Facility[]> => {
   const rows = await listFacilities();
   return rows.map(mapFacility).sort((a, b) => a.sortOrder - b.sortOrder);
 };
 
+/**
+ * Amenities present in at least half of all rooms, ordered by how many rooms
+ * include them. Falls back to the raw key when no label row exists.
+ */
 export const getRoomAmenities = async (): Promise<
   { key: AmenityKey; label: string }[]
 > => {
@@ -157,11 +183,13 @@ export const getRoomAmenities = async (): Promise<
     }));
 };
 
+/** Checkout extras sorted alphabetically by name. */
 export const getExtras = async (): Promise<ExtraItem[]> => {
   const rows = await listExtras();
   return rows.map(mapExtra).sort((a, b) => a.name.localeCompare(b.name));
 };
 
+/** Active gallery images only, sorted by explicit display order. */
 export const getGalleryImages = async (): Promise<GalleryImageRecord[]> => {
   const rows = await getGalleryRows();
   return rows
@@ -170,26 +198,27 @@ export const getGalleryImages = async (): Promise<GalleryImageRecord[]> => {
     .sort((a, b) => a.sortOrder - b.sortOrder);
 };
 
+/** Minimal room id/name pairs for selects and filters. */
 export const getRoomTypeOptions = async () => {
   const rooms = await allRooms();
   return rooms.map((r) => ({ id: r.id, name: r.name }));
 };
 
+/** FAQs sorted by explicit display order. */
 export const getFaqs = async (): Promise<Faq[]> => {
   const rows = await listFaqs();
   return rows.map(mapFaq).sort((a, b) => a.sortOrder - b.sortOrder);
 };
 
+/** Social links from hotel settings. */
 export const getSocialLinks = async (): Promise<SocialLink[]> =>
   (await getHotelSettings()).socialLinks;
 
+/** Facilities usable for events, excluding the catch-all `other` kind. */
 export const getEventFacilities = async (): Promise<Facility[]> =>
   (await getFacilities()).filter((x) => x.kind !== 'other');
 
-export const getContactInfo = async () => getHotelSettings();
-
-export const getLocationInfo = async () => getHotelSettings();
-
+/** Up to three attractions reduced to name and distance copy for teasers. */
 export const getLandmarks = async () => {
   const attractions = await getAttractions();
   return attractions
@@ -197,11 +226,16 @@ export const getLandmarks = async () => {
     .map((a) => ({ name: a.name, distance: a.distanceNote }));
 };
 
+/** Enquiry form copy, currently the advertised response time. */
 export const getFormSettings = async () => {
   const settings = await getHotelSettings();
   return { responseHours: settings.enquiryResponseHours };
 };
 
+/**
+ * Published policy pages, restricted to the known `POLICY_SLUGS` and ordered by
+ * that list rather than by arbitrary DB order.
+ */
 export const getPolicyPages = async (): Promise<PolicyPage[]> => {
   const rows = await listSitePages();
   const data = POLICY_SLUGS.map((slug) =>
@@ -216,6 +250,7 @@ export const getPolicyPages = async (): Promise<PolicyPage[]> => {
   return data;
 };
 
+/** Returns the published policy or `null` (unlike `getSitePage`, which throws). */
 export const getPolicyPage = async (
   slug: PolicySlug,
 ): Promise<PolicyPage | null> => {
@@ -223,11 +258,16 @@ export const getPolicyPage = async (
   return pages.find((p) => p.slug === slug) ?? null;
 };
 
+/** Policy-related settings derived from the hotel row. */
 export const getPolicySettings = cache(async (): Promise<PolicySettings> => {
   const row = await requireHotel();
   return mapPolicySettings(row);
 });
 
+/**
+ * Up to three popular rooms mapped to the homepage feature shape. The rooms
+ * module is imported lazily to avoid a circular dependency at load time.
+ */
 export const getFeaturedRooms = async (): Promise<Room[]> => {
   const { toFeatureRoom } = await import('../rooms');
   return (await allRooms())
@@ -236,12 +276,15 @@ export const getFeaturedRooms = async (): Promise<Room[]> => {
     .map(toFeatureRoom);
 };
 
+/** First six room amenities, for compact homepage strips. */
 export const getFeaturedAmenities = async (): Promise<
   { key: AmenityKey; label: string }[]
 > => (await getRoomAmenities()).slice(0, 6);
 
+/** First six active gallery images, for homepage previews. */
 export const getGalleryPreview = async (): Promise<GalleryImageRecord[]> =>
   (await getGalleryImages()).slice(0, 6);
 
+/** First six featured testimonials, for homepage previews. */
 export const getHomeTestimonials = async (): Promise<Testimonial[]> =>
   (await getPublishedTestimonials()).slice(0, 6);

@@ -66,6 +66,7 @@ interface MarkNoShowModalProps {
   onRefresh: () => void;
 }
 
+/** Marks a reservation as a no-show with a confirmation reason. */
 export function MarkNoShowModal({
   open,
   onClose,

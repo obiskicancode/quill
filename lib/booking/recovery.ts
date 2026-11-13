@@ -1,3 +1,11 @@
+/**
+ * Recovery for a guest who left checkout while a room was still held.
+ *
+ * A reference is only a pointer, never a credential: every candidate has to pass
+ * the signed per-reference booking access cookie and is reloaded from the
+ * database before it is offered to anyone.
+ */
+
 import {
   BOOKING_ACCESS_COOKIE_PREFIX,
   BOOKING_ACCESS_TTL_SECONDS,
@@ -7,14 +15,7 @@ import type { GuestReservationStatus } from '@/types/checkout.types';
 
 import type { StoredReservation } from './store';
 
-/**
- * Recovery for a guest who left checkout while a room was still held.
- *
- * A reference is only a pointer, never a credential: every candidate has to pass
- * the signed per-reference booking access cookie and is reloaded from the
- * database before it is offered to anyone.
- */
-
+/** Upper bound on recovered holds offered back to one browser. */
 export const MAX_PENDING_RESERVATIONS = 5;
 
 /** The guest still has something to do before the hold runs out. */
@@ -43,6 +44,7 @@ export type RecoveryReservation = Pick<
   | 'stay'
 >;
 
+/** The room and stay details a recovery request is looking for. */
 export interface StayIdentity {
   roomSlug: string;
   checkIn: string;
@@ -59,6 +61,7 @@ export function stayOverlaps(
   return a.checkIn < b.checkOut && b.checkIn < a.checkOut;
 }
 
+/** Whether a stored reservation matches the room, guests and overlapping stay. */
 export function matchesRequestedStay(
   r: Pick<RecoveryReservation, 'roomSlug' | 'stay'>,
   requested: StayIdentity,
@@ -114,6 +117,7 @@ export function pendingReferencesFromAccessCookies(
   return candidates.slice(0, MAX_PENDING_RESERVATIONS).map((c) => c.reference);
 }
 
+/** Whether an idempotent retry may replay the stored response or must start over. */
 export type ReplayDecision = 'replay' | 'stale';
 
 /**

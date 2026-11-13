@@ -1,3 +1,8 @@
+/**
+ * Server-side admin guards. Page guards redirect to the right screen; API
+ * guards return typed envelopes. Both enforce MFA setup and role permissions
+ * before a handler runs.
+ */
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
@@ -12,10 +17,12 @@ import {
 import { apiFail } from '@/lib/http/envelope';
 import type { Permission } from '@/types/auth.types';
 
+/** Result of an API guard: the authenticated context or an error response. */
 export type AdminGuardResult =
   | { ok: true; context: AdminContext }
   | { ok: false; response: ReturnType<typeof apiFail> };
 
+/** Resolves the current admin session from the request cookies. */
 export async function readAdminContext(): Promise<AdminContext | null> {
   const cookieStore = await cookies();
   const request = new Request('http://admin.local/', {
@@ -24,6 +31,11 @@ export async function readAdminContext(): Promise<AdminContext | null> {
   return resolveAdminSession(request);
 }
 
+/**
+ * Guards an admin page, redirecting unauthenticated users to login, owners who
+ * still need MFA to account setup, and unauthorised roles to the forbidden
+ * screen.
+ */
 export async function requireAdminPage(
   permission?: Permission,
   options: { allowPending?: boolean } = {},
@@ -37,6 +49,7 @@ export async function requireAdminPage(
   return context;
 }
 
+/** Whether the session's role grants a permission. */
 export function canAccess(
   context: AdminContext,
   permission: Permission,
@@ -44,10 +57,15 @@ export function canAccess(
   return can(context.role, permission);
 }
 
+/** The full permission list for the session's role. */
 export function permissionsFor(context: AdminContext): readonly Permission[] {
   return ROLE_PERMISSIONS[context.role];
 }
 
+/**
+ * Guards an admin API route. Returns 401 for a missing session, 403 for
+ * pending MFA setup or a missing permission, and the context on success.
+ */
 export async function guardAdminApi(
   request: Request,
   options: { permission?: Permission; allowPending?: boolean } = {},

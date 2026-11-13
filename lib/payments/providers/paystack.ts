@@ -14,6 +14,11 @@ import type {
   WebhookVerification,
 } from '../provider';
 
+/**
+ * Paystack adapter: hosted checkout initialization, HMAC-SHA512 webhook
+ * verification and refunds. Signature checks use a timing-safe comparison.
+ */
+
 const BASE_URL = config.PAYMENT.BASE_URL;
 
 function signatureMatches(rawBody: string, signature: string): boolean {
@@ -25,6 +30,7 @@ function signatureMatches(rawBody: string, signature: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+/** Creates the Paystack adapter, configured only when a secret key exists. */
 export function createPaystackProvider(): PaymentProviderAdapter {
   return {
     id: 'paystack',

@@ -1,3 +1,8 @@
+/**
+ * Display formatting for money, dates, times and counts. Amounts are minor
+ * units (kobo) unless the function name says otherwise; timestamps rendered for
+ * staff use the hotel timezone, while guest dates use the hotel locale.
+ */
 import { formatDayMonth } from '@/lib/dates';
 import type { ISODate } from '@/types/dates.types';
 
@@ -21,17 +26,21 @@ const digitsExact = new Intl.NumberFormat('en-NG', {
   maximumFractionDigits: 2,
 });
 
+/** Full naira amount with the currency symbol and no decimals. */
 export const formatNaira = (amount: number): string => naira.format(amount);
 
 /** Digits only — for inputs and chips that carry their own ₦ adornment. */
 export const formatNairaDigits = (amount: number): string =>
   digits.format(amount);
 
+/** Minor units (kobo) as naira with no decimals. */
 export const formatMinor = (minor: number): string => naira.format(minor / 100);
 
+/** Minor units (kobo) as naira with two decimals. */
 export const formatMinorExact = (minor: number): string =>
   nairaExact.format(minor / 100);
 
+/** Minor units as digits only, optionally with two decimals. */
 export const formatMinorDigits = (minor: number, decimals = false): string =>
   (decimals ? digitsExact : digits).format(minor / 100);
 
@@ -106,6 +115,7 @@ export const formatHotelDayMonth = stamp('day-month');
 /** "Thursday, 5 November 2026" — a page's own header, not a table cell. */
 export const formatHotelFullDate = stamp('full-date');
 
+/** Formats a non-naira amount for the secondary currencies the hotel quotes. */
 export function formatSecondary(
   currency: 'USD' | 'GBP' | 'EUR',
   amount: number,
@@ -123,11 +133,13 @@ export function formatDeadline(d: { date: ISODate; time: string }): string {
   return `${formatDayMonth(d.date)}, ${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`;
 }
 
+/** Formats milliseconds as `MM:SS`, clamped at zero for expired holds. */
 export function formatCountdown(ms: number): string {
   const total = Math.max(0, Math.ceil(ms / 1000));
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
+/** Human labels for the extra pricing units stored on inventory rows. */
 export const unitLabels = {
   per_stay: 'per stay',
   per_night: 'per night',
@@ -135,6 +147,7 @@ export const unitLabels = {
   per_guest_per_night: 'per guest per night',
 } as const;
 
+/** Returns `n` with the singular noun for one and the plural otherwise. */
 export function pluralCount(
   n: number,
   one: string,

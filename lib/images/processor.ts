@@ -1,13 +1,22 @@
+/**
+ * Room-image validation and processing. Uploads are checked by magic bytes and
+ * dimensions, then normalized to WebP with a thumbnail and blur placeholder.
+ */
+
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 
+/** Maximum accepted upload size in bytes. */
 export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+/** Minimum accepted image width in pixels. */
 export const MIN_IMAGE_WIDTH = 800;
+/** Minimum accepted image height in pixels. */
 export const MIN_IMAGE_HEIGHT = 600;
 
+/** The normalized WebP outputs produced from one uploaded image. */
 export interface ProcessedRoomImage {
   fullBuffer: Buffer;
   thumbBuffer: Buffer;

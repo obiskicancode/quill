@@ -47,7 +47,6 @@ export async function PATCH(
   const timezone = settings?.timezone || 'Africa/Lagos';
   const { today } = hotelClock(new Date(), timezone);
 
-  // 1. Permission checks on reason
   if (reason === 'owner_hold' || reason === 'renovation') {
     if (guard.context.role !== 'owner' && guard.context.role !== 'manager') {
       return apiFail(
@@ -57,7 +56,6 @@ export async function PATCH(
     }
   }
 
-  // 2. Permission checks on backdated blocks
   if (startDate < today) {
     if (guard.context.role !== 'owner' && guard.context.role !== 'manager') {
       return apiFail(403, ERROR_MESSAGES.MANAGERS_ONLY_BACKDATE);

@@ -1,7 +1,10 @@
+/**
+ * Pure helpers for downloadable `.ics` files, Google Calendar links and the
+ * WhatsApp share text. They contain only booking details the guest already has.
+ */
+
 import type { CalendarEvent, GuestReservation } from '@/types/booking.types';
 import type { ISODate } from '@/types/dates.types';
-
-/** Pure helpers: build a downloadable .ics file, a Google Calendar link and the WhatsApp share text. */
 
 /** The stay as a calendar event, or null until the check-in date is confirmed. */
 export function calendarEventFor(v: GuestReservation): CalendarEvent | null {
@@ -56,6 +59,10 @@ const describe = (e: CalendarEvent) =>
     .filter(Boolean)
     .join('\n');
 
+/**
+ * Builds a complete VCALENDAR with a one-day reminder. Lines are folded per RFC
+ * 5545 and the hotel timezone is emitted as a fixed standard-time block.
+ */
 export function buildIcs(e: CalendarEvent, now: Date = new Date()): string {
   const dtstamp = now
     .toISOString()
@@ -97,6 +104,7 @@ export function buildIcs(e: CalendarEvent, now: Date = new Date()): string {
   return lines.map(fold).join('\r\n') + '\r\n';
 }
 
+/** Builds a Google Calendar "add event" URL for the stay. */
 export function googleCalendarUrl(e: CalendarEvent): string {
   const p = new URLSearchParams({
     action: 'TEMPLATE',

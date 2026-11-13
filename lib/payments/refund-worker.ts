@@ -13,6 +13,11 @@ import { recomputeReservationFinancials } from '@/lib/reservations/payment-ledge
 import { createPaymentProvider as getPaymentProvider } from './factory';
 import { isPaymentProviderId } from './provider';
 
+/**
+ * Background worker for provider refunds. Claims a small batch with a lease,
+ * calls the provider, and records success or a retryable failure.
+ */
+
 const CLAIM_TTL_MS = 5 * 60 * 1000;
 
 async function releaseClaim(id: string, error: string): Promise<void> {
@@ -26,6 +31,10 @@ async function releaseClaim(id: string, error: string): Promise<void> {
     .where(and(eq(payments.id, id), eq(payments.status, 'pending')));
 }
 
+/**
+ * Processes pending provider refunds in a claimed batch and returns how many
+ * were handled. Stale claims are retried; failures keep the refund pending.
+ */
 export async function processPendingProviderRefunds(): Promise<number> {
   const now = new Date();
   const staleBefore = new Date(now.getTime() - CLAIM_TTL_MS);

@@ -7,6 +7,7 @@ import {
 import { formatRange } from '@/lib/rooms';
 import type { GuestReservation } from '@/types/booking.types';
 
+/** Print-friendly booking voucher. */
 export function PrintVoucher({ v }: { v: GuestReservation }) {
   const c = v.policy.cancellation;
   const cancel = c.nonRefundable

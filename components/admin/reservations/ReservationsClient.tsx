@@ -33,6 +33,10 @@ interface ReservationsClientProps {
   permissions: readonly Permission[];
 }
 
+/**
+ * Reservations page coordinator: URL-backed filters, table/mobile list,
+ * pagination and the action modals available to the current role.
+ */
 export function ReservationsClient({ permissions }: ReservationsClientProps) {
   const router = useRouter();
   const pathname = usePathname();

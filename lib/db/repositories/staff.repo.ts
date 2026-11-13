@@ -1,3 +1,9 @@
+/**
+ * Staff, session, recovery-code and password-reset persistence. Login and
+ * session helpers enforce lockouts and expiry; admin mutations go through the
+ * guard-rail validators and write audit entries.
+ */
+
 import { and, desc, eq, gt, ilike, isNull, ne, or, sql } from 'drizzle-orm';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
@@ -40,6 +46,7 @@ import type {
   StaffUpdateInput,
 } from '@/types/staff.types';
 
+/** Finds a staff user by email, including inactive accounts. */
 export async function findStaffByEmail(
   email: string,
 ): Promise<StaffUser | null> {
@@ -51,6 +58,7 @@ export async function findStaffByEmail(
   return row ?? null;
 }
 
+/** Finds a staff user by id. */
 export async function findStaffById(id: string): Promise<StaffUser | null> {
   const [row] = await db
     .select()
@@ -60,9 +68,15 @@ export async function findStaffById(id: string): Promise<StaffUser | null> {
   return row ?? null;
 }
 
+/** Failed attempts allowed before an account is locked. */
 export const MAX_FAILED_LOGINS = 5;
+/** How long an account stays locked after too many failed attempts. */
 export const LOGIN_LOCKOUT_MS = 15 * 60_000;
 
+/**
+ * Increments the failed-login counter under a row lock and locks the account
+ * once the threshold is reached.
+ */
 export async function registerFailedLogin(
   id: string,
 ): Promise<{ staff: StaffUser; locked: boolean }> {
@@ -91,6 +105,7 @@ export async function registerFailedLogin(
   });
 }
 
+/** Clears lockout state and records the successful login time and IP. */
 export async function recordSuccessfulLogin(
   id: string,
   ipAddress: string | null,
@@ -109,6 +124,7 @@ export async function recordSuccessfulLogin(
   return row ?? null;
 }
 
+/** Stores a new encrypted MFA secret and leaves MFA disabled until confirmed. */
 export async function setMfaSecret(
   id: string,
   encryptedSecret: string,
@@ -125,6 +141,7 @@ export async function setMfaSecret(
   return row ?? null;
 }
 
+/** Enables or disables MFA, clearing the stored secret when disabled. */
 export async function setMfaEnabled(
   id: string,
   enabled: boolean,
@@ -141,6 +158,7 @@ export async function setMfaEnabled(
   return row ?? null;
 }
 
+/** Lists staff users, optionally active-only. */
 export async function listStaffUsers(activeOnly = false): Promise<StaffUser[]> {
   if (activeOnly) {
     return db.select().from(staffUsers).where(eq(staffUsers.isActive, true));
@@ -148,11 +166,13 @@ export async function listStaffUsers(activeOnly = false): Promise<StaffUser[]> {
   return db.select().from(staffUsers);
 }
 
+/** Creates a staff user and returns the inserted row. */
 export async function createStaff(data: NewStaffUser): Promise<StaffUser> {
   const [row] = await db.insert(staffUsers).values(data).returning();
   return row;
 }
 
+/** Updates a staff row, refreshing `updatedAt`; null when it is missing. */
 export async function update(
   id: string,
   data: Partial<NewStaffUser>,
@@ -165,6 +185,7 @@ export async function update(
   return row ?? null;
 }
 
+/** Creates a staff session row. */
 export async function createSession(
   data: NewStaffSession,
 ): Promise<StaffSession> {
@@ -172,6 +193,7 @@ export async function createSession(
   return row;
 }
 
+/** Loads a session by id, including revoked or expired rows. */
 export async function findSessionById(
   id: string,
 ): Promise<StaffSession | null> {
@@ -183,6 +205,7 @@ export async function findSessionById(
   return row ?? null;
 }
 
+/** Finds a live session by token hash; expired or revoked sessions return null. */
 export async function findSessionByTokenHash(
   sessionTokenHash: string,
 ): Promise<StaffSession | null> {
@@ -201,6 +224,7 @@ export async function findSessionByTokenHash(
   return row;
 }
 
+/** Finds a session by token hash regardless of expiry, for replay detection. */
 export async function findAnySessionByTokenHash(
   sessionTokenHash: string,
 ): Promise<StaffSession | null> {
@@ -212,6 +236,7 @@ export async function findAnySessionByTokenHash(
   return row ?? null;
 }
 
+/** Lists a user's unrevoked, unexpired sessions. */
 export async function listActiveSessionsForUser(
   staffUserId: string,
 ): Promise<StaffSession[]> {
@@ -228,6 +253,7 @@ export async function listActiveSessionsForUser(
     );
 }
 
+/** Revokes every session for a user except the current one; returns the count. */
 export async function revokeOtherSessionsForUser(
   staffUserId: string,
   currentSessionId: string,
@@ -246,6 +272,7 @@ export async function revokeOtherSessionsForUser(
   return rows.length;
 }
 
+/** Records a successful step-up verification on a session. */
 export async function markSessionStepUp(
   id: string,
   at = new Date(),
@@ -258,6 +285,7 @@ export async function markSessionStepUp(
   return row ?? null;
 }
 
+/** Revokes one session and returns the updated row. */
 export async function revokeSession(
   sessionId: string,
 ): Promise<StaffSession | null> {
@@ -269,6 +297,7 @@ export async function revokeSession(
   return row ?? null;
 }
 
+/** Revokes every session for a user. */
 export async function revokeAllSessionsForUser(
   staffUserId: string,
 ): Promise<void> {
@@ -278,6 +307,7 @@ export async function revokeAllSessionsForUser(
     .where(eq(staffSessions.staffUserId, staffUserId));
 }
 
+/** Deletes sessions whose expiry has passed. */
 export async function cleanupExpiredSessions(): Promise<void> {
   const now = new Date();
   await db
@@ -285,6 +315,7 @@ export async function cleanupExpiredSessions(): Promise<void> {
     .where(sql`${now} > ${staffSessions.expiresAt}`);
 }
 
+/** Inserts a batch of hashed recovery codes. */
 export async function createRecoveryCodes(
   codes: NewStaffRecoveryCode[],
 ): Promise<StaffRecoveryCode[]> {
@@ -292,6 +323,7 @@ export async function createRecoveryCodes(
   return db.insert(staffRecoveryCodes).values(codes).returning();
 }
 
+/** Lists all recovery codes for a user, used or not. */
 export async function findRecoveryCodesForUser(
   staffUserId: string,
 ): Promise<StaffRecoveryCode[]> {
@@ -301,6 +333,7 @@ export async function findRecoveryCodesForUser(
     .where(eq(staffRecoveryCodes.staffUserId, staffUserId));
 }
 
+/** Lists a user's unused recovery codes. */
 export async function findUnusedRecoveryCodesForUser(
   staffUserId: string,
 ): Promise<StaffRecoveryCode[]> {
@@ -315,6 +348,7 @@ export async function findUnusedRecoveryCodesForUser(
     );
 }
 
+/** Replaces all recovery codes for a user in one transaction. */
 export async function replaceRecoveryCodes(
   staffUserId: string,
   codes: NewStaffRecoveryCode[],
@@ -329,6 +363,7 @@ export async function replaceRecoveryCodes(
   });
 }
 
+/** Marks an unused recovery code as consumed; null when already used. */
 export async function markRecoveryCodeUsed(
   id: string,
 ): Promise<StaffRecoveryCode | null> {
@@ -342,6 +377,7 @@ export async function markRecoveryCodeUsed(
   return row ?? null;
 }
 
+/** Stores a hashed password-reset token. */
 export async function createPasswordResetToken(
   data: NewPasswordResetToken,
 ): Promise<PasswordResetToken> {
@@ -349,6 +385,7 @@ export async function createPasswordResetToken(
   return row;
 }
 
+/** Finds an unexpired, unused password-reset token by hash. */
 export async function findValidPasswordResetToken(
   tokenHash: string,
 ): Promise<PasswordResetToken | null> {
@@ -367,6 +404,7 @@ export async function findValidPasswordResetToken(
   return row;
 }
 
+/** Marks a password-reset token as used; null when already used. */
 export async function markPasswordResetTokenUsed(
   id: string,
 ): Promise<PasswordResetToken | null> {
@@ -380,6 +418,7 @@ export async function markPasswordResetTokenUsed(
   return row ?? null;
 }
 
+/** Invalidates every outstanding password-reset token for a user. */
 export async function invalidatePasswordResetTokensForUser(
   staffUserId: string,
 ): Promise<void> {
@@ -394,6 +433,7 @@ export async function invalidatePasswordResetTokensForUser(
     );
 }
 
+/** Counts active owners, used to prevent removing the last one. */
 export async function getActiveOwnerCount(): Promise<number> {
   const res = await db
     .select({ count: sql<number>`count(*)` })
@@ -402,6 +442,7 @@ export async function getActiveOwnerCount(): Promise<number> {
   return Number(res[0]?.count || 1);
 }
 
+/** Returns the email addresses of all active owners. */
 export async function getAllActiveOwnerEmails(): Promise<string[]> {
   const rows = await db
     .select({ email: staffUsers.email })
@@ -410,6 +451,7 @@ export async function getAllActiveOwnerEmails(): Promise<string[]> {
   return rows.map((r) => r.email);
 }
 
+/** Lists staff for the admin table with role, status and search filters. */
 export async function listStaff(
   params: StaffQueryParams,
 ): Promise<StaffListItem[]> {
@@ -499,6 +541,7 @@ export async function listStaff(
   });
 }
 
+/** Loads a staff member's admin detail, including inviter and sessions. */
 export async function getStaffDetail(
   id: string,
 ): Promise<StaffDetailResponse | null> {
@@ -599,6 +642,7 @@ export async function getStaffDetail(
   };
 }
 
+/** Validates and invites a new staff member, then sends the invitation email. */
 export async function inviteStaff(params: {
   input: StaffInviteInput;
   actor: StaffUser;
@@ -690,6 +734,7 @@ export async function inviteStaff(params: {
   }
 }
 
+/** Applies an admin staff update after role and self-edit guard-rail checks. */
 export async function updateStaff(params: {
   id: string;
   input: StaffUpdateInput;
@@ -762,6 +807,7 @@ export async function updateStaff(params: {
   return { ok: true };
 }
 
+/** Deactivates a staff member after checking the last-owner rule. */
 export async function deactivateStaff(params: {
   id: string;
   actor: StaffUser;
@@ -829,6 +875,7 @@ export async function deactivateStaff(params: {
   return { ok: true };
 }
 
+/** Reactivates a staff member and records the change. */
 export async function reactivateStaff(params: {
   id: string;
   actor: StaffUser;
@@ -859,6 +906,7 @@ export async function reactivateStaff(params: {
   return { ok: true };
 }
 
+/** Clears a staff member's failed-login lockout and records the change. */
 export async function unlockStaff(params: {
   id: string;
   actor: StaffUser;
@@ -886,6 +934,7 @@ export async function unlockStaff(params: {
   return { ok: true };
 }
 
+/** Revokes every session for a staff member and records the action. */
 export async function revokeAllSessionsForStaff(params: {
   id: string;
   actor: StaffUser;
@@ -909,6 +958,7 @@ export async function revokeAllSessionsForStaff(params: {
   return { ok: true };
 }
 
+/** Resets a staff member's MFA after guard-rail checks and audits it. */
 export async function resetStaffMfa(params: {
   id: string;
   actor: StaffUser;
@@ -971,6 +1021,7 @@ export async function resetStaffMfa(params: {
   return { ok: true };
 }
 
+/** Creates a one-hour reset token and emails the reset link. */
 export async function sendPasswordReset(params: {
   id: string;
   actor: StaffUser;
@@ -1014,6 +1065,7 @@ export async function sendPasswordReset(params: {
   return { ok: true };
 }
 
+/** Invalidates old invite tokens and sends a fresh invitation. */
 export async function resendInvite(params: {
   id: string;
   actor: StaffUser;
