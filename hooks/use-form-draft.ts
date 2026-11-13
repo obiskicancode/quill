@@ -5,7 +5,7 @@ import type { FieldValues, UseFormReturn } from 'react-hook-form';
 
 import { getWebStorage, type WebStorageType } from './use-web-storage';
 
-const DRAFT_PREFIX = 'dela:form-draft:';
+const DRAFT_PREFIX = 'quill:form-draft:';
 const EMPTY_EXCLUDE: readonly never[] = [];
 
 interface FormDraftOptions<T extends FieldValues> {

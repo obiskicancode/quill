@@ -155,7 +155,7 @@ export function TwoFactorPanel({
     if (!codes) return;
     const blob = new Blob(
       [
-        'Divine Excellent Apartments admin recovery codes\n',
+        'Quill Apartments admin recovery codes\n',
         'Each code can be used once.\n\n',
         codes.join('\n'),
       ],

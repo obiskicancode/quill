@@ -72,9 +72,9 @@ import { useHoldCountdown } from './useHoldCountdown';
 
 const POLL_TIMEOUT_MS = 30_000;
 const TERMS_MESSAGE = ERROR_MESSAGES.TERMS_ACCEPTANCE_REQUIRED;
-const RESERVE_KEY_PREFIX = 'dela:reserve-key:';
-const PAY_KEY_PREFIX = 'dela:pay-key:';
-const PENDING_DISMISSED_PREFIX = 'dela:checkout-resume-dismissed:';
+const RESERVE_KEY_PREFIX = 'quill:reserve-key:';
+const PAY_KEY_PREFIX = 'quill:pay-key:';
+const PENDING_DISMISSED_PREFIX = 'quill:checkout-resume-dismissed:';
 const rawString = (value: string) => value;
 type Phase =
   | { name: 'form' }

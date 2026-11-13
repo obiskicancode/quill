@@ -6,7 +6,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <div className="grid min-h-dvh lg:grid-cols-[1fr_30rem]">
       <section className="on-dark hidden flex-col justify-between bg-ink p-10 text-paper lg:flex xl:p-14">
         <Link href="/" className="font-display text-h3">
-          Divine <span className="text-brand">Excellent</span>
+          Quill <span className="text-brand">Apartments</span>
         </Link>
         <div className="max-w-md">
           <p className="font-display text-h2">
@@ -28,7 +28,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             href="/"
             className="mb-8 inline-block font-display text-h3 lg:hidden"
           >
-            Divine <span className="text-brand-ink">Excellent</span>
+            Quill <span className="text-brand-ink">Apartments</span>
           </Link>
           {children}
           <p className="mt-8 border-t border-line pt-4 text-caption text-muted-foreground">

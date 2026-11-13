@@ -117,17 +117,17 @@ function AdminSidebar({
           <Link
             href="/admin"
             onClick={closeMobile}
-            aria-label="Divine admin"
+            aria-label="Quill admin"
             className="font-display text-h3"
           >
             <span className="md:max-lg:sr-only">
-              Divine <span className="text-brand">admin</span>
+              Quill <span className="text-brand">admin</span>
             </span>
             <span
               aria-hidden
               className="hidden size-8 items-center justify-center rounded-control bg-primary text-small font-semibold text-primary-foreground md:max-lg:inline-flex"
             >
-              D
+              Q
             </span>
           </Link>
           <Button

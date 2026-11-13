@@ -35,10 +35,10 @@ import {
 
 describe('CSRF & Cookie Unification Tests', () => {
   it('1. Centralized cookie constants and options builder work consistently', () => {
-    assert.strictEqual(ADMIN_ACCESS_COOKIE_NAME, 'dea_admin_access');
-    assert.strictEqual(ADMIN_CSRF_COOKIE_NAME, 'dea_admin_csrf');
-    assert.strictEqual(BOOKING_ACCESS_COOKIE_NAME('BK-100'), 'dea_bk_BK-100');
-    assert.strictEqual(BOOKING_MANAGE_COOKIE_NAME('BK-100'), 'dea_mg_BK-100');
+    assert.strictEqual(ADMIN_ACCESS_COOKIE_NAME, 'quill_admin_access');
+    assert.strictEqual(ADMIN_CSRF_COOKIE_NAME, 'quill_admin_csrf');
+    assert.strictEqual(BOOKING_ACCESS_COOKIE_NAME('BK-100'), 'quill_bk_BK-100');
+    assert.strictEqual(BOOKING_MANAGE_COOKIE_NAME('BK-100'), 'quill_mg_BK-100');
 
     assert.strictEqual(ADMIN_ACCESS_TTL_SECONDS, 900); // 15m
     assert.strictEqual(ADMIN_REFRESH_TTL_SECONDS, 604800); // 7d
@@ -73,35 +73,35 @@ describe('CSRF & Cookie Unification Tests', () => {
 
     setBookingAccessCookie(res, 'REF-999', 'booking-access-val');
     assert.strictEqual(
-      res.cookies.get('dea_bk_REF-999')?.value,
+      res.cookies.get('quill_bk_REF-999')?.value,
       'booking-access-val',
     );
 
     // Signing access level 'checkout'
     const resCheckout = NextResponse.json({ ok: true });
     setBookingAccessCookie(resCheckout, 'REF-101', 'checkout');
-    const checkoutVal = resCheckout.cookies.get('dea_bk_REF-101')?.value;
+    const checkoutVal = resCheckout.cookies.get('quill_bk_REF-101')?.value;
     assert.ok(checkoutVal && checkoutVal !== 'checkout');
     assert.strictEqual(readAccessValue('REF-101', checkoutVal), 'checkout');
 
     // Signing access level 'verified'
     const resVerified = NextResponse.json({ ok: true });
     setBookingAccessCookie(resVerified, 'REF-102', 'verified');
-    const verifiedVal = resVerified.cookies.get('dea_bk_REF-102')?.value;
+    const verifiedVal = resVerified.cookies.get('quill_bk_REF-102')?.value;
     assert.ok(verifiedVal && verifiedVal !== 'verified');
     assert.strictEqual(readAccessValue('REF-102', verifiedVal), 'verified');
 
     // Setting manage cookie with custom value
     setBookingManageCookie(res, 'REF-999', 'manage-session-val');
     assert.strictEqual(
-      res.cookies.get('dea_mg_REF-999')?.value,
+      res.cookies.get('quill_mg_REF-999')?.value,
       'manage-session-val',
     );
 
     // Setting manage cookie with auto-generated session
     const resManage = NextResponse.json({ ok: true });
     setBookingManageCookie(resManage, 'REF-103');
-    const manageVal = resManage.cookies.get('dea_mg_REF-103')?.value;
+    const manageVal = resManage.cookies.get('quill_mg_REF-103')?.value;
     assert.ok(manageVal);
     const parsedManage = readManageValue('REF-103', manageVal);
     assert.ok(parsedManage);

@@ -262,10 +262,10 @@ describe('D. pending recovery is bounded, per reference and cookie-driven', () =
   it('ignores names that are not a booking cookie', () => {
     const references = pendingReferencesFromAccessCookies(
       [
-        { name: 'dea_mg_AAA-111', value: `${NOW_SECONDS + 600}.signature` },
-        { name: 'dea_bk_short', value: `${NOW_SECONDS + 600}.c.sig` },
-        { name: 'dea_bk_has space', value: `${NOW_SECONDS + 600}.c.sig` },
-        { name: 'dea_bk_', value: `${NOW_SECONDS + 600}.c.sig` },
+        { name: 'quill_mg_AAA-111', value: `${NOW_SECONDS + 600}.signature` },
+        { name: 'quill_bk_short', value: `${NOW_SECONDS + 600}.c.sig` },
+        { name: 'quill_bk_has space', value: `${NOW_SECONDS + 600}.c.sig` },
+        { name: 'quill_bk_', value: `${NOW_SECONDS + 600}.c.sig` },
         { name: 'not_a_booking_cookie', value: `${NOW_SECONDS + 600}.c.sig` },
         accessCookie('BBB-222'),
       ],

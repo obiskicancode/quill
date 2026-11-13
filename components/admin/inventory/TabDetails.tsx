@@ -622,7 +622,7 @@ export function TabDetails({
                   maxLength={160}
                   placeholder={
                     name
-                      ? `${name} | Dela Boutique Hotel`
+                      ? `${name} | Quill Apartments`
                       : 'Page title for search engines'
                   }
                   className={inputClass(errors.metaTitle?.message)}
@@ -668,7 +668,7 @@ export function TabDetails({
                 https://hotel.example.com/rooms/{slug || 'room-slug'}
               </p>
               <p className="truncate text-body font-medium text-brand-ink hover:underline">
-                {metaTitle || name || 'Room Type Name'} | Dela Hotel
+                {metaTitle || name || 'Room Type Name'} | Quill Apartments
               </p>
               <p className="line-clamp-2 text-caption text-muted-foreground">
                 {metaDescription ||

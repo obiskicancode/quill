@@ -127,7 +127,7 @@ export function VerifyForm({
           id={`verify-reference${embedded ? '-embedded' : ''}`}
           label="Booking reference"
           error={errors.reference?.message}
-          hint="For example DEA-AB12CD"
+          hint="For example QUILL-AB12CD"
         >
           {(a) => (
             <Input

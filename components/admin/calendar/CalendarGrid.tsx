@@ -298,7 +298,7 @@ export function CalendarGrid({
   // Collapsible groups stored in localStorage
   const [collapsedGroups, setCollapsedGroups] = useWebStorage<
     Record<string, boolean>
-  >('localStorage', 'dela_calendar_collapsed', {});
+  >('localStorage', 'quill_calendar_collapsed', {});
 
   const toggleGroup = (groupId: string) => {
     setCollapsedGroups((prev) => ({

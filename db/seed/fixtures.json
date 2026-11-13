@@ -1,7 +1,7 @@
 {
   "site": {
-    "name": "Divine Excellent Luxury Apartments",
-    "shortName": "Divine Ex.",
+    "name": "Quill Apartments",
+    "shortName": "Quill",
     "description": "Comfortable rooms and serviced apartments in Nigeria. Check availability, book direct and pay securely online.",
     "url": "http://localhost:3000",
     "logo": null,
@@ -36,7 +36,7 @@
       "phoneDisplay": "[+234 000 000 0000]",
       "phoneTel": "+2340000000000",
       "whatsappNumber": "2340000000000",
-      "whatsappMessage": "Hello Divine Excellent Luxury Apartments, I'd like to make a booking.",
+      "whatsappMessage": "Hello Quill Apartments, I'd like to make a booking.",
       "email": "[reservations@yourhotel.com]"
     },
     "address": {
@@ -116,7 +116,7 @@
       "subheadline": "Book direct, pay securely online, and get your confirmation straight away.",
       "image": {
         "src": "/images/hero.webp",
-        "alt": "A guest room at Divine Excellent Luxury Apartments with a made bed and warm lighting"
+        "alt": "A guest room at Quill Apartments with a made bed and warm lighting"
       },
       "video": {
         "src": "/video/hero.mp4",
@@ -126,12 +126,12 @@
     "intro": {
       "heading": "Rest well, whatever brings you here.",
       "body": [
-        "Divine Excellent Luxury Apartments offers private rooms and serviced apartments for guests visiting for work, family or an event.",
+        "Quill Apartments offers private rooms and serviced apartments for guests visiting for work, family or an event.",
         "You get reliable power, secure parking and a front desk that picks up when you call. Tell us what you need and we'll sort it."
       ],
       "image": {
         "src": "/images/intro.webp",
-        "alt": "The entrance and reception area at Divine Excellent Luxury Apartments"
+        "alt": "The entrance and reception area at Quill Apartments"
       },
       "learnMoreHref": "/about"
     },
@@ -141,7 +141,7 @@
     }
   },
   "contentSettings": {
-    "displayName": "Divine Excellent Luxury Apartments",
+    "displayName": "Quill Apartments",
     "yearEstablished": null,
     "roomCount": 8,
     "address": {
@@ -165,7 +165,7 @@
       }
     ],
     "whatsappNumber": "2340000000000",
-    "whatsappPrefillMessage": "Hello Divine Excellent Luxury Apartments, I'd like to make a booking.",
+    "whatsappPrefillMessage": "Hello Quill Apartments, I'd like to make a booking.",
     "publicEmail": "[reservations@yourhotel.com]",
     "contactFormRecipient": "[enquiries@yourhotel.com]",
     "receptionHours": "[Reception hours, e.g. daily 7:00 am to 10:00 pm]",

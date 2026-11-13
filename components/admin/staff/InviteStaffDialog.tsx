@@ -188,7 +188,7 @@ export function InviteStaffDialog({
                   {...register('email')}
                   type="email"
                   required
-                  placeholder="staff@hoteldela.com"
+                  placeholder="staff@quillapartments.com"
                   className={inputClass(errors.email?.message)}
                 />
               )}

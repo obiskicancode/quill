@@ -16,7 +16,7 @@ export const config = {
       'http://localhost:3000',
   },
   SITE: {
-    NAME: process.env.NEXT_PUBLIC_SITE_NAME ?? 'Divine Excellent Apartments',
+    NAME: process.env.NEXT_PUBLIC_SITE_NAME ?? 'Quill Apartments',
     URL: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
   },
   DB: {

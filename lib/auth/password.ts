@@ -28,7 +28,7 @@ const commonPasswords = new Set([
   'abcd123456',
   'hotel12345',
   'staff12345',
-  'divine12345',
+  'quill12345',
   'apartment1',
   'apartments',
   'booking123',

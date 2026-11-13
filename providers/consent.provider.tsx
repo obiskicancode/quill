@@ -16,7 +16,7 @@ interface ConsentContextType {
 
 const ConsentContext = createContext<ConsentContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'dea-consent';
+const STORAGE_KEY = 'quill-consent';
 
 export function ConsentProvider({ children }: { children: ReactNode }) {
   const [consent, setConsent, removeConsent] = useWebStorage<ConsentState>(

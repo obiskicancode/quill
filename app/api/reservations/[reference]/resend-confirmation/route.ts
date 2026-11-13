@@ -9,8 +9,8 @@ import { rateLimit } from '@/lib/rate-limit';
 import type { BookingApiError, ResendResponse } from '@/types/booking.types';
 
 const COOLDOWN_SECONDS = 60;
-const g = globalThis as unknown as { __deaResend?: Map<string, number> };
-const lastSent = (g.__deaResend ??= new Map<string, number>());
+const g = globalThis as unknown as { __quillResend?: Map<string, number> };
+const lastSent = (g.__quillResend ??= new Map<string, number>());
 
 const unauthorized = () => {
   const error: BookingApiError = {

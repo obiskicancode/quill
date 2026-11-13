@@ -70,8 +70,8 @@ export async function sendStaffInvitationEmail({
       templateKey: 'staff_invitation',
       channel: 'email',
       recipient: staff.email,
-      subject: `You have been invited to Dela Hotel Admin (${staff.role})`,
-      body: `Hello ${staff.firstName},\n\n${invitedByName} has invited you to join the Dela Hotel management team as a ${staff.role}.\n\nPlease set your password and enrol in 2FA using this link:\n${inviteUrl}\n\nThis invitation link expires in 72 hours.`,
+      subject: `You have been invited to Quill Apartments Admin (${staff.role})`,
+      body: `Hello ${staff.firstName},\n\n${invitedByName} has invited you to join the Quill Apartments management team as a ${staff.role}.\n\nPlease set your password and enrol in 2FA using this link:\n${inviteUrl}\n\nThis invitation link expires in 72 hours.`,
       status: 'queued',
     });
   } catch (error) {

@@ -15,7 +15,7 @@ export const ERROR_MESSAGES = {
   BOOKING_RATE_LIMITED:
     'Too many attempts. Please wait a minute and try again.',
   BOOKING_REFERENCE_INVALID:
-    'Enter the booking reference from your email, like DEA-AB12CD.',
+    'Enter the booking reference from your email, like QUILL-AB12CD.',
   BOOKING_STATUS_CHANGED:
     'Your booking status changed. The page has been updated.',
   BOOKING_WINDOW: (days: number) =>

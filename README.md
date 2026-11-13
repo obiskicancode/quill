@@ -1,4 +1,4 @@
-# Divine Excellent Apartments: home page
+# Quill Apartments: home page
 
 Next.js (App Router), TypeScript, Tailwind CSS 3.
 

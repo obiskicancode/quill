@@ -1,5 +1,5 @@
 // =============================================================================
-// Divine Excellent Apartments - Booking Website (DBML v3, PostgreSQL 16)
+// Quill Apartments - Booking Website (DBML v3, PostgreSQL 16)
 // Covers: 21 guest pages + 45 admin pages, as described in the page outline.
 //
 // Changes from v2
@@ -28,7 +28,7 @@
 //    run the SQL in the "Postgres notes" block at the bottom as migrations.
 // =============================================================================
 
-Project divine_excellent_apartments {
+Project quill_apartments {
   database_type: 'PostgreSQL'
   Note: 'Hotel website, online booking, payments, enquiries, content and admin.'
 }
@@ -480,7 +480,7 @@ Table extras {
 
 Table reservations {
   id uuid [pk, default: `gen_random_uuid()`]
-  reference varchar(12) [not null, unique, note: 'Guest-facing code, e.g. DEA-8K2P9Q']
+  reference varchar(12) [not null, unique, note: 'Guest-facing code, e.g. QUILL-8K2P9Q']
   room_id uuid [not null, ref: > rooms.id]
   room_type_id uuid [not null, ref: > room_types.id]
   status reservation_status [not null, default: 'pending']

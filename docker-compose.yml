@@ -1,11 +1,11 @@
-name: dela
+name: quill
 
 services:
   postgres:
     image: pgvector/pgvector:pg16
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-divine_apartments}
+      POSTGRES_DB: ${POSTGRES_DB:-quill_apartments}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:

@@ -1070,7 +1070,7 @@ export async function updateReservationDetails(
       templateKey: 'booking_confirmation',
       channel: 'email',
       recipient: data.email,
-      subject: `Your Booking at Divine Excellent Home (${res.reference})`,
+      subject: `Your Booking at Quill Apartments (${res.reference})`,
       status: 'queued',
       dedupeKey: `${res.reference}:email_update:${Date.now()}`,
     });
@@ -1639,7 +1639,7 @@ export async function approveOrDeclineBooking(
           templateKey: 'booking_approved',
           channel: 'email',
           recipient: res.guestEmail,
-          subject: `Your Booking at Divine Excellent Home is Approved (${res.reference})`,
+          subject: `Your Booking at Quill Apartments is Approved (${res.reference})`,
           status: 'queued',
           dedupeKey: `${res.reference}:approved:${Date.now()}`,
         });
@@ -2176,7 +2176,7 @@ export async function resendReservationConfirmation(
     templateKey,
     channel: 'email',
     recipient,
-    subject: `Divine Excellent Home - Reference ${res.reference}`,
+    subject: `Quill Apartments - Reference ${res.reference}`,
     status: 'queued',
     dedupeKey: `${res.reference}:resend_${templateKey}:${Date.now()}`,
   });
@@ -2474,7 +2474,7 @@ export async function adminCreateReservation(
         templateKey: 'booking_confirmation',
         channel: 'email',
         recipient: input.guest.email,
-        subject: `Your Booking at Divine Excellent Home (${reference})`,
+        subject: `Your Booking at Quill Apartments (${reference})`,
         status: 'queued',
         dedupeKey: `${reference}:created:${Date.now()}`,
       });

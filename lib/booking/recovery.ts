@@ -83,7 +83,7 @@ export function isActionableForCheckout(
 }
 
 /**
- * The guest's `dea_bk_<REF>` access cookies are the pointer set: nothing else is
+ * The guest's `quill_bk_<REF>` access cookies are the pointer set: nothing else is
  * remembered. References are validated by format only here — the signature check
  * and the database load happen where the cookie is actually read.
  *

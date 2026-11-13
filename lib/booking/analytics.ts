@@ -15,7 +15,7 @@ export function trackBookingConfirmedOnce(
   const storage = getWebStorage('sessionStorage');
   if (!storage) return;
 
-  const key = `dea_tracked_${reference}`;
+  const key = `quill_tracked_${reference}`;
   try {
     if (storage.getItem(key)) return;
     storage.setItem(key, '1');
