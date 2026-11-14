@@ -1,12 +1,15 @@
 import { NextRequest } from 'next/server';
-import { eq, sql } from 'drizzle-orm';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { db } from '@/db';
-import { reservations, roomTypes } from '@/db/schema';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
-import { listAvailableRoomsForStay } from '@/lib/db/repositories/reservations.repo';
+import { hotelClock } from '@/lib/dates';
+import { checkBlockConflicts } from '@/lib/db/repositories/calendar-admin.repo';
+import {
+  getReservationAdminDetail,
+  listAvailableRoomsForStay,
+} from '@/lib/db/repositories/reservations.repo';
+import { getRoomTypeById } from '@/lib/db/repositories/rooms.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { changeDatesQuoteSchema } from '@/schemas/reservation.schema';
 
@@ -34,53 +37,44 @@ export async function POST(
     );
   }
 
-  const [res] = await db
-    .select({
-      res: reservations,
-      roomSlug: roomTypes.slug,
-    })
-    .from(reservations)
-    .innerJoin(roomTypes, eq(reservations.roomTypeId, roomTypes.id))
-    .where(eq(reservations.id, id))
-    .limit(1);
+  const res = await getReservationAdminDetail(
+    id,
+    hotelClock().today,
+    { canViewGuestContact: false, canViewPayments: false },
+    new Date(),
+    guard.context.role,
+  );
 
   if (!res) return apiFail(404, ERROR_MESSAGES.RESERVATION_NOT_FOUND_BARE);
+
+  const roomType = await getRoomTypeById(res.roomTypeId);
+  if (!roomType) return apiFail(404, ERROR_MESSAGES.RESERVATION_NOT_FOUND_BARE);
 
   const { checkIn, checkOut, extraBed } = parsed.data;
 
   try {
-    const conflictRes = await db.execute(sql`
-      SELECT 1 FROM reservations x
-      WHERE x.room_id = ${res.res.roomId}
-        AND x.id != ${id}
-        AND x.status IN ('pending', 'confirmed', 'checked_in')
-        AND daterange(x.check_in, x.check_out, '[)') && daterange(${checkIn}::date, ${checkOut}::date, '[)')
-      LIMIT 1
-    `);
+    const conflicts = await checkBlockConflicts({
+      roomIds: [res.roomId],
+      startDate: checkIn,
+      endDate: checkOut,
+      excludeReservationId: id,
+    });
 
-    const conflictBlock = await db.execute(sql`
-      SELECT 1 FROM room_blocks b
-      WHERE b.room_id = ${res.res.roomId}
-        AND daterange(b.start_date, b.end_date, '[)') && daterange(${checkIn}::date, ${checkOut}::date, '[)')
-      LIMIT 1
-    `);
-
-    const currentRoomAvailable =
-      conflictRes.rows.length === 0 && conflictBlock.rows.length === 0;
+    const currentRoomAvailable = conflicts.ok;
 
     const candidateRooms = await listAvailableRoomsForStay(
-      res.res.roomTypeId,
+      res.roomTypeId,
       checkIn,
       checkOut,
       id,
     );
 
     const quote = await buildCheckoutQuote({
-      room: res.roomSlug,
+      room: roomType.slug,
       checkIn,
       checkOut,
-      adults: res.res.adults,
-      children: res.res.children,
+      adults: res.adults,
+      children: res.children,
       extraBed: extraBed ?? false,
       extras: [],
     });
@@ -90,8 +84,8 @@ export async function POST(
     }
 
     const newTotalMinor = quote.breakdown.totalMinor;
-    const currentPaid = res.res.amountPaidMinor - res.res.amountRefundedMinor;
-    const diffMinor = newTotalMinor - res.res.totalMinor;
+    const currentPaid = res.amountPaidMinor - res.amountRefundedMinor;
+    const diffMinor = newTotalMinor - res.totalMinor;
     const balanceWithPaid = newTotalMinor - currentPaid;
 
     return apiOk({
@@ -99,7 +93,7 @@ export async function POST(
       currentRoomAvailable,
       candidateRooms,
       comparison: {
-        currentTotalMinor: res.res.totalMinor,
+        currentTotalMinor: res.totalMinor,
         newTotalMinor,
         diffMinor,
         guestOwesMinor: Math.max(0, balanceWithPaid),

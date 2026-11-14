@@ -2,14 +2,13 @@ import { NextRequest } from 'next/server';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
-import { db } from '@/db';
-import { hotelSettings } from '@/db/schema';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { hotelClock } from '@/lib/dates';
 import {
   deleteRoomBlockAdmin,
   updateRoomBlockAdmin,
 } from '@/lib/db/repositories/calendar-admin.repo';
+import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { updateBlockSchema } from '@/schemas/calendar.schema';
 
@@ -40,10 +39,7 @@ export async function PATCH(
   const { roomId, startDate, endDate, reason, notes, backdateReason, version } =
     parsed.data;
 
-  const [settings] = await db
-    .select({ timezone: hotelSettings.timezone })
-    .from(hotelSettings)
-    .limit(1);
+  const settings = await getHotelSettings();
   const timezone = settings?.timezone || 'Africa/Lagos';
   const { today } = hotelClock(new Date(), timezone);
 

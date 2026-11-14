@@ -1,11 +1,10 @@
 import { NextRequest } from 'next/server';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { db } from '@/db';
-import { hotelSettings } from '@/db/schema';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { hotelClock } from '@/lib/dates';
 import { getCalendarData } from '@/lib/db/repositories/calendar-admin.repo';
+import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { calendarQuerySchema } from '@/schemas/calendar.schema';
 
@@ -32,10 +31,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const [settings] = await db
-    .select({ timezone: hotelSettings.timezone })
-    .from(hotelSettings)
-    .limit(1);
+  const settings = await getHotelSettings();
   const timezone = settings?.timezone || 'Africa/Lagos';
   const { today } = hotelClock(new Date(), timezone);
 

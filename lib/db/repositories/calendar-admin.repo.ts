@@ -508,8 +508,10 @@ export async function checkBlockConflicts(options: {
   startDate: string;
   endDate: string;
   excludeBlockId?: string;
+  excludeReservationId?: string;
 }): Promise<BlockCheckResponse> {
-  const { roomIds, startDate, endDate, excludeBlockId } = options;
+  const { roomIds, startDate, endDate, excludeBlockId, excludeReservationId } =
+    options;
   if (!roomIds.length) return { ok: true, conflicts: [] };
 
   const conflicts: BlockCheckConflict[] = [];
@@ -533,6 +535,9 @@ export async function checkBlockConflicts(options: {
         inArray(reservations.roomId, roomIds),
         sql`daterange(${reservations.checkIn}, ${reservations.checkOut}, '[)') && daterange(${startDate}::date, ${endDate}::date, '[)')`,
         inArray(reservations.status, ['pending', 'confirmed', 'checked_in']),
+        excludeReservationId
+          ? ne(reservations.id, excludeReservationId)
+          : undefined,
       ),
     );
 

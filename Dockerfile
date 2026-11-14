@@ -1,5 +1,5 @@
 
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
@@ -13,21 +13,17 @@ FROM base AS deps
 
 WORKDIR /app
 
-# Native module compilation dependencies and Node.js headers
+# Fallback toolchain for native modules without a matching prebuild.
 RUN apk add --no-cache \
     python3 \
     make \
     g++ \
-    linux-headers \
-    nodejs-dev
+    linux-headers
 
 # Enable pnpm via Corepack
 RUN corepack enable pnpm
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-
-# Use Alpine's locally installed Node.js headers
-ENV npm_config_nodedir=/usr
 
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile

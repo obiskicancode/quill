@@ -1,23 +1,19 @@
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { db } from '@/db';
 import { decideReplay, matchesRequestedStay } from '@/lib/booking/recovery';
 import { setBookingAccessCookie } from '@/lib/booking/session';
 import { buildSnapshot } from '@/lib/booking/snapshot';
 import {
   createReference,
-  insertReservation,
+  createReservationWithIdempotency,
   loadStoredReservation,
-  toReservationResponse,
+  type CreateReservationOutcome,
 } from '@/lib/booking/store';
 import { loadPendingReservations } from '@/lib/booking/view';
 import { buildCheckoutQuote } from '@/lib/checkout/quote';
 import { getCheckoutSettings } from '@/lib/checkout/settings';
 import {
-  claimIdempotency,
-  finishIdempotency,
   getIdempotencyRecord,
-  releaseIdempotency,
   retireIdempotency,
 } from '@/lib/db/repositories/idempotency.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
@@ -161,74 +157,30 @@ export async function POST(req: Request) {
   };
   const snapshot = await buildSnapshot(room, quote, settings);
 
-  /**
-   * The claim, the hold and the response that replays it commit together, so a
-   * request that dies partway leaves either a payable reservation with a replayable
-   * response or nothing at all — never a live hold its own retry is locked out of.
-   */
-  type Outcome =
-    | { replay: ReservationResponse }
-    | { locked: true }
-    | { unavailable: true }
-    | { created: ReservationResponse };
-
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    let outcome: Outcome;
+    let outcome: CreateReservationOutcome;
     try {
-      outcome = await db.transaction(async (tx): Promise<Outcome> => {
-        const claim = await claimIdempotency(
-          idKey,
-          120,
-          { method: 'POST', path: '/api/reservations' },
-          tx,
-        );
-        if (!claim.claimed) {
-          // A record finished inside the last few seconds belongs to a hold that
-          // cannot have lapsed yet, so it is replayed as-is; the stale check above
-          // handles the one case where it has.
-          if (claim.record?.response)
-            return { replay: claim.record.response as ReservationResponse };
-          return { locked: true };
-        }
-
-        const reservation = await insertReservation(
-          {
-            reference: createReference(),
-            roomSlug: data.room,
-            stay: {
-              checkIn: data.checkIn,
-              checkOut: data.checkOut,
-              adults: data.adults,
-              children: data.children,
-              extraBed: data.extraBed,
-            },
-            extras: data.extras,
-            quote,
-            settings,
-            guest,
-            snapshot,
-            supersedeReservationId: ownHold?.id ?? null,
+      outcome = await createReservationWithIdempotency(
+        {
+          reference: createReference(),
+          roomSlug: data.room,
+          stay: {
+            checkIn: data.checkIn,
+            checkOut: data.checkOut,
+            adults: data.adults,
+            children: data.children,
+            extraBed: data.extraBed,
           },
-          tx,
-        );
-        if (!reservation) {
-          // Nothing was written, so the claim must not survive either: dropping it in
-          // the same commit leaves no trace of an attempt that created no hold.
-          await releaseIdempotency(idKey, tx);
-          return { unavailable: true };
-        }
-
-        const response = toReservationResponse(reservation);
-        await finishIdempotency(
-          idKey,
-          response,
-          201,
-          60,
-          { reservationId: reservation.id },
-          tx,
-        );
-        return { created: response };
-      });
+          extras: data.extras,
+          quote,
+          settings,
+          guest,
+          snapshot,
+          supersedeReservationId: ownHold?.id ?? null,
+        },
+        idKey,
+        { method: 'POST', path: '/api/reservations' },
+      );
     } catch (error) {
       const code = pgErrorCode(error);
       if (code === '23P01') {

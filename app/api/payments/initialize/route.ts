@@ -3,27 +3,21 @@ import { eq } from 'drizzle-orm';
 import { config } from '@/config';
 import { ERROR_CODES } from '@/constants/error-codes';
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { db } from '@/db';
-import { reservationChanges, reservations } from '@/db/schema';
+import { reservationChanges } from '@/db/schema';
 import { CHECKOUT_ACTIONABLE_STATUSES } from '@/lib/booking/recovery';
 import { getAccess } from '@/lib/booking/session';
 import {
+  commitPaymentInit,
   ensureBankTransferPayment,
   insertPayment,
-  loadStoredReservation,
   saveStoredReservation,
-  type QueryExecutor,
-  type StoredReservation,
+  type PaymentInitOutcome,
+  type PaymentInitStep,
 } from '@/lib/booking/store';
 import { loadReservation } from '@/lib/booking/view';
 import { getCheckoutSettings } from '@/lib/checkout/settings';
 import { createReference } from '@/lib/db/reference';
-import {
-  claimIdempotency,
-  finishIdempotency,
-  getIdempotencyRecord,
-  releaseIdempotency,
-} from '@/lib/db/repositories/idempotency.repo';
+import { getIdempotencyRecord } from '@/lib/db/repositories/idempotency.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { clientIp } from '@/lib/http/request';
 import { requireManage } from '@/lib/manage/auth';
@@ -63,17 +57,6 @@ function appUrl(path: string): string {
   return `${config.SITE.URL.replace(/\/$/, '')}${path}`;
 }
 
-/** The step that runs inside the transaction, once the reservation is locked. */
-type InitStep =
-  | { response: PaymentInitResponse }
-  | { reject: { status: number; error: ApiError } };
-
-type InitOutcome =
-  | { kind: 'ok'; response: PaymentInitResponse }
-  | { kind: 'replay'; response: PaymentInitResponse }
-  | { kind: 'in_progress' }
-  | { kind: 'rejected'; status: number; error: ApiError };
-
 type Plan =
   | { kind: 'bank_transfer' }
   | {
@@ -84,86 +67,13 @@ type Plan =
       amountMinor: number;
     };
 
-function rejectInit(status: number, message: string): InitStep {
+function rejectInit(status: number, message: string): PaymentInitStep {
   return {
     reject: { status, error: { code: ERROR_CODES.VALIDATION, message } },
   };
 }
 
-/**
- * Commits an initialize step in one transaction: the claim, the payment row, the
- * stamped reservation and the reply that replays them either all exist or none do, so
- * a request that dies partway can never leave a hold the guest cannot pay or a reply
- * that points at nothing.
- *
- * The reservation is locked and re-read before any of it runs, so a webhook or the
- * expiry cron that moved the row while this request was in flight is seen here instead
- * of overwritten by the copy the route read earlier.
- */
-async function commitInit(input: {
-  idKey: string;
-  reference: string;
-  reservationId: string;
-  apply: (ctx: {
-    r: StoredReservation;
-    tx: QueryExecutor;
-  }) => Promise<InitStep>;
-}): Promise<InitOutcome> {
-  return db.transaction(async (tx): Promise<InitOutcome> => {
-    const claim = await claimIdempotency(
-      input.idKey,
-      120,
-      { method: 'POST', path: '/api/payments/initialize' },
-      tx,
-    );
-    if (!claim.claimed) {
-      if (claim.record?.response)
-        return {
-          kind: 'replay',
-          response: claim.record.response as PaymentInitResponse,
-        };
-      return { kind: 'in_progress' };
-    }
-
-    await tx
-      .select({ id: reservations.id })
-      .from(reservations)
-      .where(eq(reservations.id, input.reservationId))
-      .limit(1)
-      .for('update');
-
-    const fresh = await loadStoredReservation(input.reference, tx);
-    if (!fresh) {
-      await releaseIdempotency(input.idKey, tx);
-      return {
-        kind: 'rejected',
-        status: 404,
-        error: {
-          code: ERROR_CODES.NOT_FOUND,
-          message: ERROR_MESSAGES.RESERVATION_NOT_FOUND,
-        },
-      };
-    }
-
-    const step = await input.apply({ r: fresh, tx });
-    if ('reject' in step) {
-      await releaseIdempotency(input.idKey, tx);
-      return { kind: 'rejected', ...step.reject };
-    }
-
-    await finishIdempotency(
-      input.idKey,
-      step.response,
-      200,
-      60,
-      { reservationId: input.reservationId },
-      tx,
-    );
-    return { kind: 'ok', response: step.response };
-  });
-}
-
-function initResponse(outcome: InitOutcome) {
+function initResponse(outcome: PaymentInitOutcome) {
   if (outcome.kind === 'ok' || outcome.kind === 'replay')
     return apiOk(outcome.response);
   if (outcome.kind === 'in_progress')
@@ -340,7 +250,7 @@ export async function POST(req: Request) {
     }
   }
 
-  const outcome = await commitInit({
+  const outcome = await commitPaymentInit({
     idKey,
     reference,
     reservationId: r.id,

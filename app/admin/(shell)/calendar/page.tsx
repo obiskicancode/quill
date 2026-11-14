@@ -2,11 +2,10 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { CalendarClient } from '@/components/admin/calendar/CalendarClient';
-import { db } from '@/db';
-import { hotelSettings } from '@/db/schema';
 import { requireAdminPage } from '@/lib/auth/guards';
 import { hotelClock } from '@/lib/dates';
 import { getCalendarData } from '@/lib/db/repositories/calendar-admin.repo';
+import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 
 export const metadata: Metadata = {
   title: 'Availability Calendar | Admin',
@@ -15,10 +14,7 @@ export const metadata: Metadata = {
 export default async function AdminCalendarPage() {
   const context = await requireAdminPage('calendar.view');
 
-  const [settings] = await db
-    .select({ timezone: hotelSettings.timezone })
-    .from(hotelSettings)
-    .limit(1);
+  const settings = await getHotelSettings();
 
   const timezone = settings?.timezone || 'Africa/Lagos';
   const { today } = hotelClock(new Date(), timezone);

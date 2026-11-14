@@ -7,6 +7,8 @@
 import { randomUUID } from 'node:crypto';
 import { and, desc, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 
+import { ERROR_CODES } from '@/constants/error-codes';
+import { ERROR_MESSAGES } from '@/constants/error-messages';
 import { SUCCESS_MESSAGES } from '@/constants/success-messages';
 import { db } from '@/db';
 import {
@@ -27,6 +29,11 @@ import { auditLogs } from '@/db/schema/audit';
 import type { Reservation } from '@/db/types';
 import { createReference } from '@/lib/db/reference';
 import {
+  claimIdempotency,
+  finishIdempotency,
+  releaseIdempotency,
+} from '@/lib/db/repositories/idempotency.repo';
+import {
   findAvailableRoom,
   findRoomTypeBySlug,
 } from '@/lib/db/repositories/rooms.repo';
@@ -34,14 +41,17 @@ import { logStructured } from '@/lib/observability';
 import { recomputeReservationFinancials } from '@/lib/reservations/payment-ledger';
 import type { GuestInfo, ReservationSnapshot } from '@/types/booking.types';
 import type {
+  ApiError,
   CheckoutBreakdown,
   CheckoutQuoteOk,
   ConfirmationMode,
   ExtraSelection,
   GuestReservationStatus,
+  PaymentInitResponse,
   PaymentMethod,
   PaymentProvider,
   PaymentStatus,
+  ReservationResponse,
 } from '@/types/checkout.types';
 import type {
   HistoryEntry,
@@ -1749,4 +1759,258 @@ export async function insertReservation(
 
   if (!createdId) return null;
   return loadStoredReservation(input.reference, executor);
+}
+
+/** The outcome of an atomic, idempotent reservation creation attempt. */
+export type CreateReservationOutcome =
+  | { replay: ReservationResponse }
+  | { locked: true }
+  | { unavailable: true }
+  | { created: ReservationResponse };
+
+/**
+ * Claims an idempotency key, creates the reservation and stores its replayable
+ * response in one transaction. A failure partway through therefore leaves
+ * either a payable reservation with a replayable response or nothing at all.
+ */
+export async function createReservationWithIdempotency(
+  input: Parameters<typeof insertReservation>[0],
+  idKey: string,
+  claimExtra?: Parameters<typeof claimIdempotency>[2],
+): Promise<CreateReservationOutcome> {
+  return db.transaction(async (tx) => {
+    const claim = await claimIdempotency(idKey, 120, claimExtra, tx);
+    if (!claim.claimed) {
+      if (claim.record?.response)
+        return { replay: claim.record.response as ReservationResponse };
+      return { locked: true };
+    }
+
+    const reservation = await insertReservation(input, tx);
+    if (!reservation) {
+      await releaseIdempotency(idKey, tx);
+      return { unavailable: true };
+    }
+
+    const response = toReservationResponse(reservation);
+    await finishIdempotency(
+      idKey,
+      response,
+      201,
+      60,
+      { reservationId: reservation.id },
+      tx,
+    );
+    return { created: response };
+  });
+}
+
+/** The outcome of recording an uploaded bank-transfer receipt. */
+export type TransferProofOutcome =
+  | { ok: true; status?: ReturnType<typeof toStatus> }
+  | {
+      ok: false;
+      reason:
+        | 'reservation_not_found'
+        | 'hold_expired'
+        | 'not_awaiting_transfer'
+        | 'change_not_awaiting_transfer';
+    };
+
+/**
+ * Records the uploaded receipt, its payment row and the resulting status in one
+ * commit. The reservation is locked and re-read first, so a webhook or a second
+ * upload that moved it while the file was in flight is seen here instead of
+ * being overwritten by the copy read before the storage call.
+ */
+export async function recordTransferProof(input: {
+  reference: string;
+  reservationId: string;
+  changeId: string | null;
+  storageKey: string;
+  mimeType: string;
+  sizeBytes: number;
+}): Promise<TransferProofOutcome> {
+  return db.transaction(async (tx): Promise<TransferProofOutcome> => {
+    await tx
+      .select({ id: reservations.id })
+      .from(reservations)
+      .where(eq(reservations.id, input.reservationId))
+      .limit(1)
+      .for('update');
+
+    const fresh = await loadStoredReservation(input.reference, tx);
+    if (!fresh) return { ok: false, reason: 'reservation_not_found' };
+
+    if (input.changeId) {
+      const change = fresh.pendingChange;
+      if (
+        !change ||
+        change.changeId !== input.changeId ||
+        change.status !== 'awaiting_transfer'
+      )
+        return { ok: false, reason: 'change_not_awaiting_transfer' };
+
+      const reusable = await findReusablePayment(
+        {
+          reservationId: fresh.id,
+          provider: 'bank_transfer',
+          amountMinor: change.amountDueMinor,
+          changeId: change.changeId,
+        },
+        tx,
+      );
+      const paymentId =
+        reusable?.id ??
+        (await insertPayment(
+          {
+            reservationId: fresh.id,
+            reference: createReference(),
+            method: 'bank_transfer',
+            amountMinor: change.amountDueMinor,
+            provider: 'bank_transfer',
+            note: change.changeId,
+          },
+          tx,
+        ));
+      await tx
+        .update(reservationChanges)
+        .set({ paymentId, updatedAt: new Date() })
+        .where(eq(reservationChanges.id, change.changeId));
+      await tx.insert(paymentProofs).values({
+        paymentId,
+        storageKey: input.storageKey,
+        mimeType: input.mimeType,
+        sizeBytes: input.sizeBytes,
+      });
+      change.status = 'awaiting_verification';
+      logEvent(fresh, 'transfer_proof_received', 'For your new dates', 'guest');
+      await saveStoredReservation(fresh, tx);
+      return { ok: true };
+    }
+
+    if (fresh.status === 'expired')
+      return { ok: false, reason: 'hold_expired' };
+    if (fresh.status !== 'awaiting_transfer')
+      return { ok: false, reason: 'not_awaiting_transfer' };
+
+    // `initialize` already created the transfer attempt the guest was shown, so the
+    // proof joins that row instead of opening a second one for the same receipt.
+    const reusable = await findReusablePayment(
+      {
+        reservationId: fresh.id,
+        provider: 'bank_transfer',
+        amountMinor: fresh.totals.dueNowMinor,
+      },
+      tx,
+    );
+    const paymentId =
+      reusable?.id ??
+      (await insertPayment(
+        {
+          reservationId: fresh.id,
+          reference: createReference(),
+          method: 'bank_transfer',
+          amountMinor: fresh.totals.dueNowMinor,
+          provider: 'bank_transfer',
+        },
+        tx,
+      ));
+    await tx.insert(paymentProofs).values({
+      paymentId,
+      storageKey: input.storageKey,
+      mimeType: input.mimeType,
+      sizeBytes: input.sizeBytes,
+    });
+    fresh.proof = { type: input.mimeType, size: input.sizeBytes };
+    fresh.status = 'awaiting_verification';
+    logEvent(fresh, 'transfer_proof_received', undefined, 'guest');
+    await saveStoredReservation(fresh, tx);
+    return { ok: true, status: toStatus(fresh) };
+  });
+}
+
+/** The step that runs inside a payment initialization transaction. */
+export type PaymentInitStep =
+  | { response: PaymentInitResponse }
+  | { reject: { status: number; error: ApiError } };
+
+/** The outcome of a committed payment initialization attempt. */
+export type PaymentInitOutcome =
+  | { kind: 'ok'; response: PaymentInitResponse }
+  | { kind: 'replay'; response: PaymentInitResponse }
+  | { kind: 'in_progress' }
+  | { kind: 'rejected'; status: number; error: ApiError };
+
+/**
+ * Commits an initialize step in one transaction: the claim, the payment row, the
+ * stamped reservation and the reply that replays them either all exist or none do, so
+ * a request that dies partway can never leave a hold the guest cannot pay or a reply
+ * that points at nothing.
+ *
+ * The reservation is locked and re-read before any of it runs, so a webhook or the
+ * expiry cron that moved the row while this request was in flight is seen here instead
+ * of overwritten by the copy the route read earlier.
+ */
+export async function commitPaymentInit(input: {
+  idKey: string;
+  reference: string;
+  reservationId: string;
+  apply: (ctx: {
+    r: StoredReservation;
+    tx: QueryExecutor;
+  }) => Promise<PaymentInitStep>;
+}): Promise<PaymentInitOutcome> {
+  return db.transaction(async (tx): Promise<PaymentInitOutcome> => {
+    const claim = await claimIdempotency(
+      input.idKey,
+      120,
+      { method: 'POST', path: '/api/payments/initialize' },
+      tx,
+    );
+    if (!claim.claimed) {
+      if (claim.record?.response)
+        return {
+          kind: 'replay',
+          response: claim.record.response as PaymentInitResponse,
+        };
+      return { kind: 'in_progress' };
+    }
+
+    await tx
+      .select({ id: reservations.id })
+      .from(reservations)
+      .where(eq(reservations.id, input.reservationId))
+      .limit(1)
+      .for('update');
+
+    const fresh = await loadStoredReservation(input.reference, tx);
+    if (!fresh) {
+      await releaseIdempotency(input.idKey, tx);
+      return {
+        kind: 'rejected',
+        status: 404,
+        error: {
+          code: ERROR_CODES.NOT_FOUND,
+          message: ERROR_MESSAGES.RESERVATION_NOT_FOUND,
+        },
+      };
+    }
+
+    const step = await input.apply({ r: fresh, tx });
+    if ('reject' in step) {
+      await releaseIdempotency(input.idKey, tx);
+      return { kind: 'rejected', ...step.reject };
+    }
+
+    await finishIdempotency(
+      input.idKey,
+      step.response,
+      200,
+      60,
+      { reservationId: input.reservationId },
+      tx,
+    );
+    return { kind: 'ok', response: step.response };
+  });
 }

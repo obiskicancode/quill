@@ -1,11 +1,9 @@
 import { NextRequest } from 'next/server';
-import { eq } from 'drizzle-orm';
 
 import { ERROR_MESSAGES } from '@/constants/error-messages';
-import { db } from '@/db';
-import { reservationNights, reservations } from '@/db/schema';
 import { guardAdminApi } from '@/lib/auth/guards';
 import { fromISO, hotelClock } from '@/lib/dates';
+import { getReservationAdminDetail } from '@/lib/db/repositories/reservations.repo';
 import { getHotelSettings } from '@/lib/db/repositories/settings.repo';
 import { apiFail, apiOk } from '@/lib/http/envelope';
 import { calculateRefund } from '@/lib/manage/refund';
@@ -25,24 +23,19 @@ export async function GET(
   const { id } = await params;
   if (!id) return apiFail(400, ERROR_MESSAGES.MISSING_RESERVATION_ID);
 
-  const [res] = await db
-    .select()
-    .from(reservations)
-    .where(eq(reservations.id, id))
-    .limit(1);
-
-  if (!res) return apiFail(404, ERROR_MESSAGES.RESERVATION_NOT_FOUND_BARE);
-
-  const [firstNight] = await db
-    .select()
-    .from(reservationNights)
-    .where(eq(reservationNights.reservationId, id))
-    .orderBy(reservationNights.date)
-    .limit(1);
-
   const settings = await getHotelSettings();
   const timezone = settings?.timezone ?? 'Africa/Lagos';
   const clock = hotelClock(new Date(), timezone);
+
+  const res = await getReservationAdminDetail(
+    id,
+    clock.today,
+    { canViewGuestContact: false, canViewPayments: false },
+    new Date(),
+    guard.context.role,
+  );
+
+  if (!res) return apiFail(404, ERROR_MESSAGES.RESERVATION_NOT_FOUND_BARE);
 
   const freeHours = settings?.freeCancellationHours ?? 48;
   const checkInDate = fromISO(res.checkIn);
@@ -76,7 +69,8 @@ export async function GET(
     paidMinor: netPaidMinor,
     totalMinor: res.totalMinor,
     firstNightMinor:
-      firstNight?.rateMinor ?? res.subtotalMinor / Math.max(1, res.nights),
+      res.nightsList[0]?.rateMinor ??
+      res.subtotalMinor / Math.max(1, res.nights),
     clock,
     timelines: { original: '3-5 business days', manual: 'Immediate' },
   });
