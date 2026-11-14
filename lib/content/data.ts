@@ -68,6 +68,7 @@ const hotel = cache(async () => (await getHotelRow()) ?? null);
 const social = cache(() => getSocialLinkRows());
 const roomTypes = cache(() => getRoomTypesWithDetails());
 const allRooms = cache(async () => (await roomTypes()).map((r) => r.room));
+const sitePages = cache(() => listSitePages());
 
 async function requireHotel() {
   const row = await hotel();
@@ -109,20 +110,30 @@ export const getConsentSettings = cache(async (): Promise<ConsentSettings> => {
   };
 });
 
-/** Loads a published page by slug; throws when the page is absent or unpublished. */
-export async function getSitePage(slug: SitePage['slug']): Promise<SitePage> {
-  const pages = await listSitePages();
-  const row = pages.find((p) => p.slug === slug && p.status === 'published');
-  if (!row) throw new Error(ERROR_MESSAGES.PAGE_NOT_PUBLISHED(slug));
-  return mapSitePage(row);
+/** Loads a published page by slug; returns null when the page is absent or unpublished. */
+export async function getPublishedSitePage(
+  slug: SitePage['slug'],
+): Promise<SitePage | null> {
+  const rows = await sitePages();
+  const row = rows.find((p) => p.slug === slug && p.status === 'published');
+  return row ? mapSitePage(row) : null;
 }
 
-/** Published about page. */
-export const getAboutPage = async () => getSitePage('about');
+/** Loads a published page by slug; throws when the page is absent or unpublished. */
+export async function getSitePage(slug: SitePage['slug']): Promise<SitePage> {
+  const page = await getPublishedSitePage(slug);
+  if (!page) throw new Error(ERROR_MESSAGES.PAGE_NOT_PUBLISHED(slug));
+  return page;
+}
 
-/** First four value cards from the about page. */
-export const getValueCards = async () =>
-  (await getSitePage('about')).content.valueCards.slice(0, 4);
+/** Published about page, or null when it is absent or unpublished. */
+export const getAboutPage = async () => getPublishedSitePage('about');
+
+/** First four value cards from the about page; empty when it is unpublished. */
+export const getValueCards = async () => {
+  const page = await getPublishedSitePage('about');
+  return page?.content.valueCards.slice(0, 4) ?? [];
+};
 
 /** Compact year/room stats used by highlight sections. */
 export const getHighlights = async () => {
@@ -237,7 +248,7 @@ export const getFormSettings = async () => {
  * that list rather than by arbitrary DB order.
  */
 export const getPolicyPages = async (): Promise<PolicyPage[]> => {
-  const rows = await listSitePages();
+  const rows = await sitePages();
   const data = POLICY_SLUGS.map((slug) =>
     rows.find((row) => row.slug === slug && row.template === 'policy'),
   )
@@ -256,6 +267,23 @@ export const getPolicyPage = async (
 ): Promise<PolicyPage | null> => {
   const pages = await getPolicyPages();
   return pages.find((p) => p.slug === slug) ?? null;
+};
+
+export type PolicyPageState =
+  | { status: 'published'; page: PolicyPage }
+  | { status: 'unpublished' }
+  | { status: 'missing' };
+
+/** Distinguishes a draft policy from one that has never been seeded. */
+export const getPolicyPageState = async (
+  slug: PolicySlug,
+): Promise<PolicyPageState> => {
+  const rows = await sitePages();
+  const row = rows.find((p) => p.slug === slug && p.template === 'policy');
+  if (!row) return { status: 'missing' };
+  const page = mapPolicyPage(row);
+  if (!page || !page.isPublished) return { status: 'unpublished' };
+  return { status: 'published', page };
 };
 
 /** Policy-related settings derived from the hotel row. */

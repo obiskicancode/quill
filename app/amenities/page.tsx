@@ -6,6 +6,7 @@ import { FacilitiesSection } from '@/components/amenities/FacilitiesSection';
 import { RoomAmenitiesSummary } from '@/components/amenities/RoomAmenitiesSummary';
 import { JsonLd } from '@/components/content/JsonLd';
 import { PageHero } from '@/components/content/PageHero';
+import { PageNotPublished } from '@/components/content/PageNotPublished';
 import { Section } from '@/components/content/Section';
 import { SectionSkeleton } from '@/components/content/Skeletons';
 import { CtaBand } from '@/components/CtaBand';
@@ -13,12 +14,17 @@ import {
   getFacilities,
   getHotelSettings,
   getPublicSite,
-  getSitePage,
+  getPublishedSitePage,
 } from '@/lib/content/data';
 import { hotelJsonLd } from '@/lib/content/jsonld';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await getSitePage('amenities');
+  const page = await getPublishedSitePage('amenities');
+  if (!page)
+    return {
+      title: 'Page not published',
+      robots: { index: false, follow: false },
+    };
   const title = page.metaTitle ?? page.title;
   const description = page.metaDescription ?? page.intro;
   return {
@@ -36,8 +42,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AmenitiesPage() {
-  const [page, settings, site] = await Promise.all([
-    getSitePage('amenities'),
+  const page = await getPublishedSitePage('amenities');
+  if (!page) return <PageNotPublished />;
+
+  const [settings, site] = await Promise.all([
     getHotelSettings(),
     getPublicSite(),
   ]);

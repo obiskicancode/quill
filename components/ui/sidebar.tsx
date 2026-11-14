@@ -74,10 +74,13 @@ function SidebarProvider({
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
   const [_open, _setOpen] = React.useState(defaultOpen);
-  const open = openProp ?? _open;
+  // Tablets default to the collapsed icon rail until the user toggles it.
+  const [hasToggled, setHasToggled] = React.useState(false);
+  const open = openProp ?? (isTablet && !hasToggled ? false : _open);
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === 'function' ? value(open) : value;
+      setHasToggled(true);
       if (setOpenProp) {
         setOpenProp(openState);
       } else {
@@ -522,7 +525,7 @@ function SidebarMenuButton({
     isActive?: boolean;
     tooltip?: string | React.ComponentProps<typeof TooltipContent>;
   } & VariantProps<typeof sidebarMenuButtonVariants>) {
-  const { isMobile, isTablet, state } = useSidebar();
+  const { isMobile, state } = useSidebar();
   const comp = useRender({
     defaultTagName: 'button',
     props: mergeProps<'button'>(
@@ -556,7 +559,7 @@ function SidebarMenuButton({
       <TooltipContent
         side="right"
         align="center"
-        hidden={isMobile || (!isTablet && state !== 'collapsed')}
+        hidden={isMobile || state !== 'collapsed'}
         {...tooltip}
       />
     </Tooltip>

@@ -8,18 +8,24 @@ import { TeamSection } from '@/components/about/TeamSection';
 import { ValueCards } from '@/components/about/ValueCards';
 import { JsonLd } from '@/components/content/JsonLd';
 import { PageHero } from '@/components/content/PageHero';
+import { PageNotPublished } from '@/components/content/PageNotPublished';
 import { Section } from '@/components/content/Section';
 import { SectionSkeleton } from '@/components/content/Skeletons';
 import { CtaBand } from '@/components/CtaBand';
 import {
   getHotelSettings,
   getPublicSite,
-  getSitePage,
+  getPublishedSitePage,
 } from '@/lib/content/data';
 import { hotelJsonLd } from '@/lib/content/jsonld';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await getSitePage('about');
+  const page = await getPublishedSitePage('about');
+  if (!page)
+    return {
+      title: 'Page not published',
+      robots: { index: false, follow: false },
+    };
   const title = page.metaTitle ?? page.title;
   const description = page.metaDescription ?? page.intro;
   const image = (page.ogImage ?? page.heroImage).src;
@@ -36,8 +42,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
-  const [page, settings, site] = await Promise.all([
-    getSitePage('about'),
+  const page = await getPublishedSitePage('about');
+  if (!page) return <PageNotPublished />;
+
+  const [settings, site] = await Promise.all([
     getHotelSettings(),
     getPublicSite(),
   ]);

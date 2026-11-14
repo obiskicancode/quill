@@ -21,6 +21,8 @@ import { SiteProvider } from '@/providers/site.provider';
 
 import './globals.css';
 
+export const dynamic = 'force-dynamic';
+
 const display = Young_Serif({
   subsets: ['latin'],
   weight: '400',

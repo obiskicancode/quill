@@ -19,7 +19,7 @@ function split(blocks: RichBlock[], parts: number): RichBlock[][] {
 
 export async function StorySection() {
   const page = await getAboutPage();
-  if (page.body.length === 0) return null; // no story yet: the section is omitted
+  if (!page || page.body.length === 0) return null; // no story yet: the section is omitted
   const images = page.content.images.slice(0, 2);
   const chunks = split(page.body, Math.max(1, images.length));
 

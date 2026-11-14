@@ -14,13 +14,14 @@ import {
   LayoutDashboard,
   LogOut,
   MessageSquare,
+  PanelLeftIcon,
   Settings,
   ShieldAlert,
   Sparkles,
   Users,
   X,
 } from 'lucide-react';
-import { useEffect, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -87,7 +88,8 @@ function AdminSidebar({
   onSignOut,
 }: AdminSidebarProps) {
   const pathname = usePathname();
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { isMobile, setOpenMobile, state, toggleSidebar } = useSidebar();
+  const collapsed = !isMobile && state === 'collapsed';
 
   const groups = mfaPending
     ? []
@@ -109,53 +111,67 @@ function AdminSidebar({
 
   return (
     <Sidebar
-      collapsible="offcanvas"
+      collapsible="icon"
       className="z-(--z-panel) border-r border-sidebar-border"
     >
       <div className="on-dark flex h-full min-h-0 flex-col bg-ink text-paper">
-        <SidebarHeader className="h-(--header-h) flex-row items-center justify-between border-b border-sidebar-border px-3 py-0 md:max-lg:justify-center md:max-lg:px-1">
-          <Link
-            href="/admin"
-            onClick={closeMobile}
-            aria-label="Quill admin"
-            className="font-display text-h3"
-          >
-            <span className="md:max-lg:sr-only">
-              Quill <span className="text-brand">admin</span>
-            </span>
-            <span
-              aria-hidden
-              className="hidden size-8 items-center justify-center rounded-control bg-primary text-small font-semibold text-primary-foreground md:max-lg:inline-flex"
+        <SidebarHeader className="h-(--header-h) flex-row items-center justify-between border-b border-sidebar-border px-3 py-0 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-1">
+          {collapsed ? (
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label="Expand sidebar"
+              title="Expand sidebar"
+              className="group/brand-toggle flex size-9 cursor-col-resize items-center justify-center rounded-control bg-primary text-small font-semibold text-primary-foreground ring-sidebar-ring outline-hidden focus-visible:ring-2"
             >
-              Q
-            </span>
-          </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={closeMobile}
-            aria-label="Close navigation"
-            className="hover:bg-sidebar-accent md:hidden"
-          >
-            <X className="size-5" aria-hidden />
-          </Button>
+              <span aria-hidden className="group-hover/brand-toggle:hidden">
+                Q
+              </span>
+              <PanelLeftIcon
+                aria-hidden
+                className="hidden size-4 group-hover/brand-toggle:block"
+              />
+              <span className="sr-only">Expand sidebar</span>
+            </button>
+          ) : (
+            <>
+              <Link
+                href="/admin"
+                onClick={closeMobile}
+                aria-label="Quill admin"
+                className="font-display text-h3"
+              >
+                Quill <span className="text-brand">admin</span>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={closeMobile}
+                aria-label="Close navigation"
+                className="hover:bg-sidebar-accent md:hidden"
+              >
+                <X className="size-5" aria-hidden />
+              </Button>
+              <SidebarTrigger className="hidden shrink-0 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground md:inline-flex" />
+            </>
+          )}
         </SidebarHeader>
 
         <SidebarContent>
           {mfaPending && (
-            <div className="p-3 pb-0 md:max-lg:p-1 md:max-lg:pb-0">
+            <div className="p-3 pb-0 group-data-[collapsible=icon]:p-1 group-data-[collapsible=icon]:pb-0">
               <Link
                 href="/admin/account?setup=required"
                 onClick={closeMobile}
                 aria-label="Finish two-factor setup"
                 title="Finish two-factor setup"
-                className="block rounded-control border border-primary/40 bg-primary/10 p-3 text-small text-paper hover:bg-primary/20 md:max-lg:flex md:max-lg:size-10 md:max-lg:items-center md:max-lg:justify-center md:max-lg:p-0"
+                className="block rounded-control border border-primary/40 bg-primary/10 p-3 text-small text-paper group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0 hover:bg-primary/20"
               >
                 <ShieldAlert
-                  className="hidden size-5 shrink-0 text-primary md:max-lg:block"
+                  className="hidden size-5 shrink-0 text-primary group-data-[collapsible=icon]:block"
                   aria-hidden
                 />
-                <span className="md:max-lg:sr-only">
+                <span className="group-data-[collapsible=icon]:sr-only">
                   <span className="font-semibold">Finish two-factor setup</span>
                   <span className="mt-1 block text-caption text-sidebar-foreground/70">
                     Required before the admin opens.
@@ -165,8 +181,11 @@ function AdminSidebar({
             </div>
           )}
           {groups.map((group) => (
-            <SidebarGroup key={group.label} className="pb-1 md:max-lg:px-1">
-              <SidebarGroupLabel className="text-caption tracking-wide text-sidebar-foreground/50 uppercase md:max-lg:hidden">
+            <SidebarGroup
+              key={group.label}
+              className="pb-1 group-data-[collapsible=icon]:px-1"
+            >
+              <SidebarGroupLabel className="text-caption tracking-wide text-sidebar-foreground/50 uppercase">
                 {group.label}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -190,10 +209,10 @@ function AdminSidebar({
                           }
                           isActive={active}
                           tooltip={item.label}
-                          className="min-h-10 gap-2.5 px-2.5 text-small text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground data-active:bg-primary data-active:text-primary-foreground data-active:hover:bg-brand-hover md:max-lg:size-10 md:max-lg:justify-center md:max-lg:gap-0 md:max-lg:p-0"
+                          className="min-h-10 gap-2.5 px-2.5 text-small text-sidebar-foreground/80 group-data-[collapsible=icon]:size-10! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:p-0! hover:bg-sidebar-accent hover:text-sidebar-foreground data-active:bg-primary data-active:text-primary-foreground data-active:hover:bg-brand-hover"
                         >
                           <Icon className="size-4 shrink-0" aria-hidden />
-                          <span className="md:max-lg:sr-only">
+                          <span className="group-data-[collapsible=icon]:sr-only">
                             {item.label}
                           </span>
                         </SidebarMenuButton>
@@ -206,18 +225,18 @@ function AdminSidebar({
           ))}
         </SidebarContent>
 
-        <SidebarFooter className="gap-2 border-t border-sidebar-border p-3 md:max-lg:p-1">
+        <SidebarFooter className="gap-2 border-t border-sidebar-border p-3 group-data-[collapsible=icon]:p-1">
           <Link
             href="/admin/account"
             onClick={closeMobile}
-            className="flex items-center gap-2.5 rounded-control px-1 py-1 hover:bg-sidebar-accent md:max-lg:justify-center md:max-lg:gap-0 md:max-lg:px-0"
+            className="flex items-center gap-2.5 rounded-control px-1 py-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0 hover:bg-sidebar-accent"
           >
             <Avatar className="size-9">
               <AvatarFallback className="bg-primary text-small font-bold text-primary-foreground">
                 {initials || 'A'}
               </AvatarFallback>
             </Avatar>
-            <span className="min-w-0 md:max-lg:sr-only">
+            <span className="min-w-0 group-data-[collapsible=icon]:sr-only">
               <span className="block truncate text-small font-semibold">
                 {user.firstName} {user.lastName}
               </span>
@@ -232,9 +251,11 @@ function AdminSidebar({
             loading={signingOut}
             onClick={onSignOut}
             icon={<LogOut className="size-4" aria-hidden />}
-            className="justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground md:max-lg:mx-auto md:max-lg:size-9 md:max-lg:justify-center md:max-lg:px-0"
+            className="justify-start text-sidebar-foreground/80 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-9 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 hover:bg-sidebar-accent hover:text-sidebar-foreground"
           >
-            <span className="md:max-lg:sr-only">Sign out</span>
+            <span className="group-data-[collapsible=icon]:sr-only">
+              Sign out
+            </span>
           </Button>
         </SidebarFooter>
       </div>
@@ -281,14 +302,7 @@ export function AdminShell({
   }
 
   return (
-    <SidebarProvider
-      className="min-h-dvh bg-paper md:max-lg:[--admin-sidebar-width:var(--sidebar-width-icon)]"
-      style={
-        {
-          '--sidebar-width': 'var(--admin-sidebar-width, 16rem)',
-        } as CSSProperties
-      }
-    >
+    <SidebarProvider className="min-h-dvh bg-paper">
       <AdminSidebar
         user={user}
         role={role}
@@ -299,7 +313,7 @@ export function AdminShell({
       />
       <SidebarInset className="min-w-0 bg-paper">
         <header className="sticky top-0 z-(--z-sticky) flex h-(--header-h) items-center gap-3 border-b border-line bg-card/95 px-4 backdrop-blur md:px-6">
-          <SidebarTrigger />
+          <SidebarTrigger className="md:hidden" />
           <div className="flex-1" />
           <Button
             variant="ghost"

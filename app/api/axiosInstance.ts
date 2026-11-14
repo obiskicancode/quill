@@ -19,7 +19,7 @@ type CustomRequestConfig = InternalAxiosRequestConfig;
 
 const isServer = typeof window === 'undefined';
 const BASE_PATH = '/api';
-const baseURL = isServer ? config.API.BASE_URL + BASE_PATH : BASE_PATH;
+const baseURL = isServer ? config.SITE.URL + BASE_PATH : BASE_PATH;
 
 function readCsrfToken(cookieName: string = ADMIN_CSRF_COOKIE_NAME): string {
   if (typeof document === 'undefined') return '';

@@ -7,13 +7,14 @@ import { LocationSection } from '@/components/contact/LocationSection';
 import { SocialLinks } from '@/components/contact/SocialLinks';
 import { JsonLd } from '@/components/content/JsonLd';
 import { PageHero } from '@/components/content/PageHero';
+import { PageNotPublished } from '@/components/content/PageNotPublished';
 import { Section } from '@/components/content/Section';
 import { SectionSkeleton } from '@/components/content/Skeletons';
 import { CtaBand } from '@/components/CtaBand';
 import {
   getHotelSettings,
   getPublicSite,
-  getSitePage,
+  getPublishedSitePage,
 } from '@/lib/content/data';
 import { hotelJsonLd } from '@/lib/content/jsonld';
 
@@ -22,7 +23,12 @@ const one = (v: string | string[] | undefined) =>
   Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
 
 export async function generateMetadata(): Promise<Metadata> {
-  const page = await getSitePage('contact');
+  const page = await getPublishedSitePage('contact');
+  if (!page)
+    return {
+      title: 'Page not published',
+      robots: { index: false, follow: false },
+    };
   const title = page.metaTitle ?? page.title;
   const description = page.metaDescription ?? page.intro;
   return {
@@ -45,8 +51,10 @@ export default async function ContactPage({
   searchParams: Promise<Params>;
 }) {
   const sp = await searchParams;
-  const [page, settings, site] = await Promise.all([
-    getSitePage('contact'),
+  const page = await getPublishedSitePage('contact');
+  if (!page) return <PageNotPublished />;
+
+  const [settings, site] = await Promise.all([
     getHotelSettings(),
     getPublicSite(),
   ]);

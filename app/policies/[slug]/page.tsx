@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import type { Metadata } from 'next';
 
+import { PageNotPublished } from '@/components/content/PageNotPublished';
 import { RichText } from '@/components/content/RichText';
 import {
   CancellationSummary,
@@ -12,19 +13,13 @@ import { PolicyToc } from '@/components/policies/PolicyToc';
 import { PrintButton } from '@/components/policies/PrintButton';
 import { TextLink } from '@/components/ui/text-link';
 import { POLICY_SLUGS } from '@/constants/content';
-import { getPolicyPage, getPolicySettings } from '@/lib/content/data';
+import { getPolicyPageState, getPolicySettings } from '@/lib/content/data';
 import { policyHeadings } from '@/lib/content/rich';
 import { formatDayMonthYear } from '@/lib/dates';
 import type { PolicySlug } from '@/types/content.types';
 
 const isPolicySlug = (s: string): s is PolicySlug =>
   (POLICY_SLUGS as readonly string[]).includes(s);
-
-// The four policy slugs are known ahead of time, so they are pre-rendered and anything else 404s.
-export const dynamicParams = false;
-export function generateStaticParams() {
-  return POLICY_SLUGS.map((slug) => ({ slug }));
-}
 
 export async function generateMetadata({
   params,
@@ -33,8 +28,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   if (!isPolicySlug(slug)) return { title: 'Policies' };
-  const page = await getPolicyPage(slug);
-  if (!page) return { title: 'Policies' };
+  const state = await getPolicyPageState(slug);
+  if (state.status === 'missing') return { title: 'Policies' };
+  if (state.status === 'unpublished')
+    return {
+      title: 'Page not published',
+      robots: { index: false, follow: false },
+    };
+  const page = state.page;
   const title = page.metaTitle ?? page.title;
   const description = page.metaDescription ?? page.summary;
   return {
@@ -51,9 +52,11 @@ export default async function PolicyPage({
 }) {
   const { slug } = await params;
   if (!isPolicySlug(slug)) notFound();
-  const page = await getPolicyPage(slug);
-  if (!page) notFound();
+  const state = await getPolicyPageState(slug);
+  if (state.status === 'missing') notFound();
+  if (state.status === 'unpublished') return <PageNotPublished />;
 
+  const page = state.page;
   const headings = policyHeadings(page.body);
   const settings = await getPolicySettings();
 

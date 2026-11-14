@@ -1,11 +1,14 @@
 import { Reveal, StaggerGroup, StaggerItem } from '@/components/motion';
 import { TextLink } from '@/components/ui/text-link';
-import { getAttractions, getSitePage } from '@/lib/content/data';
+import { getAttractions, getPublishedSitePage } from '@/lib/content/data';
 
 /** Short text about the area, a list of nearby attractions and a link to Contact. Omitted when there is nothing to say. */
 export async function SurroundingsSection() {
-  const attractions = await getAttractions();
-  const text = (await getSitePage('about')).content.surroundingsText ?? '';
+  const [attractions, page] = await Promise.all([
+    getAttractions(),
+    getPublishedSitePage('about'),
+  ]);
+  const text = page?.content.surroundingsText ?? '';
   if (!text && attractions.length === 0) return null;
   return (
     <section aria-labelledby="area-title" className="bg-card section-y">
