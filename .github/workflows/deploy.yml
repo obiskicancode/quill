@@ -1,0 +1,33 @@
+name: Trigger Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quill-deployment-trigger
+  cancel-in-progress: false
+
+jobs:
+  trigger-deployment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger central deployment
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOY_DISPATCH_TOKEN }}
+          SOURCE_REPO: ${{ github.repository }}
+          SOURCE_REF: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          gh workflow run deploy.yml \
+            --repo obiskicancode/deployment \
+            --ref main \
+            -f source_repo="$SOURCE_REPO" \
+            -f source_ref="$SOURCE_REF" \
+            -f app_name="quill"

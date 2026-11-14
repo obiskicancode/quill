@@ -5,7 +5,7 @@ import { textLinkRecipe } from '@/components/ui/text-link';
 import { cn } from '@/lib/utils';
 import { useConsent } from '@/providers/consent.provider';
 
-/** A small button to reopen cookie settings and change your choice. Reusable on light and dark backgrounds. */
+/** A small button to reopen cookie settings and change your choice */
 export function CookieSettingsButton({ className }: { className?: string }) {
   const { reset } = useConsent();
 

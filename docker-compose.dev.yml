@@ -1,13 +1,14 @@
-name: quill
+name: quill-dev
 
 services:
   postgres:
     image: pgvector/pgvector:pg16
     restart: unless-stopped
+    container_name: quill-dev-postgres
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-quill_apartments}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
     volumes:

@@ -1,0 +1,28 @@
+services:
+  quill:
+    build:
+      context: .
+    container_name: quill
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '127.0.0.1:3000:3002'
+    networks:
+      - proxy
+      - backend
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '5'
+
+networks:
+  proxy:
+    external: true
+  backend:
+    external: true

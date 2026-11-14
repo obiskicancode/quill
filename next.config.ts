@@ -1,7 +1,9 @@
 import type { NextConfig } from 'next';
 
 const config: NextConfig = {
+  output: 'standalone',
   images: { formats: ['image/avif', 'image/webp'] },
+
   poweredByHeader: false,
   // argon2 ships a native binary; keep it out of the bundled server code.
   serverExternalPackages: ['argon2'],
