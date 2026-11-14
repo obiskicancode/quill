@@ -50,7 +50,10 @@ export async function getCheckoutSettings(
     acceptedMethods: methods,
     provider,
     confirmationMode:
-      row.confirmationModeDefault === 'manual' ? 'manual' : 'instant',
+      row.confirmationModeDefault === 'manual' ||
+      row.confirmationModeDefault === 'manual_approval'
+        ? 'manual'
+        : 'instant',
     holdSeconds: row.holdMinutes * 60,
     bank: {
       bankName: bank?.bankName ?? '',

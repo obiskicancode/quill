@@ -6,6 +6,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -53,5 +54,8 @@ export const seedRecords = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [index('idx_sr_table_row').on(table.tableName, table.rowId)],
+  (table) => [
+    uniqueIndex('idx_sr_table_row').on(table.tableName, table.rowId),
+    index('idx_sr_seed_name').on(table.seedName),
+  ],
 );

@@ -917,17 +917,17 @@ Table audit_logs {
   }
 }
 
-// Demo seed rows only, so seed:reset-demo never touches real data.
+// Seed rows only, so seed:reset-demo never touches real data.
 Table seed_records {
   id uuid [pk, default: `gen_random_uuid()`]
   table_name varchar(64) [not null]
   row_id varchar(64) [not null]
-  seed_name varchar(50) [not null, note: 'demo | e2e']
+  seed_name varchar(50) [not null, note: 'bootstrap | demo | e2e']
   created_at timestamptz [not null, default: `now()`]
 
   indexes {
-    (table_name, row_id) [unique]
-    seed_name
+    idx_sr_table_row (table_name, row_id) [unique]
+    idx_sr_seed_name (seed_name)
   }
 }
 

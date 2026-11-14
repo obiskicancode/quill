@@ -18,11 +18,15 @@
     "db:studio": "drizzle-kit studio",
     "db:check": "drizzle-kit check",
     "db:drop": "drizzle-kit drop",
-    "db:seed": "node --env-file=.env --import tsx db/seed/index.ts",
     "db:owner": "node --env-file=.env --import tsx db/seed/create-owner.ts",
     "db:reconcile": "node --env-file=.env --import tsx db/reconcile.ts",
     "db:verify": "node --env-file=.env --import tsx db/verify-migrations.ts",
-    "test": "node --import tsx --test tests/*.test.ts"
+    "test": "node --import tsx --test tests/*.test.ts",
+    "seed:bootstrap": "node --env-file=.env --import tsx scripts/seed/bootstrap.ts",
+    "seed:demo": "node --env-file=.env --import tsx scripts/seed/demo.ts",
+    "seed:e2e": "node --env-file=.env --import tsx scripts/seed/e2e.ts",
+    "seed:reset-demo": "node --env-file=.env --import tsx scripts/seed/reset-demo.ts",
+    "test:e2e": "playwright test"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -64,6 +68,7 @@
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
+    "@playwright/test": "^1.65.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^22.10.0",
     "@types/pg": "^8.23.1",
