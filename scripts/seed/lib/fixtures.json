@@ -3,7 +3,7 @@
     "name": "Quill Apartments",
     "shortName": "Quill",
     "description": "Comfortable rooms and serviced apartments in Nigeria. Check availability, book direct and pay securely online.",
-    "url": "http://localhost:3000",
+    "url": "http://localhost:3002",
     "logo": null,
     "bookingHref": "/checkout",
     "nav": [

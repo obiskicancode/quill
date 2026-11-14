@@ -111,16 +111,16 @@ describe('CSRF & Cookie Unification Tests', () => {
 
   it('3. sameOrigin validation handles origin, host, and forwarded hosts correctly', () => {
     // No origin header -> treated as same-origin
-    const noOrigin = new Request('http://localhost:3000/api/test', {
-      headers: { host: 'localhost:3000' },
+    const noOrigin = new Request('http://localhost:3002/api/test', {
+      headers: { host: 'localhost:3002' },
     });
     assert.strictEqual(sameOrigin(noOrigin), true);
 
     // Matching origin and host
-    const matching = new Request('http://localhost:3000/api/test', {
+    const matching = new Request('http://localhost:3002/api/test', {
       headers: {
-        host: 'localhost:3000',
-        origin: 'http://localhost:3000',
+        host: 'localhost:3002',
+        origin: 'http://localhost:3002',
       },
     });
     assert.strictEqual(sameOrigin(matching), true);
@@ -135,9 +135,9 @@ describe('CSRF & Cookie Unification Tests', () => {
     assert.strictEqual(sameOrigin(fwdHost), true);
 
     // Mismatched origin
-    const mismatched = new Request('http://localhost:3000/api/test', {
+    const mismatched = new Request('http://localhost:3002/api/test', {
       headers: {
-        host: 'localhost:3000',
+        host: 'localhost:3002',
         origin: 'https://evil-attacker.com',
       },
     });
@@ -161,12 +161,12 @@ describe('CSRF & Cookie Unification Tests', () => {
 
     // Valid checkManageCsrf request
     const validReq = new Request(
-      'http://localhost:3000/api/reservations/BK-TEST-123/cancel',
+      'http://localhost:3002/api/reservations/BK-TEST-123/cancel',
       {
         method: 'POST',
         headers: {
-          host: 'localhost:3000',
-          origin: 'http://localhost:3000',
+          host: 'localhost:3002',
+          origin: 'http://localhost:3002',
           [CSRF_HEADER_NAME]: manageCsrf,
         },
       },
@@ -175,12 +175,12 @@ describe('CSRF & Cookie Unification Tests', () => {
 
     // Wrong CSRF header
     const badReq = new Request(
-      'http://localhost:3000/api/reservations/BK-TEST-123/cancel',
+      'http://localhost:3002/api/reservations/BK-TEST-123/cancel',
       {
         method: 'POST',
         headers: {
-          host: 'localhost:3000',
-          origin: 'http://localhost:3000',
+          host: 'localhost:3002',
+          origin: 'http://localhost:3002',
           [CSRF_HEADER_NAME]: 'invalid-token',
         },
       },
@@ -201,11 +201,11 @@ describe('CSRF & Cookie Unification Tests', () => {
     assert.strictEqual(verifyCsrfToken(aliasToken), true);
 
     // Valid admin request passing both cookie and header
-    const validReq = new Request('http://localhost:3000/api/admin/auth/login', {
+    const validReq = new Request('http://localhost:3002/api/admin/auth/login', {
       method: 'POST',
       headers: {
-        host: 'localhost:3000',
-        origin: 'http://localhost:3000',
+        host: 'localhost:3002',
+        origin: 'http://localhost:3002',
         cookie: `${ADMIN_CSRF_COOKIE_NAME}=${validToken}`,
         [CSRF_HEADER_NAME]: validToken,
       },
@@ -219,12 +219,12 @@ describe('CSRF & Cookie Unification Tests', () => {
     assert.strictEqual(verifyCsrfToken(forgedToken), false);
 
     const forgedReq = new Request(
-      'http://localhost:3000/api/admin/auth/login',
+      'http://localhost:3002/api/admin/auth/login',
       {
         method: 'POST',
         headers: {
-          host: 'localhost:3000',
-          origin: 'http://localhost:3000',
+          host: 'localhost:3002',
+          origin: 'http://localhost:3002',
           cookie: `${ADMIN_CSRF_COOKIE_NAME}=${forgedToken}`,
           [CSRF_HEADER_NAME]: forgedToken,
         },
@@ -240,12 +240,12 @@ describe('CSRF & Cookie Unification Tests', () => {
 
     // Mismatched header and cookie
     const mismatchReq = new Request(
-      'http://localhost:3000/api/admin/auth/login',
+      'http://localhost:3002/api/admin/auth/login',
       {
         method: 'POST',
         headers: {
-          host: 'localhost:3000',
-          origin: 'http://localhost:3000',
+          host: 'localhost:3002',
+          origin: 'http://localhost:3002',
           cookie: `${ADMIN_CSRF_COOKIE_NAME}=${validToken}`,
           [CSRF_HEADER_NAME]: 'another-token',
         },

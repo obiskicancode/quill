@@ -11,7 +11,7 @@ export const config = {
   isProd,
   SITE: {
     NAME: process.env.NEXT_PUBLIC_SITE_NAME ?? 'Quill Apartments',
-    URL: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
+    URL: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3002',
   },
   DB: {
     URL: process.env.DATABASE_URL || '',

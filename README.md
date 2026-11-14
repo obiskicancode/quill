@@ -4,7 +4,7 @@ Next.js (App Router), TypeScript, Tailwind CSS 3.
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000
+npm run dev        # http://localhost:3002
 npm run typecheck
 npm run build
 ```
