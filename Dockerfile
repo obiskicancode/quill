@@ -46,6 +46,10 @@ ENV NEXT_PUBLIC_SITE_NAME=$NEXT_PUBLIC_SITE_NAME
 
 RUN pnpm build
 
+FROM builder AS migrator
+
+WORKDIR /app
+
 # Production runtime
 FROM base AS runner
 
